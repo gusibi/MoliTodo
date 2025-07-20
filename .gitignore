@@ -1,9 +1,10 @@
 # ====================== #
 # 操作系统和编辑器文件
 # ====================== #
-.DS_Store           # macOS 系统文件
+.DS_Store
 .idea/              # JetBrains IDE (WebStorm, IntelliJ)
-.vscode/            # VS Code 配置
+.vscode/
+.vercel/
 *.suo               # Windows 用户选项文件
 *.log               # 日志文件
 *.pid               # 进程 ID 文件
@@ -12,7 +13,7 @@
 # ====================== #
 # Node.js 和 npm 相关
 # ====================== #
-node_modules/       # npm 依赖
+node_modules/
 .npm                # npm 缓存
 package-lock.json   # npm 锁文件（如果使用 yarn，可以保留）
 yarn.lock           # yarn 锁文件（如果使用 npm，可以保留）
