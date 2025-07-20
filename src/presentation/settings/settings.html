@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - MoliTodo</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="settings-container">
+        <!-- 标签页导航 -->
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="general">通用</button>
+            <button class="tab-button" data-tab="appearance">外观</button>
+            <button class="tab-button" data-tab="notifications">通知</button>
+        </div>
+
+        <!-- 通用设置 -->
+        <div class="tab-content active" id="general">
+            <div class="setting-section">
+                <h3>启动设置</h3>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="autoStart" class="setting-checkbox">
+                        <span class="checkmark"></span>
+                        开机时自动启动 MoliTodo
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>数据管理</h3>
+                <div class="setting-item">
+                    <button class="setting-button" id="exportData">导出数据...</button>
+                    <p class="setting-description">将所有任务数据导出为 JSON 文件</p>
+                </div>
+                <div class="setting-item">
+                    <button class="setting-button" id="importData">导入数据...</button>
+                    <p class="setting-description">从 JSON 文件导入任务数据（将覆盖现有数据）</p>
+                </div>
+                <div class="setting-item">
+                    <button class="setting-button danger" id="clearAllData">清除所有数据</button>
+                    <p class="setting-description">永久删除所有未完成和已完成的任务</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外观设置 -->
+        <div class="tab-content" id="appearance">
+            <div class="setting-section">
+                <h3>悬浮图标调整</h3>
+                <div class="setting-item">
+                    <label class="setting-label">透明度</label>
+                    <div class="slider-container">
+                        <input type="range" id="opacitySlider" min="20" max="100" step="5" class="setting-slider">
+                        <span class="slider-value" id="opacityValue">100%</span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">大小</label>
+                    <div class="slider-container">
+                        <input type="range" id="sizeSlider" min="40" max="80" step="5" class="setting-slider">
+                        <span class="slider-value" id="sizeValue">60px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>主题</h3>
+                <div class="setting-item">
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="theme" value="light" class="setting-radio">
+                            <span class="radio-mark"></span>
+                            亮色模式图标
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="theme" value="dark" class="setting-radio">
+                            <span class="radio-mark"></span>
+                            暗色模式图标
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="theme" value="system" class="setting-radio" checked>
+                            <span class="radio-mark"></span>
+                            跟随系统（默认）
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知设置 -->
+        <div class="tab-content" id="notifications">
+            <div class="setting-section">
+                <h3>提醒声音</h3>
+                <div class="setting-item">
+                    <label class="setting-label">声音类型</label>
+                    <div class="select-container">
+                        <select id="alertSound" class="setting-select">
+                            <option value="none">无 (静音)</option>
+                            <option value="system">系统默认</option>
+                            <option value="chime">钟声</option>
+                            <option value="digital">数字铃声</option>
+                        </select>
+                        <button class="play-button" id="playSound">播放</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3>系统通知</h3>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="showNotifications" class="setting-checkbox" checked>
+                        <span class="checkmark"></span>
+                        任务到达提醒时间时，发送桌面通知
+                    </label>
+                    <p class="setting-description">关闭后，任务到期将只有悬浮图标的动画提醒</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

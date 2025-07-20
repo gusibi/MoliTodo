@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, screen, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -11,6 +11,8 @@ class MoliTodoApp {
   constructor() {
     this.floatingWindow = null;
     this.taskPanelWindow = null;
+    this.settingsWindow = null;
+    this.historyWindow = null;
     this.tray = null;
     
     // 初始化服务
@@ -25,10 +27,14 @@ class MoliTodoApp {
         floatingIcon: {
           x: 100,
           y: 100,
-          size: 60
+          size: 60,
+          opacity: 100,
+          visible: true
         },
         autoStart: false,
-        showNotifications: true
+        showNotifications: true,
+        alertSound: 'system', // 'none', 'system', 'chime', 'digital'
+        theme: 'system' // 'light', 'dark', 'system'
       }
     });
 
@@ -51,8 +57,8 @@ class MoliTodoApp {
     // 创建悬浮窗口
     this.createFloatingWindow();
     
-    // 创建系统托盘 (暂时注释，需要PNG图标)
-    // this.createTray();
+    // 创建系统托盘
+    this.createTray();
     
     // 设置IPC处理器
     this.setupIpcHandlers();
@@ -119,6 +125,8 @@ class MoliTodoApp {
       this.floatingWindow.show();
       console.log('主进程: 悬浮窗口已显示');
       this.updateFloatingIcon();
+      // 立即应用配置以确保透明度正确
+      this.applyFloatingIconConfig();
     });
 
     // 添加webContents事件监听
@@ -201,55 +209,195 @@ class MoliTodoApp {
   }
 
   /**
+   * 显示设置窗口
+   */
+  showSettingsWindow() {
+    if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+      if (this.settingsWindow.isVisible()) {
+        this.settingsWindow.focus();
+      } else {
+        this.settingsWindow.show();
+      }
+      return;
+    }
+
+    this.settingsWindow = new BrowserWindow({
+      width: 600,
+      height: 500,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      title: '设置',
+      show: false,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    });
+
+    this.settingsWindow.loadFile(path.join(__dirname, '../presentation/settings/settings.html'));
+
+    this.settingsWindow.once('ready-to-show', () => {
+      this.settingsWindow.show();
+    });
+
+    // 阻止窗口关闭，只是隐藏
+    this.settingsWindow.on('close', (event) => {
+      if (!this.isQuitting) {
+        event.preventDefault();
+        this.settingsWindow.hide();
+      }
+    });
+
+    // 只有在应用退出时才清理引用
+    this.settingsWindow.on('closed', () => {
+      this.settingsWindow = null;
+    });
+  }
+
+  /**
+   * 显示历史记录窗口
+   */
+  showHistoryWindow() {
+    if (this.historyWindow && !this.historyWindow.isDestroyed()) {
+      if (this.historyWindow.isVisible()) {
+        this.historyWindow.focus();
+      } else {
+        this.historyWindow.show();
+      }
+      return;
+    }
+
+    this.historyWindow = new BrowserWindow({
+      width: 700,
+      height: 600,
+      resizable: true,
+      minimizable: false,
+      maximizable: false,
+      title: '已完成任务',
+      show: false,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    });
+
+    this.historyWindow.loadFile(path.join(__dirname, '../presentation/history/history.html'));
+
+    this.historyWindow.once('ready-to-show', () => {
+      this.historyWindow.show();
+    });
+
+    // 阻止窗口关闭，只是隐藏
+    this.historyWindow.on('close', (event) => {
+      if (!this.isQuitting) {
+        event.preventDefault();
+        this.historyWindow.hide();
+      }
+    });
+
+    // 只有在应用退出时才清理引用
+    this.historyWindow.on('closed', () => {
+      this.historyWindow = null;
+    });
+  }
+
+  /**
+   * 显示关于对话框
+   */
+  showAboutDialog() {
+    const { dialog } = require('electron');
+    
+    dialog.showMessageBox(this.floatingWindow || null, {
+      type: 'info',
+      title: '关于 MoliTodo',
+      message: 'MoliTodo',
+      detail: `版本: 1.0.0
+一款常驻在桌面边缘的悬浮式待办事项应用
+
+© 2024 MoliTodo Team
+MIT License`,
+      buttons: ['确定']
+    });
+  }
+
+  /**
    * 创建系统托盘
    */
   createTray() {
-    // 使用SVG图标路径
-    const trayIconPath = path.join(__dirname, '../presentation/assets/icons/tray-icon.svg');
+    // 使用PNG图标，因为SVG在某些系统上可能不支持
+    const trayIconPath = path.join(__dirname, '../presentation/assets/icons/app-icon-256x256.png');
     
     try {
-      this.tray = new Tray(trayIconPath);
+      // 创建图标并调整大小
+      const image = nativeImage.createFromPath(trayIconPath);
+      const resizedImage = image.resize({ width: 16, height: 16 });
       
-      const contextMenu = Menu.buildFromTemplate([
-        {
-          label: '显示/隐藏悬浮图标',
-          click: () => {
-            if (this.floatingWindow.isVisible()) {
-              this.floatingWindow.hide();
-            } else {
-              this.floatingWindow.show();
-            }
-          }
-        },
-        { type: 'separator' },
-        {
-          label: '设置',
-          click: () => {
-            // TODO: 打开设置窗口
-          }
-        },
-        {
-          label: '关于',
-          click: () => {
-            // TODO: 打开关于窗口
-          }
-        },
-        { type: 'separator' },
-        {
-          label: '退出',
-          click: () => {
-            this.isQuitting = true;
-            app.quit();
-          }
-        }
-      ]);
-
-      this.tray.setContextMenu(contextMenu);
+      this.tray = new Tray(resizedImage);
       this.tray.setToolTip('MoliTodo - 悬浮待办');
+      
+      this.updateTrayMenu();
+      
+      // macOS 上的左键点击事件
+      this.tray.on('click', () => {
+        this.tray.popUpContextMenu();
+      });
       
     } catch (error) {
       console.warn('无法创建系统托盘:', error.message);
     }
+  }
+
+  /**
+   * 更新托盘菜单
+   */
+  updateTrayMenu() {
+    const floatingIconVisible = this.configStore.get('floatingIcon.visible', true);
+    
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: floatingIconVisible ? '隐藏悬浮图标' : '显示悬浮图标',
+        type: 'normal',
+        click: () => {
+          // 每次点击时重新获取当前状态
+          const currentVisible = this.configStore.get('floatingIcon.visible', true);
+          const newVisible = !currentVisible;
+          
+          this.configStore.set('floatingIcon.visible', newVisible);
+          this.applyFloatingIconConfig();
+          this.updateTrayMenu(); // 更新菜单文本
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '设置...',
+        click: () => {
+          this.showSettingsWindow();
+        }
+      },
+      {
+        label: '查看已完成任务...',
+        click: () => {
+          this.showHistoryWindow();
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '关于 MoliTodo',
+        click: () => {
+          this.showAboutDialog();
+        }
+      },
+      {
+        label: '退出 MoliTodo',
+        click: () => {
+          this.isQuitting = true;
+          app.quit();
+        }
+      }
+    ]);
+
+    this.tray.setContextMenu(contextMenu);
   }
 
   /**
@@ -403,6 +551,224 @@ class MoliTodoApp {
         console.log('主进程: 保存拖拽后位置', { x, y });
       }
     });
+
+    // ========== 设置相关的IPC处理器 ==========
+    
+    // 获取应用配置
+    ipcMain.handle('get-config', () => {
+      return this.configStore.store;
+    });
+
+    // 更新配置
+    ipcMain.handle('update-config', (event, key, value) => {
+      this.configStore.set(key, value);
+      
+      // 如果是悬浮图标相关配置，立即应用
+      if (key.startsWith('floatingIcon.')) {
+        this.applyFloatingIconConfig();
+      }
+      
+      return this.configStore.get(key);
+    });
+
+    // 导出数据
+    ipcMain.handle('export-data', async () => {
+      const { dialog } = require('electron');
+      const fs = require('fs').promises;
+      
+      try {
+        const result = await dialog.showSaveDialog(this.settingsWindow || this.floatingWindow, {
+          title: '导出数据',
+          defaultPath: `MoliTodo-backup-${new Date().toISOString().split('T')[0]}.json`,
+          filters: [
+            { name: 'JSON Files', extensions: ['json'] }
+          ]
+        });
+
+        if (!result.canceled && result.filePath) {
+          const allTasks = await this.taskService.getAllTasks();
+          const exportData = {
+            version: '1.0.0',
+            exportDate: new Date().toISOString(),
+            tasks: allTasks,
+            config: this.configStore.store
+          };
+
+          await fs.writeFile(result.filePath, JSON.stringify(exportData, null, 2), 'utf8');
+          return { success: true, path: result.filePath };
+        }
+        
+        return { success: false, canceled: true };
+      } catch (error) {
+        console.error('导出数据失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 导入数据
+    ipcMain.handle('import-data', async () => {
+      const { dialog } = require('electron');
+      const fs = require('fs').promises;
+      
+      try {
+        const result = await dialog.showOpenDialog(this.settingsWindow || this.floatingWindow, {
+          title: '导入数据',
+          filters: [
+            { name: 'JSON Files', extensions: ['json'] }
+          ],
+          properties: ['openFile']
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+          const filePath = result.filePaths[0];
+          const fileContent = await fs.readFile(filePath, 'utf8');
+          const importData = JSON.parse(fileContent);
+
+          // 验证数据格式
+          if (!importData.tasks || !Array.isArray(importData.tasks)) {
+            throw new Error('无效的数据格式');
+          }
+
+          // 清除现有数据
+          await this.taskService.clearAllTasks();
+          this.notificationService.clearAllSchedules();
+
+          // 导入任务
+          for (const taskData of importData.tasks) {
+            await this.taskService.importTask(taskData);
+          }
+
+          // 导入配置（可选）
+          if (importData.config) {
+            for (const [key, value] of Object.entries(importData.config)) {
+              this.configStore.set(key, value);
+            }
+            this.applyFloatingIconConfig();
+          }
+
+          // 重新初始化提醒
+          await this.initializeReminders();
+          this.updateFloatingIcon();
+          this.sendTasksToPanel();
+
+          return { success: true, taskCount: importData.tasks.length };
+        }
+        
+        return { success: false, canceled: true };
+      } catch (error) {
+        console.error('导入数据失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 清除所有数据
+    ipcMain.handle('clear-all-data', async () => {
+      try {
+        await this.taskService.clearAllTasks();
+        this.notificationService.clearAllSchedules();
+        this.updateFloatingIcon();
+        this.sendTasksToPanel();
+        return { success: true };
+      } catch (error) {
+        console.error('清除数据失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 设置开机自启动
+    ipcMain.handle('set-auto-start', (event, enabled) => {
+      try {
+        app.setLoginItemSettings({
+          openAtLogin: enabled,
+          path: app.getPath('exe')
+        });
+        this.configStore.set('autoStart', enabled);
+        return { success: true };
+      } catch (error) {
+        console.error('设置开机自启动失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 播放提醒声音
+    ipcMain.handle('play-alert-sound', (event, soundType) => {
+      // TODO: 实现声音播放
+      console.log('播放提醒声音:', soundType);
+      return { success: true };
+    });
+  }
+
+  /**
+   * 应用悬浮图标配置
+   */
+  applyFloatingIconConfig() {
+    if (!this.floatingWindow || this.floatingWindow.isDestroyed()) {
+      return;
+    }
+
+    const config = this.configStore.get('floatingIcon', {
+      size: 60,
+      opacity: 100,
+      visible: true,
+      x: null,
+      y: null
+    });
+    
+    // 如果当前配置的透明度不是100，强制更新为100
+    if (config.opacity !== 100) {
+      this.configStore.set('floatingIcon.opacity', 100);
+      config.opacity = 100;
+    }
+    
+    // 应用大小
+    this.floatingWindow.setSize(config.size, config.size);
+    
+    // 应用透明度 - 确保opacity是有效数值
+    const opacity = typeof config.opacity === 'number' && !isNaN(config.opacity) ? config.opacity : 100;
+    this.floatingWindow.setOpacity(opacity / 100);
+    
+    // 确保窗口位置在屏幕范围内
+    const { screen } = require('electron');
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    
+    if (config.x !== null && config.y !== null) {
+      const x = Math.min(Math.max(config.x, 0), width - config.size);
+      const y = Math.min(Math.max(config.y, 0), height - config.size);
+      this.floatingWindow.setPosition(x, y);
+    } else {
+      // 如果没有保存的位置，设置到屏幕右边缘
+      const x = width - config.size - 20;
+      const y = Math.floor(height / 2);
+      this.floatingWindow.setPosition(x, y);
+      this.configStore.set('floatingIcon.x', x);
+      this.configStore.set('floatingIcon.y', y);
+    }
+    
+    // 应用可见性
+    if (config.visible) {
+      // 确保窗口已经准备好再显示
+      if (this.floatingWindow.webContents.isLoading()) {
+        this.floatingWindow.webContents.once('did-finish-load', () => {
+          this.floatingWindow.show();
+          this.floatingWindow.focus();
+        });
+      } else {
+        this.floatingWindow.show();
+        this.floatingWindow.focus();
+      }
+    } else {
+      this.floatingWindow.hide();
+    }
+    
+    // 通知渲染进程更新
+    if (!this.floatingWindow.webContents.isLoading()) {
+      this.floatingWindow.webContents.send('config-updated', config);
+    }
+    
+    // 更新托盘菜单
+    if (this.tray) {
+      this.updateTrayMenu();
+    }
   }
 
   /**
