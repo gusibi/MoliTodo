@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoliTodo Icon</title>
+    <link rel="stylesheet" href="floating-icon.css">
+</head>
+<body>
+    <div class="floating-icon-container">
+        <div class="floating-icon" id="floatingIcon">
+            <!-- 默认图标 -->
+            <div class="icon-content default-icon" id="defaultIcon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                </svg>
+            </div>
+            
+            <!-- 提醒状态图标 -->
+            <div class="icon-content alert-icon" id="alertIcon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor"/>
+                </svg>
+            </div>
+            
+            <!-- 任务数量角标 -->
+            <div class="badge" id="badge">
+                <span id="badgeText">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="floating-icon.js"></script>
+    <script>
+        // 等待logToMain函数可用
+        setTimeout(() => {
+            if (typeof logToMain === 'function') {
+                logToMain('HTML: 页面脚本开始执行');
+                logToMain('HTML: document.readyState =', document.readyState);
+                
+                // 立即检查DOM状态
+                if (document.readyState === 'loading') {
+                    logToMain('HTML: DOM正在加载中');
+                    document.addEventListener('DOMContentLoaded', () => {
+                        logToMain('HTML: DOMContentLoaded事件触发');
+                    });
+                } else {
+                    logToMain('HTML: DOM已经加载完成');
+                }
+                
+                // 检查window.load事件
+                window.addEventListener('load', () => {
+                    logToMain('HTML: window load事件触发');
+                });
+                
+                // 检查FloatingIcon类是否已定义
+                if (typeof FloatingIcon !== 'undefined') {
+                    logToMain('HTML: FloatingIcon类已定义，实例应该已在JS文件中创建');
+                } else {
+                    logToMain('HTML: FloatingIcon类未定义');
+                }
+            } else {
+                console.log('HTML: logToMain函数不可用，使用console.log');
+                console.log('HTML: 页面脚本开始执行');
+            }
+        }, 100);
+    </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+/* 悬浮图标样式 */
+/* * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+} */
+
+/* 关键：让 HTML 和 body 透明 */
+html, body {
+    background-color: transparent;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* 防止出现滚动条 */
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-app-region: no-drag;
+    /* 让body不接收鼠标事件 */
+    pointer-events: none;
+}
+
+.floating-icon-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* 关键：使用 filter: drop-shadow 创建真实的阴影 */
+    /* 这比 box-shadow 效果好得多，因为它会跟随内容的形状 */
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.floating-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 使用 filter: drop-shadow() 创建更逼真的阴影效果 */
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+    /* 恢复app-region设置，但通过JS控制拖拽 */
+    -webkit-app-region: no-drag;
+    /* 只有图标本身接收鼠标事件 */
+    pointer-events: auto;
+}
+
+.floating-icon:hover {
+    transform: scale(1.1);
+    /* 悬停时增强阴影效果 */
+    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
+}
+
+/* 图标内容 */
+.icon-content {
+    color: white;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.default-icon {
+    opacity: 1;
+}
+
+.alert-icon {
+    opacity: 0;
+    position: absolute;
+}
+
+/* 提醒状态样式 */
+.floating-icon.alert-state {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    animation: alertPulse 2s infinite;
+}
+
+.floating-icon.alert-state .default-icon {
+    opacity: 0;
+}
+
+.floating-icon.alert-state .alert-icon {
+    opacity: 1;
+}
+
+/* 提醒动画 */
+@keyframes alertPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* 角标样式 */
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 20px;
+    height: 20px;
+    background: #ff4757;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    border: 2px solid transparent;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.badge.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.badge span {
+    line-height: 1;
+    padding: 0 4px;
+}
+
+/* 悬停效果 */
+.floating-icon:hover .badge {
+    transform: scale(1.1);
+}
+
+/* 拖拽状态 */
+.floating-icon.dragging {
+    transform: scale(1.1);
+    /* 拖拽时使用更强烈的阴影效果 */
+    filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.35));
+    z-index: 1000;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .floating-icon {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .badge {
+        min-width: 18px;
+        height: 18px;
+        font-size: 10px;
+    }
+}
+
+/* 无障碍支持 */
+.floating-icon:focus {
+    outline: 2px solid #4285f4;
+    outline-offset: 2px;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .floating-icon {
+        border: 2px solid #000;
+    }
+    
+    .badge {
+        border: 2px solid transparent;
+    }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+    .floating-icon,
+    .badge,
+    .icon-content {
+        transition: none;
+    }
+    
+    .floating-icon.alert-state {
+        animation: none;
+    }
+}

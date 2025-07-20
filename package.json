@@ -1,0 +1,75 @@
+{
+  "name": "float-todo",
+  "version": "1.0.0",
+  "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:mac:intel": "electron-builder --mac --x64",
+    "build:mac:arm": "electron-builder --mac --arm64",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "todo",
+    "floating",
+    "productivity",
+    "electron",
+    "macos"
+  ],
+  "author": "MoliTodo Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "node-schedule": "^2.1.1"
+  },
+  "build": {
+    "appId": "com.MoliTodo.app",
+    "productName": "MoliTodo",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": "x64"
+        },
+        {
+          "target": "dmg",
+          "arch": "arm64"
+        }
+      ],
+      "icon": "src/presentation/assets/icons/app-icon-256x256.png"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "src/presentation/assets/icons/app-icon-256x256.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
