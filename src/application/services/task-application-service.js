@@ -1,10 +1,11 @@
 const { ipcRenderer } = require('electron');
 
 /**
- * 公共数据管理器
- * 统一管理任务数据的获取、缓存和更新
+ * 任务应用服务
+ * 应用层服务，负责协调任务相关的用例
+ * 提供数据获取、缓存、状态管理和事件通知功能
  */
-class DataManager {
+class TaskApplicationService {
     constructor() {
         this.tasks = [];
         this.completedTasks = [];
@@ -46,7 +47,7 @@ class DataManager {
     async loadTasks() {
         try {
             this.tasks = await ipcRenderer.invoke('get-tasks') || [];
-            console.log('DataManager: 加载未完成任务', this.tasks.length, '个');
+            console.log('TaskApplicationService: 加载未完成任务', this.tasks.length, '个');
             this.notifyListeners('tasksUpdated', this.tasks);
         } catch (error) {
             console.error('加载任务失败:', error);
@@ -60,7 +61,7 @@ class DataManager {
     async loadCompletedTasks() {
         try {
             this.completedTasks = await ipcRenderer.invoke('get-completed-tasks') || [];
-            console.log('DataManager: 加载已完成任务', this.completedTasks.length, '个');
+            console.log('TaskApplicationService: 加载已完成任务', this.completedTasks.length, '个');
             this.notifyListeners('completedTasksUpdated', this.completedTasks);
         } catch (error) {
             console.error('加载已完成任务失败:', error);
@@ -293,10 +294,10 @@ class DataManager {
 }
 
 // 创建全局单例
-const dataManager = new DataManager();
+const taskApplicationService = new TaskApplicationService();
 
 // 导出单例和类
 module.exports = {
-    DataManager,
-    dataManager
+    TaskApplicationService,
+    taskApplicationService
 };

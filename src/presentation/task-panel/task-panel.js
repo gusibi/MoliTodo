@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const { dataManager } = require('../shared/data-manager');
+const { taskApplicationService } = require('../../application/services/task-application-service');
 
 class TaskPanel {
     constructor() {
@@ -27,26 +27,26 @@ class TaskPanel {
 
     async init() {
         // 初始化数据管理器
-        await dataManager.init();
+        await taskApplicationService.init();
         
         this.setupEventListeners();
-        this.setupDataManagerListeners();
+        this.setupTaskApplicationServiceListeners();
         this.loadTasks();
         
         // 聚焦输入框
         this.quickAddInput.focus();
     }
 
-    setupDataManagerListeners() {
+    setupTaskApplicationServiceListeners() {
         // 监听任务数据更新
-        dataManager.addEventListener('tasksUpdated', (tasks) => {
+        taskApplicationService.addEventListener('tasksUpdated', (tasks) => {
             this.tasks = tasks;
             this.renderTasks();
             this.updateStats();
         });
 
         // 监听已完成任务数据更新（用于统计）
-        dataManager.addEventListener('completedTasksUpdated', () => {
+        taskApplicationService.addEventListener('completedTasksUpdated', () => {
             this.updateStats();
         });
     }
@@ -148,7 +148,7 @@ class TaskPanel {
 
     async loadTasks() {
         try {
-            this.tasks = dataManager.getTasks();
+            this.tasks = taskApplicationService.getTasks();
             this.renderTasks();
             await this.updateStats();
         } catch (error) {
@@ -161,7 +161,7 @@ class TaskPanel {
         if (!content) return;
 
         try {
-            await dataManager.createTask(content);
+            await taskApplicationService.createTask(content);
             this.quickAddInput.value = '';
             
             // 重新聚焦输入框
@@ -174,7 +174,7 @@ class TaskPanel {
 
     async completeTask(taskId) {
         try {
-            await dataManager.completeTask(taskId);
+            await taskApplicationService.completeTask(taskId);
         } catch (error) {
             console.error('完成任务失败:', error);
             this.showError('完成任务失败');
@@ -183,7 +183,7 @@ class TaskPanel {
 
     async deleteTask(taskId) {
         try {
-            await dataManager.deleteTask(taskId);
+            await taskApplicationService.deleteTask(taskId);
         } catch (error) {
             console.error('删除任务失败:', error);
             this.showError('删除任务失败');
@@ -372,7 +372,7 @@ class TaskPanel {
         }
 
         try {
-            await dataManager.setTaskReminder(this.currentEditingTask, reminderTime.toISOString());
+            await taskApplicationService.setTaskReminder(this.currentEditingTask, reminderTime.toISOString());
             this.hideReminderModal();
         } catch (error) {
             console.error('设置提醒失败:', error);
@@ -412,7 +412,7 @@ class TaskPanel {
         }
 
         try {
-            await dataManager.updateTaskContent(taskId, newContent);
+            await taskApplicationService.updateTaskContent(taskId, newContent);
         } catch (error) {
             console.error('更新任务失败:', error);
             this.showError('更新任务失败');
@@ -422,7 +422,7 @@ class TaskPanel {
 
     async updateTaskContent(taskId, newContent) {
         try {
-            await dataManager.updateTaskContent(taskId, newContent);
+            await taskApplicationService.updateTaskContent(taskId, newContent);
         } catch (error) {
             console.error('更新任务内容失败:', error);
             this.showError('更新任务失败');
@@ -431,7 +431,7 @@ class TaskPanel {
 
     async setTaskReminder(taskId, reminderTime) {
         try {
-            await dataManager.setTaskReminder(taskId, reminderTime);
+            await taskApplicationService.setTaskReminder(taskId, reminderTime);
         } catch (error) {
             console.error('设置提醒失败:', error);
             this.showError('设置提醒失败');
@@ -440,7 +440,7 @@ class TaskPanel {
 
     async clearTaskReminder(taskId) {
         try {
-            await dataManager.clearTaskReminder(taskId);
+            await taskApplicationService.clearTaskReminder(taskId);
         } catch (error) {
             console.error('清除提醒失败:', error);
             this.showError('清除提醒失败');
@@ -471,7 +471,7 @@ class TaskPanel {
     async updateStats() {
         try {
             const incompleteTasks = this.tasks;
-            const completedTasks = dataManager.getCompletedTasks();
+            const completedTasks = taskApplicationService.getCompletedTasks();
             
             const incompleteCount = incompleteTasks.length;
             const completedCount = completedTasks.length;

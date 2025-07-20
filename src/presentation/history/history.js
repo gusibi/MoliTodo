@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const { dataManager } = require('../shared/data-manager');
+const { taskApplicationService } = require('../../application/services/task-application-service');
 
 class HistoryManager {
     constructor() {
@@ -12,8 +12,8 @@ class HistoryManager {
     }
 
     async init() {
-        // 初始化数据管理器
-        await dataManager.init();
+        // 初始化应用服务
+        await taskApplicationService.init();
         
         // 显示加载状态
         this.showLoading(true);
@@ -27,8 +27,8 @@ class HistoryManager {
         // 绑定事件
         this.bindEvents();
         
-        // 设置数据管理器监听器
-        this.setupDataManagerListeners();
+        // 设置应用服务监听器
+        this.setupTaskApplicationServiceListeners();
         
         // 隐藏加载状态
         this.showLoading(false);
@@ -40,14 +40,14 @@ class HistoryManager {
         this.updateStats();
     }
 
-    setupDataManagerListeners() {
+    setupTaskApplicationServiceListeners() {
         // 监听任务数据更新
-        dataManager.addEventListener('tasksUpdated', () => {
+        taskApplicationService.addEventListener('tasksUpdated', () => {
             this.loadTasks();
         });
 
         // 监听已完成任务数据更新
-        dataManager.addEventListener('completedTasksUpdated', () => {
+        taskApplicationService.addEventListener('completedTasksUpdated', () => {
             this.loadTasks();
         });
     }
@@ -55,8 +55,8 @@ class HistoryManager {
     async loadTasks() {
         try {
             // 获取所有任务（包括未完成和已完成）
-            const incompleteTasks = dataManager.getTasks();
-            const completedTasks = dataManager.getCompletedTasks();
+            const incompleteTasks = taskApplicationService.getTasks();
+            const completedTasks = taskApplicationService.getCompletedTasks();
             
             console.log('HistoryManager: 获取未完成任务', incompleteTasks.length, '个');
             console.log('HistoryManager: 获取已完成任务', completedTasks.length, '个');
@@ -279,7 +279,7 @@ class HistoryManager {
 
     async restoreTask(taskId) {
         try {
-            await dataManager.completeTask(taskId, false); // 恢复任务（设置为未完成）
+            await taskApplicationService.completeTask(taskId, false); // 恢复任务（设置为未完成）
             this.showMessage('任务已恢复');
         } catch (error) {
             console.error('恢复任务失败:', error);
@@ -293,7 +293,7 @@ class HistoryManager {
         }
 
         try {
-            await dataManager.deleteTask(taskId);
+            await taskApplicationService.deleteTask(taskId);
             this.showMessage('任务已删除');
         } catch (error) {
             console.error('删除任务失败:', error);
@@ -308,11 +308,11 @@ class HistoryManager {
 
         try {
             // 获取所有已完成任务的ID
-            const completedTasks = dataManager.getCompletedTasks();
+            const completedTasks = taskApplicationService.getCompletedTasks();
             
             // 批量删除所有已完成任务
             for (const task of completedTasks) {
-                await dataManager.deleteTask(task.id);
+                await taskApplicationService.deleteTask(task.id);
             }
             
             this.showMessage('历史记录已清空');
