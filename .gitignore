@@ -2,53 +2,53 @@
 # 操作系统和编辑器文件
 # ====================== #
 .DS_Store
-.idea/              # JetBrains IDE (WebStorm, IntelliJ)
+.idea/
 .vscode/
 .vercel/
-*.suo               # Windows 用户选项文件
-*.log               # 日志文件
-*.pid               # 进程 ID 文件
-*.swp               # Vim 临时文件
+*.suo
+*.log
+*.pid
+*.swp
 
 # ====================== #
 # Node.js 和 npm 相关
 # ====================== #
 node_modules/
-.npm                # npm 缓存
-package-lock.json   # npm 锁文件（如果使用 yarn，可以保留）
-yarn.lock           # yarn 锁文件（如果使用 npm，可以保留）
-.pnpm-lock.yaml     # pnpm 锁文件
+.npm
+package-lock.json
+yarn.lock
+.pnpm-lock.yaml
 
 # ====================== #
 # Electron 和构建输出
 # ====================== #
-/dist/              # 构建输出目录
-/release/           # 打包后的应用
-/out/               # 编译输出（如 TypeScript）
-*.exe               # Windows 可执行文件
-*.dmg               # macOS 安装包
-*.deb               # Linux Debian 包
-*.AppImage          # Linux AppImage
-*.snap              # Linux Snap 包
+/dist/
+/release/
+/out/
+*.exe
+*.dmg
+*.deb
+*.AppImage
+*.snap
 
 # ====================== #
 # 调试和开发环境
 # ====================== #
-.env                # 环境变量（敏感信息）
-.env.local          # 本地环境变量
-.env.development    # 开发环境变量
-.env.production     # 生产环境变量
-debug.log           # 调试日志
+.env
+.env.local
+.env.development
+.env.production
+debug.log
 
 # ====================== #
 # 测试相关
 # ====================== #
-/coverage/          # 测试覆盖率报告
-.nyc_output/        # NYC 测试输出
+/coverage/
+.nyc_output/
 
 # ====================== #
 # 其他
 # ====================== #
-.cache/             # 缓存目录（如 webpack）
-.temp/              # 临时文件
-*.pem               # SSL 证书（如开发 HTTPS 时生成）
+.cache/
+.temp/
+*.pem
