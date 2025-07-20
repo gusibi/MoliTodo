@@ -54,7 +54,7 @@
           "arch": "arm64"
         }
       ],
-      "icon": "src/presentation/assets/icons/app-icon-256x256.png"
+      "icon": "src/presentation/assets/icons/app-icon-512x512.png"
     },
     "win": {
       "target": [
@@ -63,7 +63,7 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "src/presentation/assets/icons/app-icon-256x256.png"
+      "icon": "src/presentation/assets/icons/app-icon-512x512.png"
     },
     "nsis": {
       "oneClick": false,
