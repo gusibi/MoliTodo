@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron');
+const { dataManager } = require('../shared/data-manager');
 
 class TaskPanel {
     constructor() {
@@ -24,13 +25,30 @@ class TaskPanel {
         this.init();
     }
 
-    init() {
+    async init() {
+        // 初始化数据管理器
+        await dataManager.init();
+        
         this.setupEventListeners();
-        this.setupIpcListeners();
+        this.setupDataManagerListeners();
         this.loadTasks();
         
         // 聚焦输入框
         this.quickAddInput.focus();
+    }
+
+    setupDataManagerListeners() {
+        // 监听任务数据更新
+        dataManager.addEventListener('tasksUpdated', (tasks) => {
+            this.tasks = tasks;
+            this.renderTasks();
+            this.updateStats();
+        });
+
+        // 监听已完成任务数据更新（用于统计）
+        dataManager.addEventListener('completedTasksUpdated', () => {
+            this.updateStats();
+        });
     }
 
     setupEventListeners() {
@@ -121,17 +139,16 @@ class TaskPanel {
     }
 
     setupIpcListeners() {
-        // 监听任务更新
+        // 保留原有的IPC监听器作为备用
         ipcRenderer.on('update-tasks', async (event, tasks) => {
-            this.tasks = tasks || [];
-            this.renderTasks();
-            await this.updateStats();
+            // 这个监听器现在主要用于兼容性
+            console.log('收到任务更新事件（兼容模式）');
         });
     }
 
     async loadTasks() {
         try {
-            this.tasks = await ipcRenderer.invoke('get-tasks') || [];
+            this.tasks = dataManager.getTasks();
             this.renderTasks();
             await this.updateStats();
         } catch (error) {
@@ -144,11 +161,8 @@ class TaskPanel {
         if (!content) return;
 
         try {
-            const task = await ipcRenderer.invoke('create-task', content);
-            this.tasks.push(task); // 使用push而不是unshift，让排序逻辑处理顺序
+            await dataManager.createTask(content);
             this.quickAddInput.value = '';
-            this.renderTasks();
-            await this.updateStats();
             
             // 重新聚焦输入框
             this.quickAddInput.focus();
@@ -160,10 +174,7 @@ class TaskPanel {
 
     async completeTask(taskId) {
         try {
-            await ipcRenderer.invoke('complete-task', taskId);
-            this.tasks = this.tasks.filter(task => task.id !== taskId);
-            this.renderTasks();
-            await this.updateStats();
+            await dataManager.completeTask(taskId);
         } catch (error) {
             console.error('完成任务失败:', error);
             this.showError('完成任务失败');
@@ -172,10 +183,7 @@ class TaskPanel {
 
     async deleteTask(taskId) {
         try {
-            await ipcRenderer.invoke('delete-task', taskId);
-            this.tasks = this.tasks.filter(task => task.id !== taskId);
-            this.renderTasks();
-            await this.updateStats();
+            await dataManager.deleteTask(taskId);
         } catch (error) {
             console.error('删除任务失败:', error);
             this.showError('删除任务失败');
@@ -364,15 +372,7 @@ class TaskPanel {
         }
 
         try {
-            const updatedTask = await ipcRenderer.invoke('set-task-reminder', this.currentEditingTask, reminderTime.toISOString());
-            
-            // 更新本地任务数据
-            const taskIndex = this.tasks.findIndex(t => t.id === this.currentEditingTask);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.renderTasks();
-            }
-            
+            await dataManager.setTaskReminder(this.currentEditingTask, reminderTime.toISOString());
             this.hideReminderModal();
         } catch (error) {
             console.error('设置提醒失败:', error);
@@ -412,18 +412,38 @@ class TaskPanel {
         }
 
         try {
-            const updatedTask = await ipcRenderer.invoke('update-task-content', taskId, newContent);
-            
-            // 更新本地任务数据
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.renderTasks();
-            }
+            await dataManager.updateTaskContent(taskId, newContent);
         } catch (error) {
             console.error('更新任务失败:', error);
             this.showError('更新任务失败');
             this.cancelTaskEdit(inputElement);
+        }
+    }
+
+    async updateTaskContent(taskId, newContent) {
+        try {
+            await dataManager.updateTaskContent(taskId, newContent);
+        } catch (error) {
+            console.error('更新任务内容失败:', error);
+            this.showError('更新任务失败');
+        }
+    }
+
+    async setTaskReminder(taskId, reminderTime) {
+        try {
+            await dataManager.setTaskReminder(taskId, reminderTime);
+        } catch (error) {
+            console.error('设置提醒失败:', error);
+            this.showError('设置提醒失败');
+        }
+    }
+
+    async clearTaskReminder(taskId) {
+        try {
+            await dataManager.clearTaskReminder(taskId);
+        } catch (error) {
+            console.error('清除提醒失败:', error);
+            this.showError('清除提醒失败');
         }
     }
 
@@ -449,27 +469,25 @@ class TaskPanel {
     }
 
     async updateStats() {
-        const count = this.tasks.length;
-        this.taskCount.textContent = `${count} 个任务`;
-        
-        // 获取今日完成的任务数
         try {
-            const completedTasks = await ipcRenderer.invoke('get-completed-tasks');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const incompleteTasks = this.tasks;
+            const completedTasks = dataManager.getCompletedTasks();
             
-            // 筛选今天完成的任务
-            const todayCompletedCount = completedTasks.filter(task => {
-                const completedAt = new Date(task.updatedAt);
-                return completedAt >= today && completedAt < tomorrow;
-            }).length;
+            const incompleteCount = incompleteTasks.length;
+            const completedCount = completedTasks.length;
+            const totalCount = incompleteCount + completedCount;
             
-            this.footerStats.textContent = `今日完成 ${todayCompletedCount} 个任务`;
+            // 更新任务计数
+            this.taskCount.textContent = incompleteCount;
+            
+            // 更新底部统计
+            if (totalCount === 0) {
+                this.footerStats.textContent = '暂无任务';
+            } else {
+                this.footerStats.textContent = `共 ${totalCount} 个任务，已完成 ${completedCount} 个`;
+            }
         } catch (error) {
-            console.error('获取已完成任务失败:', error);
-            this.footerStats.textContent = `今日完成 0 个任务`;
+            console.error('更新统计失败:', error);
         }
     }
 

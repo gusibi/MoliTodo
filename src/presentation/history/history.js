@@ -1,8 +1,10 @@
 const { ipcRenderer } = require('electron');
+const { dataManager } = require('../shared/data-manager');
 
 class HistoryManager {
     constructor() {
         this.completedTasks = [];
+        this.allTasks = [];
         this.filteredTasks = [];
         this.currentFilter = 'all';
         this.searchQuery = '';
@@ -10,17 +12,23 @@ class HistoryManager {
     }
 
     async init() {
+        // 初始化数据管理器
+        await dataManager.init();
+        
         // 显示加载状态
         this.showLoading(true);
         
-        // 加载已完成任务
-        await this.loadCompletedTasks();
+        // 加载任务数据
+        await this.loadTasks();
         
         // 初始化UI
         this.initUI();
         
         // 绑定事件
         this.bindEvents();
+        
+        // 设置数据管理器监听器
+        this.setupDataManagerListeners();
         
         // 隐藏加载状态
         this.showLoading(false);
@@ -32,15 +40,37 @@ class HistoryManager {
         this.updateStats();
     }
 
-    async loadCompletedTasks() {
+    setupDataManagerListeners() {
+        // 监听任务数据更新
+        dataManager.addEventListener('tasksUpdated', () => {
+            this.loadTasks();
+        });
+
+        // 监听已完成任务数据更新
+        dataManager.addEventListener('completedTasksUpdated', () => {
+            this.loadTasks();
+        });
+    }
+
+    async loadTasks() {
         try {
-            const allTasks = await ipcRenderer.invoke('get-tasks');
-            this.completedTasks = allTasks.filter(task => task.completed);
-            this.filteredTasks = [...this.completedTasks];
+            // 获取所有任务（包括未完成和已完成）
+            const incompleteTasks = dataManager.getTasks();
+            const completedTasks = dataManager.getCompletedTasks();
+            
+            console.log('HistoryManager: 获取未完成任务', incompleteTasks.length, '个');
+            console.log('HistoryManager: 获取已完成任务', completedTasks.length, '个');
+            
+            // 合并所有任务
+            this.allTasks = [...incompleteTasks, ...completedTasks];
+            
+            console.log('HistoryManager: 合并后总任务数', this.allTasks.length, '个');
+            
+            this.applyFilters();
+            this.updateStats();
         } catch (error) {
-            console.error('加载已完成任务失败:', error);
-            this.completedTasks = [];
-            this.filteredTasks = [];
+            console.error('加载任务失败:', error);
+            this.showError('加载任务失败');
         }
     }
 
@@ -112,7 +142,13 @@ class HistoryManager {
     }
 
     applyFilters() {
-        let filtered = [...this.completedTasks];
+        // 确保 allTasks 已初始化
+        if (!this.allTasks) {
+            this.allTasks = [];
+        }
+        
+        // 只显示已完成的任务
+        let filtered = this.allTasks.filter(task => task.completed);
 
         // 应用搜索过滤
         if (this.searchQuery) {
@@ -136,7 +172,7 @@ class HistoryManager {
         switch (this.currentFilter) {
             case 'today':
                 return tasks.filter(task => {
-                    const completedDate = new Date(task.completedAt);
+                    const completedDate = new Date(task.completedAt || task.updatedAt);
                     return completedDate >= today;
                 });
                 
@@ -144,7 +180,7 @@ class HistoryManager {
                 const weekAgo = new Date(today);
                 weekAgo.setDate(weekAgo.getDate() - 7);
                 return tasks.filter(task => {
-                    const completedDate = new Date(task.completedAt);
+                    const completedDate = new Date(task.completedAt || task.updatedAt);
                     return completedDate >= weekAgo;
                 });
                 
@@ -152,7 +188,7 @@ class HistoryManager {
                 const monthAgo = new Date(today);
                 monthAgo.setMonth(monthAgo.getMonth() - 1);
                 return tasks.filter(task => {
-                    const completedDate = new Date(task.completedAt);
+                    const completedDate = new Date(task.completedAt || task.updatedAt);
                     return completedDate >= monthAgo;
                 });
                 
@@ -162,7 +198,7 @@ class HistoryManager {
                 endDate.setHours(23, 59, 59, 999); // 包含结束日期的整天
                 
                 return tasks.filter(task => {
-                    const completedDate = new Date(task.completedAt);
+                    const completedDate = new Date(task.completedAt || task.updatedAt);
                     return completedDate >= startDate && completedDate <= endDate;
                 });
                 
@@ -181,7 +217,9 @@ class HistoryManager {
 
         if (this.filteredTasks.length === 0) {
             tasksList.style.display = 'none';
-            if (this.completedTasks.length === 0) {
+            // 检查是否有已完成任务
+            const completedTasks = this.allTasks.filter(task => task.completed);
+            if (completedTasks.length === 0) {
                 emptyState.style.display = 'block';
                 noResults.style.display = 'none';
             } else {
@@ -197,7 +235,7 @@ class HistoryManager {
 
         // 按完成时间倒序排列
         const sortedTasks = [...this.filteredTasks].sort((a, b) => 
-            new Date(b.completedAt) - new Date(a.completedAt)
+            new Date(b.completedAt || b.updatedAt) - new Date(a.completedAt || a.updatedAt)
         );
 
         sortedTasks.forEach(task => {
@@ -211,7 +249,7 @@ class HistoryManager {
         taskDiv.className = 'task-item';
         taskDiv.dataset.taskId = task.id;
 
-        const completedDate = new Date(task.completedAt);
+        const completedDate = new Date(task.completedAt || task.updatedAt);
         const formattedDate = this.formatDate(completedDate);
         const formattedTime = this.formatTime(completedDate);
 
@@ -241,76 +279,63 @@ class HistoryManager {
 
     async restoreTask(taskId) {
         try {
-            await ipcRenderer.invoke('complete-task', taskId, false);
-            
-            // 从列表中移除
-            this.completedTasks = this.completedTasks.filter(task => task.id !== taskId);
-            this.applyFilters();
-            
-            this.showMessage('任务已恢复到未完成状态', 'success');
+            await dataManager.completeTask(taskId, false); // 恢复任务（设置为未完成）
+            this.showMessage('任务已恢复');
         } catch (error) {
             console.error('恢复任务失败:', error);
-            this.showMessage('恢复任务失败', 'error');
+            this.showError('恢复任务失败');
         }
     }
 
     async deleteTask(taskId) {
-        if (!confirm('确定要永久删除这个任务吗？此操作无法撤销。')) {
+        if (!confirm('确定要删除这个任务吗？此操作不可撤销。')) {
             return;
         }
 
         try {
-            await ipcRenderer.invoke('delete-task', taskId);
-            
-            // 从列表中移除
-            this.completedTasks = this.completedTasks.filter(task => task.id !== taskId);
-            this.applyFilters();
-            
-            this.showMessage('任务已删除', 'success');
+            await dataManager.deleteTask(taskId);
+            this.showMessage('任务已删除');
         } catch (error) {
             console.error('删除任务失败:', error);
-            this.showMessage('删除任务失败', 'error');
+            this.showError('删除任务失败');
         }
     }
 
     async clearHistory() {
-        if (!confirm('确定要清空所有已完成任务的历史记录吗？此操作无法撤销。')) {
+        if (!confirm('确定要清空所有历史记录吗？此操作不可撤销。')) {
             return;
         }
 
         try {
-            // 删除所有已完成的任务
-            const deletePromises = this.completedTasks.map(task => 
-                ipcRenderer.invoke('delete-task', task.id)
-            );
+            // 获取所有已完成任务的ID
+            const completedTasks = dataManager.getCompletedTasks();
             
-            await Promise.all(deletePromises);
+            // 批量删除所有已完成任务
+            for (const task of completedTasks) {
+                await dataManager.deleteTask(task.id);
+            }
             
-            this.completedTasks = [];
-            this.filteredTasks = [];
-            this.renderTasks();
-            this.updateStats();
-            
-            this.showMessage('历史记录已清空', 'success');
+            this.showMessage('历史记录已清空');
         } catch (error) {
             console.error('清空历史记录失败:', error);
-            this.showMessage('清空历史记录失败', 'error');
+            this.showError('清空历史记录失败');
         }
     }
 
     updateStats() {
-        const totalCompleted = this.completedTasks.length;
+        const completedTasks = this.allTasks.filter(task => task.completed);
+        const totalCompleted = completedTasks.length;
         const today = new Date();
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const weekStart = new Date(todayStart);
         weekStart.setDate(weekStart.getDate() - 7);
 
-        const todayCompleted = this.completedTasks.filter(task => 
-            new Date(task.completedAt) >= todayStart
+        const todayCompleted = completedTasks.filter(task => 
+            new Date(task.completedAt || task.updatedAt) >= todayStart
         ).length;
 
-        const weekCompleted = this.completedTasks.filter(task => 
-            new Date(task.completedAt) >= weekStart
+        const weekCompleted = completedTasks.filter(task => 
+            new Date(task.completedAt || task.updatedAt) >= weekStart
         ).length;
 
         document.getElementById('totalCompleted').textContent = totalCompleted;
@@ -392,6 +417,10 @@ class HistoryManager {
                 }
             }, 300);
         }, 3000);
+    }
+
+    showError(message) {
+        this.showMessage(message, 'error');
     }
 }
 

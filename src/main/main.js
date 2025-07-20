@@ -435,9 +435,21 @@ MIT License`,
     });
 
     // 完成任务
-    ipcMain.handle('complete-task', async (event, taskId) => {
-      const task = await this.taskService.completeTask(taskId);
-      this.notificationService.cancelTaskReminder(taskId);
+    ipcMain.handle('complete-task', async (event, taskId, completed = true) => {
+      let task;
+      if (completed) {
+        task = await this.taskService.completeTask(taskId);
+        this.notificationService.cancelTaskReminder(taskId);
+      } else {
+        task = await this.taskService.uncompleteTask(taskId);
+        // 如果任务有提醒时间，重新设置提醒
+        if (task.reminderTime) {
+          this.notificationService.scheduleTaskReminder(task, (task) => {
+            this.handleTaskReminder(task);
+          });
+        }
+      }
+      
       this.updateFloatingIcon();
       this.sendTasksToPanel(); // 更新任务面板
       return task;
