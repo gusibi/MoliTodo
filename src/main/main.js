@@ -11,8 +11,8 @@ class MoliTodoApp {
   constructor() {
     this.floatingWindow = null;
     this.taskPanelWindow = null;
+    this.taskManagerWindow = null;
     this.settingsWindow = null;
-    this.historyWindow = null;
     this.tray = null;
     
     // 初始化服务
@@ -40,6 +40,55 @@ class MoliTodoApp {
 
     this.isQuitting = false;
     this.alertState = false; // 提醒状态
+  }
+
+  /**
+   * 显示任务管理窗口
+   */
+  showTaskManagerWindow() {
+    if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+      if (this.taskManagerWindow.isVisible()) {
+        this.taskManagerWindow.focus();
+      } else {
+        this.taskManagerWindow.show();
+      }
+      return;
+    }
+
+    this.taskManagerWindow = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      minWidth: 800,
+      minHeight: 600,
+      resizable: true,
+      minimizable: true,
+      maximizable: true,
+      title: 'MoliTodo - 任务管理',
+      show: false,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    });
+
+    this.taskManagerWindow.loadFile(path.join(__dirname, '../presentation/task-manager/task-manager.html'));
+
+    this.taskManagerWindow.once('ready-to-show', () => {
+      this.taskManagerWindow.show();
+    });
+
+    // 阻止窗口关闭，只是隐藏
+    this.taskManagerWindow.on('close', (event) => {
+      if (!this.isQuitting) {
+        event.preventDefault();
+        this.taskManagerWindow.hide();
+      }
+    });
+
+    // 只有在应用退出时才清理引用
+    this.taskManagerWindow.on('closed', () => {
+      this.taskManagerWindow = null;
+    });
   }
 
   /**
@@ -256,53 +305,6 @@ class MoliTodoApp {
   }
 
   /**
-   * 显示历史记录窗口
-   */
-  showHistoryWindow() {
-    if (this.historyWindow && !this.historyWindow.isDestroyed()) {
-      if (this.historyWindow.isVisible()) {
-        this.historyWindow.focus();
-      } else {
-        this.historyWindow.show();
-      }
-      return;
-    }
-
-    this.historyWindow = new BrowserWindow({
-      width: 700,
-      height: 600,
-      resizable: true,
-      minimizable: false,
-      maximizable: false,
-      title: '已完成任务',
-      show: false,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false
-      }
-    });
-
-    this.historyWindow.loadFile(path.join(__dirname, '../presentation/history/history.html'));
-
-    this.historyWindow.once('ready-to-show', () => {
-      this.historyWindow.show();
-    });
-
-    // 阻止窗口关闭，只是隐藏
-    this.historyWindow.on('close', (event) => {
-      if (!this.isQuitting) {
-        event.preventDefault();
-        this.historyWindow.hide();
-      }
-    });
-
-    // 只有在应用退出时才清理引用
-    this.historyWindow.on('closed', () => {
-      this.historyWindow = null;
-    });
-  }
-
-  /**
    * 显示关于对话框
    */
   showAboutDialog() {
@@ -370,15 +372,15 @@ MIT License`,
       },
       { type: 'separator' },
       {
-        label: '设置...',
+        label: '任务管理...',
         click: () => {
-          this.showSettingsWindow();
+          this.showTaskManagerWindow();
         }
       },
       {
-        label: '查看已完成任务...',
+        label: '设置...',
         click: () => {
-          this.showHistoryWindow();
+          this.showSettingsWindow();
         }
       },
       { type: 'separator' },
@@ -490,6 +492,11 @@ MIT License`,
       if (this.taskPanelWindow) {
         this.taskPanelWindow.close();
       }
+    });
+
+    // 显示任务管理窗口
+    ipcMain.handle('show-task-manager', () => {
+      this.showTaskManagerWindow();
     });
 
     // 设置鼠标穿透状态

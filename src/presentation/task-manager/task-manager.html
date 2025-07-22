@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务管理 - MoliTodo</title>
+    <link rel="stylesheet" href="task-manager.css">
+</head>
+<body>
+    <div class="task-manager">
+    
+        <div class="main-container">
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-item active" data-category="today">
+                        <div class="sidebar-icon">📅</div>
+                        <span class="sidebar-text">今天</span>
+                        <span class="task-count" id="todayCount">0</span>
+                    </div>
+                    <div class="sidebar-item" data-category="scheduled">
+                        <div class="sidebar-icon">⏰</div>
+                        <span class="sidebar-text">计划中</span>
+                        <span class="task-count" id="scheduledCount">0</span>
+                    </div>
+                    <div class="sidebar-item" data-category="all">
+                        <div class="sidebar-icon">📋</div>
+                        <span class="sidebar-text">所有任务</span>
+                        <span class="task-count" id="allCount">0</span>
+                    </div>
+                    <div class="sidebar-item" data-category="completed">
+                        <div class="sidebar-icon">✅</div>
+                        <span class="sidebar-text">已完成</span>
+                        <span class="task-count" id="completedCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="main-content">
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-container">
+                        <div class="search-icon">🔍</div>
+                        <input type="text" class="search-input" id="searchInput" placeholder="搜索任务...">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-button primary" id="addTaskBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            新建任务
+                        </button>
+                        <button class="toolbar-button secondary" id="batchActionsBtn" style="display: none;">
+                            批量操作
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 任务列表容器 -->
+                <div class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title" id="contentTitle">今天</h2>
+                        <div class="view-options">
+                            <button class="view-option active" data-view="list">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 快速添加区域 -->
+                    <div class="quick-add-section" id="quickAddSection">
+                        <div class="quick-add-container">
+                            <input type="text" class="quick-add-input" id="quickAddInput" placeholder="添加新任务..." maxlength="200">
+                            <button class="quick-add-button" id="quickAddButton">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 任务列表 -->
+                    <div class="task-list-container">
+                        <div class="task-list" id="taskList">
+                            <!-- 任务项将通过 JavaScript 动态添加 -->
+                        </div>
+                        
+                        <!-- 空状态 -->
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-icon">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3 class="empty-title">暂无任务</h3>
+                            <p class="empty-description">点击上方按钮添加新任务</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计信息栏 -->
+                <div class="stats-bar">
+                    <div class="stats-item">
+                        <span class="stats-label">总任务:</span>
+                        <span class="stats-number" id="totalTasks">0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-label">已完成:</span>
+                        <span class="stats-number" id="completedTasks">0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-label">完成率:</span>
+                        <span class="stats-number" id="completionRate">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务编辑弹窗 -->
+        <div class="modal" id="taskEditModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">编辑任务</h3>
+                    <button class="close-button" id="closeEditModal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editTaskContent">任务内容</label>
+                        <textarea id="editTaskContent" class="form-textarea" rows="3" placeholder="输入任务内容..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editReminderDate">提醒时间</label>
+                        <div class="datetime-container">
+                            <input type="date" id="editReminderDate" class="form-input">
+                            <input type="time" id="editReminderTime" class="form-input">
+                        </div>
+                        <div class="quick-time-buttons">
+                            <button class="quick-time-btn" data-minutes="15">15分钟后</button>
+                            <button class="quick-time-btn" data-minutes="60">1小时后</button>
+                            <button class="quick-time-btn" data-hours="24">明天</button>
+                            <button class="quick-time-btn" data-clear="true">清除提醒</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelEdit">取消</button>
+                    <button class="btn btn-primary" id="saveEdit">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 确认删除弹窗 -->
+        <div class="modal" id="deleteConfirmModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">确认删除</h3>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除这个任务吗？此操作无法撤销。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelDelete">取消</button>
+                    <button class="btn btn-danger" id="confirmDelete">删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量操作弹窗 -->
+        <div class="modal" id="batchActionsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">批量操作</h3>
+                    <button class="close-button" id="closeBatchModal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>已选择 <span id="selectedCount">0</span> 个任务</p>
+                    <div class="batch-actions">
+                        <button class="batch-action-btn" id="batchComplete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                            </svg>
+                            标记为完成
+                        </button>
+                        <button class="batch-action-btn" id="batchDelete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            删除选中
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelBatch">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="task-manager.js"></script>
+</body>
+</html>

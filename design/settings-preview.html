@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置预览 - Things 3 风格</title>
+    <style>
+        /* Things 3 风格设计 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            font-size: 15px;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .settings-window {
+            max-width: 720px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 0;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.12),
+                0 10px 30px rgba(0, 0, 0, 0.08),
+                0 5px 15px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        /* 窗口标题栏 */
+        .window-header {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            text-align: center;
+            position: relative;
+        }
+
+        .window-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            letter-spacing: -0.3px;
+        }
+
+        .window-controls {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .control-close { background: #ff5f57; }
+        .control-minimize { background: #ffbd2e; }
+        .control-maximize { background: #28ca42; }
+
+        /* 标签页导航 */
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 0 30px;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.08),
+                0 2px 6px rgba(0, 0, 0, 0.06);
+            position: relative;
+            z-index: 10;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 18px 24px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            letter-spacing: -0.2px;
+        }
+
+        .tab-button:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .tab-button.active {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(59, 130, 246, 0.2);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 2px;
+        }
+
+        /* 标签页内容 */
+        .tab-content {
+            display: none;
+            padding: 32px 30px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 设置区块 */
+        .setting-section {
+            margin-bottom: 40px;
+        }
+
+        .setting-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            letter-spacing: -0.4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .setting-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .setting-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .setting-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 设置标签 */
+        .setting-label {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            font-size: 16px;
+            letter-spacing: -0.2px;
+        }
+
+        .setting-description {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            margin-left: auto;
+        }
+
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #cbd5e1;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* 按钮样式 */
+        .setting-button {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: -0.2px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .setting-button:hover {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .setting-button.primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-color: transparent;
+        }
+
+        .setting-button.primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        .setting-button.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-color: transparent;
+        }
+
+        .setting-button.danger:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        /* 滑块样式 */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 12px;
+        }
+
+        .setting-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 0;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .setting-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 0;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .setting-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: #3b82f6;
+            min-width: 50px;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        /* 下拉选择器 */
+        .select-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .setting-select {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 
+                0 0 0 3px rgba(59, 130, 246, 0.1),
+                0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 0;
+            padding: 10px 16px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .play-button:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 0;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .radio-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .radio-item.selected {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: #3b82f6;
+            box-shadow: 0 3px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .radio-circle {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 0;
+            margin-right: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .radio-item.selected .radio-circle {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .radio-item.selected .radio-circle::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 0;
+            background: #3b82f6;
+        }
+
+        .radio-text {
+            font-weight: 500;
+            color: #334155;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .settings-window {
+                border-radius: 0;
+            }
+            
+            .tab-content {
+                padding: 24px 20px;
+            }
+            
+            .setting-item {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-window">
+        <!-- 窗口标题栏 -->
+        <div class="window-header">
+            <div class="window-controls">
+                <button class="control-button control-close"></button>
+                <button class="control-button control-minimize"></button>
+                <button class="control-button control-maximize"></button>
+            </div>
+            <h1 class="window-title">设置</h1>
+        </div>
+
+        <!-- 标签页导航 -->
+        <div class="tab-nav">
+            <button class="tab-button active" onclick="switchTab('general')">通用</button>
+            <button class="tab-button" onclick="switchTab('appearance')">外观</button>
+            <button class="tab-button" onclick="switchTab('notifications')">通知</button>
+        </div>
+
+        <!-- 通用设置 -->
+        <div class="tab-content active" id="general">
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    启动设置
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        开机时自动启动 MoliTodo
+                        <div class="toggle-switch">
+                            <input type="checkbox" class="toggle-input" id="autoStart">
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                    <p class="setting-description">启用后，MoliTodo 将在系统启动时自动运行</p>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">💾</span>
+                    数据管理
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">导出数据</label>
+                    <p class="setting-description">将所有任务数据导出为 JSON 文件，便于备份和迁移</p>
+                    <button class="setting-button primary" style="margin-top: 12px;">导出数据...</button>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">导入数据</label>
+                    <p class="setting-description">从 JSON 文件导入任务数据（将覆盖现有数据）</p>
+                    <button class="setting-button" style="margin-top: 12px;">导入数据...</button>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">清除所有数据</label>
+                    <p class="setting-description">永久删除所有未完成和已完成的任务，此操作无法撤销</p>
+                    <button class="setting-button danger" style="margin-top: 12px;">清除所有数据</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外观设置 -->
+        <div class="tab-content" id="appearance">
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    悬浮图标调整
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">透明度</label>
+                    <p class="setting-description">调整悬浮图标的透明度，拖动时可实时预览效果</p>
+                    <div class="slider-container">
+                        <input type="range" class="setting-slider" min="20" max="100" value="100" step="5" oninput="updateSliderValue(this, 'opacityValue', '%')">
+                        <span class="slider-value" id="opacityValue">100%</span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">大小</label>
+                    <p class="setting-description">调整悬浮图标的大小，拖动时可实时预览效果</p>
+                    <div class="slider-container">
+                        <input type="range" class="setting-slider" min="40" max="80" value="60" step="5" oninput="updateSliderValue(this, 'sizeValue', 'px')">
+                        <span class="slider-value" id="sizeValue">60px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">🌓</span>
+                    主题
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">图标主题</label>
+                    <p class="setting-description">选择悬浮图标的配色方案</p>
+                    <div class="radio-group">
+                        <div class="radio-item" onclick="selectRadio(this)">
+                            <div class="radio-circle"></div>
+                            <span class="radio-text">亮色模式图标</span>
+                        </div>
+                        <div class="radio-item" onclick="selectRadio(this)">
+                            <div class="radio-circle"></div>
+                            <span class="radio-text">暗色模式图标</span>
+                        </div>
+                        <div class="radio-item selected" onclick="selectRadio(this)">
+                            <div class="radio-circle"></div>
+                            <span class="radio-text">跟随系统（默认）</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知设置 -->
+        <div class="tab-content" id="notifications">
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">🔊</span>
+                    提醒声音
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">声音类型</label>
+                    <p class="setting-description">选择任务提醒时播放的声音</p>
+                    <div class="select-container">
+                        <select class="setting-select">
+                            <option value="none">无 (静音)</option>
+                            <option value="system" selected>系统默认</option>
+                            <option value="chime">钟声</option>
+                            <option value="digital">数字铃声</option>
+                        </select>
+                        <button class="play-button">播放</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <h3 class="section-title">
+                    <span class="section-icon">🔔</span>
+                    系统通知
+                </h3>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        桌面通知
+                        <div class="toggle-switch">
+                            <input type="checkbox" class="toggle-input" id="showNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                    <p class="setting-description">任务到达提醒时间时，发送桌面通知。关闭后，任务到期将只有悬浮图标的动画提醒</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 添加活动状态
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function updateSliderValue(slider, valueId, unit) {
+            document.getElementById(valueId).textContent = slider.value + unit;
+        }
+
+        function selectRadio(item) {
+            // 移除所有选中状态
+            document.querySelectorAll('.radio-item').forEach(radio => radio.classList.remove('selected'));
+            // 添加选中状态
+            item.classList.add('selected');
+        }
+
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有设置项添加悬停效果
+            const settingItems = document.querySelectorAll('.setting-item');
+            settingItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

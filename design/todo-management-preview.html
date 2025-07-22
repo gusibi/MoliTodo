@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo 管理 - Things 3 风格</title>
+    <style>
+        /* Things 3 风格设计 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            font-size: 15px;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .todo-window {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 0;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            min-height: 80vh;
+        }
+
+        /* 窗口标题栏 */
+        .window-header {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            text-align: center;
+            position: relative;
+        }
+
+        .window-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            letter-spacing: -0.3px;
+        }
+
+        .window-controls {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .control-close { background: #ff5f57; }
+        .control-minimize { background: #ffbd2e; }
+        .control-maximize { background: #28ca42; }
+
+        /* 标签页导航 */
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 0 30px;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.08),
+                0 2px 6px rgba(0, 0, 0, 0.06);
+            position: relative;
+            z-index: 10;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 18px 24px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            letter-spacing: -0.2px;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        /* 搜索和操作栏 */
+        .toolbar {
+            padding: 24px 30px;
+            background: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            color: #475569;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 3px rgba(102, 126, 234, 0.1),
+                0 4px 12px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .toolbar-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 0;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: -0.2px;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .toolbar-button:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .toolbar-button.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .toolbar-button.danger:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        /* 标签页内容 */
+        .tab-content {
+            display: none;
+            padding: 0;
+            min-height: 400px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 任务列表 */
+        .task-list {
+            padding: 0 30px 30px;
+        }
+
+        .date-group {
+            margin-bottom: 32px;
+        }
+
+        .date-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-icon {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0;
+            padding: 20px 24px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .task-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .task-item:hover .task-actions {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-checkbox.completed {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+        }
+
+        .task-checkbox.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .task-text {
+            font-size: 16px;
+            color: #334155;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+
+        .task-meta {
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .task-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .task-priority {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .priority-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .priority-low {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+
+        .action-button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-restore {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+
+        .action-restore:hover {
+            background: rgba(34, 197, 94, 0.2);
+            transform: scale(1.1);
+        }
+
+        .action-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .action-delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(1.1);
+        }
+
+        .action-edit {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .action-edit:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #475569;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* 统计信息 */
+        .stats-bar {
+            padding: 20px 30px;
+            background: rgba(248, 250, 252, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .stats-number {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .todo-window {
+                border-radius: 0;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .task-list {
+                padding: 0 20px 20px;
+            }
+            
+            .task-item {
+                padding: 16px 20px;
+            }
+            
+            .task-actions {
+                opacity: 1;
+                transform: translateX(0);
+                position: absolute;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .modal-text {
+            color: #64748b;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-button.primary {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .modal-button.secondary {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="todo-window">
+        <!-- 窗口标题栏 -->
+        <div class="window-header">
+            <div class="window-controls">
+                <button class="control-button control-close"></button>
+                <button class="control-button control-minimize"></button>
+                <button class="control-button control-maximize"></button>
+            </div>
+            <h1 class="window-title">Todo 管理</h1>
+        </div>
+
+        <!-- 标签页导航 -->
+        <div class="tab-nav">
+            <button class="tab-button active" onclick="switchTab('current')">当前任务</button>
+            <button class="tab-button" onclick="switchTab('completed')">已完成</button>
+            <button class="tab-button" onclick="switchTab('all')">全部任务</button>
+        </div>
+
+        <!-- 搜索和操作栏 -->
+        <div class="toolbar">
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="搜索任务..." oninput="filterTasks(this.value)">
+            </div>
+            <button class="toolbar-button" onclick="addNewTask()">+ 新建任务</button>
+            <button class="toolbar-button danger" onclick="showClearAllModal()">清除全部</button>
+        </div>
+
+        <!-- 当前任务 -->
+        <div class="tab-content active" id="current">
+            <div class="task-list">
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">📅</span>
+                        今天
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-text">完成项目文档编写</div>
+                            <div class="task-meta">
+                                <span class="task-time">⏰ 14:30</span>
+                                <span class="task-priority priority-high">高优先级</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-edit" title="编辑">✏️</button>
+                            <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-text">回复客户邮件</div>
+                            <div class="task-meta">
+                                <span class="task-time">⏰ 16:00</span>
+                                <span class="task-priority priority-medium">中优先级</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-edit" title="编辑">✏️</button>
+                            <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">📋</span>
+                        明天
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-text">团队会议准备</div>
+                            <div class="task-meta">
+                                <span class="task-time">⏰ 09:00</span>
+                                <span class="task-priority priority-low">低优先级</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-edit" title="编辑">✏️</button>
+                            <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 已完成任务 -->
+        <div class="tab-content" id="completed">
+            <div class="task-list">
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">✅</span>
+                        今天
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox completed"></div>
+                        <div class="task-content">
+                            <div class="task-text completed">检查代码质量</div>
+                            <div class="task-meta">
+                                <span class="task-time">✓ 完成于 12:30</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                            <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox completed"></div>
+                        <div class="task-content">
+                            <div class="task-text completed">更新用户手册</div>
+                            <div class="task-meta">
+                                <span class="task-time">✓ 完成于 10:15</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                            <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">📆</span>
+                        昨天
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox completed"></div>
+                        <div class="task-content">
+                            <div class="task-text completed">优化数据库查询</div>
+                            <div class="task-meta">
+                                <span class="task-time">✓ 完成于 2024年1月15日 17:45</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                            <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全部任务 -->
+        <div class="tab-content" id="all">
+            <div class="task-list">
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">📊</span>
+                        进行中的任务
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-text">完成项目文档编写</div>
+                            <div class="task-meta">
+                                <span class="task-time">⏰ 今天 14:30</span>
+                                <span class="task-priority priority-high">高优先级</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-edit" title="编辑">✏️</button>
+                            <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-text">回复客户邮件</div>
+                            <div class="task-meta">
+                                <span class="task-time">⏰ 今天 16:00</span>
+                                <span class="task-priority priority-medium">中优先级</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-edit" title="编辑">✏️</button>
+                            <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">✅</span>
+                        已完成的任务
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox completed"></div>
+                        <div class="task-content">
+                            <div class="task-text completed">检查代码质量</div>
+                            <div class="task-meta">
+                                <span class="task-time">✓ 今天 12:30</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                            <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-checkbox completed"></div>
+                        <div class="task-content">
+                            <div class="task-text completed">更新用户手册</div>
+                            <div class="task-meta">
+                                <span class="task-time">✓ 今天 10:15</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                            <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息栏 -->
+        <div class="stats-bar">
+            <div class="stats-item">
+                <span>待完成:</span>
+                <span class="stats-number" id="pendingCount">3</span>
+            </div>
+            <div class="stats-item">
+                <span>已完成:</span>
+                <span class="stats-number" id="completedCount">3</span>
+            </div>
+            <div class="stats-item">
+                <span>总计:</span>
+                <span class="stats-number" id="totalCount">6</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-title">确认删除</div>
+            <div class="modal-text">确定要永久删除这条任务吗？此操作无法撤销。</div>
+            <div class="modal-buttons">
+                <button class="modal-button secondary" onclick="hideModal('deleteModal')">取消</button>
+                <button class="modal-button primary" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清除全部模态框 -->
+    <div class="modal" id="clearAllModal">
+        <div class="modal-content">
+            <div class="modal-title">清除所有历史记录</div>
+            <div class="modal-text">此操作将永久删除所有已完成的任务且无法恢复，确定吗？</div>
+            <div class="modal-buttons">
+                <button class="modal-button secondary" onclick="hideModal('clearAllModal')">取消</button>
+                <button class="modal-button primary" onclick="confirmClearAll()">清除全部</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDeleteTarget = null;
+
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 添加活动状态
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function toggleTask(checkbox) {
+            checkbox.classList.toggle('completed');
+            const taskText = checkbox.parentElement.querySelector('.task-text');
+            taskText.classList.toggle('completed');
+            
+            // 更新时间显示
+            const taskMeta = checkbox.parentElement.querySelector('.task-meta');
+            if (checkbox.classList.contains('completed')) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                taskMeta.innerHTML = `<span class="task-time">✓ 完成于 ${timeStr}</span>`;
+                
+                // 更新操作按钮
+                const actions = checkbox.parentElement.querySelector('.task-actions');
+                actions.innerHTML = `
+                    <button class="action-button action-restore" title="恢复" onclick="restoreTask(this)">↩️</button>
+                    <button class="action-button action-delete" title="永久删除" onclick="showDeleteModal(this)">🗑️</button>
+                `;
+            }
+            
+            updateStats();
+        }
+
+        function restoreTask(button) {
+            const taskItem = button.closest('.task-item');
+            const checkbox = taskItem.querySelector('.task-checkbox');
+            const taskText = taskItem.querySelector('.task-text');
+            
+            checkbox.classList.remove('completed');
+            taskText.classList.remove('completed');
+            
+            // 恢复时间显示
+            const taskMeta = taskItem.querySelector('.task-meta');
+            taskMeta.innerHTML = `
+                <span class="task-time">⏰ 14:30</span>
+                <span class="task-priority priority-medium">中优先级</span>
+            `;
+            
+            // 更新操作按钮
+            const actions = taskItem.querySelector('.task-actions');
+            actions.innerHTML = `
+                <button class="action-button action-edit" title="编辑">✏️</button>
+                <button class="action-button action-delete" title="删除" onclick="showDeleteModal(this)">🗑️</button>
+            `;
+            
+            updateStats();
+        }
+
+        function showDeleteModal(button) {
+            currentDeleteTarget = button.closest('.task-item');
+            showModal('deleteModal');
+        }
+
+        function showClearAllModal() {
+            showModal('clearAllModal');
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function confirmDelete() {
+            if (currentDeleteTarget) {
+                currentDeleteTarget.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    currentDeleteTarget.remove();
+                    updateStats();
+                }, 300);
+                currentDeleteTarget = null;
+            }
+            hideModal('deleteModal');
+        }
+
+        function confirmClearAll() {
+            const completedTasks = document.querySelectorAll('.task-checkbox.completed');
+            completedTasks.forEach(task => {
+                const taskItem = task.closest('.task-item');
+                taskItem.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    taskItem.remove();
+                    updateStats();
+                }, 300);
+            });
+            hideModal('clearAllModal');
+        }
+
+        function addNewTask() {
+            alert('新建任务功能将在实际应用中实现');
+        }
+
+        function filterTasks(searchTerm) {
+            const tasks = document.querySelectorAll('.task-item');
+            tasks.forEach(task => {
+                const taskText = task.querySelector('.task-text').textContent.toLowerCase();
+                if (taskText.includes(searchTerm.toLowerCase())) {
+                    task.style.display = 'flex';
+                } else {
+                    task.style.display = 'none';
+                }
+            });
+        }
+
+        function updateStats() {
+            const allTasks = document.querySelectorAll('.task-item');
+            const completedTasks = document.querySelectorAll('.task-checkbox.completed');
+            const pendingTasks = allTasks.length - completedTasks.length;
+            
+            document.getElementById('pendingCount').textContent = pendingTasks;
+            document.getElementById('completedCount').textContent = completedTasks.length;
+            document.getElementById('totalCount').textContent = allTasks.length;
+        }
+
+        // 添加淡出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 初始化统计
+        updateStats();
+
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
