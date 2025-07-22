@@ -15,12 +15,12 @@ class MoliTodoApp {
     this.taskManagerWindow = null;
     this.settingsWindow = null;
     this.tray = null;
-    
+
     // 初始化服务 - 稍后在 initialize 方法中设置
     this.taskRepository = null;
     this.taskService = null;
     this.notificationService = new NotificationService();
-    
+
     // 应用配置存储
     this.configStore = new Store({
       name: 'config',
@@ -101,7 +101,7 @@ class MoliTodoApp {
    */
   async initialize() {
     await app.whenReady();
-    
+
     // 设置应用为单例
     if (!app.requestSingleInstanceLock()) {
       app.quit();
@@ -113,16 +113,16 @@ class MoliTodoApp {
 
     // 创建悬浮窗口
     this.createFloatingWindow();
-    
+
     // 创建系统托盘
     this.createTray();
-    
+
     // 设置IPC处理器
     this.setupIpcHandlers();
-    
+
     // 初始化提醒调度
     await this.initializeReminders();
-    
+
     // 应用事件监听
     this.setupAppEvents();
 
@@ -134,13 +134,13 @@ class MoliTodoApp {
    */
   async initializeDatabase() {
     const dbConfig = this.configStore.get('database', { type: 'sqlite', path: null });
-    
+
     try {
       if (dbConfig.type === 'sqlite') {
         // 使用 SQLite 数据库
         const dbPath = dbConfig.path || this.getDefaultDatabasePath();
         console.log('初始化 SQLite 数据库:', dbPath);
-        
+
         this.taskRepository = new SqliteTaskRepository(dbPath);
         await this.taskRepository.initialize();
       } else {
@@ -148,7 +148,7 @@ class MoliTodoApp {
         console.log('使用文件存储');
         this.taskRepository = new FileTaskRepository();
       }
-      
+
       this.taskService = new TaskService(this.taskRepository);
       console.log('数据库初始化完成');
     } catch (error) {
@@ -182,7 +182,7 @@ class MoliTodoApp {
 
     // 重新初始化
     await this.initializeDatabase();
-    
+
     // 重新设置提醒
     await this.initializeReminders();
   }
@@ -192,13 +192,13 @@ class MoliTodoApp {
    */
   createFloatingWindow() {
     console.log('主进程: 开始创建悬浮窗口');
-    
+
     const config = this.configStore.get('floatingIcon');
     console.log('主进程: 悬浮窗口配置:', config);
-    
+
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     console.log('主进程: 屏幕工作区域:', { width, height });
-    
+
     // 确保窗口位置在屏幕范围内
     const x = Math.min(Math.max(config.x, 0), width - config.size);
     const y = Math.min(Math.max(config.y, 0), height - config.size);
@@ -231,7 +231,7 @@ class MoliTodoApp {
     // 加载悬浮图标页面
     const htmlPath = path.join(__dirname, '../presentation/floating-icon/floating-icon.html');
     console.log('主进程: 准备加载HTML文件:', htmlPath);
-    
+
     this.floatingWindow.loadFile(htmlPath);
 
     // 窗口准备好后显示
@@ -260,6 +260,19 @@ class MoliTodoApp {
       this.configStore.set('floatingIcon.y', y);
     });
 
+    // 处理悬浮窗口关闭事件
+    this.floatingWindow.on('close', (event) => {
+      if (!this.isQuitting) {
+        // 如果不是应用退出，阻止关闭（悬浮窗口应该始终存在）
+        event.preventDefault();
+      }
+    });
+
+    // 悬浮窗口关闭时清理引用
+    this.floatingWindow.on('closed', () => {
+      this.floatingWindow = null;
+    });
+
     // 初始状态不启用鼠标穿透，让图标可以接收事件
     // 我们将通过CSS和窗口形状来控制可点击区域
     console.log('主进程: 悬浮窗口创建流程完成');
@@ -277,22 +290,22 @@ class MoliTodoApp {
     const { screen } = require('electron');
     const display = screen.getDisplayNearestPoint({ x: floatingBounds.x, y: floatingBounds.y });
     const workArea = display.workArea;
-    
+
     // 计算面板位置，确保不超出屏幕边界
     let panelX = floatingBounds.x + floatingBounds.width + 10;
     let panelY = floatingBounds.y;
-    
+
     // 如果右侧空间不够，显示在左侧
     if (panelX + 320 > workArea.x + workArea.width) {
       panelX = floatingBounds.x - 320 - 10;
     }
-    
+
     // 确保不超出屏幕顶部和底部
     const maxHeight = Math.min(600, workArea.height * 0.8);
     if (panelY + maxHeight > workArea.y + workArea.height) {
       panelY = workArea.y + workArea.height - maxHeight;
     }
-    
+
     this.taskPanelWindow = new BrowserWindow({
       width: 320,
       height: maxHeight,
@@ -375,7 +388,7 @@ class MoliTodoApp {
    */
   showAboutDialog() {
     const { dialog } = require('electron');
-    
+
     dialog.showMessageBox(this.floatingWindow || null, {
       type: 'info',
       title: '关于 MoliTodo',
@@ -395,22 +408,22 @@ MIT License`,
   createTray() {
     // 使用PNG图标，因为SVG在某些系统上可能不支持
     const trayIconPath = path.join(__dirname, '../presentation/assets/icons/app-icon-256x256.png');
-    
+
     try {
       // 创建图标并调整大小
       const image = nativeImage.createFromPath(trayIconPath);
       const resizedImage = image.resize({ width: 16, height: 16 });
-      
+
       this.tray = new Tray(resizedImage);
       this.tray.setToolTip('MoliTodo - 悬浮待办');
-      
+
       this.updateTrayMenu();
-      
+
       // macOS 上的左键点击事件
       this.tray.on('click', () => {
         this.tray.popUpContextMenu();
       });
-      
+
     } catch (error) {
       console.warn('无法创建系统托盘:', error.message);
     }
@@ -421,7 +434,7 @@ MIT License`,
    */
   updateTrayMenu() {
     const floatingIconVisible = this.configStore.get('floatingIcon.visible', true);
-    
+
     const contextMenu = Menu.buildFromTemplate([
       {
         label: floatingIconVisible ? '隐藏悬浮图标' : '显示悬浮图标',
@@ -430,7 +443,7 @@ MIT License`,
           // 每次点击时重新获取当前状态
           const currentVisible = this.configStore.get('floatingIcon.visible', true);
           const newVisible = !currentVisible;
-          
+
           this.configStore.set('floatingIcon.visible', newVisible);
           this.applyFloatingIconConfig();
           this.updateTrayMenu(); // 更新菜单文本
@@ -459,8 +472,27 @@ MIT License`,
       {
         label: '退出 MoliTodo',
         click: () => {
+          console.log('用户点击退出菜单');
           this.isQuitting = true;
-          app.quit();
+
+          // 立即关闭所有窗口
+          if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+            this.floatingWindow.close();
+          }
+          if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+            this.taskPanelWindow.close();
+          }
+          if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+            this.taskManagerWindow.close();
+          }
+          if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+            this.settingsWindow.close();
+          }
+
+          // 延迟一点时间确保窗口关闭完成，然后退出应用
+          setTimeout(() => {
+            app.quit();
+          }, 100);
         }
       }
     ]);
@@ -490,13 +522,13 @@ MIT License`,
     // 创建任务
     ipcMain.handle('create-task', async (event, content, reminderTime) => {
       const task = await this.taskService.createTask(content, reminderTime ? new Date(reminderTime) : null);
-      
+
       if (task.reminderTime) {
         this.notificationService.scheduleTaskReminder(task, (task) => {
           this.handleTaskReminder(task);
         });
       }
-      
+
       this.updateFloatingIcon();
       this.sendTasksToPanel(); // 更新任务面板
       return task;
@@ -517,7 +549,7 @@ MIT License`,
           });
         }
       }
-      
+
       this.updateFloatingIcon();
       this.sendTasksToPanel(); // 更新任务面板
       return task;
@@ -646,7 +678,7 @@ MIT License`,
     });
 
     // ========== 设置相关的IPC处理器 ==========
-    
+
     // 获取应用配置
     ipcMain.handle('get-config', () => {
       return this.configStore.store;
@@ -655,12 +687,12 @@ MIT License`,
     // 更新配置
     ipcMain.handle('update-config', (event, key, value) => {
       this.configStore.set(key, value);
-      
+
       // 如果是悬浮图标相关配置，立即应用
       if (key.startsWith('floatingIcon.')) {
         this.applyFloatingIconConfig();
       }
-      
+
       return this.configStore.get(key);
     });
 
@@ -668,7 +700,7 @@ MIT License`,
     ipcMain.handle('export-data', async () => {
       const { dialog } = require('electron');
       const fs = require('fs').promises;
-      
+
       try {
         const result = await dialog.showSaveDialog(this.settingsWindow || this.floatingWindow, {
           title: '导出数据',
@@ -690,7 +722,7 @@ MIT License`,
           await fs.writeFile(result.filePath, JSON.stringify(exportData, null, 2), 'utf8');
           return { success: true, path: result.filePath };
         }
-        
+
         return { success: false, canceled: true };
       } catch (error) {
         console.error('导出数据失败:', error);
@@ -702,7 +734,7 @@ MIT License`,
     ipcMain.handle('import-data', async () => {
       const { dialog } = require('electron');
       const fs = require('fs').promises;
-      
+
       try {
         const result = await dialog.showOpenDialog(this.settingsWindow || this.floatingWindow, {
           title: '导入数据',
@@ -746,7 +778,7 @@ MIT License`,
 
           return { success: true, taskCount: importData.tasks.length };
         }
-        
+
         return { success: false, canceled: true };
       } catch (error) {
         console.error('导入数据失败:', error);
@@ -791,7 +823,7 @@ MIT License`,
     });
 
     // ========== 数据库相关的IPC处理器 ==========
-    
+
     // 获取数据库统计信息
     ipcMain.handle('get-database-stats', async () => {
       try {
@@ -809,7 +841,7 @@ MIT License`,
     ipcMain.handle('set-database-path', async (event, newPath) => {
       try {
         const { dialog } = require('electron');
-        
+
         // 如果没有提供路径，打开文件选择对话框
         if (!newPath) {
           const result = await dialog.showSaveDialog(this.settingsWindow || this.floatingWindow, {
@@ -823,14 +855,14 @@ MIT License`,
           if (result.canceled || !result.filePath) {
             return { success: false, canceled: true };
           }
-          
+
           newPath = result.filePath;
         }
 
         // 验证路径
         const fs = require('fs').promises;
         const newDir = path.dirname(newPath);
-        
+
         try {
           await fs.mkdir(newDir, { recursive: true });
         } catch (error) {
@@ -839,10 +871,10 @@ MIT License`,
 
         // 保存配置
         this.configStore.set('database.path', newPath);
-        
+
         // 重新初始化数据库
         await this.reinitializeDatabase();
-        
+
         return { success: true, path: newPath };
       } catch (error) {
         console.error('设置数据库路径失败:', error);
@@ -855,20 +887,20 @@ MIT License`,
       try {
         // 导出当前数据
         const exportData = await this.taskRepository.exportData();
-        
+
         // 切换数据库类型
         this.configStore.set('database.type', toType);
-        
+
         // 重新初始化数据库
         await this.reinitializeDatabase();
-        
+
         // 导入数据到新数据库
         await this.taskRepository.importData(exportData);
-        
+
         // 更新UI
         this.updateFloatingIcon();
         this.sendTasksToPanel();
-        
+
         return { success: true, taskCount: exportData.tasks.length };
       } catch (error) {
         console.error('数据库迁移失败:', error);
@@ -892,24 +924,24 @@ MIT License`,
       x: null,
       y: null
     });
-    
+
     // 如果当前配置的透明度不是100，强制更新为100
     if (config.opacity !== 100) {
       this.configStore.set('floatingIcon.opacity', 100);
       config.opacity = 100;
     }
-    
+
     // 应用大小
     this.floatingWindow.setSize(config.size, config.size);
-    
+
     // 应用透明度 - 确保opacity是有效数值
     const opacity = typeof config.opacity === 'number' && !isNaN(config.opacity) ? config.opacity : 100;
     this.floatingWindow.setOpacity(opacity / 100);
-    
+
     // 确保窗口位置在屏幕范围内
     const { screen } = require('electron');
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    
+
     if (config.x !== null && config.y !== null) {
       const x = Math.min(Math.max(config.x, 0), width - config.size);
       const y = Math.min(Math.max(config.y, 0), height - config.size);
@@ -922,7 +954,7 @@ MIT License`,
       this.configStore.set('floatingIcon.x', x);
       this.configStore.set('floatingIcon.y', y);
     }
-    
+
     // 应用可见性
     if (config.visible) {
       // 确保窗口已经准备好再显示
@@ -938,12 +970,12 @@ MIT License`,
     } else {
       this.floatingWindow.hide();
     }
-    
+
     // 通知渲染进程更新
     if (!this.floatingWindow.webContents.isLoading()) {
       this.floatingWindow.webContents.send('config-updated', config);
     }
-    
+
     // 更新托盘菜单
     if (this.tray) {
       this.updateTrayMenu();
@@ -955,14 +987,41 @@ MIT License`,
    */
   setupAppEvents() {
     app.on('window-all-closed', (event) => {
+      console.log('所有窗口已关闭，isQuitting:', this.isQuitting);
       if (!this.isQuitting) {
         event.preventDefault();
+        console.log('阻止应用退出');
+      } else {
+        console.log('允许应用退出');
       }
     });
 
     app.on('before-quit', () => {
+      console.log('应用准备退出...');
       this.isQuitting = true;
       this.notificationService.clearAllSchedules();
+
+      // 确保所有窗口都能正常关闭
+      if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+        this.floatingWindow.destroy();
+      }
+      if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+        this.taskPanelWindow.destroy();
+      }
+      if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+        this.taskManagerWindow.destroy();
+      }
+      if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+        this.settingsWindow.destroy();
+      }
+    });
+
+    app.on('will-quit', (event) => {
+      console.log('应用即将退出...');
+      if (!this.isQuitting) {
+        console.log('意外的退出尝试，阻止退出');
+        event.preventDefault();
+      }
     });
 
     app.on('activate', () => {
@@ -988,7 +1047,7 @@ MIT License`,
   handleTaskReminder(task) {
     this.alertState = true;
     this.updateFloatingIcon();
-    
+
     // 发送通知到悬浮窗口
     if (this.floatingWindow) {
       this.floatingWindow.webContents.send('task-reminder', task);
@@ -1000,7 +1059,7 @@ MIT License`,
    */
   async updateFloatingIcon() {
     const count = await this.taskService.getIncompleteTaskCount();
-    
+
     if (this.floatingWindow) {
       this.floatingWindow.webContents.send('update-badge', {
         count,

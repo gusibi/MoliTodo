@@ -198,6 +198,18 @@ class TaskManager {
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
         });
+
+        // 窗口焦点事件 - 当窗口获得焦点时刷新数据
+        window.addEventListener('focus', () => {
+            this.refreshData();
+        });
+
+        // 页面可见性变化事件 - 当页面变为可见时刷新数据
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.refreshData();
+            }
+        });
     }
 
     async loadTasks() {
@@ -209,6 +221,26 @@ class TaskManager {
             this.updateStats();
         } catch (error) {
             console.error('加载任务失败:', error);
+        }
+    }
+
+    /**
+     * 刷新数据 - 当窗口获得焦点或变为可见时调用
+     */
+    async refreshData() {
+        try {
+            // 重新加载任务数据
+            this.tasks = taskApplicationService.getTasks();
+            this.completedTasks = taskApplicationService.getCompletedTasks();
+            
+            // 更新当前视图
+            this.renderCurrentView();
+            this.updateCounts();
+            this.updateStats();
+            
+            console.log('Task Manager: 数据已刷新');
+        } catch (error) {
+            console.error('刷新数据失败:', error);
         }
     }
 
@@ -949,6 +981,12 @@ class TaskManager {
             currentTasks.forEach(task => this.selectedTasks.add(task.id));
             this.renderCurrentView();
             this.updateBatchActionsButton();
+        }
+
+        // F5 或 Ctrl/Cmd + R: 刷新数据
+        if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
+            e.preventDefault();
+            this.refreshData();
         }
     }
 

@@ -90,6 +90,18 @@ class TaskPanel {
             }
         });
 
+        // 窗口焦点事件 - 当窗口获得焦点时刷新数据
+        window.addEventListener('focus', () => {
+            this.refresh();
+        });
+
+        // 页面可见性变化事件 - 当页面变为可见时刷新数据
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.refresh();
+            }
+        });
+
         // 面板鼠标事件 - 使用更稳定的事件处理
         const taskPanel = document.querySelector('.task-panel');
         if (taskPanel) {
