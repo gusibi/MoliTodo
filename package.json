@@ -1,5 +1,5 @@
 {
-  "name": "float-todo",
+  "name": "moli-todo",
   "version": "0.3.0",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
@@ -13,7 +13,10 @@
     "build:win": "electron-builder --win",
     "build:all": "electron-builder --mac --win",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "install-sqlite": "node install-sqlite.js",
+    "migrate-to-sqlite": "node migrate-to-sqlite.js",
+    "test-task-status": "node test-task-status.js"
   },
   "keywords": [
     "todo",
@@ -30,7 +33,9 @@
   },
   "dependencies": {
     "electron-store": "^8.1.0",
-    "node-schedule": "^2.1.1"
+    "node-schedule": "^2.1.1",
+    "sqlite3": "^5.1.6",
+    "sqlite": "^5.1.1"
   },
   "build": {
     "appId": "com.MoliTodo.app",

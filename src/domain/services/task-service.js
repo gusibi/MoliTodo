@@ -225,6 +225,42 @@ class TaskService {
     
     return deletedCount;
   }
+
+  /**
+   * 清空所有任务
+   * @returns {Promise<void>}
+   */
+  async clearAllTasks() {
+    return await this.taskRepository.clear();
+  }
+
+  /**
+   * 导入任务
+   * @param {Object} taskData 任务数据
+   * @returns {Promise<Task>}
+   */
+  async importTask(taskData) {
+    const task = Task.fromJSON(taskData);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 根据状态获取任务
+   * @param {string} status 状态 ('todo', 'doing', 'done')
+   * @returns {Promise<Task[]>}
+   */
+  async getTasksByStatus(status) {
+    if (typeof this.taskRepository.findByStatus === 'function') {
+      return await this.taskRepository.findByStatus(status);
+    }
+    
+    // 回退到过滤所有任务
+    const allTasks = await this.taskRepository.findAll();
+    return allTasks.filter(task => {
+      const taskStatus = task.status || (task.completed ? 'done' : 'todo');
+      return taskStatus === status;
+    });
+  }
 }
 
 module.exports = TaskService;

@@ -29,6 +29,34 @@
             </div>
 
             <div class="setting-section">
+                <h3>数据存储</h3>
+                <div class="setting-item">
+                    <label class="setting-label">存储类型</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="dbType" value="sqlite" class="setting-radio" checked>
+                            <span class="radio-mark"></span>
+                            SQLite 数据库（推荐）
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="dbType" value="file" class="setting-radio">
+                            <span class="radio-mark"></span>
+                            文件存储（兼容模式）
+                        </label>
+                    </div>
+                </div>
+                <div class="setting-item" id="dbPathSetting">
+                    <label class="setting-label">数据库位置</label>
+                    <div class="path-container">
+                        <input type="text" id="dbPath" class="setting-input" readonly placeholder="使用默认位置">
+                        <button class="setting-button" id="choosePath">选择位置...</button>
+                        <button class="setting-button secondary" id="resetPath">重置为默认</button>
+                    </div>
+                    <p class="setting-description" id="dbStats">数据库统计信息加载中...</p>
+                </div>
+            </div>
+
+            <div class="setting-section">
                 <h3>数据管理</h3>
                 <div class="setting-item">
                     <button class="setting-button" id="exportData">导出数据...</button>

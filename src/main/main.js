@@ -4,6 +4,7 @@ const Store = require('electron-store');
 
 // 导入服务和仓储
 const FileTaskRepository = require('../infrastructure/persistence/file-task-repository');
+const SqliteTaskRepository = require('../infrastructure/persistence/sqlite-task-repository');
 const TaskService = require('../domain/services/task-service');
 const NotificationService = require('../domain/services/notification-service');
 
@@ -15,9 +16,9 @@ class MoliTodoApp {
     this.settingsWindow = null;
     this.tray = null;
     
-    // 初始化服务
-    this.taskRepository = new FileTaskRepository();
-    this.taskService = new TaskService(this.taskRepository);
+    // 初始化服务 - 稍后在 initialize 方法中设置
+    this.taskRepository = null;
+    this.taskService = null;
     this.notificationService = new NotificationService();
     
     // 应用配置存储
@@ -34,7 +35,11 @@ class MoliTodoApp {
         autoStart: false,
         showNotifications: true,
         alertSound: 'system', // 'none', 'system', 'chime', 'digital'
-        theme: 'system' // 'light', 'dark', 'system'
+        theme: 'system', // 'light', 'dark', 'system'
+        database: {
+          type: 'sqlite', // 'file' or 'sqlite'
+          path: null // null 表示使用默认路径
+        }
       }
     });
 
@@ -103,6 +108,9 @@ class MoliTodoApp {
       return;
     }
 
+    // 初始化数据库和服务
+    await this.initializeDatabase();
+
     // 创建悬浮窗口
     this.createFloatingWindow();
     
@@ -119,6 +127,64 @@ class MoliTodoApp {
     this.setupAppEvents();
 
     console.log('MoliTodo 应用已启动');
+  }
+
+  /**
+   * 初始化数据库
+   */
+  async initializeDatabase() {
+    const dbConfig = this.configStore.get('database', { type: 'sqlite', path: null });
+    
+    try {
+      if (dbConfig.type === 'sqlite') {
+        // 使用 SQLite 数据库
+        const dbPath = dbConfig.path || this.getDefaultDatabasePath();
+        console.log('初始化 SQLite 数据库:', dbPath);
+        
+        this.taskRepository = new SqliteTaskRepository(dbPath);
+        await this.taskRepository.initialize();
+      } else {
+        // 使用文件存储（向后兼容）
+        console.log('使用文件存储');
+        this.taskRepository = new FileTaskRepository();
+      }
+      
+      this.taskService = new TaskService(this.taskRepository);
+      console.log('数据库初始化完成');
+    } catch (error) {
+      console.error('数据库初始化失败:', error);
+      // 回退到文件存储
+      console.log('回退到文件存储');
+      this.taskRepository = new FileTaskRepository();
+      this.taskService = new TaskService(this.taskRepository);
+    }
+  }
+
+  /**
+   * 获取默认数据库路径
+   */
+  getDefaultDatabasePath() {
+    const { app } = require('electron');
+    return path.join(app.getPath('userData'), 'tasks.db');
+  }
+
+  /**
+   * 重新初始化数据库
+   */
+  async reinitializeDatabase() {
+    // 关闭当前数据库连接
+    if (this.taskRepository && typeof this.taskRepository.close === 'function') {
+      await this.taskRepository.close();
+    }
+
+    // 清除提醒调度
+    this.notificationService.clearAllSchedules();
+
+    // 重新初始化
+    await this.initializeDatabase();
+    
+    // 重新设置提醒
+    await this.initializeReminders();
   }
 
   /**
@@ -722,6 +788,92 @@ MIT License`,
       // TODO: 实现声音播放
       console.log('播放提醒声音:', soundType);
       return { success: true };
+    });
+
+    // ========== 数据库相关的IPC处理器 ==========
+    
+    // 获取数据库统计信息
+    ipcMain.handle('get-database-stats', async () => {
+      try {
+        if (this.taskRepository && typeof this.taskRepository.getStats === 'function') {
+          return await this.taskRepository.getStats();
+        }
+        return { error: '数据库统计信息不可用' };
+      } catch (error) {
+        console.error('获取数据库统计失败:', error);
+        return { error: error.message };
+      }
+    });
+
+    // 设置数据库路径
+    ipcMain.handle('set-database-path', async (event, newPath) => {
+      try {
+        const { dialog } = require('electron');
+        
+        // 如果没有提供路径，打开文件选择对话框
+        if (!newPath) {
+          const result = await dialog.showSaveDialog(this.settingsWindow || this.floatingWindow, {
+            title: '选择数据库保存位置',
+            defaultPath: 'tasks.db',
+            filters: [
+              { name: 'SQLite Database', extensions: ['db', 'sqlite', 'sqlite3'] }
+            ]
+          });
+
+          if (result.canceled || !result.filePath) {
+            return { success: false, canceled: true };
+          }
+          
+          newPath = result.filePath;
+        }
+
+        // 验证路径
+        const fs = require('fs').promises;
+        const newDir = path.dirname(newPath);
+        
+        try {
+          await fs.mkdir(newDir, { recursive: true });
+        } catch (error) {
+          return { success: false, error: '无法创建目录: ' + error.message };
+        }
+
+        // 保存配置
+        this.configStore.set('database.path', newPath);
+        
+        // 重新初始化数据库
+        await this.reinitializeDatabase();
+        
+        return { success: true, path: newPath };
+      } catch (error) {
+        console.error('设置数据库路径失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 迁移数据库
+    ipcMain.handle('migrate-database', async (event, fromType, toType) => {
+      try {
+        // 导出当前数据
+        const exportData = await this.taskRepository.exportData();
+        
+        // 切换数据库类型
+        this.configStore.set('database.type', toType);
+        
+        // 重新初始化数据库
+        await this.reinitializeDatabase();
+        
+        // 导入数据到新数据库
+        await this.taskRepository.importData(exportData);
+        
+        // 更新UI
+        this.updateFloatingIcon();
+        this.sendTasksToPanel();
+        
+        return { success: true, taskCount: exportData.tasks.length };
+      } catch (error) {
+        console.error('数据库迁移失败:', error);
+        return { success: false, error: error.message };
+      }
     });
   }
 

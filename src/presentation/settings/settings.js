@@ -43,6 +43,21 @@ class SettingsManager {
             sizeValue.textContent = `${this.config.floatingIcon.size}px`;
         }
 
+        // 更新数据库设置
+        const dbTypeRadios = document.querySelectorAll('input[name="dbType"]');
+        const dbPath = document.getElementById('dbPath');
+        
+        if (this.config.database) {
+            dbTypeRadios.forEach(radio => {
+                radio.checked = radio.value === (this.config.database.type || 'sqlite');
+            });
+            
+            if (dbPath) {
+                dbPath.value = this.config.database.path || '';
+                dbPath.placeholder = this.config.database.path ? '' : '使用默认位置';
+            }
+        }
+
         // 更新主题设置
         const themeRadios = document.querySelectorAll('input[name="theme"]');
         themeRadios.forEach(radio => {
@@ -60,6 +75,9 @@ class SettingsManager {
         if (showNotifications) {
             showNotifications.checked = this.config.showNotifications !== false;
         }
+
+        // 加载数据库统计信息
+        this.loadDatabaseStats();
     }
 
     initTabs() {
@@ -128,6 +146,28 @@ class SettingsManager {
         const autoStart = document.getElementById('autoStart');
         autoStart.addEventListener('change', (e) => {
             this.setAutoStart(e.target.checked);
+        });
+
+        // 数据库类型选择
+        const dbTypeRadios = document.querySelectorAll('input[name="dbType"]');
+        dbTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.changeDatabaseType(e.target.value);
+                }
+            });
+        });
+
+        // 选择数据库路径
+        const choosePath = document.getElementById('choosePath');
+        choosePath.addEventListener('click', () => {
+            this.chooseDatabasePath();
+        });
+
+        // 重置数据库路径
+        const resetPath = document.getElementById('resetPath');
+        resetPath.addEventListener('click', () => {
+            this.resetDatabasePath();
         });
     }
 
@@ -226,6 +266,87 @@ class SettingsManager {
             console.error('设置自动启动失败:', error);
             this.showMessage('设置自动启动失败: ' + error.message, 'error');
             document.getElementById('autoStart').checked = !enabled;
+        }
+    }
+
+    async loadDatabaseStats() {
+        try {
+            const stats = await ipcRenderer.invoke('get-database-stats');
+            const dbStatsEl = document.getElementById('dbStats');
+            
+            if (stats.error) {
+                dbStatsEl.textContent = '无法获取数据库统计信息';
+                dbStatsEl.className = 'setting-description';
+            } else {
+                const statusCounts = stats.statusCounts || {};
+                const statsText = `总任务: ${stats.total || 0} | 待办: ${statusCounts.todo || 0} | 进行中: ${statusCounts.doing || 0} | 已完成: ${statusCounts.done || 0}${stats.withReminder ? ` | 有提醒: ${stats.withReminder}` : ''}${stats.dbPath ? ` | 位置: ${stats.dbPath}` : ''}`;
+                
+                dbStatsEl.textContent = statsText;
+                dbStatsEl.className = 'setting-description stats';
+            }
+        } catch (error) {
+            console.error('加载数据库统计失败:', error);
+            const dbStatsEl = document.getElementById('dbStats');
+            dbStatsEl.textContent = '数据库统计信息加载失败';
+            dbStatsEl.className = 'setting-description';
+        }
+    }
+
+    async changeDatabaseType(newType) {
+        const currentType = this.config.database?.type || 'sqlite';
+        
+        if (newType === currentType) {
+            return;
+        }
+
+        if (confirm(`切换数据库类型将迁移现有数据。确定要从 ${currentType === 'sqlite' ? 'SQLite' : '文件存储'} 切换到 ${newType === 'sqlite' ? 'SQLite' : '文件存储'} 吗？`)) {
+            try {
+                const result = await ipcRenderer.invoke('migrate-database', currentType, newType);
+                
+                if (result.success) {
+                    this.showMessage(`数据库迁移成功！已迁移 ${result.taskCount} 个任务`, 'success');
+                    await this.loadConfig(); // 重新加载配置
+                } else {
+                    this.showMessage('数据库迁移失败: ' + result.error, 'error');
+                    // 恢复原来的选择
+                    document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+                }
+            } catch (error) {
+                this.showMessage('数据库迁移失败: ' + error.message, 'error');
+                document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+            }
+        } else {
+            // 用户取消，恢复原来的选择
+            document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+        }
+    }
+
+    async chooseDatabasePath() {
+        try {
+            const result = await ipcRenderer.invoke('set-database-path');
+            
+            if (result.success) {
+                this.showMessage('数据库路径设置成功', 'success');
+                await this.loadConfig(); // 重新加载配置
+            } else if (result.canceled) {
+                // 用户取消了操作
+            } else {
+                this.showMessage('设置数据库路径失败: ' + result.error, 'error');
+            }
+        } catch (error) {
+            this.showMessage('设置数据库路径失败: ' + error.message, 'error');
+        }
+    }
+
+    async resetDatabasePath() {
+        if (confirm('重置为默认数据库路径？这将创建一个新的数据库文件。')) {
+            try {
+                await this.updateConfig('database.path', null);
+                this.showMessage('数据库路径已重置为默认', 'success');
+                await this.loadConfig(); // 重新加载配置
+            } catch (error) {
+                this.showMessage('重置数据库路径失败: ' + error.message, 'error');
+            }
         }
     }
 
