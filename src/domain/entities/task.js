@@ -92,10 +92,23 @@ class Task {
    * @param {Date} reminderTime 提醒时间
    */
   setReminder(reminderTime) {
-    if (reminderTime && reminderTime <= new Date()) {
-      throw new Error('提醒时间不能是过去的时间');
+    if (reminderTime) {
+      // 检查是否是 Unix 时间戳 0 (1970-01-01T00:00:00.000Z)，这表示清除提醒
+      const isUnixEpoch = reminderTime.getTime() === 0;
+      
+      if (!isUnixEpoch) {
+        const now = new Date();
+        // 允许30秒的时间容差，避免因为网络延迟或处理时间导致的问题
+        const minAllowedTime = new Date(now.getTime() - 30 * 1000);
+        
+        if (reminderTime <= minAllowedTime) {
+          throw new Error('提醒时间不能是过去的时间');
+        }
+      }
     }
-    this.reminderTime = reminderTime;
+    
+    // 如果是 Unix 时间戳 0，将其设置为 null（表示无提醒）
+    this.reminderTime = (reminderTime && reminderTime.getTime() === 0) ? null : reminderTime;
     this.updatedAt = new Date();
   }
 

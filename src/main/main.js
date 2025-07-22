@@ -530,7 +530,7 @@ MIT License`,
       }
 
       this.updateFloatingIcon();
-      this.sendTasksToPanel(); // 更新任务面板
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return task;
     });
 
@@ -551,7 +551,7 @@ MIT License`,
       }
 
       this.updateFloatingIcon();
-      this.sendTasksToPanel(); // 更新任务面板
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return task;
     });
 
@@ -560,7 +560,7 @@ MIT License`,
       const success = await this.taskService.deleteTask(taskId);
       this.notificationService.cancelTaskReminder(taskId);
       this.updateFloatingIcon();
-      this.sendTasksToPanel(); // 更新任务面板
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return success;
     });
 
@@ -570,13 +570,14 @@ MIT License`,
       this.notificationService.scheduleTaskReminder(task, (task) => {
         this.handleTaskReminder(task);
       });
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return task;
     });
 
     // 更新任务内容
     ipcMain.handle('update-task-content', async (event, taskId, content) => {
       const task = await this.taskService.updateTaskContent(taskId, content);
-      this.sendTasksToPanel(); // 更新任务面板
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return task;
     });
 
@@ -584,7 +585,7 @@ MIT License`,
     ipcMain.handle('update-task-status', async (event, taskId, status) => {
       const task = await this.taskService.updateTaskStatus(taskId, status);
       this.updateFloatingIcon();
-      this.sendTasksToPanel(); // 更新任务面板
+      this.broadcastTaskUpdates(); // 更新所有窗口
       return task;
     });
 
@@ -774,7 +775,7 @@ MIT License`,
           // 重新初始化提醒
           await this.initializeReminders();
           this.updateFloatingIcon();
-          this.sendTasksToPanel();
+          this.broadcastTaskUpdates();
 
           return { success: true, taskCount: importData.tasks.length };
         }
@@ -792,7 +793,7 @@ MIT License`,
         await this.taskService.clearAllTasks();
         this.notificationService.clearAllSchedules();
         this.updateFloatingIcon();
-        this.sendTasksToPanel();
+        this.broadcastTaskUpdates();
         return { success: true };
       } catch (error) {
         console.error('清除数据失败:', error);
@@ -899,7 +900,7 @@ MIT License`,
 
         // 更新UI
         this.updateFloatingIcon();
-        this.sendTasksToPanel();
+        this.broadcastTaskUpdates();
 
         return { success: true, taskCount: exportData.tasks.length };
       } catch (error) {
@@ -1075,6 +1076,35 @@ MIT License`,
     if (this.taskPanelWindow) {
       const tasks = await this.taskService.getIncompleteTasks();
       this.taskPanelWindow.webContents.send('update-tasks', tasks);
+    }
+  }
+
+  /**
+   * 向所有窗口发送任务更新
+   */
+  async broadcastTaskUpdates() {
+    try {
+      const tasks = await this.taskService.getIncompleteTasks();
+      const completedTasks = await this.taskService.getCompletedTasks();
+
+      let sentCount = 0;
+
+      // 向任务面板发送更新
+      if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+        this.taskPanelWindow.webContents.send('update-tasks', tasks);
+        sentCount++;
+      }
+
+      // 向任务管理器发送更新
+      if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+        this.taskManagerWindow.webContents.send('update-tasks', tasks);
+        this.taskManagerWindow.webContents.send('update-completed-tasks', completedTasks);
+        sentCount++;
+      }
+
+      console.log(`主进程: 已向 ${sentCount} 个窗口广播任务更新 (${tasks.length} 个未完成任务, ${completedTasks.length} 个已完成任务)`);
+    } catch (error) {
+      console.error('广播任务更新失败:', error);
     }
   }
 }

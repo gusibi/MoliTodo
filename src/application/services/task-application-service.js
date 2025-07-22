@@ -20,11 +20,16 @@ class TaskApplicationService {
      * 初始化数据管理器
      */
     async init() {
-        if (this.isInitialized) return;
-        
+        if (this.isInitialized) {
+            console.log('TaskApplicationService: 已经初始化，跳过重复初始化');
+            return;
+        }
+
+        console.log('TaskApplicationService: 开始初始化');
         await this.loadAllData();
         this.setupIpcListeners();
         this.isInitialized = true;
+        console.log('TaskApplicationService: 初始化完成');
     }
 
     /**
@@ -73,14 +78,20 @@ class TaskApplicationService {
      * 设置IPC监听器
      */
     setupIpcListeners() {
+        // 先移除可能存在的旧监听器，避免重复添加
+        ipcRenderer.removeAllListeners('update-tasks');
+        ipcRenderer.removeAllListeners('update-completed-tasks');
+        
         // 监听任务更新事件
         ipcRenderer.on('update-tasks', async (event, tasks) => {
+            console.log('TaskApplicationService: 接收到任务更新事件', tasks?.length || 0, '个任务');
             this.tasks = tasks || [];
             this.notifyListeners('tasksUpdated', this.tasks);
         });
 
         // 监听已完成任务更新事件
         ipcRenderer.on('update-completed-tasks', async (event, completedTasks) => {
+            console.log('TaskApplicationService: 接收到已完成任务更新事件', completedTasks?.length || 0, '个任务');
             this.completedTasks = completedTasks || [];
             this.notifyListeners('completedTasksUpdated', this.completedTasks);
         });
@@ -92,8 +103,11 @@ class TaskApplicationService {
     async createTask(content, reminderTime = null) {
         try {
             const task = await ipcRenderer.invoke('create-task', content, reminderTime);
-            this.tasks.push(task);
-            this.notifyListeners('tasksUpdated', this.tasks);
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return task;
         } catch (error) {
             console.error('创建任务失败:', error);
@@ -107,16 +121,11 @@ class TaskApplicationService {
     async completeTask(taskId) {
         try {
             const task = await ipcRenderer.invoke('complete-task', taskId);
-            
-            // 从未完成任务中移除
-            this.tasks = this.tasks.filter(t => t.id !== taskId);
-            
-            // 添加到已完成任务
-            this.completedTasks.unshift(task);
-            
-            this.notifyListeners('tasksUpdated', this.tasks);
-            this.notifyListeners('completedTasksUpdated', this.completedTasks);
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return task;
         } catch (error) {
             console.error('完成任务失败:', error);
@@ -130,16 +139,11 @@ class TaskApplicationService {
     async restoreTask(taskId) {
         try {
             const task = await ipcRenderer.invoke('complete-task', taskId, false);
-            
-            // 从已完成任务中移除
-            this.completedTasks = this.completedTasks.filter(t => t.id !== taskId);
-            
-            // 添加到未完成任务
-            this.tasks.push(task);
-            
-            this.notifyListeners('tasksUpdated', this.tasks);
-            this.notifyListeners('completedTasksUpdated', this.completedTasks);
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return task;
         } catch (error) {
             console.error('恢复任务失败:', error);
@@ -153,14 +157,11 @@ class TaskApplicationService {
     async deleteTask(taskId) {
         try {
             await ipcRenderer.invoke('delete-task', taskId);
-            
-            // 从两个列表中移除
-            this.tasks = this.tasks.filter(t => t.id !== taskId);
-            this.completedTasks = this.completedTasks.filter(t => t.id !== taskId);
-            
-            this.notifyListeners('tasksUpdated', this.tasks);
-            this.notifyListeners('completedTasksUpdated', this.completedTasks);
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return true;
         } catch (error) {
             console.error('删除任务失败:', error);
@@ -174,14 +175,11 @@ class TaskApplicationService {
     async updateTaskContent(taskId, content) {
         try {
             const updatedTask = await ipcRenderer.invoke('update-task-content', taskId, content);
-            
-            // 更新本地缓存
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.notifyListeners('tasksUpdated', this.tasks);
-            }
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return updatedTask;
         } catch (error) {
             console.error('更新任务内容失败:', error);
@@ -195,14 +193,11 @@ class TaskApplicationService {
     async setTaskReminder(taskId, reminderTime) {
         try {
             const updatedTask = await ipcRenderer.invoke('set-task-reminder', taskId, reminderTime);
-            
-            // 更新本地缓存
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.notifyListeners('tasksUpdated', this.tasks);
-            }
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return updatedTask;
         } catch (error) {
             console.error('设置任务提醒失败:', error);
@@ -216,14 +211,11 @@ class TaskApplicationService {
     async updateTaskStatus(taskId, status) {
         try {
             const updatedTask = await ipcRenderer.invoke('update-task-status', taskId, status);
-            
-            // 更新本地缓存
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.notifyListeners('tasksUpdated', this.tasks);
-            }
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return updatedTask;
         } catch (error) {
             console.error('更新任务状态失败:', error);
@@ -308,14 +300,11 @@ class TaskApplicationService {
     async clearTaskReminder(taskId) {
         try {
             const updatedTask = await ipcRenderer.invoke('set-task-reminder', taskId, null);
-            
-            // 更新本地缓存
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex >= 0) {
-                this.tasks[taskIndex] = updatedTask;
-                this.notifyListeners('tasksUpdated', this.tasks);
-            }
-            
+
+            // 不需要手动更新本地缓存，因为主进程会广播更新
+            // 主进程的 broadcastTaskUpdates() 会发送 IPC 事件，
+            // setupIpcListeners() 中的监听器会自动更新本地缓存
+
             return updatedTask;
         } catch (error) {
             console.error('清除任务提醒失败:', error);
@@ -327,11 +316,22 @@ class TaskApplicationService {
      * 清理资源
      */
     destroy() {
+        console.log('TaskApplicationService: 开始清理资源');
+        
+        // 清理 IPC 监听器
+        ipcRenderer.removeAllListeners('update-tasks');
+        ipcRenderer.removeAllListeners('update-completed-tasks');
+        
+        // 清理事件监听器
         this.listeners = {
             tasksUpdated: [],
             completedTasksUpdated: []
         };
+        
+        // 重置初始化状态
         this.isInitialized = false;
+        
+        console.log('TaskApplicationService: 资源清理完成');
     }
 }
 
