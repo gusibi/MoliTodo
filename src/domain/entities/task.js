@@ -3,12 +3,29 @@
  * 领域层核心实体，包含任务的所有业务逻辑
  */
 class Task {
-  constructor(id, content, completed = false, createdAt = new Date(), reminderTime = null) {
+  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null) {
     this.id = id;
     this.content = content;
-    this.completed = completed;
+    this.status = status; // 'todo', 'doing', 'done'
     this.createdAt = createdAt;
     this.reminderTime = reminderTime;
+    this.updatedAt = new Date();
+    
+    // Keep backward compatibility
+    this.completed = status === 'done';
+  }
+
+  /**
+   * 更新任务状态
+   * @param {string} status 新状态 ('todo', 'doing', 'done')
+   */
+  updateStatus(status) {
+    const validStatuses = ['todo', 'doing', 'done'];
+    if (!validStatuses.includes(status)) {
+      throw new Error('无效的任务状态');
+    }
+    this.status = status;
+    this.completed = status === 'done'; // Keep backward compatibility
     this.updatedAt = new Date();
   }
 
@@ -16,22 +33,58 @@ class Task {
    * 标记任务为已完成
    */
   markAsCompleted() {
-    if (this.completed) {
-      throw new Error('任务已经完成');
-    }
-    this.completed = true;
-    this.updatedAt = new Date();
+    this.updateStatus('done');
   }
 
   /**
    * 标记任务为未完成
    */
   markAsIncomplete() {
-    if (!this.completed) {
-      throw new Error('任务已经是未完成状态');
-    }
-    this.completed = false;
-    this.updatedAt = new Date();
+    this.updateStatus('todo');
+  }
+
+  /**
+   * 标记任务为进行中
+   */
+  markAsInProgress() {
+    this.updateStatus('doing');
+  }
+
+  /**
+   * 获取状态显示文本
+   * @returns {string}
+   */
+  getStatusText() {
+    const statusMap = {
+      'todo': '待办',
+      'doing': '进行中',
+      'done': '已完成'
+    };
+    return statusMap[this.status] || '未知';
+  }
+
+  /**
+   * 检查是否已完成
+   * @returns {boolean}
+   */
+  isCompleted() {
+    return this.status === 'done';
+  }
+
+  /**
+   * 检查是否进行中
+   * @returns {boolean}
+   */
+  isInProgress() {
+    return this.status === 'doing';
+  }
+
+  /**
+   * 检查是否待办
+   * @returns {boolean}
+   */
+  isTodo() {
+    return this.status === 'todo';
   }
 
   /**
@@ -71,7 +124,7 @@ class Task {
    * @returns {boolean}
    */
   shouldRemind() {
-    if (!this.reminderTime || this.completed) {
+    if (!this.reminderTime || this.isCompleted()) {
       return false;
     }
     return new Date() >= this.reminderTime;
@@ -118,7 +171,8 @@ class Task {
     return {
       id: this.id,
       content: this.content,
-      completed: this.completed,
+      status: this.status,
+      completed: this.completed, // Keep for backward compatibility
       createdAt: this.createdAt.toISOString(),
       reminderTime: this.reminderTime ? this.reminderTime.toISOString() : null,
       updatedAt: this.updatedAt.toISOString()
@@ -131,10 +185,16 @@ class Task {
    * @returns {Task}
    */
   static fromJSON(data) {
+    // Handle backward compatibility
+    let status = data.status;
+    if (!status) {
+      status = data.completed ? 'done' : 'todo';
+    }
+    
     return new Task(
       data.id,
       data.content,
-      data.completed,
+      status,
       new Date(data.createdAt),
       data.reminderTime ? new Date(data.reminderTime) : null
     );
@@ -145,7 +205,7 @@ class Task {
    * @returns {string}
    */
   static generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 }
 

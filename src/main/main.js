@@ -482,6 +482,14 @@ MIT License`,
       return task;
     });
 
+    // 更新任务状态
+    ipcMain.handle('update-task-status', async (event, taskId, status) => {
+      const task = await this.taskService.updateTaskStatus(taskId, status);
+      this.updateFloatingIcon();
+      this.sendTasksToPanel(); // 更新任务面板
+      return task;
+    });
+
     // 显示任务面板
     ipcMain.handle('show-task-panel', () => {
       this.createTaskPanel();

@@ -23,7 +23,7 @@ class TaskService {
     const task = new Task(
       Task.generateId(),
       content.trim(),
-      false,
+      'todo', // Default status
       new Date(),
       reminderTime
     );
@@ -94,6 +94,22 @@ class TaskService {
     }
 
     task.updateContent(content);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 更新任务状态
+   * @param {string} taskId 任务ID
+   * @param {string} status 新状态 ('todo', 'doing', 'done')
+   * @returns {Promise<Task>}
+   */
+  async updateTaskStatus(taskId, status) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.updateStatus(status);
     return await this.taskRepository.save(task);
   }
 

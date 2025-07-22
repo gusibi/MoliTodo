@@ -211,6 +211,27 @@ class TaskApplicationService {
     }
 
     /**
+     * 更新任务状态
+     */
+    async updateTaskStatus(taskId, status) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('update-task-status', taskId, status);
+            
+            // 更新本地缓存
+            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex >= 0) {
+                this.tasks[taskIndex] = updatedTask;
+                this.notifyListeners('tasksUpdated', this.tasks);
+            }
+            
+            return updatedTask;
+        } catch (error) {
+            console.error('更新任务状态失败:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 获取未完成任务
      */
     getTasks() {
@@ -279,6 +300,27 @@ class TaskApplicationService {
      */
     async refresh() {
         await this.loadAllData();
+    }
+
+    /**
+     * 清除任务提醒
+     */
+    async clearTaskReminder(taskId) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('set-task-reminder', taskId, null);
+            
+            // 更新本地缓存
+            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex >= 0) {
+                this.tasks[taskIndex] = updatedTask;
+                this.notifyListeners('tasksUpdated', this.tasks);
+            }
+            
+            return updatedTask;
+        } catch (error) {
+            console.error('清除任务提醒失败:', error);
+            throw error;
+        }
     }
 
     /**

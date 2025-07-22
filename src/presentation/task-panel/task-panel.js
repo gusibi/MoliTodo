@@ -181,6 +181,62 @@ class TaskPanel {
         }
     }
 
+    async cycleTaskStatus(taskId) {
+        try {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const currentStatus = task.status || (task.completed ? 'done' : 'todo');
+            let nextStatus;
+            
+            // Cycle through statuses: todo -> doing -> done -> todo
+            switch (currentStatus) {
+                case 'todo':
+                    nextStatus = 'doing';
+                    break;
+                case 'doing':
+                    nextStatus = 'done';
+                    break;
+                case 'done':
+                    nextStatus = 'todo';
+                    break;
+                default:
+                    nextStatus = 'doing';
+            }
+
+            await taskApplicationService.updateTaskStatus(taskId, nextStatus);
+        } catch (error) {
+            console.error('更新任务状态失败:', error);
+            this.showError('更新任务状态失败');
+        }
+    }
+
+    getStatusText(status) {
+        const statusMap = {
+            'todo': '待办',
+            'doing': '进行中',
+            'done': '已完成'
+        };
+        return statusMap[status] || '待办';
+    }
+
+    getStatusIcon(status) {
+        const iconMap = {
+            'todo': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                     </svg>`,
+            'doing': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="4" fill="white"/>
+                      </svg>`,
+            'done': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white"/>
+                     </svg>`
+        };
+        return iconMap[status] || iconMap['todo'];
+    }
+
     async deleteTask(taskId) {
         try {
             await taskApplicationService.deleteTask(taskId);
@@ -233,24 +289,30 @@ class TaskPanel {
         const isOverdue = task.reminderTime && new Date(task.reminderTime) < new Date();
         const reminderClass = isOverdue ? 'task-reminder overdue' : 'task-reminder';
         
+        // 获取任务状态
+        const status = task.status || (task.completed ? 'done' : 'todo');
+        const statusText = this.getStatusText(status);
+        const statusClass = `task-status status-${status}`;
+        
         return `
-            <div class="task-item" data-task-id="${task.id}">
-                <div class="task-checkbox" data-action="complete">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
-                    </svg>
+            <div class="task-item ${status}" data-task-id="${task.id}" data-status="${status}">
+                <div class="task-status-indicator" data-action="cycle-status" title="点击切换状态">
+                    ${this.getStatusIcon(status)}
                 </div>
                 <div class="task-content">
                     <div class="task-text" data-action="edit" title="双击编辑">${this.escapeHtml(task.content)}</div>
                     <input class="task-edit-input" style="display: none;" value="${this.escapeHtml(task.content)}" />
-                    ${reminderText ? `
-                        <div class="${reminderClass}">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor"/>
-                            </svg>
-                            ${reminderText}
-                        </div>
-                    ` : ''}
+                    <div class="task-meta">
+                        <span class="${statusClass}">${statusText}</span>
+                        ${reminderText ? `
+                            <div class="${reminderClass}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor"/>
+                                </svg>
+                                ${reminderText}
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
                 <div class="task-actions">
                     <button class="action-button reminder-btn" data-action="reminder" title="设置提醒">
@@ -277,6 +339,9 @@ class TaskPanel {
             const action = e.target.closest('[data-action]')?.dataset.action;
 
             switch (action) {
+                case 'cycle-status':
+                    this.cycleTaskStatus(taskId);
+                    break;
                 case 'complete':
                     this.completeTask(taskId);
                     break;

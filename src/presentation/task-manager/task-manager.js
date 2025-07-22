@@ -24,6 +24,8 @@ class TaskManager {
         this.taskCounts = {
             today: document.getElementById('todayCount'),
             scheduled: document.getElementById('scheduledCount'),
+            todo: document.getElementById('todoCount'),
+            doing: document.getElementById('doingCount'),
             all: document.getElementById('allCount'),
             completed: document.getElementById('completedCount')
         };
@@ -223,6 +225,8 @@ class TaskManager {
         const titles = {
             today: '今天',
             scheduled: '计划中',
+            todo: '待办任务',
+            doing: '进行中',
             all: '所有任务',
             completed: '已完成'
         };
@@ -255,6 +259,18 @@ class TaskManager {
                 break;
             case 'scheduled':
                 tasks = this.getScheduledTasks();
+                break;
+            case 'todo':
+                tasks = this.tasks.filter(task => {
+                    const status = task.status || (task.completed ? 'done' : 'todo');
+                    return status === 'todo';
+                });
+                break;
+            case 'doing':
+                tasks = this.tasks.filter(task => {
+                    const status = task.status || (task.completed ? 'done' : 'todo');
+                    return status === 'doing';
+                });
                 break;
             case 'all':
                 tasks = [...this.tasks];
@@ -439,12 +455,14 @@ class TaskManager {
         }
 
         const isCompleted = this.currentCategory === 'completed';
+        const status = task.status || (task.completed ? 'done' : 'todo');
+        
+        // Add status class
+        taskItem.classList.add(`status-${status}`);
 
         taskItem.innerHTML = `
-            <div class="task-checkbox ${isCompleted ? 'completed' : ''}" data-action="toggle">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
-                </svg>
+            <div class="task-status-indicator" data-action="cycle-status" title="点击切换状态">
+                ${this.getStatusIcon(status)}
             </div>
             <div class="task-content">
                 <div class="task-text ${isCompleted ? 'completed' : ''}">${this.escapeHtml(task.content)}</div>
@@ -462,6 +480,15 @@ class TaskManager {
 
     renderTaskMeta(task) {
         const meta = [];
+        const status = task.status || (task.completed ? 'done' : 'todo');
+        const statusText = this.getStatusText(status);
+
+        // Add status badge
+        meta.push(`
+            <div class="task-status status-${status}">
+                ${statusText}
+            </div>
+        `);
 
         if (task.reminderTime) {
             const reminderText = this.formatReminderTime(new Date(task.reminderTime));
@@ -544,6 +571,9 @@ class TaskManager {
         e.stopPropagation();
 
         switch (action) {
+            case 'cycle-status':
+                this.cycleTaskStatus(taskId);
+                break;
             case 'toggle':
                 if (this.currentCategory === 'completed') {
                     this.restoreTask(taskId);
@@ -639,6 +669,62 @@ class TaskManager {
             console.error('删除任务失败:', error);
             this.showError('删除任务失败');
         }
+    }
+
+    async cycleTaskStatus(taskId) {
+        try {
+            const task = [...this.tasks, ...this.completedTasks].find(t => t.id === taskId);
+            if (!task) return;
+
+            const currentStatus = task.status || (task.completed ? 'done' : 'todo');
+            let nextStatus;
+            
+            // Cycle through statuses: todo -> doing -> done -> todo
+            switch (currentStatus) {
+                case 'todo':
+                    nextStatus = 'doing';
+                    break;
+                case 'doing':
+                    nextStatus = 'done';
+                    break;
+                case 'done':
+                    nextStatus = 'todo';
+                    break;
+                default:
+                    nextStatus = 'doing';
+            }
+
+            await taskApplicationService.updateTaskStatus(taskId, nextStatus);
+        } catch (error) {
+            console.error('更新任务状态失败:', error);
+            this.showError('更新任务状态失败');
+        }
+    }
+
+    getStatusText(status) {
+        const statusMap = {
+            'todo': '待办',
+            'doing': '进行中',
+            'done': '已完成'
+        };
+        return statusMap[status] || '待办';
+    }
+
+    getStatusIcon(status) {
+        const iconMap = {
+            'todo': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                     </svg>`,
+            'doing': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="4" fill="white"/>
+                      </svg>`,
+            'done': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white"/>
+                     </svg>`
+        };
+        return iconMap[status] || iconMap['todo'];
     }
 
     showEditModal(taskId) {
@@ -807,10 +893,25 @@ class TaskManager {
         const todayTasks = this.getTodayTasks();
         const scheduledTasks = this.getScheduledTasks();
 
+        // Count tasks by status
+        const todoTasks = this.tasks.filter(task => {
+            const status = task.status || (task.completed ? 'done' : 'todo');
+            return status === 'todo';
+        });
+        
+        const doingTasks = this.tasks.filter(task => {
+            const status = task.status || (task.completed ? 'done' : 'todo');
+            return status === 'doing';
+        });
+
         this.taskCounts.today.textContent = todayTasks.length;
         this.taskCounts.scheduled.textContent = scheduledTasks.length;
         this.taskCounts.all.textContent = this.tasks.length;
         this.taskCounts.completed.textContent = this.completedTasks.length;
+        
+        // Update status-specific counts
+        if (this.taskCounts.todo) this.taskCounts.todo.textContent = todoTasks.length;
+        if (this.taskCounts.doing) this.taskCounts.doing.textContent = doingTasks.length;
     }
 
     updateStats() {

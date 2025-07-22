@@ -408,6 +408,50 @@ body {
     border-left: 4px solid #ef4444;
 }
 
+.task-item.status-todo {
+    border-left: 4px solid #94a3b8;
+}
+
+.task-item.status-doing {
+    border-left: 4px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.03);
+}
+
+.task-item.status-done {
+    border-left: 4px solid #10b981;
+    background: rgba(16, 185, 129, 0.03);
+}
+
+/* 任务状态指示器 */
+.task-status-indicator {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+.task-status-indicator:hover {
+    transform: scale(1.1);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.task-item.status-todo .task-status-indicator {
+    color: #94a3b8;
+}
+
+.task-item.status-doing .task-status-indicator {
+    color: #f59e0b;
+}
+
+.task-item.status-done .task-status-indicator {
+    color: #10b981;
+}
+
 /* 任务复选框 */
 .task-checkbox {
     width: 20px;
@@ -468,6 +512,11 @@ body {
     color: #94a3b8;
 }
 
+.task-item.status-done .task-text {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
 .task-meta {
     font-size: 13px;
     color: #64748b;
@@ -502,6 +551,32 @@ body {
 .task-created {
     color: #94a3b8;
     font-size: 12px;
+}
+
+.task-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.task-status.status-todo {
+    background: rgba(148, 163, 184, 0.15);
+    color: #64748b;
+}
+
+.task-status.status-doing {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.task-status.status-done {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
 }
 
 /* 任务操作按钮 */
