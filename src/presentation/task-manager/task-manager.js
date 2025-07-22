@@ -11,10 +11,10 @@ class TaskManager {
         this.selectedTasks = new Set();
         this.currentEditingTask = null;
         this.currentDeletingTask = null;
-        
+
         // DOM 元素
         this.initDOMElements();
-        
+
         this.init();
     }
 
@@ -70,11 +70,11 @@ class TaskManager {
     async init() {
         // 初始化数据管理器
         await taskApplicationService.init();
-        
+
         this.setupEventListeners();
         this.setupTaskApplicationServiceListeners();
         this.loadTasks();
-        
+
         // 聚焦搜索框
         this.searchInput.focus();
     }
@@ -213,7 +213,7 @@ class TaskManager {
     switchCategory(category) {
         this.currentCategory = category;
         this.selectedTasks.clear();
-        
+
         // 更新侧边栏状态
         this.sidebarItems.forEach(item => {
             item.classList.toggle('active', item.dataset.category === category);
@@ -237,7 +237,7 @@ class TaskManager {
 
     renderCurrentView() {
         const filteredTasks = this.getFilteredTasks();
-        
+
         if (filteredTasks.length === 0) {
             this.showEmptyState();
         } else {
@@ -248,7 +248,7 @@ class TaskManager {
 
     getFilteredTasks() {
         let tasks = [];
-        
+
         switch (this.currentCategory) {
             case 'today':
                 tasks = this.getTodayTasks();
@@ -266,7 +266,7 @@ class TaskManager {
 
         // 应用搜索过滤
         if (this.searchQuery) {
-            tasks = tasks.filter(task => 
+            tasks = tasks.filter(task =>
                 task.content.toLowerCase().includes(this.searchQuery.toLowerCase())
             );
         }
@@ -277,7 +277,7 @@ class TaskManager {
     getTodayTasks() {
         const today = new Date();
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+        const todayEnd = new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate() + 1);
 
         return this.tasks.filter(task => {
             if (!task.reminderTime) return false;
@@ -293,12 +293,12 @@ class TaskManager {
     renderTasks(tasks) {
         // 按类别排序任务
         const sortedTasks = this.sortTasks(tasks);
-        
+
         // 按日期分组（仅对有提醒时间的任务）
         const groupedTasks = this.groupTasksByDate(sortedTasks);
-        
+
         this.taskList.innerHTML = '';
-        
+
         if (Object.keys(groupedTasks).length > 0) {
             // 渲染分组任务
             Object.entries(groupedTasks).forEach(([dateKey, dateTasks]) => {
@@ -322,20 +322,20 @@ class TaskManager {
             // 未完成任务排序逻辑
             const aOverdue = this.isOverdue(a);
             const bOverdue = this.isOverdue(b);
-            
+
             // 逾期任务优先
             if (aOverdue && !bOverdue) return -1;
             if (!aOverdue && bOverdue) return 1;
-            
+
             // 有提醒时间的任务按时间排序
             if (a.reminderTime && b.reminderTime) {
                 return new Date(a.reminderTime) - new Date(b.reminderTime);
             }
-            
+
             // 有提醒时间的任务排在前面
             if (a.reminderTime && !b.reminderTime) return -1;
             if (!a.reminderTime && b.reminderTime) return 1;
-            
+
             // 都没有提醒时间，按创建时间排序
             return new Date(a.createdAt) - new Date(b.createdAt);
         });
@@ -344,15 +344,16 @@ class TaskManager {
     groupTasksByDate(tasks) {
         const groups = {};
         const now = new Date();
+        // 使用本地时区获取今天的开始时间
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-        
+        const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
         tasks.forEach(task => {
             let dateKey = 'no-date';
-            
+
             if (task.reminderTime) {
                 const reminderDate = new Date(task.reminderTime);
-                
+
                 if (this.isSameDay(reminderDate, today)) {
                     dateKey = 'today';
                 } else if (this.isSameDay(reminderDate, tomorrow)) {
@@ -363,26 +364,26 @@ class TaskManager {
                     dateKey = reminderDate.toDateString();
                 }
             }
-            
+
             if (!groups[dateKey]) {
                 groups[dateKey] = [];
             }
             groups[dateKey].push(task);
         });
-        
+
         return groups;
     }
 
     renderDateGroup(dateKey, tasks) {
         const dateGroup = document.createElement('div');
         dateGroup.className = 'date-group';
-        
+
         const dateHeader = document.createElement('div');
         dateHeader.className = 'date-header';
-        
+
         let dateText = '';
         let dateIcon = '📅';
-        
+
         switch (dateKey) {
             case 'overdue':
                 dateText = '逾期';
@@ -402,25 +403,25 @@ class TaskManager {
                 break;
             default:
                 const date = new Date(dateKey);
-                dateText = date.toLocaleDateString('zh-CN', { 
-                    month: 'long', 
+                dateText = date.toLocaleDateString('zh-CN', {
+                    month: 'long',
                     day: 'numeric',
                     weekday: 'short'
                 });
                 dateIcon = '📅';
         }
-        
+
         dateHeader.innerHTML = `
             <div class="date-icon">${dateIcon}</div>
             ${dateText}
         `;
-        
+
         dateGroup.appendChild(dateHeader);
-        
+
         tasks.forEach(task => {
             dateGroup.appendChild(this.createTaskElement(task));
         });
-        
+
         this.taskList.appendChild(dateGroup);
     }
 
@@ -428,17 +429,17 @@ class TaskManager {
         const taskItem = document.createElement('div');
         taskItem.className = 'task-item';
         taskItem.dataset.taskId = task.id;
-        
+
         if (this.selectedTasks.has(task.id)) {
             taskItem.classList.add('selected');
         }
-        
+
         if (this.isOverdue(task)) {
             taskItem.classList.add('overdue');
         }
 
         const isCompleted = this.currentCategory === 'completed';
-        
+
         taskItem.innerHTML = `
             <div class="task-checkbox ${isCompleted ? 'completed' : ''}" data-action="toggle">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -461,7 +462,7 @@ class TaskManager {
 
     renderTaskMeta(task) {
         const meta = [];
-        
+
         if (task.reminderTime) {
             const reminderText = this.formatReminderTime(new Date(task.reminderTime));
             const isOverdue = this.isOverdue(task);
@@ -474,31 +475,31 @@ class TaskManager {
                 </div>
             `);
         }
-        
+
         if (this.currentCategory === 'completed') {
             meta.push(`
                 <div class="task-created">
                     完成于 ${new Date(task.completedAt || task.updatedAt).toLocaleString('zh-CN', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
                 </div>
             `);
         } else {
             meta.push(`
                 <div class="task-created">
                     创建于 ${new Date(task.createdAt).toLocaleString('zh-CN', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
                 </div>
             `);
         }
-        
+
         return meta.join('');
     }
 
@@ -578,13 +579,13 @@ class TaskManager {
         } else {
             this.selectedTasks.add(taskId);
         }
-        
+
         // 更新UI
         const taskItem = this.taskList.querySelector(`[data-task-id="${taskId}"]`);
         if (taskItem) {
             taskItem.classList.toggle('selected', this.selectedTasks.has(taskId));
         }
-        
+
         this.updateBatchActionsButton();
     }
 
@@ -646,7 +647,7 @@ class TaskManager {
 
         this.currentEditingTask = taskId;
         this.editTaskContent.value = task.content;
-        
+
         if (task.reminderTime) {
             const reminderDate = new Date(task.reminderTime);
             this.editReminderDate.value = reminderDate.getFullYear() + '-' +
@@ -658,7 +659,7 @@ class TaskManager {
             this.editReminderDate.value = '';
             this.editReminderTime.value = '';
         }
-        
+
         this.taskEditModal.classList.add('show');
         this.editTaskContent.focus();
     }
@@ -680,28 +681,28 @@ class TaskManager {
         try {
             // 更新任务内容
             await taskApplicationService.updateTaskContent(this.currentEditingTask, content);
-            
+
             // 更新提醒时间
             const date = this.editReminderDate.value;
             const time = this.editReminderTime.value;
-            
+
             if (date) {
                 // 如果设置了日期
                 const timeToUse = time || '09:00'; // 如果没有设置时间，默认使用9:00
                 const reminderTime = new Date(`${date}T${timeToUse}`);
-                
+
                 // 检查是否是过去的时间
                 if (reminderTime <= new Date()) {
                     this.showError('提醒时间不能是过去的时间');
                     return;
                 }
-                
+
                 await taskApplicationService.setTaskReminder(this.currentEditingTask, reminderTime.toISOString());
             } else {
                 // 如果没有设置日期，清除提醒
                 await taskApplicationService.setTaskReminder(this.currentEditingTask, null);
             }
-            
+
             this.hideEditModal();
         } catch (error) {
             console.error('保存任务失败:', error);
@@ -718,9 +719,9 @@ class TaskManager {
 
         const minutes = parseInt(button.dataset.minutes) || 0;
         const hours = parseInt(button.dataset.hours) || 0;
-        
+
         const targetTime = new Date(Date.now() + (minutes * 60 + hours * 60 * 60) * 1000);
-        
+
         this.editReminderDate.value = targetTime.toISOString().split('T')[0];
         this.editReminderTime.value = targetTime.toTimeString().slice(0, 5);
     }
@@ -737,7 +738,7 @@ class TaskManager {
 
     async confirmDeleteTask() {
         if (!this.currentDeletingTask) return;
-        
+
         try {
             await this.deleteTask(this.currentDeletingTask);
             this.hideDeleteModal();
@@ -758,11 +759,11 @@ class TaskManager {
 
     async batchCompleteTask() {
         try {
-            const promises = Array.from(this.selectedTasks).map(taskId => 
+            const promises = Array.from(this.selectedTasks).map(taskId =>
                 taskApplicationService.completeTask(taskId)
             );
             await Promise.all(promises);
-            
+
             this.selectedTasks.clear();
             this.updateBatchActionsButton();
             this.hideBatchActionsModal();
@@ -774,11 +775,11 @@ class TaskManager {
 
     async batchDeleteTasks() {
         try {
-            const promises = Array.from(this.selectedTasks).map(taskId => 
+            const promises = Array.from(this.selectedTasks).map(taskId =>
                 taskApplicationService.deleteTask(taskId)
             );
             await Promise.all(promises);
-            
+
             this.selectedTasks.clear();
             this.updateBatchActionsButton();
             this.hideBatchActionsModal();
@@ -805,7 +806,7 @@ class TaskManager {
     updateCounts() {
         const todayTasks = this.getTodayTasks();
         const scheduledTasks = this.getScheduledTasks();
-        
+
         this.taskCounts.today.textContent = todayTasks.length;
         this.taskCounts.scheduled.textContent = scheduledTasks.length;
         this.taskCounts.all.textContent = this.tasks.length;
@@ -816,7 +817,7 @@ class TaskManager {
         const totalTasks = this.tasks.length + this.completedTasks.length;
         const completedCount = this.completedTasks.length;
         const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-        
+
         this.totalTasks.textContent = totalTasks;
         this.completedTasksCount.textContent = completedCount;
         this.completionRate.textContent = `${completionRate}%`;
@@ -828,7 +829,7 @@ class TaskManager {
             e.preventDefault();
             this.showQuickAdd();
         }
-        
+
         // Escape: 关闭模态框
         if (e.key === 'Escape') {
             if (this.taskEditModal.classList.contains('show')) {
@@ -839,7 +840,7 @@ class TaskManager {
                 this.hideBatchActionsModal();
             }
         }
-        
+
         // Ctrl/Cmd + A: 全选任务
         if ((e.ctrlKey || e.metaKey) && e.key === 'a' && this.currentCategory !== 'completed') {
             e.preventDefault();
@@ -857,15 +858,16 @@ class TaskManager {
 
     isSameDay(date1, date2) {
         return date1.getFullYear() === date2.getFullYear() &&
-               date1.getMonth() === date2.getMonth() &&
-               date1.getDate() === date2.getDate();
+            date1.getMonth() === date2.getMonth() &&
+            date1.getDate() === date2.getDate();
     }
 
     formatReminderTime(date) {
         const now = new Date();
+        // 使用本地时区获取今天的开始时间
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-        
+        const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
         if (this.isSameDay(date, today)) {
             return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
         } else if (this.isSameDay(date, tomorrow)) {
