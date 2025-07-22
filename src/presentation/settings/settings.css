@@ -1,4 +1,4 @@
-/* 设置窗口样式 */
+/* Things 3 风格的设置页面样式 */
 * {
     margin: 0;
     padding: 0;
@@ -6,60 +6,88 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    font-size: 14px;
-    line-height: 1.5;
-    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #2c3e50;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.settings-app {
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* 窗口标题栏 */
+.window-header {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    padding: 20px 30px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.window-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    letter-spacing: -0.3px;
 }
 
 .settings-container {
-    max-width: 600px;
-    margin: 0 auto;
-    background: white;
-    min-height: 100vh;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* 标签页导航 */
 .tab-nav {
     display: flex;
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    background: rgba(248, 250, 252, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
 }
 
 .tab-button {
     flex: 1;
-    padding: 16px 20px;
+    padding: 18px 24px;
     border: none;
     background: transparent;
-    color: #666;
-    font-size: 14px;
+    color: #64748b;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     border-bottom: 3px solid transparent;
+    letter-spacing: -0.2px;
 }
 
 .tab-button:hover {
-    background: #f8f8f8;
-    color: #333;
+    background: rgba(102, 126, 234, 0.08);
+    color: #475569;
 }
 
 .tab-button.active {
-    color: #007AFF;
-    border-bottom-color: #007AFF;
-    background: #fff;
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    font-weight: 600;
 }
 
 /* 标签页内容 */
 .tab-content {
     display: none;
-    padding: 24px;
+    padding: 30px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .tab-content.active {
@@ -68,41 +96,49 @@ body {
 
 /* 设置区块 */
 .setting-section {
-    margin-bottom: 32px;
+    margin-bottom: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .setting-section h3 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
-    color: #333;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e8e8e8;
+    color: #1e293b;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    letter-spacing: -0.3px;
 }
 
 .setting-item {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding: 16px 0;
 }
 
 .setting-item:not(:last-child) {
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 /* 标签 */
 .setting-label {
     display: block;
     font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
+    color: #334155;
+    margin-bottom: 12px;
     cursor: pointer;
+    font-size: 15px;
+    letter-spacing: -0.1px;
 }
 
 .setting-description {
-    font-size: 12px;
-    color: #666;
-    margin-top: 6px;
-    line-height: 1.4;
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.5;
 }
 
 /* 复选框 */
@@ -113,25 +149,32 @@ body {
 .setting-label .checkmark {
     position: relative;
     display: inline-block;
-    width: 18px;
-    height: 18px;
-    background: #fff;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    margin-right: 12px;
     vertical-align: middle;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.setting-label .checkmark:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
 }
 
 .setting-checkbox:checked + .checkmark {
-    background: #007AFF;
-    border-color: #007AFF;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
 .setting-checkbox:checked + .checkmark::after {
     content: '';
     position: absolute;
-    left: 5px;
+    left: 6px;
     top: 2px;
     width: 4px;
     height: 8px;
@@ -144,14 +187,23 @@ body {
 .radio-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .radio-label {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 8px 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.radio-label:hover {
+    background: rgba(102, 126, 234, 0.05);
+    border-color: rgba(102, 126, 234, 0.2);
 }
 
 .setting-radio {
@@ -159,28 +211,39 @@ body {
 }
 
 .radio-mark {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #ddd;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 12px;
     position: relative;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.radio-label:hover .radio-mark {
+    border-color: #667eea;
 }
 
 .setting-radio:checked + .radio-mark {
-    border-color: #007AFF;
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
 }
 
 .setting-radio:checked + .radio-mark::after {
     content: '';
     position: absolute;
-    top: 3px;
-    left: 3px;
+    top: 4px;
+    left: 4px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #007AFF;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.setting-radio:checked ~ span {
+    color: #667eea;
+    font-weight: 500;
 }
 
 /* 滑块 */
@@ -194,7 +257,7 @@ body {
     flex: 1;
     height: 6px;
     border-radius: 3px;
-    background: #e0e0e0;
+    background: rgba(100, 116, 139, 0.2);
     outline: none;
     -webkit-appearance: none;
     cursor: pointer;
@@ -205,22 +268,22 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #007AFF;
+    background: linear-gradient(135deg, #667eea, #764ba2);
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
     transition: all 0.2s ease;
 }
 
 .setting-slider::-webkit-slider-thumb:hover {
     transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(0, 122, 255, 0.4);
+    box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
 }
 
 .slider-value {
     min-width: 50px;
     text-align: right;
     font-weight: 500;
-    color: #007AFF;
+    color: #667eea;
 }
 
 /* 选择框 */
@@ -232,74 +295,116 @@ body {
 
 .setting-select {
     flex: 1;
-    padding: 10px 12px;
-    border: 2px solid #e0e0e0;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
-    background: white;
-    font-size: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    color: #475569;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .setting-select:focus {
-    border-color: #007AFF;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 1);
 }
 
 /* 按钮 */
 .setting-button, .play-button {
-    padding: 10px 20px;
-    border: 2px solid #007AFF;
+    padding: 12px 20px;
+    border: none;
     border-radius: 8px;
-    background: white;
-    color: #007AFF;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     outline: none;
+    letter-spacing: -0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.setting-button:hover, .play-button:hover {
-    background: #007AFF;
+.setting-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
+}
+
+.setting-button:hover {
+    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.setting-button.secondary {
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.setting-button.secondary:hover {
+    background: rgba(100, 116, 139, 0.2);
+    transform: translateY(-1px);
 }
 
 .setting-button.danger {
-    border-color: #FF3B30;
-    color: #FF3B30;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
 }
 
 .setting-button.danger:hover {
-    background: #FF3B30;
-    color: white;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .play-button {
     padding: 8px 16px;
     font-size: 12px;
     min-width: 60px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.play-button:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-1px);
 }
 
 /* 响应式设计 */
-@media (max-width: 480px) {
-    .settings-container {
+@media (max-width: 768px) {
+    .settings-app {
         margin: 0;
         box-shadow: none;
     }
     
+    .window-header {
+        padding: 16px 20px;
+    }
+    
     .tab-content {
-        padding: 16px;
+        padding: 20px;
     }
     
     .tab-button {
-        padding: 12px 16px;
-        font-size: 13px;
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+    
+    .setting-section {
+        padding: 20px;
+        margin-bottom: 24px;
     }
     
     .slider-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
+        gap: 12px;
     }
     
     .slider-value {
@@ -309,7 +414,17 @@ body {
     .select-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
+        gap: 12px;
+    }
+    
+    .path-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .setting-input {
+        min-width: auto;
     }
 }
 
@@ -317,27 +432,29 @@ body {
 .path-container {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .setting-input {
     flex: 1;
     min-width: 200px;
-    padding: 10px 12px;
-    border: 2px solid #e0e0e0;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
-    background: #f8f8f8;
+    background: rgba(248, 250, 252, 0.8);
     font-size: 14px;
-    color: #666;
+    color: #64748b;
     outline: none;
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .setting-input:focus {
-    border-color: #007AFF;
-    background: white;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 1);
 }
 
 .setting-button.secondary {
@@ -354,14 +471,15 @@ body {
 
 /* 数据库统计信息 */
 .setting-description.stats {
-    background: #f8f9fa;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border-left: 3px solid #007AFF;
+    background: rgba(102, 126, 234, 0.05);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 11px;
-    color: #495057;
+    font-size: 12px;
+    color: #475569;
     margin-top: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* 动画效果 */
@@ -380,14 +498,82 @@ body {
     }
 }
 
-/* 响应式调整 */
-@media (max-width: 480px) {
-    .path-container {
-        flex-direction: column;
-        align-items: stretch;
+/* 加载状态 */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 成功状态提示 */
+.success-message {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #10b981;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+}
+
+.success-message.show {
+    display: block;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* 错误状态提示 */
+.error-message {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #ef4444;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
     }
-    
-    .setting-input {
-        min-width: auto;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
+
+/* 设置项图标 */
+.setting-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+/* 改进的设置标签样式 */
+.setting-label-with-icon {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    letter-spacing: -0.1px;
 }

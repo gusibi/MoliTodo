@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="settings.css">
 </head>
 <body>
-    <div class="settings-container">
+    <div class="settings-app">
+        <!-- 窗口标题栏 -->
+        <div class="window-header">
+            <h1 class="window-title">设置</h1>
+        </div>
+        
+        <div class="settings-container">
         <!-- 标签页导航 -->
         <div class="tab-nav">
             <button class="tab-button active" data-tab="general">通用</button>
@@ -18,18 +24,19 @@
         <!-- 通用设置 -->
         <div class="tab-content active" id="general">
             <div class="setting-section">
-                <h3>启动设置</h3>
+                <h3>🚀 启动设置</h3>
                 <div class="setting-item">
                     <label class="setting-label">
                         <input type="checkbox" id="autoStart" class="setting-checkbox">
                         <span class="checkmark"></span>
                         开机时自动启动 MoliTodo
                     </label>
+                    <p class="setting-description">启用后，MoliTodo 将在系统启动时自动运行</p>
                 </div>
             </div>
 
             <div class="setting-section">
-                <h3>数据存储</h3>
+                <h3>💾 数据存储</h3>
                 <div class="setting-item">
                     <label class="setting-label">存储类型</label>
                     <div class="radio-group">
@@ -57,18 +64,24 @@
             </div>
 
             <div class="setting-section">
-                <h3>数据管理</h3>
+                <h3>📊 数据管理</h3>
                 <div class="setting-item">
                     <button class="setting-button" id="exportData">导出数据...</button>
                     <p class="setting-description">将所有任务数据导出为 JSON 文件</p>
+                    <div class="success-message" id="exportSuccess">数据导出成功！</div>
+                    <div class="error-message" id="exportError">导出失败，请重试</div>
                 </div>
                 <div class="setting-item">
                     <button class="setting-button" id="importData">导入数据...</button>
                     <p class="setting-description">从 JSON 文件导入任务数据（将覆盖现有数据）</p>
+                    <div class="success-message" id="importSuccess">数据导入成功！</div>
+                    <div class="error-message" id="importError">导入失败，请检查文件格式</div>
                 </div>
                 <div class="setting-item">
                     <button class="setting-button danger" id="clearAllData">清除所有数据</button>
                     <p class="setting-description">永久删除所有未完成和已完成的任务</p>
+                    <div class="success-message" id="clearSuccess">数据清除成功！</div>
+                    <div class="error-message" id="clearError">清除失败，请重试</div>
                 </div>
             </div>
         </div>
@@ -76,7 +89,7 @@
         <!-- 外观设置 -->
         <div class="tab-content" id="appearance">
             <div class="setting-section">
-                <h3>悬浮图标调整</h3>
+                <h3>🎨 悬浮图标调整</h3>
                 <div class="setting-item">
                     <label class="setting-label">透明度</label>
                     <div class="slider-container">
@@ -94,7 +107,7 @@
             </div>
 
             <div class="setting-section">
-                <h3>主题</h3>
+                <h3>🌈 主题</h3>
                 <div class="setting-item">
                     <div class="radio-group">
                         <label class="radio-label">
@@ -120,7 +133,7 @@
         <!-- 通知设置 -->
         <div class="tab-content" id="notifications">
             <div class="setting-section">
-                <h3>提醒声音</h3>
+                <h3>🔊 提醒声音</h3>
                 <div class="setting-item">
                     <label class="setting-label">声音类型</label>
                     <div class="select-container">
@@ -136,7 +149,7 @@
             </div>
 
             <div class="setting-section">
-                <h3>系统通知</h3>
+                <h3>🔔 系统通知</h3>
                 <div class="setting-item">
                     <label class="setting-label">
                         <input type="checkbox" id="showNotifications" class="setting-checkbox" checked>
@@ -146,6 +159,7 @@
                     <p class="setting-description">关闭后，任务到期将只有悬浮图标的动画提醒</p>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 
