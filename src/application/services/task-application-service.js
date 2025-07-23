@@ -256,7 +256,13 @@ class TaskApplicationService {
      */
     addEventListener(event, callback) {
         if (this.listeners[event]) {
-            this.listeners[event].push(callback);
+            // 检查是否已经存在相同的回调函数，避免重复添加
+            if (!this.listeners[event].includes(callback)) {
+                this.listeners[event].push(callback);
+                console.log(`TaskApplicationService: 添加 ${event} 监听器，当前数量: ${this.listeners[event].length}`);
+            } else {
+                console.warn(`TaskApplicationService: ${event} 监听器已存在，跳过重复添加`);
+            }
         }
     }
 
@@ -268,6 +274,9 @@ class TaskApplicationService {
             const index = this.listeners[event].indexOf(callback);
             if (index > -1) {
                 this.listeners[event].splice(index, 1);
+                console.log(`TaskApplicationService: 移除 ${event} 监听器，当前数量: ${this.listeners[event].length}`);
+            } else {
+                console.warn(`TaskApplicationService: 未找到要移除的 ${event} 监听器`);
             }
         }
     }
@@ -276,12 +285,13 @@ class TaskApplicationService {
      * 通知监听器
      */
     notifyListeners(event, data) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => {
+        if (this.listeners[event] && this.listeners[event].length > 0) {
+            console.log(`TaskApplicationService: 通知 ${event} 监听器，数量: ${this.listeners[event].length}`);
+            this.listeners[event].forEach((callback, index) => {
                 try {
                     callback(data);
                 } catch (error) {
-                    console.error('监听器回调执行失败:', error);
+                    console.error(`监听器回调执行失败 (${event}[${index}]):`, error);
                 }
             });
         }

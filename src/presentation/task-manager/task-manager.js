@@ -82,16 +82,12 @@ class TaskManager {
     }
 
     setupTaskApplicationServiceListeners() {
-        // 先移除可能存在的旧监听器，避免重复添加
-        if (this.tasksUpdatedListener) {
-            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
-        }
-        if (this.completedTasksUpdatedListener) {
-            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
-        }
+        // 确保先清理旧的监听器
+        this.cleanupTaskApplicationServiceListeners();
 
         // 创建新的监听器函数并保存引用
         this.tasksUpdatedListener = (tasks) => {
+            console.log('TaskManager: 接收到任务更新', tasks.length, '个任务');
             this.tasks = tasks;
             this.renderCurrentView();
             this.updateCounts();
@@ -99,6 +95,7 @@ class TaskManager {
         };
 
         this.completedTasksUpdatedListener = (completedTasks) => {
+            console.log('TaskManager: 接收到已完成任务更新', completedTasks.length, '个任务');
             this.completedTasks = completedTasks;
             this.renderCurrentView();
             this.updateCounts();
@@ -110,6 +107,21 @@ class TaskManager {
 
         // 监听已完成任务数据更新
         taskApplicationService.addEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+        
+        console.log('TaskManager: 事件监听器已设置');
+    }
+
+    cleanupTaskApplicationServiceListeners() {
+        // 移除旧的监听器
+        if (this.tasksUpdatedListener) {
+            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
+            this.tasksUpdatedListener = null;
+        }
+        if (this.completedTasksUpdatedListener) {
+            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+            this.completedTasksUpdatedListener = null;
+        }
+        console.log('TaskManager: 旧的事件监听器已清理');
     }
 
     setupEventListeners() {
@@ -1066,15 +1078,18 @@ class TaskManager {
 
     // 清理资源
     destroy() {
-        // 移除事件监听器
-        if (this.tasksUpdatedListener) {
-            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
-            this.tasksUpdatedListener = null;
-        }
-        if (this.completedTasksUpdatedListener) {
-            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
-            this.completedTasksUpdatedListener = null;
-        }
+        console.log('TaskManager: 开始清理资源');
+        
+        // 清理事件监听器
+        this.cleanupTaskApplicationServiceListeners();
+        
+        // 清理其他资源
+        this.tasks = [];
+        this.completedTasks = [];
+        this.selectedTasks.clear();
+        this.currentEditingTask = null;
+        this.currentDeletingTask = null;
+        
         console.log('TaskManager: 资源清理完成');
     }
 }
@@ -1091,6 +1106,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('TaskManager: 创建新实例');
     window.taskManager = new TaskManager();
+});
+
+// 页面卸载时清理资源
+window.addEventListener('beforeunload', () => {
+    if (window.taskManager && typeof window.taskManager.destroy === 'function') {
+        console.log('TaskManager: 页面卸载，清理资源');
+        window.taskManager.destroy();
+        window.taskManager = null;
+    }
 });
 
 // 导出供其他模块使用
