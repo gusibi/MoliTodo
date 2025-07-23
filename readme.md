@@ -54,18 +54,17 @@ MoliTodo 旨在提供最快速的任务查看和添加体验。通过可自定�
 
 ### 悬浮图标和任务面板
 <div align="center">
-  <img src="design/screenshots/floating-icon-demo.png" alt="悬浮图标" width="300">
-  <img src="design/screenshots/task-panel-demo.png" alt="任务面板" width="400">
+  <img src="screenshots/floating-icon-demo.png" alt="悬浮图标" width="300">
 </div>
 
 ### 任务管理页面
 <div align="center">
-  <img src="design/screenshots/task-manager-demo.png" alt="任务管理" width="600">
+  <img src="screenshots/task-manager-demo.png" alt="任务管理" width="600">
 </div>
 
 ### 设置页面
 <div align="center">
-  <img src="design/screenshots/settings-demo.png" alt="设置页面" width="500">
+  <img src="screenshots/settings-demo.png" alt="设置页面" width="500">
 </div>
 
 ## 快速开始
