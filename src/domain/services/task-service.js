@@ -75,7 +75,9 @@ class TaskService {
   async deleteTask(taskId) {
     const task = await this.taskRepository.findById(taskId);
     if (!task) {
-      throw new Error('任务不存在');
+      console.warn(`尝试删除不存在的任务: ${taskId}`);
+      // 返回 true 表示删除操作"成功"（任务已经不存在了）
+      return true;
     }
 
     return await this.taskRepository.delete(taskId);

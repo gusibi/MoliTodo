@@ -26,6 +26,12 @@ jobs:
           node-version: '18'
           cache: 'npm'
           
+      - name: Setup Python (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
       - name: Install dependencies
         run: npm ci
         
@@ -34,6 +40,9 @@ jobs:
         run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          PYTHON_PATH: /usr/bin/python3
+          npm_config_python: /usr/bin/python3
           
       - name: Build application (Windows)
         if: matrix.os == 'windows-latest'

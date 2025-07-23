@@ -38,17 +38,30 @@ class TaskPanel {
     }
 
     setupTaskApplicationServiceListeners() {
-        // 监听任务数据更新
-        taskApplicationService.addEventListener('tasksUpdated', (tasks) => {
+        // 先移除可能存在的旧监听器，避免重复添加
+        if (this.tasksUpdatedListener) {
+            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
+        }
+        if (this.completedTasksUpdatedListener) {
+            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+        }
+
+        // 创建新的监听器函数并保存引用
+        this.tasksUpdatedListener = (tasks) => {
             this.tasks = tasks;
             this.renderTasks();
             this.updateStats();
-        });
+        };
+
+        this.completedTasksUpdatedListener = () => {
+            this.updateStats();
+        };
+
+        // 监听任务数据更新
+        taskApplicationService.addEventListener('tasksUpdated', this.tasksUpdatedListener);
 
         // 监听已完成任务数据更新（用于统计）
-        taskApplicationService.addEventListener('completedTasksUpdated', () => {
-            this.updateStats();
-        });
+        taskApplicationService.addEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
     }
 
     setupEventListeners() {
@@ -608,10 +621,31 @@ class TaskPanel {
     getTaskCount() {
         return this.tasks.length;
     }
+
+    // 清理资源
+    destroy() {
+        // 移除事件监听器
+        if (this.tasksUpdatedListener) {
+            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
+            this.tasksUpdatedListener = null;
+        }
+        if (this.completedTasksUpdatedListener) {
+            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+            this.completedTasksUpdatedListener = null;
+        }
+        console.log('TaskPanel: 资源清理完成');
+    }
 }
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
+    // 如果已经存在实例，先清理
+    if (window.taskPanel) {
+        console.log('TaskPanel: 发现已存在的实例，先清理');
+        window.taskPanel.destroy();
+    }
+    
+    console.log('TaskPanel: 创建新实例');
     window.taskPanel = new TaskPanel();
 });
 

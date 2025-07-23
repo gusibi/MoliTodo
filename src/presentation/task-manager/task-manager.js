@@ -82,21 +82,34 @@ class TaskManager {
     }
 
     setupTaskApplicationServiceListeners() {
-        // 监听任务数据更新
-        taskApplicationService.addEventListener('tasksUpdated', (tasks) => {
+        // 先移除可能存在的旧监听器，避免重复添加
+        if (this.tasksUpdatedListener) {
+            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
+        }
+        if (this.completedTasksUpdatedListener) {
+            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+        }
+
+        // 创建新的监听器函数并保存引用
+        this.tasksUpdatedListener = (tasks) => {
             this.tasks = tasks;
             this.renderCurrentView();
             this.updateCounts();
             this.updateStats();
-        });
+        };
 
-        // 监听已完成任务数据更新
-        taskApplicationService.addEventListener('completedTasksUpdated', (completedTasks) => {
+        this.completedTasksUpdatedListener = (completedTasks) => {
             this.completedTasks = completedTasks;
             this.renderCurrentView();
             this.updateCounts();
             this.updateStats();
-        });
+        };
+
+        // 监听任务数据更新
+        taskApplicationService.addEventListener('tasksUpdated', this.tasksUpdatedListener);
+
+        // 监听已完成任务数据更新
+        taskApplicationService.addEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
     }
 
     setupEventListeners() {
@@ -1050,10 +1063,33 @@ class TaskManager {
     getTaskCount() {
         return this.tasks.length;
     }
+
+    // 清理资源
+    destroy() {
+        // 移除事件监听器
+        if (this.tasksUpdatedListener) {
+            taskApplicationService.removeEventListener('tasksUpdated', this.tasksUpdatedListener);
+            this.tasksUpdatedListener = null;
+        }
+        if (this.completedTasksUpdatedListener) {
+            taskApplicationService.removeEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
+            this.completedTasksUpdatedListener = null;
+        }
+        console.log('TaskManager: 资源清理完成');
+    }
 }
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
+    // 如果已经存在实例，先清理
+    if (window.taskManager) {
+        console.log('TaskManager: 发现已存在的实例，先清理');
+        if (typeof window.taskManager.destroy === 'function') {
+            window.taskManager.destroy();
+        }
+    }
+    
+    console.log('TaskManager: 创建新实例');
     window.taskManager = new TaskManager();
 });
 

@@ -8,6 +8,7 @@
     "dev": "electron . --dev",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
+    "postinstall": "electron-builder install-app-deps",
     "build:mac:intel": "electron-builder --mac --x64",
     "build:mac:arm": "electron-builder --mac --arm64",
     "build:win": "electron-builder --win",
@@ -47,6 +48,8 @@
       "src/**/*",
       "node_modules/**/*"
     ],
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
@@ -59,13 +62,20 @@
           "arch": "arm64"
         }
       ],
-      "icon": "src/presentation/assets/icons/app-icon-512x512.png"
+      "icon": "src/presentation/assets/icons/app-icon-512x512.png",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "src/presentation/assets/icons/app-icon-512x512.png"
