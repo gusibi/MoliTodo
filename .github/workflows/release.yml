@@ -17,8 +17,17 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+      - name: Setup Python (macOS)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       - run: npm ci
       - run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          PYTHON_PATH: /usr/bin/python3
+          npm_config_python: /usr/bin/python3
       - name: List build artifacts
         run: ls -la dist/
       - uses: actions/upload-artifact@v4
@@ -36,6 +45,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
@@ -60,6 +71,8 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+          draft: false
+          prerelease: false
           body: |
             ## 下载说明
             
