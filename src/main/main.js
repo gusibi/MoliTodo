@@ -350,8 +350,10 @@ class MoliTodoApp {
     }
 
     this.settingsWindow = new BrowserWindow({
-      width: 600,
-      height: 500,
+      width: 900,
+      height: 650,
+      minWidth: 900,
+      minHeight: 600,
       resizable: false,
       minimizable: false,
       maximizable: false,
