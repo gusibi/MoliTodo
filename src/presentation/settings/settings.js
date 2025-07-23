@@ -44,13 +44,13 @@ class SettingsManager {
         }
 
         // 更新数据库设置
-        const dbTypeRadios = document.querySelectorAll('input[name="dbType"]');
+        const dbTypeSelect = document.getElementById('dbType');
         const dbPath = document.getElementById('dbPath');
         
         if (this.config.database) {
-            dbTypeRadios.forEach(radio => {
-                radio.checked = radio.value === (this.config.database.type || 'sqlite');
-            });
+            if (dbTypeSelect) {
+                dbTypeSelect.value = this.config.database.type || 'sqlite';
+            }
             
             if (dbPath) {
                 dbPath.value = this.config.database.path || '';
@@ -59,41 +59,74 @@ class SettingsManager {
         }
 
         // 更新主题设置
-        const themeRadios = document.querySelectorAll('input[name="theme"]');
-        themeRadios.forEach(radio => {
-            radio.checked = radio.value === this.config.theme;
-        });
+        const appThemeSelect = document.getElementById('appTheme');
+        if (appThemeSelect) {
+            appThemeSelect.value = this.config.theme || 'system';
+        }
+
+        const iconStyleSelect = document.getElementById('iconStyle');
+        if (iconStyleSelect) {
+            iconStyleSelect.value = this.config.iconStyle || 'default';
+        }
 
         // 更新声音设置
-        const alertSoundSelect = document.getElementById('alertSound');
-        if (alertSoundSelect) {
-            alertSoundSelect.value = this.config.alertSound || 'system';
+        const soundTypeSelect = document.getElementById('soundType');
+        if (soundTypeSelect) {
+            soundTypeSelect.value = this.config.alertSound || 'default';
+        }
+
+        const soundVolumeSlider = document.getElementById('soundVolume');
+        const volumeValue = document.getElementById('volumeValue');
+        if (soundVolumeSlider && this.config.soundVolume !== undefined) {
+            soundVolumeSlider.value = this.config.soundVolume;
+            if (volumeValue) {
+                volumeValue.textContent = `${this.config.soundVolume}%`;
+            }
         }
 
         // 更新通知设置
-        const showNotifications = document.getElementById('showNotifications');
-        if (showNotifications) {
-            showNotifications.checked = this.config.showNotifications !== false;
+        const systemNotifications = document.getElementById('systemNotifications');
+        if (systemNotifications) {
+            systemNotifications.checked = this.config.showNotifications !== false;
+        }
+
+        const iconAnimation = document.getElementById('iconAnimation');
+        if (iconAnimation) {
+            iconAnimation.checked = this.config.iconAnimation !== false;
+        }
+
+        const alertSound = document.getElementById('alertSound');
+        if (alertSound) {
+            alertSound.checked = this.config.alertSoundEnabled !== false;
+        }
+
+        // 更新启动设置
+        const showIconOnStart = document.getElementById('showIconOnStart');
+        if (showIconOnStart) {
+            showIconOnStart.checked = this.config.showIconOnStart !== false;
         }
 
         // 加载数据库统计信息
         this.loadDatabaseStats();
+        
+        // 初始化图标预览
+        this.updateIconPreview();
     }
 
     initTabs() {
-        const tabButtons = document.querySelectorAll('.tab-button');
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
         const tabContents = document.querySelectorAll('.tab-content');
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.dataset.tab;
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tabId = item.dataset.tab;
                 
                 // 移除所有活动状态
-                tabButtons.forEach(btn => btn.classList.remove('active'));
+                sidebarItems.forEach(sidebarItem => sidebarItem.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
                 
                 // 激活当前标签
-                button.classList.add('active');
+                item.classList.add('active');
                 document.getElementById(tabId).classList.add('active');
             });
         });
@@ -120,27 +153,71 @@ class SettingsManager {
             this.updateFloatingIconConfig('size', parseInt(value));
         });
 
-        // 主题单选按钮
-        const themeRadios = document.querySelectorAll('input[name="theme"]');
-        themeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.updateConfig('theme', e.target.value);
-                }
+        // 主题选择
+        const appThemeSelect = document.getElementById('appTheme');
+        if (appThemeSelect) {
+            appThemeSelect.addEventListener('change', (e) => {
+                this.updateConfig('theme', e.target.value);
             });
-        });
+        }
 
-        // 声音选择
-        const alertSoundSelect = document.getElementById('alertSound');
-        alertSoundSelect.addEventListener('change', (e) => {
-            this.updateConfig('alertSound', e.target.value);
-        });
+        const iconStyleSelect = document.getElementById('iconStyle');
+        if (iconStyleSelect) {
+            iconStyleSelect.addEventListener('change', (e) => {
+                this.updateConfig('iconStyle', e.target.value);
+                this.updateIconPreview();
+            });
+        }
+
+        // 声音设置
+        const soundTypeSelect = document.getElementById('soundType');
+        if (soundTypeSelect) {
+            soundTypeSelect.addEventListener('change', (e) => {
+                this.updateConfig('alertSound', e.target.value);
+            });
+        }
+
+        const soundVolumeSlider = document.getElementById('soundVolume');
+        const volumeValue = document.getElementById('volumeValue');
+        if (soundVolumeSlider) {
+            soundVolumeSlider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (volumeValue) {
+                    volumeValue.textContent = `${value}%`;
+                }
+                this.updateConfig('soundVolume', parseInt(value));
+            });
+        }
 
         // 通知设置
-        const showNotifications = document.getElementById('showNotifications');
-        showNotifications.addEventListener('change', (e) => {
-            this.updateConfig('showNotifications', e.target.checked);
-        });
+        const systemNotifications = document.getElementById('systemNotifications');
+        if (systemNotifications) {
+            systemNotifications.addEventListener('change', (e) => {
+                this.updateConfig('showNotifications', e.target.checked);
+            });
+        }
+
+        const iconAnimation = document.getElementById('iconAnimation');
+        if (iconAnimation) {
+            iconAnimation.addEventListener('change', (e) => {
+                this.updateConfig('iconAnimation', e.target.checked);
+            });
+        }
+
+        const alertSound = document.getElementById('alertSound');
+        if (alertSound) {
+            alertSound.addEventListener('change', (e) => {
+                this.updateConfig('alertSoundEnabled', e.target.checked);
+            });
+        }
+
+        // 启动设置
+        const showIconOnStart = document.getElementById('showIconOnStart');
+        if (showIconOnStart) {
+            showIconOnStart.addEventListener('change', (e) => {
+                this.updateConfig('showIconOnStart', e.target.checked);
+            });
+        }
 
         // 自动启动
         const autoStart = document.getElementById('autoStart');
@@ -149,14 +226,12 @@ class SettingsManager {
         });
 
         // 数据库类型选择
-        const dbTypeRadios = document.querySelectorAll('input[name="dbType"]');
-        dbTypeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.changeDatabaseType(e.target.value);
-                }
+        const dbTypeSelect = document.getElementById('dbType');
+        if (dbTypeSelect) {
+            dbTypeSelect.addEventListener('change', (e) => {
+                this.changeDatabaseType(e.target.value);
             });
-        });
+        }
 
         // 选择数据库路径
         const choosePath = document.getElementById('choosePath');
@@ -174,10 +249,12 @@ class SettingsManager {
     bindEvents() {
         // 播放声音按钮
         const playSound = document.getElementById('playSound');
-        playSound.addEventListener('click', () => {
-            const soundType = document.getElementById('alertSound').value;
-            ipcRenderer.invoke('play-alert-sound', soundType);
-        });
+        if (playSound) {
+            playSound.addEventListener('click', () => {
+                const soundType = document.getElementById('soundType').value;
+                ipcRenderer.invoke('play-alert-sound', soundType);
+            });
+        }
 
         // 导出数据
         const exportData = document.getElementById('exportData');
@@ -240,8 +317,21 @@ class SettingsManager {
             
             await ipcRenderer.invoke('update-config', 'floatingIcon', newConfig);
             this.config.floatingIcon = newConfig;
+            
+            // 更新预览
+            this.updateIconPreview();
         } catch (error) {
             console.error('更新悬浮图标配置失败:', error);
+        }
+    }
+
+    updateIconPreview() {
+        const preview = document.getElementById('iconPreview');
+        if (preview && this.config.floatingIcon) {
+            const { size, opacity } = this.config.floatingIcon;
+            preview.style.width = `${size || 60}px`;
+            preview.style.height = `${size || 60}px`;
+            preview.style.opacity = `${(opacity || 90) / 100}`;
         }
     }
 
@@ -309,15 +399,24 @@ class SettingsManager {
                 } else {
                     this.showMessage('数据库迁移失败: ' + result.error, 'error');
                     // 恢复原来的选择
-                    document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+                    const dbTypeSelect = document.getElementById('dbType');
+                    if (dbTypeSelect) {
+                        dbTypeSelect.value = currentType;
+                    }
                 }
             } catch (error) {
                 this.showMessage('数据库迁移失败: ' + error.message, 'error');
-                document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+                const dbTypeSelect = document.getElementById('dbType');
+                if (dbTypeSelect) {
+                    dbTypeSelect.value = currentType;
+                }
             }
         } else {
             // 用户取消，恢复原来的选择
-            document.querySelector(`input[name="dbType"][value="${currentType}"]`).checked = true;
+            const dbTypeSelect = document.getElementById('dbType');
+            if (dbTypeSelect) {
+                dbTypeSelect.value = currentType;
+            }
         }
     }
 
@@ -351,28 +450,29 @@ class SettingsManager {
     }
 
     showMessage(message, type = 'info') {
-        // 创建消息提示
-        const messageEl = document.createElement('div');
-        messageEl.className = `message message-${type}`;
-        messageEl.textContent = message;
-        messageEl.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-            background: ${type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF'};
-        `;
+        // 使用现有的消息容器
+        const messageContainer = document.querySelector('.message-container');
+        if (!messageContainer) {
+            console.warn('Message container not found');
+            return;
+        }
 
-        document.body.appendChild(messageEl);
+        // 创建消息元素
+        const messageEl = document.createElement('div');
+        messageEl.className = type === 'success' ? 'success-message' : 'error-message';
+        messageEl.textContent = message;
+        
+        // 添加到容器
+        messageContainer.appendChild(messageEl);
+        
+        // 显示消息
+        setTimeout(() => {
+            messageEl.classList.add('show');
+        }, 10);
 
         // 3秒后自动移除
         setTimeout(() => {
-            messageEl.style.animation = 'slideOut 0.3s ease';
+            messageEl.classList.remove('show');
             setTimeout(() => {
                 if (messageEl.parentNode) {
                     messageEl.parentNode.removeChild(messageEl);
