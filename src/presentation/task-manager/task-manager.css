@@ -132,6 +132,43 @@ body {
     color: #667eea;
 }
 
+/* 设置按钮区域 */
+.sidebar-bottom {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.settings-item {
+    margin-bottom: 0 !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.settings-item:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: translateY(-1px);
+}
+
+.settings-item .sidebar-icon {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+.settings-item .sidebar-text {
+    font-weight: 500;
+    color: #64748b;
+}
+
+.settings-item:hover .sidebar-text {
+    color: #667eea;
+}
+
+.settings-item:hover .sidebar-icon {
+    opacity: 1;
+}
+
 /* 主内容区 */
 .main-content {
     flex: 1;

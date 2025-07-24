@@ -608,6 +608,11 @@ MIT License`,
       this.showTaskManagerWindow();
     });
 
+    // 显示设置窗口
+    ipcMain.on('open-settings', () => {
+      this.showSettingsWindow();
+    });
+
     // 设置鼠标穿透状态
     ipcMain.handle('set-mouse-ignore', (event, ignore) => {
       console.log(`Main: 设置鼠标穿透状态为 ${ignore}`);

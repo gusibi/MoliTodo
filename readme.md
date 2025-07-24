@@ -85,6 +85,18 @@ MoliTodo 旨在提供最快速的任务查看和添加体验。通过可自定�
    - **Windows**: `MoliTodo Setup {version}.exe`
 3. 双击安装包完成安装
 
+
+> 临时解除 Gatekeeper 限制
+> ​右键绕过校验​
+> 按住 Control 键点击应用图标 → 选择「打开」→ 在弹出的提示中点击「打开」即可强制运行。
+
+>​终端命令解除限制​
+> 打开「终端」（应用程序 → 实用工具），输入以下命令后回车：
+```
+sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
+```
+> 输入密码后即可运行。
+
 #### 方式二：从源码构建
 
 ```bash

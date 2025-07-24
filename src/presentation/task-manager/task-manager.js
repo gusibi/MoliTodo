@@ -21,6 +21,7 @@ class TaskManager {
     initDOMElements() {
         // 侧边栏
         this.sidebarItems = document.querySelectorAll('.sidebar-item');
+        this.settingsBtn = document.getElementById('settingsBtn');
         this.taskCounts = {
             today: document.getElementById('todayCount'),
             scheduled: document.getElementById('scheduledCount'),
@@ -129,8 +130,15 @@ class TaskManager {
         this.sidebarItems.forEach(item => {
             item.addEventListener('click', () => {
                 const category = item.dataset.category;
-                this.switchCategory(category);
+                if (category) {
+                    this.switchCategory(category);
+                }
             });
+        });
+
+        // 设置按钮
+        this.settingsBtn.addEventListener('click', () => {
+            this.openSettings();
         });
 
         // 搜索
@@ -934,6 +942,11 @@ class TaskManager {
 
     showQuickAdd() {
         this.quickAddInput.focus();
+    }
+
+    openSettings() {
+        // 通过 IPC 通知主进程打开设置窗口
+        ipcRenderer.send('open-settings');
     }
 
     showEmptyState() {
