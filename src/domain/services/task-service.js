@@ -263,6 +263,114 @@ class TaskService {
       return taskStatus === status;
     });
   }
+
+  /**
+   * 开始任务 - 从待办状态开始计时
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async startTask(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.startTask();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 暂停任务 - 从进行中状态暂停，累计已用时间
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async pauseTask(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.pauseTask();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 完成任务（带时间追踪）
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async completeTaskWithTracking(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    // 如果任务已经完成，直接返回任务，不抛出错误
+    if (task.completed) {
+      console.log(`任务 ${taskId} 已经完成，跳过操作`);
+      return task;
+    }
+
+    task.completeTask();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 重新开始任务 - 从已完成状态重新开始
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async restartTask(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.restartTask();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 获取进行中的任务
+   * @returns {Promise<Task[]>}
+   */
+  async getInProgressTasks() {
+    return await this.getTasksByStatus('doing');
+  }
+
+  /**
+   * 获取时间统计信息
+   * @returns {Promise<Object>}
+   */
+  async getTimeStats() {
+    const allTasks = await this.getAllTasks();
+    const completedTasks = allTasks.filter(task => task.isCompleted());
+    const inProgressTasks = allTasks.filter(task => task.isInProgress());
+    
+    let totalWorkTime = 0;
+    let totalCompletedTasks = 0;
+    let currentActiveTime = 0;
+
+    // 计算已完成任务的总工作时间
+    completedTasks.forEach(task => {
+      totalWorkTime += task.getTotalWorkDuration();
+      totalCompletedTasks++;
+    });
+
+    // 计算当前进行中任务的时间
+    inProgressTasks.forEach(task => {
+      currentActiveTime += task.getCurrentDuration();
+      totalWorkTime += task.getTotalWorkDuration();
+    });
+
+    return {
+      totalWorkTime,
+      totalCompletedTasks,
+      currentActiveTime,
+      inProgressTasksCount: inProgressTasks.length,
+      averageTaskTime: totalCompletedTasks > 0 ? Math.floor(totalWorkTime / totalCompletedTasks) : 0
+    };
+  }
 }
 
 module.exports = TaskService;

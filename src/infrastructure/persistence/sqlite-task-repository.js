@@ -78,6 +78,15 @@ class SqliteTaskRepository extends TaskRepository {
     if (!columnNames.includes('completed_at')) {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN completed_at TEXT');
     }
+    
+    // 添加时间跟踪字段
+    if (!columnNames.includes('started_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN started_at TEXT');
+    }
+    
+    if (!columnNames.includes('total_duration')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN total_duration INTEGER DEFAULT 0');
+    }
 
     // 迁移现有数据的状态字段
     await this.migrateExistingData();
@@ -120,7 +129,9 @@ class SqliteTaskRepository extends TaskRepository {
       created_at: task.createdAt.toISOString(),
       updated_at: task.updatedAt.toISOString(),
       reminder_time: task.reminderTime ? task.reminderTime.toISOString() : null,
-      completed_at: task.completedAt ? task.completedAt.toISOString() : null
+      completed_at: task.completedAt ? task.completedAt.toISOString() : null,
+      started_at: task.startedAt ? task.startedAt.toISOString() : null,
+      total_duration: task.totalDuration || 0
     };
   }
 
@@ -128,18 +139,23 @@ class SqliteTaskRepository extends TaskRepository {
    * 将数据库行转换为任务对象
    */
   rowToTask(row) {
+    // 准备时间跟踪数据
+    const timeTracking = {
+      startedAt: row.started_at ? new Date(row.started_at) : null,
+      completedAt: row.completed_at ? new Date(row.completed_at) : null,
+      totalDuration: row.total_duration || 0
+    };
+    
     const task = new Task(
       row.id,
       row.content,
       row.status || (row.completed ? 'done' : 'todo'),
       new Date(row.created_at),
-      row.reminder_time ? new Date(row.reminder_time) : null
+      row.reminder_time ? new Date(row.reminder_time) : null,
+      timeTracking
     );
     
     task.updatedAt = new Date(row.updated_at);
-    if (row.completed_at) {
-      task.completedAt = new Date(row.completed_at);
-    }
     
     return task;
   }
@@ -259,7 +275,9 @@ class SqliteTaskRepository extends TaskRepository {
           completed = ?,
           updated_at = ?,
           reminder_time = ?,
-          completed_at = ?
+          completed_at = ?,
+          started_at = ?,
+          total_duration = ?
         WHERE id = ?
       `, [
         row.content,
@@ -268,14 +286,16 @@ class SqliteTaskRepository extends TaskRepository {
         row.updated_at,
         row.reminder_time,
         row.completed_at,
+        row.started_at,
+        row.total_duration,
         row.id
       ]);
     } else {
       // 插入新任务
       await this.db.run(`
         INSERT INTO tasks (
-          id, content, status, completed, created_at, updated_at, reminder_time, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         row.id,
         row.content,
@@ -284,7 +304,9 @@ class SqliteTaskRepository extends TaskRepository {
         row.created_at,
         row.updated_at,
         row.reminder_time,
-        row.completed_at
+        row.completed_at,
+        row.started_at,
+        row.total_duration
       ]);
     }
     

@@ -613,6 +613,52 @@ MIT License`,
       this.showSettingsWindow();
     });
 
+    // ========== 时间追踪相关的IPC处理器 ==========
+
+    // 开始任务
+    ipcMain.handle('start-task', async (event, taskId) => {
+      const task = await this.taskService.startTask(taskId);
+      this.updateFloatingIcon();
+      this.broadcastTaskUpdates();
+      return task;
+    });
+
+    // 暂停任务
+    ipcMain.handle('pause-task', async (event, taskId) => {
+      const task = await this.taskService.pauseTask(taskId);
+      this.updateFloatingIcon();
+      this.broadcastTaskUpdates();
+      return task;
+    });
+
+    // 完成任务（带时间追踪）
+    ipcMain.handle('complete-task-with-tracking', async (event, taskId) => {
+      const task = await this.taskService.completeTaskWithTracking(taskId);
+      this.notificationService.cancelTaskReminder(taskId);
+      this.updateFloatingIcon();
+      this.broadcastTaskUpdates();
+      return task;
+    });
+
+    // 重新开始任务
+    ipcMain.handle('restart-task', async (event, taskId) => {
+      const task = await this.taskService.restartTask(taskId);
+      // 如果任务有提醒时间，重新设置提醒
+      if (task.reminderTime) {
+        this.notificationService.scheduleTaskReminder(task, (task) => {
+          this.handleTaskReminder(task);
+        });
+      }
+      this.updateFloatingIcon();
+      this.broadcastTaskUpdates();
+      return task;
+    });
+
+    // 获取时间统计信息
+    ipcMain.handle('get-time-stats', async () => {
+      return await this.taskService.getTimeStats();
+    });
+
     // 设置鼠标穿透状态
     ipcMain.handle('set-mouse-ignore', (event, ignore) => {
       console.log(`Main: 设置鼠标穿透状态为 ${ignore}`);

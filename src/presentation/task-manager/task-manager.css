@@ -169,6 +169,85 @@ body {
     opacity: 1;
 }
 
+/* 时间追踪样式 */
+.task-duration {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.task-duration.in-progress {
+    color: #f59e0b;
+    animation: pulse 2s infinite;
+}
+
+.task-duration.completed {
+    color: #10b981;
+}
+
+.task-duration svg {
+    opacity: 0.7;
+}
+
+.task-item.status-doing {
+    border-left: 3px solid #f59e0b;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);
+}
+
+.task-item.status-doing .task-status-indicator {
+    color: #f59e0b;
+}
+
+/* 进行中任务的脉冲动画 */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* 时间追踪按钮样式 */
+.action-button.action-start {
+    background: #10b981;
+    color: white;
+}
+
+.action-button.action-start:hover {
+    background: #059669;
+}
+
+.action-button.action-pause {
+    background: #f59e0b;
+    color: white;
+}
+
+.action-button.action-pause:hover {
+    background: #d97706;
+}
+
+.action-button.action-complete {
+    background: #3b82f6;
+    color: white;
+}
+
+.action-button.action-complete:hover {
+    background: #2563eb;
+}
+
+.action-button.action-restart {
+    background: #8b5cf6;
+    color: white;
+}
+
+.action-button.action-restart:hover {
+    background: #7c3aed;
+}
+
 /* 主内容区 */
 .main-content {
     flex: 1;

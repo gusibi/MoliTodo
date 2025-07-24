@@ -3,13 +3,18 @@
  * 领域层核心实体，包含任务的所有业务逻辑
  */
 class Task {
-  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null) {
+  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}) {
     this.id = id;
     this.content = content;
     this.status = status; // 'todo', 'doing', 'done'
     this.createdAt = createdAt;
     this.reminderTime = reminderTime;
     this.updatedAt = new Date();
+    
+    // Time tracking fields
+    this.startedAt = timeTracking.startedAt || null;
+    this.completedAt = timeTracking.completedAt || null;
+    this.totalDuration = timeTracking.totalDuration || 0; // milliseconds
     
     // Keep backward compatibility
     this.completed = status === 'done';
@@ -48,6 +53,122 @@ class Task {
    */
   markAsInProgress() {
     this.updateStatus('doing');
+  }
+
+  /**
+   * 开始任务 - 从待办状态开始计时
+   */
+  startTask() {
+    if (this.status !== 'todo') {
+      throw new Error('只能从待办状态开始任务');
+    }
+    this.status = 'doing';
+    this.startedAt = new Date();
+    this.completed = false;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 暂停任务 - 从进行中状态暂停，累计已用时间
+   */
+  pauseTask() {
+    if (this.status !== 'doing') {
+      throw new Error('只能暂停进行中的任务');
+    }
+    if (this.startedAt) {
+      const currentDuration = Date.now() - this.startedAt.getTime();
+      this.totalDuration += currentDuration;
+    }
+    this.status = 'todo';
+    this.startedAt = null;
+    this.completed = false;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 完成任务 - 记录完成时间和总耗时
+   */
+  completeTask() {
+    if (this.status === 'doing' && this.startedAt) {
+      const currentDuration = Date.now() - this.startedAt.getTime();
+      this.totalDuration += currentDuration;
+    }
+    this.status = 'done';
+    this.completed = true;
+    this.completedAt = new Date();
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 重新开始任务 - 从已完成状态重新开始
+   */
+  restartTask() {
+    this.status = 'todo';
+    this.completed = false;
+    this.startedAt = null;
+    this.completedAt = null;
+    // 保留 totalDuration，作为历史记录
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 获取当前进行时长（毫秒）
+   * @returns {number}
+   */
+  getCurrentDuration() {
+    if (this.status !== 'doing' || !this.startedAt) {
+      return 0;
+    }
+    return Date.now() - this.startedAt.getTime();
+  }
+
+  /**
+   * 获取总工作时长（毫秒）
+   * @returns {number}
+   */
+  getTotalWorkDuration() {
+    return this.totalDuration + this.getCurrentDuration();
+  }
+
+  /**
+   * 格式化时长显示
+   * @param {number} milliseconds 毫秒数
+   * @param {boolean} compact 是否使用紧凑格式
+   * @returns {string}
+   */
+  static formatDuration(milliseconds, compact = false) {
+    if (milliseconds < 1000) {
+      return compact ? '0m' : '0秒';
+    }
+
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (compact) {
+      if (hours > 0) {
+        return `${hours}h${minutes % 60}m`;
+      } else {
+        return `${minutes}m`;
+      }
+    } else {
+      if (hours > 0) {
+        return `${hours}小时${minutes % 60}分钟`;
+      } else if (minutes > 0) {
+        return `${minutes}分钟`;
+      } else {
+        return `${seconds}秒`;
+      }
+    }
+  }
+
+  /**
+   * 获取格式化的工作时长
+   * @param {boolean} compact 是否使用紧凑格式
+   * @returns {string}
+   */
+  getFormattedDuration(compact = false) {
+    return Task.formatDuration(this.getTotalWorkDuration(), compact);
   }
 
   /**
@@ -188,7 +309,11 @@ class Task {
       completed: this.completed, // Keep for backward compatibility
       createdAt: this.createdAt.toISOString(),
       reminderTime: this.reminderTime ? this.reminderTime.toISOString() : null,
-      updatedAt: this.updatedAt.toISOString()
+      updatedAt: this.updatedAt.toISOString(),
+      // Time tracking fields
+      startedAt: this.startedAt ? this.startedAt.toISOString() : null,
+      completedAt: this.completedAt ? this.completedAt.toISOString() : null,
+      totalDuration: this.totalDuration
     };
   }
 
@@ -204,12 +329,20 @@ class Task {
       status = data.completed ? 'done' : 'todo';
     }
     
+    // Time tracking data with defaults for backward compatibility
+    const timeTracking = {
+      startedAt: data.startedAt ? new Date(data.startedAt) : null,
+      completedAt: data.completedAt ? new Date(data.completedAt) : null,
+      totalDuration: data.totalDuration || 0
+    };
+    
     return new Task(
       data.id,
       data.content,
       status,
       new Date(data.createdAt),
-      data.reminderTime ? new Date(data.reminderTime) : null
+      data.reminderTime ? new Date(data.reminderTime) : null,
+      timeTracking
     );
   }
 

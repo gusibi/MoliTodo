@@ -8,6 +8,9 @@ class TaskPanel {
         this.tasks = [];
         this.currentEditingTask = null;
 
+        // Time tracking
+        this.updateTimer = null;
+
         // DOM 元素
         this.taskList = document.getElementById('taskList');
         this.emptyState = document.getElementById('emptyState');
@@ -34,6 +37,7 @@ class TaskPanel {
         this.setupEventListeners();
         this.setupTaskApplicationServiceListeners();
         this.loadTasks();
+        this.startUpdateTimer();
 
         // 聚焦输入框
         this.quickAddInput.focus();
@@ -270,20 +274,135 @@ class TaskPanel {
             if (!task) return;
 
             const currentStatus = task.status || (task.completed ? 'done' : 'todo');
-            let nextStatus;
 
+            // Use time tracking methods for status transitions
             switch (currentStatus) {
-                case 'todo': nextStatus = 'doing'; break;
-                case 'doing': nextStatus = 'done'; break;
-                case 'done': nextStatus = 'todo'; break;
-                default: nextStatus = 'doing';
+                case 'todo':
+                    await taskApplicationService.startTask(taskId);
+                    break;
+                case 'doing':
+                    await taskApplicationService.completeTaskWithTracking(taskId);
+                    break;
+                case 'done':
+                    await taskApplicationService.restartTask(taskId);
+                    break;
+                default:
+                    await taskApplicationService.startTask(taskId);
             }
-
-            await taskApplicationService.updateTaskStatus(taskId, nextStatus);
         } catch (error) {
             console.error('更新任务状态失败:', error);
             this.showError('更新任务状态失败');
         }
+    }
+
+    /**
+     * 启动更新定时器 - 每30秒更新进行中任务的时长显示
+     */
+    startUpdateTimer() {
+        // 清除可能存在的旧定时器
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+        }
+
+        // 每30秒更新一次
+        this.updateTimer = setInterval(() => {
+            this.updateInProgressTasksDisplay();
+        }, 30000); // 30 seconds
+    }
+
+    /**
+     * 更新进行中任务的显示
+     */
+    updateInProgressTasksDisplay() {
+        const inProgressTasks = this.tasks.filter(task => {
+            const status = task.status || (task.completed ? 'done' : 'todo');
+            return status === 'doing';
+        });
+
+        inProgressTasks.forEach(task => {
+            const taskElement = this.taskList.querySelector(`[data-task-id="${task.id}"]`);
+            if (taskElement) {
+                const metaElement = taskElement.querySelector('.task-meta');
+                if (metaElement) {
+                    metaElement.innerHTML = this.renderTaskMeta(task);
+                }
+            }
+        });
+    }
+
+    /**
+     * 格式化时长显示（紧凑格式）
+     */
+    formatDurationCompact(milliseconds) {
+        if (milliseconds < 60000) {
+            return '0m';
+        }
+
+        const minutes = Math.floor(milliseconds / 60000);
+        const hours = Math.floor(minutes / 60);
+
+        if (hours > 0) {
+            return `${hours}h${minutes % 60}m`;
+        } else {
+            return `${minutes}m`;
+        }
+    }
+
+    /**
+     * 获取任务的总工作时长
+     */
+    getTaskTotalDuration(task) {
+        let totalDuration = task.totalDuration || 0;
+
+        // 如果任务正在进行中，加上当前进行时长
+        if (task.status === 'doing' && task.startedAt) {
+            const currentDuration = Date.now() - new Date(task.startedAt).getTime();
+            totalDuration += currentDuration;
+        }
+
+        return totalDuration;
+    }
+
+    /**
+     * 渲染任务元数据
+     */
+    renderTaskMeta(task) {
+        const status = task.status || (task.completed ? 'done' : 'todo');
+        const statusText = this.getStatusText(status);
+        const statusClass = `task-status status-${status}`;
+
+        let meta = `<span class="${statusClass}">${statusText}</span>`;
+
+        // 时间追踪信息（仅显示进行中任务）
+        if (status === 'doing') {
+            const totalDuration = this.getTaskTotalDuration(task);
+            meta += `
+                <div class="task-duration">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                    </svg>
+                    ${this.formatDurationCompact(totalDuration)}
+                </div>
+            `;
+        }
+
+        // 提醒时间
+        if (task.reminderTime) {
+            const reminderText = this.formatReminderTime(new Date(task.reminderTime));
+            const isOverdue = new Date(task.reminderTime) < new Date();
+            const reminderClass = isOverdue ? 'task-reminder overdue' : 'task-reminder';
+
+            meta += `
+                <div class="${reminderClass}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor"/>
+                    </svg>
+                    ${reminderText}
+                </div>
+            `;
+        }
+
+        return meta;
     }
 
     getStatusText(status) {
@@ -333,12 +452,18 @@ class TaskPanel {
     }
 
     createTaskElement(task) {
-        const reminderText = task.reminderTime ? this.formatReminderTime(new Date(task.reminderTime)) : '';
-        const isOverdue = task.reminderTime && new Date(task.reminderTime) < new Date();
-        const reminderClass = isOverdue ? 'task-reminder overdue' : 'task-reminder';
         const status = task.status || (task.completed ? 'done' : 'todo');
         const statusText = this.getStatusText(status);
         const statusClass = `task-status status-${status}`;
+
+        // Handle reminder display
+        let reminderText = '';
+        let reminderClass = '';
+        if (task.reminderTime) {
+            reminderText = this.formatReminderTime(new Date(task.reminderTime));
+            const isOverdue = new Date(task.reminderTime) < new Date();
+            reminderClass = isOverdue ? 'task-reminder overdue' : 'task-reminder';
+        }
 
         return `
             <div class="task-item ${status}" data-task-id="${task.id}" data-status="${status}">
@@ -349,13 +474,7 @@ class TaskPanel {
                     <div class="task-text" data-action="edit" title="双击编辑">${this.escapeHtml(task.content)}</div>
                     <input class="task-edit-input" style="display: none;" value="${this.escapeHtml(task.content)}" />
                     <div class="task-meta">
-                        <span class="${statusClass}">${statusText}</span>
-                        ${reminderText ? `
-                            <div class="${reminderClass}">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor"/></svg>
-                                ${reminderText}
-                            </div>
-                        ` : ''}
+                        ${this.renderTaskMeta(task)}
                     </div>
                 </div>
                 <div class="task-actions">

@@ -12,6 +12,9 @@ class TaskManager {
         this.currentEditingTask = null;
         this.currentDeletingTask = null;
 
+        // Time tracking
+        this.updateTimer = null;
+
         // DOM 元素
         this.initDOMElements();
 
@@ -77,6 +80,7 @@ class TaskManager {
         this.setupEventListeners();
         this.setupTaskApplicationServiceListeners();
         this.loadTasks();
+        this.startUpdateTimer();
 
         // 聚焦搜索框
         this.searchInput.focus();
@@ -108,7 +112,7 @@ class TaskManager {
 
         // 监听已完成任务数据更新
         taskApplicationService.addEventListener('completedTasksUpdated', this.completedTasksUpdatedListener);
-        
+
         console.log('TaskManager: 事件监听器已设置');
     }
 
@@ -265,12 +269,12 @@ class TaskManager {
             // 重新加载任务数据
             this.tasks = taskApplicationService.getTasks();
             this.completedTasks = taskApplicationService.getCompletedTasks();
-            
+
             // 更新当前视图
             this.renderCurrentView();
             this.updateCounts();
             this.updateStats();
-            
+
             console.log('Task Manager: 数据已刷新');
         } catch (error) {
             console.error('刷新数据失败:', error);
@@ -521,7 +525,7 @@ class TaskManager {
 
         const isCompleted = this.currentCategory === 'completed';
         const status = task.status || (task.completed ? 'done' : 'todo');
-        
+
         // Add status class
         taskItem.classList.add(`status-${status}`);
 
@@ -554,6 +558,32 @@ class TaskManager {
                 ${statusText}
             </div>
         `);
+
+        // Time tracking information
+        const totalDuration = this.getTaskTotalDuration(task);
+        if (status === 'doing') {
+            // 进行中任务显示实时时长
+            meta.push(`
+                <div class="task-duration in-progress">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    进行中 ${this.formatDuration(totalDuration)}
+                </div>
+            `);
+        } else if (status === 'done' && totalDuration > 0) {
+            // 已完成任务显示总用时
+            meta.push(`
+                <div class="task-duration completed">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                    </svg>
+                    用时 ${this.formatDuration(totalDuration)}
+                </div>
+            `);
+        }
 
         if (task.reminderTime) {
             const reminderText = this.formatReminderTime(new Date(task.reminderTime));
@@ -596,9 +626,11 @@ class TaskManager {
     }
 
     renderTaskActions(task) {
+        const status = task.status || (task.completed ? 'done' : 'todo');
+
         if (this.currentCategory === 'completed') {
             return `
-                <button class="action-button action-restore" data-action="restore" title="恢复任务">
+                <button class="action-button action-restart" data-action="restart" title="重新开始任务">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8M3 12l2.26-2.26A9.75 9.75 0 0112 3a9 9 0 019 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -610,7 +642,34 @@ class TaskManager {
                 </button>
             `;
         } else {
+            let timeTrackingButton = '';
+
+            if (status === 'todo') {
+                timeTrackingButton = `
+                    <button class="action-button action-start" data-action="start" title="开始任务">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="5,3 19,12 5,21" fill="currentColor"/>
+                        </svg>
+                    </button>
+                `;
+            } else if (status === 'doing') {
+                timeTrackingButton = `
+                    <button class="action-button action-pause" data-action="pause" title="暂停任务">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="action-button action-complete" data-action="complete" title="完成任务">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                `;
+            }
+
             return `
+                ${timeTrackingButton}
                 <button class="action-button action-edit" data-action="edit" title="编辑任务">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -638,6 +697,18 @@ class TaskManager {
         switch (action) {
             case 'cycle-status':
                 this.cycleTaskStatus(taskId);
+                break;
+            case 'start':
+                this.startTask(taskId);
+                break;
+            case 'pause':
+                this.pauseTask(taskId);
+                break;
+            case 'complete':
+                this.completeTaskWithTracking(taskId);
+                break;
+            case 'restart':
+                this.restartTask(taskId);
                 break;
             case 'toggle':
                 if (this.currentCategory === 'completed') {
@@ -725,6 +796,50 @@ class TaskManager {
         }
     }
 
+    async startTask(taskId) {
+        try {
+            await taskApplicationService.startTask(taskId);
+            this.selectedTasks.delete(taskId);
+            this.updateBatchActionsButton();
+        } catch (error) {
+            console.error('开始任务失败:', error);
+            this.showError('开始任务失败');
+        }
+    }
+
+    async pauseTask(taskId) {
+        try {
+            await taskApplicationService.pauseTask(taskId);
+            this.selectedTasks.delete(taskId);
+            this.updateBatchActionsButton();
+        } catch (error) {
+            console.error('暂停任务失败:', error);
+            this.showError('暂停任务失败');
+        }
+    }
+
+    async completeTaskWithTracking(taskId) {
+        try {
+            await taskApplicationService.completeTaskWithTracking(taskId);
+            this.selectedTasks.delete(taskId);
+            this.updateBatchActionsButton();
+        } catch (error) {
+            console.error('完成任务失败:', error);
+            this.showError('完成任务失败');
+        }
+    }
+
+    async restartTask(taskId) {
+        try {
+            await taskApplicationService.restartTask(taskId);
+            this.selectedTasks.delete(taskId);
+            this.updateBatchActionsButton();
+        } catch (error) {
+            console.error('重新开始任务失败:', error);
+            this.showError('重新开始任务失败');
+        }
+    }
+
     async deleteTask(taskId) {
         try {
             await taskApplicationService.deleteTask(taskId);
@@ -742,24 +857,21 @@ class TaskManager {
             if (!task) return;
 
             const currentStatus = task.status || (task.completed ? 'done' : 'todo');
-            let nextStatus;
-            
-            // Cycle through statuses: todo -> doing -> done -> todo
+
+            // Use time tracking methods for status transitions
             switch (currentStatus) {
                 case 'todo':
-                    nextStatus = 'doing';
+                    await taskApplicationService.startTask(taskId);
                     break;
                 case 'doing':
-                    nextStatus = 'done';
+                    await taskApplicationService.completeTaskWithTracking(taskId);
                     break;
                 case 'done':
-                    nextStatus = 'todo';
+                    await taskApplicationService.restartTask(taskId);
                     break;
                 default:
-                    nextStatus = 'doing';
+                    await taskApplicationService.startTask(taskId);
             }
-
-            await taskApplicationService.updateTaskStatus(taskId, nextStatus);
         } catch (error) {
             console.error('更新任务状态失败:', error);
             this.showError('更新任务状态失败');
@@ -949,6 +1061,85 @@ class TaskManager {
         ipcRenderer.send('open-settings');
     }
 
+    /**
+     * 启动更新定时器 - 每秒更新进行中任务的时长显示
+     */
+    startUpdateTimer() {
+        // 清除可能存在的旧定时器
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+        }
+
+        // 每秒更新一次，实现实时显示
+        this.updateTimer = setInterval(() => {
+            this.updateInProgressTasksDisplay();
+        }, 1000); // 1 second
+    }
+
+    /**
+     * 更新进行中任务的显示
+     */
+    updateInProgressTasksDisplay() {
+        const inProgressTasks = this.tasks.filter(task => {
+            const status = task.status || (task.completed ? 'done' : 'todo');
+            return status === 'doing';
+        });
+
+        inProgressTasks.forEach(task => {
+            const taskElement = this.taskList.querySelector(`[data-task-id="${task.id}"]`);
+            if (taskElement) {
+                const metaElement = taskElement.querySelector('.task-meta');
+                if (metaElement) {
+                    metaElement.innerHTML = this.renderTaskMeta(task);
+                }
+            }
+        });
+    }
+
+    /**
+     * 格式化时长显示
+     */
+    formatDuration(milliseconds, compact = false) {
+        if (milliseconds < 1000) {
+            return compact ? '0m' : '0秒';
+        }
+
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (compact) {
+            if (hours > 0) {
+                return `${hours}h${minutes % 60}m`;
+            } else {
+                return `${minutes}m`;
+            }
+        } else {
+            if (hours > 0) {
+                return `${hours}小时${minutes % 60}分钟`;
+            } else if (minutes > 0) {
+                return `${minutes}分钟`;
+            } else {
+                return `${seconds}秒`;
+            }
+        }
+    }
+
+    /**
+     * 获取任务的总工作时长
+     */
+    getTaskTotalDuration(task) {
+        let totalDuration = task.totalDuration || 0;
+
+        // 如果任务正在进行中，加上当前进行时长
+        if (task.status === 'doing' && task.startedAt) {
+            const currentDuration = Date.now() - new Date(task.startedAt).getTime();
+            totalDuration += currentDuration;
+        }
+
+        return totalDuration;
+    }
+
     showEmptyState() {
         this.taskList.style.display = 'none';
         this.emptyState.classList.add('show');
@@ -968,7 +1159,7 @@ class TaskManager {
             const status = task.status || (task.completed ? 'done' : 'todo');
             return status === 'todo';
         });
-        
+
         const doingTasks = this.tasks.filter(task => {
             const status = task.status || (task.completed ? 'done' : 'todo');
             return status === 'doing';
@@ -978,7 +1169,7 @@ class TaskManager {
         this.taskCounts.scheduled.textContent = scheduledTasks.length;
         this.taskCounts.all.textContent = this.tasks.length;
         this.taskCounts.completed.textContent = this.completedTasks.length;
-        
+
         // Update status-specific counts
         if (this.taskCounts.todo) this.taskCounts.todo.textContent = todoTasks.length;
         if (this.taskCounts.doing) this.taskCounts.doing.textContent = doingTasks.length;
@@ -1092,17 +1283,23 @@ class TaskManager {
     // 清理资源
     destroy() {
         console.log('TaskManager: 开始清理资源');
-        
+
+        // 清理定时器
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+            this.updateTimer = null;
+        }
+
         // 清理事件监听器
         this.cleanupTaskApplicationServiceListeners();
-        
+
         // 清理其他资源
         this.tasks = [];
         this.completedTasks = [];
         this.selectedTasks.clear();
         this.currentEditingTask = null;
         this.currentDeletingTask = null;
-        
+
         console.log('TaskManager: 资源清理完成');
     }
 }
@@ -1116,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.taskManager.destroy();
         }
     }
-    
+
     console.log('TaskManager: 创建新实例');
     window.taskManager = new TaskManager();
 });
