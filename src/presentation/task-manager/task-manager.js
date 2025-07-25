@@ -983,10 +983,28 @@ class TaskManager {
         const minutes = parseInt(button.dataset.minutes) || 0;
         const hours = parseInt(button.dataset.hours) || 0;
 
-        const targetTime = new Date(Date.now() + (minutes * 60 + hours * 60 * 60) * 1000);
+        let targetTime;
 
-        this.editReminderDate.value = targetTime.toISOString().split('T')[0];
-        this.editReminderTime.value = targetTime.toTimeString().slice(0, 5);
+        // 特殊处理"明天"按钮 (data-hours="24")
+        if (hours === 24) {
+            // 明天上午9点
+            targetTime = new Date();
+            targetTime.setDate(targetTime.getDate() + 1);
+            targetTime.setHours(9, 0, 0, 0);
+        } else {
+            // 其他按钮按原逻辑处理（当前时间 + 指定分钟/小时）
+            targetTime = new Date(Date.now() + (minutes * 60 + hours * 60 * 60) * 1000);
+        }
+
+        // 使用本地时间格式，避免时区问题
+        const year = targetTime.getFullYear();
+        const month = String(targetTime.getMonth() + 1).padStart(2, '0');
+        const day = String(targetTime.getDate()).padStart(2, '0');
+        const hour = String(targetTime.getHours()).padStart(2, '0');
+        const minute = String(targetTime.getMinutes()).padStart(2, '0');
+
+        this.editReminderDate.value = `${year}-${month}-${day}`;
+        this.editReminderTime.value = `${hour}:${minute}`;
     }
 
     showDeleteModal(taskId) {
