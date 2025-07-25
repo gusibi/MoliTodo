@@ -323,6 +323,80 @@ class TaskApplicationService {
     }
 
     /**
+     * 开始任务 - 从待办状态开始计时
+     */
+    async startTask(taskId) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('start-task', taskId);
+            return updatedTask;
+        } catch (error) {
+            console.error('开始任务失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 暂停任务 - 从进行中状态暂停，累计已用时间
+     */
+    async pauseTask(taskId) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('pause-task', taskId);
+            return updatedTask;
+        } catch (error) {
+            console.error('暂停任务失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 完成任务（带时间追踪）
+     */
+    async completeTaskWithTracking(taskId) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('complete-task-with-tracking', taskId);
+            return updatedTask;
+        } catch (error) {
+            console.error('完成任务失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 重新开始任务 - 从已完成状态重新开始
+     */
+    async restartTask(taskId) {
+        try {
+            const updatedTask = await ipcRenderer.invoke('restart-task', taskId);
+            return updatedTask;
+        } catch (error) {
+            console.error('重新开始任务失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 获取进行中的任务
+     */
+    getInProgressTasks() {
+        return this.tasks.filter(task => {
+            const status = task.status || (task.completed ? 'done' : 'todo');
+            return status === 'doing';
+        });
+    }
+
+    /**
+     * 获取时间统计信息
+     */
+    async getTimeStats() {
+        try {
+            return await ipcRenderer.invoke('get-time-stats');
+        } catch (error) {
+            console.error('获取时间统计失败:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 清理资源
      */
     destroy() {

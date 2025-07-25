@@ -140,6 +140,104 @@
 4. 实现开机自启动功能
 5. 进行全面测试和优化
 
+## 最近更新
+
+### 2025-07-25: 重大功能更新 - 完整时间跟踪系统
+
+#### 功能概述
+实现了完整的任务时间跟踪系统，支持任务状态管理、时间计算、实时显示和数据持久化。
+
+#### 核心功能实现
+
+**1. 任务状态管理系统**
+- **三种状态**: `todo`（待办）、`doing`（进行中）、`completed`（已完成）
+- **状态转换逻辑**:
+  - `todo` → `doing`: 开始任务，记录开始时间
+  - `doing` → `todo`: 暂停任务，累计已用时间
+  - `doing` → `completed`: 完成任务，记录完成时间
+  - `todo` → `completed`: 直接完成，不记录工作时间
+
+**2. 时间计算引擎**
+- **当前进行时长**: `Date.now() - startedAt`（仅doing状态）
+- **总工作时长**: `totalDuration + 当前进行时长`
+- **任务完成耗时**: `completedAt - startedAt + totalDuration`
+
+**3. 智能时间格式化**
+```javascript
+// 标准格式: "2小时30分钟" / "30分钟" / "45秒"
+formatDuration(milliseconds)
+
+// 紧凑格式: "2h30m" / "30m" (用于悬浮面板)
+formatDurationCompact(milliseconds)
+```
+
+#### UI 组件更新
+
+**TaskManager 页面增强**
+- **待办任务**: 显示创建时间、提醒时间，[开始] [编辑] [删除] 操作
+- **进行中任务**: 实时显示"进行中 2小时30分钟"，[暂停] [完成] [编辑] 操作
+- **已完成任务**: 显示"用时 1小时15分钟" + 完成时间，[重新开始] [删除] 操作
+
+**TaskPanel 悬浮面板优化**
+- **进行中任务**: 显示紧凑格式"进行中 30m"（每30秒更新）
+- **简洁设计**: 保持悬浮面板的简洁性，不显示详细时间信息
+
+#### 实时更新机制
+- **TaskManager**: 每分钟更新进行中任务时长显示
+- **TaskPanel**: 每30秒更新进行中任务时长显示
+- **定时器管理**: 使用 `setInterval` 实现，组件销毁时自动清理
+
+#### 数据持久化增强
+
+**存储结构扩展**
+```json
+{
+  "tasks": {
+    "taskId1": {
+      "id": "taskId1",
+      "content": "任务内容",
+      "status": "doing",
+      "completed": false,
+      "createdAt": "2025-07-23T15:38:09.273Z",
+      "startedAt": "2025-07-24T09:15:00.000Z",
+      "completedAt": null,
+      "reminderTime": null,
+      "updatedAt": "2025-07-24T09:15:00.000Z",
+      "totalDuration": 1800000
+    }
+  }
+}
+```
+
+**数据迁移策略**
+- 为现有任务添加默认值: `startedAt: null`, `completedAt: null`, `status: 'todo'`, `totalDuration: 0`
+- 保持向后兼容性，优雅处理缺失字段
+- 提供数据修复工具处理异常时间数据
+
+#### 文件修改清单
+- `src/domain/entities/task.js` - 任务实体增加时间跟踪属性和方法
+- `src/domain/services/task-service.js` - 任务服务增加状态管理逻辑
+- `src/infrastructure/persistence/sqlite-task-repository.js` - 数据持久化支持新字段
+- `src/application/services/task-application-service.js` - 应用服务层时间跟踪逻辑
+- `src/presentation/task-manager/task-manager.js` - 任务管理器UI和交互逻辑
+- `src/presentation/task-manager/task-manager.css` - 时间跟踪相关样式
+- `src/presentation/task-panel/task-panel.js` - 悬浮面板时间显示逻辑
+- `src/presentation/task-panel/task-panel.css` - 悬浮面板时间显示样式
+- `src/main/main.js` - 主进程IPC通信支持
+
+#### 技术亮点
+1. **完整的状态机**: 清晰的任务状态转换逻辑
+2. **精确时间计算**: 支持暂停/继续的累计时间统计
+3. **实时UI更新**: 不同组件的差异化更新频率
+4. **数据向后兼容**: 平滑的数据迁移和错误处理
+5. **用户体验优化**: 直观的时间显示和操作反馈
+
+#### 用户价值
+- **时间管理**: 精确跟踪任务耗时，提升工作效率
+- **数据洞察**: 了解任务完成时间分布，优化时间分配
+- **工作习惯**: 通过时间跟踪培养专注工作的习惯
+- **项目管理**: 为项目时间估算提供历史数据支持
+
 ## 技术亮点
 
 1. **领域驱动设计**：清晰的分层架构，易于维护和扩展
