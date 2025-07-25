@@ -2,22 +2,32 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 const fs = require('fs').promises;
-const { app } = require('electron');
 const Task = require('../../domain/entities/task');
+const TaskRepository = require('../../domain/repositories/task-repository');
 
 /**
  * 基于 SQLite 的任务仓储实现
  */
-class SqliteTaskRepository {
+class SqliteTaskRepository extends TaskRepository {
   constructor(dbPath = null) {
+    super();
     this.db = null;
-    this.dbPath = dbPath || path.join(app.getPath('userData'), 'tasks.db');
+    this.dbPath = dbPath;
   }
 
   /**
    * 初始化数据库连接
+   * @param {string} dbPath 数据库文件路径
    */
-  async initialize() {
+  async initialize(dbPath = null) {
+    if (dbPath) {
+      this.dbPath = dbPath;
+    }
+    
+    if (!this.dbPath) {
+      throw new Error('数据库路径未设置');
+    }
+
     // 确保数据库目录存在
     const dbDir = path.dirname(this.dbPath);
     try {
@@ -51,9 +61,7 @@ class SqliteTaskRepository {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         reminder_time TEXT,
-        completed_at TEXT,
-        started_at TEXT,
-        total_duration INTEGER DEFAULT 0
+        completed_at TEXT
       )
     `;
 
@@ -71,6 +79,7 @@ class SqliteTaskRepository {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN completed_at TEXT');
     }
     
+    // 添加时间跟踪字段
     if (!columnNames.includes('started_at')) {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN started_at TEXT');
     }
@@ -87,6 +96,7 @@ class SqliteTaskRepository {
    * 迁移现有数据，确保状态字段正确
    */
   async migrateExistingData() {
+    // 更新没有状态的任务
     await this.db.run(`
       UPDATE tasks 
       SET status = CASE 
@@ -129,6 +139,7 @@ class SqliteTaskRepository {
    * 将数据库行转换为任务对象
    */
   rowToTask(row) {
+    // 准备时间跟踪数据
     const timeTracking = {
       startedAt: row.started_at ? new Date(row.started_at) : null,
       completedAt: row.completed_at ? new Date(row.completed_at) : null,
@@ -202,6 +213,40 @@ class SqliteTaskRepository {
 
     const rows = await this.db.all(
       'SELECT * FROM tasks WHERE status = "done" ORDER BY updated_at DESC'
+    );
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
+   * 根据状态查找任务
+   * @param {string} status 
+   * @returns {Promise<Task[]>}
+   */
+  async findByStatus(status) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const rows = await this.db.all(
+      'SELECT * FROM tasks WHERE status = ? ORDER BY created_at DESC',
+      [status]
+    );
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
+   * 获取需要提醒的任务
+   * @returns {Promise<Task[]>}
+   */
+  async findTasksToRemind() {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const now = new Date().toISOString();
+    const rows = await this.db.all(
+      'SELECT * FROM tasks WHERE reminder_time IS NOT NULL AND reminder_time <= ? AND status != "done"',
+      [now]
     );
     return rows.map(row => this.rowToTask(row));
   }
@@ -296,7 +341,30 @@ class SqliteTaskRepository {
   }
 
   /**
-   * 清空所有任务
+   * 获取各状态任务数量统计
+   * @returns {Promise<Object>}
+   */
+  async getStatusCounts() {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const rows = await this.db.all(`
+      SELECT status, COUNT(*) as count 
+      FROM tasks 
+      GROUP BY status
+    `);
+    
+    const counts = { todo: 0, doing: 0, done: 0 };
+    rows.forEach(row => {
+      counts[row.status] = row.count;
+    });
+    
+    return counts;
+  }
+
+  /**
+   * 清空所有任务 (用于测试或重置)
    * @returns {Promise<void>}
    */
   async clear() {
@@ -308,10 +376,67 @@ class SqliteTaskRepository {
   }
 
   /**
-   * 获取数据库统计信息
+   * 导出所有任务数据
    * @returns {Promise<Object>}
    */
-  async getStats() {
+  async exportData() {
+    const tasks = await this.findAll();
+    return {
+      tasks: tasks.map(task => task.toJSON()),
+      exportedAt: new Date().toISOString(),
+      version: '1.0.0'
+    };
+  }
+
+  /**
+   * 导入任务数据
+   * @param {Object} data 
+   * @returns {Promise<void>}
+   */
+  async importData(data) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    if (!data.tasks || !Array.isArray(data.tasks)) {
+      throw new Error('无效的导入数据格式');
+    }
+
+    // 清空现有数据
+    await this.clear();
+
+    // 导入新数据
+    for (const taskData of data.tasks) {
+      const task = Task.fromJSON(taskData);
+      await this.save(task);
+    }
+  }
+
+  /**
+   * 备份数据库文件
+   * @param {string} backupPath 备份文件路径
+   * @returns {Promise<void>}
+   */
+  async backup(backupPath) {
+    if (!this.dbPath) {
+      throw new Error('数据库路径未设置');
+    }
+
+    const backupDir = path.dirname(backupPath);
+    try {
+      await fs.access(backupDir);
+    } catch (error) {
+      await fs.mkdir(backupDir, { recursive: true });
+    }
+
+    await fs.copyFile(this.dbPath, backupPath);
+  }
+
+  /**
+   * 获取数据库信息
+   * @returns {Promise<Object>}
+   */
+  async getDatabaseInfo() {
     if (!this.db) {
       throw new Error('数据库未初始化');
     }
@@ -322,8 +447,20 @@ class SqliteTaskRepository {
     return {
       path: this.dbPath,
       taskCount: taskCount.count,
-      fileSize: dbSize
+      size: dbSize,
+      sizeFormatted: this.formatBytes(dbSize)
     };
+  }
+
+  /**
+   * 格式化字节大小
+   */
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }
 

@@ -214,10 +214,12 @@ class Task {
    */
   setReminder(reminderTime) {
     if (reminderTime) {
+      // 检查是否是 Unix 时间戳 0 (1970-01-01T00:00:00.000Z)，这表示清除提醒
       const isUnixEpoch = reminderTime.getTime() === 0;
       
       if (!isUnixEpoch) {
         const now = new Date();
+        // 允许30秒的时间容差，避免因为网络延迟或处理时间导致的问题
         const minAllowedTime = new Date(now.getTime() - 30 * 1000);
         
         if (reminderTime <= minAllowedTime) {
@@ -226,6 +228,7 @@ class Task {
       }
     }
     
+    // 如果是 Unix 时间戳 0，将其设置为 null（表示无提醒）
     this.reminderTime = (reminderTime && reminderTime.getTime() === 0) ? null : reminderTime;
     this.updatedAt = new Date();
   }
@@ -273,16 +276,19 @@ class Task {
     const now = new Date();
     const reminder = new Date(this.reminderTime);
     
+    // 如果是今天
     if (reminder.toDateString() === now.toDateString()) {
       return `今天 ${reminder.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
+    // 如果是明天
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     if (reminder.toDateString() === tomorrow.toDateString()) {
       return `明天 ${reminder.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
+    // 其他日期
     return reminder.toLocaleString('zh-CN', {
       month: 'short',
       day: 'numeric',
@@ -300,10 +306,11 @@ class Task {
       id: this.id,
       content: this.content,
       status: this.status,
-      completed: this.completed,
+      completed: this.completed, // Keep for backward compatibility
       createdAt: this.createdAt.toISOString(),
       reminderTime: this.reminderTime ? this.reminderTime.toISOString() : null,
       updatedAt: this.updatedAt.toISOString(),
+      // Time tracking fields
       startedAt: this.startedAt ? this.startedAt.toISOString() : null,
       completedAt: this.completedAt ? this.completedAt.toISOString() : null,
       totalDuration: this.totalDuration
@@ -316,11 +323,13 @@ class Task {
    * @returns {Task}
    */
   static fromJSON(data) {
+    // Handle backward compatibility
     let status = data.status;
     if (!status) {
       status = data.completed ? 'done' : 'todo';
     }
     
+    // Time tracking data with defaults for backward compatibility
     const timeTracking = {
       startedAt: data.startedAt ? new Date(data.startedAt) : null,
       completedAt: data.completedAt ? new Date(data.completedAt) : null,

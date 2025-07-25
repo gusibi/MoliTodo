@@ -23,7 +23,7 @@ class TaskService {
     const task = new Task(
       Task.generateId(),
       content.trim(),
-      'todo',
+      'todo', // Default status
       new Date(),
       reminderTime
     );
@@ -42,6 +42,7 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    // 如果任务已经完成，直接返回任务，不抛出错误
     if (task.completed) {
       console.log(`任务 ${taskId} 已经完成，跳过操作`);
       return task;
@@ -75,6 +76,7 @@ class TaskService {
     const task = await this.taskRepository.findById(taskId);
     if (!task) {
       console.warn(`尝试删除不存在的任务: ${taskId}`);
+      // 返回 true 表示删除操作"成功"（任务已经不存在了）
       return true;
     }
 
@@ -130,6 +132,21 @@ class TaskService {
   }
 
   /**
+   * 清除任务提醒
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async clearTaskReminder(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.clearReminder();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
    * 获取所有未完成任务
    * @returns {Promise<Task[]>}
    */
@@ -159,6 +176,92 @@ class TaskService {
    */
   async getIncompleteTaskCount() {
     return await this.taskRepository.getIncompleteCount();
+  }
+
+  /**
+   * 获取需要提醒的任务
+   * @returns {Promise<Task[]>}
+   */
+  async getTasksToRemind() {
+    return await this.taskRepository.findTasksToRemind();
+  }
+
+  /**
+   * 批量完成任务
+   * @param {string[]} taskIds 任务ID数组
+   * @returns {Promise<Task[]>}
+   */
+  async completeMultipleTasks(taskIds) {
+    const completedTasks = [];
+    
+    for (const taskId of taskIds) {
+      try {
+        const task = await this.completeTask(taskId);
+        completedTasks.push(task);
+      } catch (error) {
+        console.warn(`Failed to complete task ${taskId}:`, error.message);
+      }
+    }
+    
+    return completedTasks;
+  }
+
+  /**
+   * 批量删除任务
+   * @param {string[]} taskIds 任务ID数组
+   * @returns {Promise<number>} 成功删除的任务数量
+   */
+  async deleteMultipleTasks(taskIds) {
+    let deletedCount = 0;
+    
+    for (const taskId of taskIds) {
+      try {
+        const success = await this.deleteTask(taskId);
+        if (success) {
+          deletedCount++;
+        }
+      } catch (error) {
+        console.warn(`Failed to delete task ${taskId}:`, error.message);
+      }
+    }
+    
+    return deletedCount;
+  }
+
+  /**
+   * 清空所有任务
+   * @returns {Promise<void>}
+   */
+  async clearAllTasks() {
+    return await this.taskRepository.clear();
+  }
+
+  /**
+   * 导入任务
+   * @param {Object} taskData 任务数据
+   * @returns {Promise<Task>}
+   */
+  async importTask(taskData) {
+    const task = Task.fromJSON(taskData);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 根据状态获取任务
+   * @param {string} status 状态 ('todo', 'doing', 'done')
+   * @returns {Promise<Task[]>}
+   */
+  async getTasksByStatus(status) {
+    if (typeof this.taskRepository.findByStatus === 'function') {
+      return await this.taskRepository.findByStatus(status);
+    }
+    
+    // 回退到过滤所有任务
+    const allTasks = await this.taskRepository.findAll();
+    return allTasks.filter(task => {
+      const taskStatus = task.status || (task.completed ? 'done' : 'todo');
+      return taskStatus === status;
+    });
   }
 
   /**
@@ -202,6 +305,7 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    // 如果任务已经完成，直接返回任务，不抛出错误
     if (task.completed) {
       console.log(`任务 ${taskId} 已经完成，跳过操作`);
       return task;
@@ -212,21 +316,26 @@ class TaskService {
   }
 
   /**
-   * 清空所有任务
-   * @returns {Promise<void>}
+   * 重新开始任务 - 从已完成状态重新开始
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
    */
-  async clearAllTasks() {
-    return await this.taskRepository.clear();
+  async restartTask(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.restartTask();
+    return await this.taskRepository.save(task);
   }
 
   /**
-   * 导入任务
-   * @param {Object} taskData 任务数据
-   * @returns {Promise<Task>}
+   * 获取进行中的任务
+   * @returns {Promise<Task[]>}
    */
-  async importTask(taskData) {
-    const task = Task.fromJSON(taskData);
-    return await this.taskRepository.save(task);
+  async getInProgressTasks() {
+    return await this.getTasksByStatus('doing');
   }
 
   /**
@@ -242,11 +351,13 @@ class TaskService {
     let totalCompletedTasks = 0;
     let currentActiveTime = 0;
 
+    // 计算已完成任务的总工作时间
     completedTasks.forEach(task => {
       totalWorkTime += task.getTotalWorkDuration();
       totalCompletedTasks++;
     });
 
+    // 计算当前进行中任务的时间
     inProgressTasks.forEach(task => {
       currentActiveTime += task.getCurrentDuration();
       totalWorkTime += task.getTotalWorkDuration();
