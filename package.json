@@ -29,14 +29,14 @@
   "author": "MoliTodo Team",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.3.3",
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
+    "electron": "^37.2.4",
     "electron-store": "^8.1.0",
     "node-schedule": "^2.1.1",
-    "sqlite3": "^5.1.6",
-    "sqlite": "^5.1.1"
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   },
   "build": {
     "appId": "com.MoliTodo.app",
