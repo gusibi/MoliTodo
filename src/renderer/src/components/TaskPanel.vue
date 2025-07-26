@@ -49,22 +49,10 @@
               <!-- 时间追踪信息（仅显示进行中任务） -->
               <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-duration">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                    fill="currentColor" />
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2"/>
                 </svg>
-                {{ formatDurationCompact(getTaskTotalDuration(task)) }}
-              </div>
-
-              <!-- 提醒时间 -->
-              <div v-if="task.reminderTime"
-                :class="['task-reminder', { overdue: isReminderOverdue(task.reminderTime) }]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                    fill="currentColor" />
-                </svg>
-                {{ formatReminderTime(new Date(task.reminderTime)) }}
+                进行中 {{ formatDurationCompact(getTaskTotalDuration(task)) }}
               </div>
             </div>
           </div>
@@ -240,6 +228,8 @@ const cycleTaskStatus = async (taskId) => {
     }
 
     await loadTasks()
+    // 重新启动定时器以调整更新频率
+    startUpdateTimer()
   } catch (error) {
     console.error('更新任务状态失败:', error)
   }
@@ -387,17 +377,26 @@ const getTaskTotalDuration = (task) => {
 }
 
 const formatDurationCompact = (milliseconds) => {
-  if (milliseconds < 60000) {
-    return '0m'
+  if (!milliseconds || milliseconds < 1000) {
+    return '0s'
   }
 
-  const minutes = Math.floor(milliseconds / 60000)
-  const hours = Math.floor(minutes / 60)
+  const totalSeconds = Math.floor(milliseconds / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
 
+  // 如果超过一小时，显示小时和分钟
   if (hours > 0) {
-    return `${hours}h${minutes % 60}m`
-  } else {
-    return `${minutes}m`
+    return `${hours}h${minutes}m`
+  }
+  // 如果超过一分钟但不到一小时，显示分钟和秒
+  else if (minutes > 0) {
+    return `${minutes}m${seconds}s`
+  }
+  // 如果不到一分钟，只显示秒
+  else {
+    return `${seconds}s`
   }
 }
 
@@ -443,6 +442,49 @@ const handleTasksUpdated = () => {
   loadTasks()
 }
 
+// 检查是否有进行中的任务在一小时内
+const hasRecentDoingTasks = () => {
+  return tasks.value.some(task => {
+    if (task.status !== 'doing' || !task.startedAt) return false
+    const currentDuration = Date.now() - new Date(task.startedAt).getTime()
+    return currentDuration < 60 * 60 * 1000 // 一小时内
+  })
+}
+
+// 定时器引用
+let updateTimer = null
+
+// 启动定时器更新进行中任务的时长显示
+const startUpdateTimer = () => {
+  if (updateTimer) {
+    clearInterval(updateTimer)
+  }
+  
+  const updateDisplay = () => {
+    // 强制更新进行中任务的时长显示
+    tasks.value = [...tasks.value]
+    
+    // 重新设置定时器间隔
+    const interval = hasRecentDoingTasks() ? 1000 : 30000 // 一小时内每秒更新，否则每30秒更新
+    
+    if (updateTimer) {
+      clearInterval(updateTimer)
+    }
+    updateTimer = setInterval(updateDisplay, interval)
+  }
+  
+  // 初始设置
+  const initialInterval = hasRecentDoingTasks() ? 1000 : 30000
+  updateTimer = setInterval(updateDisplay, initialInterval)
+}
+
+const stopUpdateTimer = () => {
+  if (updateTimer) {
+    clearInterval(updateTimer)
+    updateTimer = null
+  }
+}
+
 // 生命周期
 onMounted(async () => {
   await loadTasks()
@@ -454,574 +496,16 @@ onMounted(async () => {
   // 监听任务更新事件
   window.electronAPI.events.on('tasks-updated', handleTasksUpdated)
 
-  // 定时更新进行中任务的显示
-  const updateTimer = setInterval(() => {
-    // 强制更新进行中任务的时长显示
-    tasks.value = [...tasks.value]
-  }, 30000)
+  // 启动定时器
+  startUpdateTimer()
 
   onUnmounted(() => {
-    clearInterval(updateTimer)
+    stopUpdateTimer()
     window.electronAPI.events.removeAllListeners('tasks-updated')
   })
 })
 </script>
 
 <style scoped>
-/* 导入原版样式，稍作调整以适应 Vue 组件 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.task-panel {
-  width: 320px;
-  min-height: 200px;
-  max-height: 80vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* 面板头部 */
-.panel-header {
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.panel-title svg {
-  color: #667eea;
-}
-
-.task-count {
-  font-size: 12px;
-  color: #666;
-  font-weight: 400;
-}
-
-/* 快速添加区域 */
-.quick-add-section {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.input-container {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.quick-add-input {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.9);
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.quick-add-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.quick-add-input::placeholder {
-  color: #999;
-}
-
-.add-button {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 8px;
-  background: #667eea;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.add-button:hover {
-  background: #5a67d8;
-  transform: scale(1.05);
-}
-
-.add-button:active {
-  transform: scale(0.95);
-}
-
-/* 任务列表容器 */
-.task-list-container {
-  flex: 1;
-  min-height: 100px;
-  max-height: calc(80vh - 200px);
-  overflow-y: auto;
-  position: relative;
-}
-
-.task-list {
-  padding: 8px 0;
-}
-
-/* 任务项 */
-.task-item {
-  padding: 12px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  position: relative;
-}
-
-.task-item:hover {
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.task-item:last-child {
-  border-bottom: none;
-}
-
-.task-item.todo {
-  border-left: 3px solid #94a3b8;
-}
-
-.task-item.doing {
-  border-left: 3px solid #f59e0b;
-  background: rgba(245, 158, 11, 0.05);
-}
-
-.task-item.done {
-  border-left: 3px solid #10b981;
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.task-status-indicator {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  margin-top: 2px;
-  border-radius: 50%;
-}
-
-.task-status-indicator:hover {
-  transform: scale(1.1);
-  background: rgba(102, 126, 234, 0.1);
-}
-
-.task-item.todo .task-status-indicator {
-  color: #94a3b8;
-}
-
-.task-item.doing .task-status-indicator {
-  color: #f59e0b;
-}
-
-.task-item.done .task-status-indicator {
-  color: #10b981;
-}
-
-.task-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.task-text {
-  font-size: 14px;
-  color: #1a1a1a;
-  line-height: 1.4;
-  word-wrap: break-word;
-  margin-bottom: 4px;
-  cursor: pointer;
-}
-
-.task-text:hover {
-  background: rgba(102, 126, 234, 0.05);
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin: -2px -4px 2px -4px;
-}
-
-.task-item.done .task-text {
-  text-decoration: line-through;
-  color: #94a3b8;
-}
-
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.task-status {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.task-status.status-todo {
-  background: rgba(148, 163, 184, 0.2);
-  color: #64748b;
-}
-
-.task-status.status-doing {
-  background: rgba(245, 158, 11, 0.2);
-  color: #d97706;
-}
-
-.task-status.status-done {
-  background: rgba(16, 185, 129, 0.2);
-  color: #059669;
-}
-
-.task-edit-input {
-  font-size: 14px;
-  color: #1a1a1a;
-  line-height: 1.4;
-  border: 1px solid #667eea;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin-bottom: 4px;
-  background: white;
-  outline: none;
-  width: 100%;
-  font-family: inherit;
-}
-
-.task-edit-input:focus {
-  border-color: #5a67d8;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-.task-reminder {
-  font-size: 12px;
-  color: #667eea;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.task-reminder.overdue {
-  color: #ff4757;
-}
-
-.task-reminder svg {
-  width: 12px;
-  height: 12px;
-}
-
-.task-duration {
-  font-size: 12px;
-  color: #f59e0b;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.task-duration svg {
-  width: 12px;
-  height: 12px;
-}
-
-.task-actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.task-item:hover .task-actions {
-  opacity: 1;
-}
-
-.action-button {
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.action-button:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.action-button.reminder-btn {
-  color: #667eea;
-}
-
-.action-button.delete-btn {
-  color: #ff4757;
-}
-
-/* 空状态 */
-.empty-state {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  color: #666;
-}
-
-.empty-state.show {
-  display: flex;
-}
-
-.empty-icon {
-  margin-bottom: 16px;
-  color: #667eea;
-  opacity: 0.6;
-}
-
-.empty-state h3 {
-  font-size: 16px;
-  margin-bottom: 8px;
-  color: #1a1a1a;
-}
-
-.empty-state p {
-  font-size: 14px;
-  color: #666;
-}
-
-/* 提醒设置弹窗 */
-.reminder-modal {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  border-radius: 16px;
-}
-
-.reminder-modal.show {
-  display: flex;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  width: 260px;
-  max-width: 85%;
-  max-height: 80%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  overflow-y: auto;
-}
-
-.modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.close-button {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.close-button:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 6px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 6px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-  border-color: #667eea;
-}
-
-.quick-time-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.quick-time-btn {
-  padding: 6px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
-  background: white;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.quick-time-btn:hover {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
-.modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary {
-  background: rgba(0, 0, 0, 0.05);
-  color: #666;
-}
-
-.btn-secondary:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5a67d8;
-}
-
-/* 面板底部 */
-.panel-footer {
-  padding: 12px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.footer-stats {
-  font-size: 12px;
-  color: #666;
-  text-align: center;
-}
-
-/* 滚动条样式 */
-.task-list-container::-webkit-scrollbar {
-  width: 4px;
-}
-
-.task-list-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.task-list-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-}
-
-.task-list-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* 动画效果 */
-.task-item {
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Component-specific styles that override or extend base styles */
 </style>

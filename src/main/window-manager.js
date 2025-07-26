@@ -1,15 +1,16 @@
-const { BrowserWindow, screen, nativeImage, Tray, Menu } = require('electron');
+const { BrowserWindow, screen, nativeImage, Tray, Menu, app } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
 class WindowManager {
-  constructor() {
+  constructor(appInstance = null) {
     this.floatingWindow = null;
     this.taskPanelWindow = null;
     this.taskManagerWindow = null;
     this.settingsWindow = null;
     this.tray = null;
-    
+    this.appInstance = appInstance;
+
     this.configStore = new Store({
       name: 'config',
       defaults: {
@@ -235,22 +236,22 @@ class WindowManager {
   createTray() {
     try {
       const trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
-      
+
       // 检查图标文件是否存在
       const fs = require('fs');
       if (!fs.existsSync(trayIconPath)) {
         console.warn('托盘图标文件不存在，跳过托盘创建');
         return;
       }
-      
+
       const image = nativeImage.createFromPath(trayIconPath);
-      
+
       // 检查图像是否为空
       if (image.isEmpty()) {
         console.warn('托盘图标为空，跳过托盘创建');
         return;
       }
-      
+
       const resizedImage = image.resize({ width: 16, height: 16 });
 
       this.tray = new Tray(resizedImage);
@@ -281,18 +282,18 @@ class WindowManager {
       },
       { type: 'separator' },
       {
-        label: '任务管理...',
+        label: '任务管理',
         click: () => this.createTaskManagerWindow()
       },
       {
-        label: '设置...',
+        label: '设置',
         click: () => this.createSettingsWindow()
       },
       { type: 'separator' },
       {
         label: '退出 MoliTodo',
         click: () => {
-          require('electron').app.quit();
+          this.quit();
         }
       }
     ]);
@@ -306,7 +307,7 @@ class WindowManager {
     }
 
     const config = this.configStore.get('floatingIcon');
-    
+
     this.floatingWindow.setSize(config.size, config.size);
     this.floatingWindow.setOpacity(config.opacity / 100);
 
@@ -330,12 +331,43 @@ class WindowManager {
 
   updateConfig(key, value) {
     this.configStore.set(key, value);
-    
+
     if (key.startsWith('floatingIcon.')) {
       this.applyFloatingIconConfig();
     }
-    
+
     return this.configStore.get(key);
+  }
+
+  quit() {
+    // Clean up windows before quitting
+    if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+      this.taskPanelWindow.close();
+    }
+    if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+      this.taskManagerWindow.close();
+    }
+    if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+      this.settingsWindow.close();
+    }
+
+    // Force close floating window even if closable is false
+    if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+      this.floatingWindow.setClosable(true);
+      this.floatingWindow.close();
+    }
+
+    // Destroy tray
+    if (this.tray) {
+      this.tray.destroy();
+    }
+
+    // Use app instance if available, otherwise fallback to direct app.quit()
+    if (this.appInstance && typeof this.appInstance.quit === 'function') {
+      this.appInstance.quit();
+    } else {
+      app.quit();
+    }
   }
 }
 

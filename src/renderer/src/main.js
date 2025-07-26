@@ -1,26 +1,10 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
+import router from './router'
 
-// 导入视图组件
-import MainView from './views/MainView.vue'
-import TaskManagerView from './views/TaskManagerView.vue'
-import SettingsView from './views/SettingsView.vue'
-import TaskPanelView from './views/TaskPanelView.vue'
-
-// 创建路由
-const routes = [
-  { path: '/', component: MainView },
-  { path: '/task-manager', component: TaskManagerView },
-  { path: '/settings', component: SettingsView },
-  { path: '/task-panel', component: TaskPanelView }
-]
-
-const router = createRouter({
-  history: createWebHashHistory(),
-  routes
-})
+// Import global styles
+import './assets/styles/index.css'
 
 // 创建应用
 const app = createApp(App)

@@ -238,6 +238,32 @@ formatDurationCompact(milliseconds)
 - **工作习惯**: 通过时间跟踪培养专注工作的习惯
 - **项目管理**: 为项目时间估算提供历史数据支持
 
+## 架构快速参考
+
+### 数据流概览
+```
+Vue Components → Pinia Store → electronAPI → IPC Handlers → Domain Services → SQLite Repository → Database
+```
+
+### 关键文件映射
+- **前端状态**: `src/renderer/src/store/taskStore.js`
+- **IPC 通信**: `src/main/preload.js` + `src/main/ipc-handlers.js`
+- **业务逻辑**: `src/domain/services/task-service.js`
+- **数据持久化**: `src/infrastructure/persistence/sqlite-task-repository.js`
+
+### 主要 API 调用链
+```javascript
+// 创建任务示例
+taskStore.createTask(data)
+  → window.electronAPI.tasks.create(data)
+  → ipcMain.handle('create-task')
+  → taskService.createTask()
+  → taskRepository.save()
+  → SQLite INSERT
+```
+
+详细架构说明请参考 [ARCHITECTURE.md](./ARCHITECTURE.md)
+
 ## 技术亮点
 
 1. **领域驱动设计**：清晰的分层架构，易于维护和扩展
@@ -245,3 +271,5 @@ formatDurationCompact(milliseconds)
 3. **完整的业务逻辑**：任务管理、提醒系统、数据持久化
 4. **良好的用户体验**：悬浮操作、快捷功能、实时反馈
 5. **可扩展架构**：模块化设计，便于添加新功能
+6. **安全的 IPC 通信**：使用 contextBridge 确保渲染进程安全
+7. **实时数据同步**：多窗口数据一致性保证

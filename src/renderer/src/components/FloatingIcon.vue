@@ -306,12 +306,6 @@ onMounted(async () => {
   // 监听面板鼠标事件
   window.electronAPI.events.on('panel-mouse-enter', handlePanelMouseEnter)
   window.electronAPI.events.on('panel-mouse-leave', handlePanelMouseLeave)
-
-  // 测试：5秒后触发提醒状态
-  setTimeout(() => {
-    console.log('测试：手动触发提醒状态')
-    handleTaskReminder(null, { id: 'test', content: '测试任务' })
-  }, 5000)
 })
 
 onUnmounted(() => {

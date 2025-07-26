@@ -1,0 +1,133 @@
+/* CSS Variables for Theme System */
+:root {
+  /* Color Palette - Light Theme (Default) */
+  --color-primary: #667eea;
+  --color-primary-hover: #5a67d8;
+  --color-primary-light: rgba(102, 126, 234, 0.1);
+  
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #545b62;
+  
+  --color-success: #28a745;
+  --color-success-hover: #1e7e34;
+  --color-success-light: rgba(16, 185, 129, 0.2);
+  
+  --color-warning: #ffc107;
+  --color-warning-hover: #e0a800;
+  --color-warning-light: rgba(245, 158, 11, 0.2);
+  
+  --color-danger: #dc3545;
+  --color-danger-hover: #c82333;
+  
+  --color-info: #17a2b8;
+  --color-info-hover: #138496;
+  
+  /* Status Colors */
+  --status-todo: #94a3b8;
+  --status-doing: #f59e0b;
+  --status-done: #10b981;
+  
+  /* Background Colors */
+  --bg-primary: rgba(255, 255, 255, 0.95);
+  --bg-secondary: rgba(255, 255, 255, 0.8);
+  --bg-tertiary: rgba(255, 255, 255, 0.9);
+  --bg-hover: rgba(102, 126, 234, 0.05);
+  --bg-active: rgba(102, 126, 234, 0.1);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-transparent: transparent;
+  
+  /* Text Colors */
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --text-white: white;
+  --text-disabled: #94a3b8;
+  
+  /* Border Colors */
+  --border-light: rgba(0, 0, 0, 0.05);
+  --border-medium: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --border-focus: rgba(102, 126, 234, 0.3);
+  --border-white: rgba(255, 255, 255, 0.2);
+  
+  /* Shadow Values */
+  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-panel: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.2);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 50%;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-modal: 1000;
+  --z-tooltip: 1100;
+  --z-overlay: 1200;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-primary-light: rgba(124, 58, 237, 0.1);
+  
+  --bg-primary: rgba(30, 30, 30, 0.95);
+  --bg-secondary: rgba(40, 40, 40, 0.8);
+  --bg-tertiary: rgba(50, 50, 50, 0.9);
+  --bg-hover: rgba(124, 58, 237, 0.05);
+  --bg-active: rgba(124, 58, 237, 0.1);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  --text-disabled: #555555;
+  
+  --border-light: rgba(255, 255, 255, 0.05);
+  --border-medium: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-focus: rgba(124, 58, 237, 0.3);
+  
+  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 8px 25px rgba(0, 0, 0, 0.5);
+  --shadow-panel: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.4);
+}

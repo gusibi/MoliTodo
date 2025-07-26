@@ -35,7 +35,7 @@ class MoliTodoApp {
       await this.initializeServices();
 
       // 初始化窗口管理器
-      this.windowManager = new WindowManager();
+      this.windowManager = new WindowManager(this);
       await this.windowManager.initialize();
 
       // 初始化 IPC 处理器
@@ -97,6 +97,13 @@ class MoliTodoApp {
         this.windowManager.createFloatingWindow();
       }
     });
+  }
+
+  // 添加方法供 WindowManager 调用来退出应用
+  quit() {
+    this.isQuitting = true;
+    this.notificationService.clearAllSchedules();
+    app.quit();
   }
 }
 

@@ -6,8 +6,8 @@ process.env.NODE_ENV = 'development';
 
 // 启动渲染进程开发服务器
 console.log('启动渲染进程开发服务器...');
-const rendererProcess = spawn('npm', ['run', 'dev'], {
-  cwd: path.join(__dirname, 'src/renderer'),
+const rendererProcess = spawn('npm', ['run', 'dev:renderer'], {
+  cwd: __dirname,
   stdio: 'inherit',
   shell: true
 });

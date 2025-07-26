@@ -5,12 +5,11 @@
   "main": "src/main/main.js",
   "scripts": {
     "dev": "node dev-start.js",
-    "dev:renderer": "cd src/renderer && npm run dev",
+    "dev:renderer": "vite --config src/renderer/vite.config.js",
     "build": "npm run build:renderer && electron-builder",
-    "build:renderer": "cd src/renderer && npm run build",
+    "build:renderer": "vite build --config src/renderer/vite.config.js",
     "build:mac": "npm run build",
-    "build:win": "npm run build",
-    "postinstall": "cd src/renderer && npm install"
+    "build:win": "npm run build"
   },
   "keywords": [
     "todo",
@@ -26,13 +25,18 @@
     "concurrently": "^7.6.0",
     "electron": "^28.3.3",
     "electron-builder": "^24.9.1",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "@vitejs/plugin-vue": "^4.4.0",
+    "vite": "^4.5.0"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
     "node-schedule": "^2.1.1",
     "sqlite3": "^5.1.6",
-    "sqlite": "^5.1.1"
+    "sqlite": "^5.1.1",
+    "vue": "^3.3.8",
+    "vue-router": "^4.2.5",
+    "pinia": "^2.1.7"
   },
   "build": {
     "appId": "com.MoliTodo.app",

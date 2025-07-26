@@ -76,7 +76,7 @@ MoliTodo v0.5.0 采用现代化的 Vue 3 + electron-vite 架构：
 - **Pinia**: 状态管理
 - **Vite**: 现代化构建工具
 
-### 项目结构
+### 项目结构 (优化后)
 ```
 src/
 ├── main/                       # 主进程代码
@@ -100,22 +100,23 @@ src/
 │
 └── renderer/                   # 表现层 - Vue 应用
     ├── src/
-    │   ├── components/         # Vue 组件
+    │   ├── components/         # 可复用的 UI 组件
     │   │   ├── FloatingIcon.vue
     │   │   ├── TaskManager.vue
     │   │   ├── TaskPanel.vue
     │   │   └── Settings.vue
-    │   ├── views/              # 页面级组件
+    │   ├── views/              # 页面级组件（与路由绑定）
     │   │   ├── MainView.vue
-    │   │   ├── TaskManagerView.vue
-    │   │   ├── TaskPanelView.vue
     │   │   └── SettingsView.vue
+    │   ├── router/             # 路由配置
+    │   │   └── index.js        # 路由定义和配置
     │   ├── store/              # Pinia 状态管理
     │   │   └── taskStore.js
     │   ├── App.vue             # 根组件
     │   └── main.js             # Vue 应用入口
-    ├── package.json            # 渲染进程依赖
-    └── vite.config.js          # Vite 配置
+    ├── index.html              # HTML 模板
+    ├── vite.config.js          # Vite 配置
+    └── README.md               # 渲染进程说明文档
 ```
 
 ### 架构优势
@@ -161,13 +162,8 @@ src/
 git clone https://github.com/your-username/moli-todo.git
 cd moli-todo
 
-# 安装主项目依赖
+# 安装所有依赖（已合并到根目录）
 npm install
-
-# 安装渲染进程依赖
-cd src/renderer
-npm install
-cd ../..
 
 # 运行开发版本
 npm run dev
@@ -241,9 +237,8 @@ window.electronAPI.events.on('tasks-updated', () => {
 ### 开发环境设置
 
 ```bash
-# 安装依赖
+# 安装所有依赖（已合并到根目录）
 npm install
-cd src/renderer && npm install && cd ../..
 
 # 启动开发模式
 npm run dev

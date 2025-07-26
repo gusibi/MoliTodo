@@ -1,0 +1,186 @@
+/* Floating Icon Component Styles */
+
+.floating-icon-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(var(--shadow-sm));
+}
+
+.floating-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-smooth);
+  filter: drop-shadow(var(--shadow-md));
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+}
+
+.floating-icon:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(var(--shadow-lg));
+}
+
+.floating-icon:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Icon Content */
+.icon-content {
+  color: var(--text-white);
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.default-icon {
+  opacity: 1;
+}
+
+.alert-icon {
+  opacity: 0;
+  position: absolute;
+}
+
+/* Alert State */
+.floating-icon.alert {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  animation: alertPulse 2s infinite;
+}
+
+.floating-icon.alert .default-icon {
+  opacity: 0;
+}
+
+.floating-icon.alert .alert-icon {
+  opacity: 1;
+}
+
+@keyframes alertPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Badge */
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  background: var(--color-danger);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-white);
+  border: 2px solid transparent;
+  opacity: 0;
+  transform: scale(0);
+  transition: all var(--transition-bounce);
+  font-family: var(--font-family);
+}
+
+.badge.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.badge span {
+  line-height: 1;
+  padding: 0 var(--spacing-xs);
+}
+
+.floating-icon:hover .badge {
+  transform: scale(1.1);
+}
+
+/* Dragging State */
+.floating-icon.dragging {
+  transform: scale(1.1);
+  filter: drop-shadow(var(--shadow-xl));
+  z-index: var(--z-modal);
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--color-success);
+  border-radius: var(--radius-full);
+  animation: blink 2s infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .floating-icon {
+    width: 45px;
+    height: 45px;
+  }
+
+  .badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .floating-icon {
+    border: 2px solid #000;
+  }
+
+  .badge {
+    border: 2px solid transparent;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .floating-icon,
+  .badge,
+  .icon-content {
+    transition: none;
+  }
+
+  .floating-icon.alert {
+    animation: none;
+  }
+
+  .progress-indicator {
+    animation: none;
+  }
+}

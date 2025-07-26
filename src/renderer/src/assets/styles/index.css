@@ -1,0 +1,11 @@
+/* Main CSS Entry Point */
+
+/* Import CSS Variables and Base Styles */
+@import './variables.css';
+@import './base.css';
+
+/* Import Component Styles */
+@import './components/floating-icon.css';
+@import './components/task-panel.css';
+@import './components/task-manager.css';
+@import './components/settings.css';
