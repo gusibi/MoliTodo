@@ -25,13 +25,17 @@
   @apply w-5 h-5 border-0 bg-transparent text-gray-500 cursor-pointer rounded transition-all duration-200 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100;
 }
 
+.task-edit-expand-placeholder {
+  @apply w-0 h-5;
+}
+
 .task-item-expand-placeholder {
   @apply w-5 h-5;
 }
 
 /* 复选框样式 */
 .task-item-checkbox {
-  @apply relative;
+  @apply relative mr-2;
 }
 
 .task-item-checkbox input[type="checkbox"] {

@@ -6,7 +6,7 @@
       @click="handleStartAdding"
     >
       <!-- 展开占位符 -->
-      <div class="task-item-expand-placeholder"></div>
+      <div class="task-edit-expand-placeholder"></div>
       
       <!-- 复选框（不可点击） -->
       <div class="task-item-checkbox">

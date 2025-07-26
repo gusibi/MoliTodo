@@ -1,22 +1,22 @@
 <template>
   <div class="task-panel" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
     <!-- 面板头部 -->
-    <div class="panel-header">
-      <h2 class="panel-title">
+    <div class="task-panel-header">
+      <h2 class="task-panel-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
         待办事项
+        <span class="task-panel-count">{{ taskCount }} 个任务</span>
       </h2>
-      <div class="task-count">{{ taskCount }} 个任务</div>
     </div>
 
     <!-- 快速添加框 -->
-    <div class="quick-add-section">
-      <div class="input-container">
-        <input v-model="newTaskContent" type="text" class="quick-add-input" placeholder="添加新任务..." maxlength="200"
+    <div class="task-panel-quick-add">
+      <div class="task-panel-input-container">
+        <input v-model="newTaskContent" type="text" class="task-panel-input" placeholder="添加新任务..." maxlength="200"
           @keypress.enter="addTask" ref="quickAddInput">
-        <button class="add-button" @click="addTask" title="添加任务">
+        <button class="task-panel-add-btn" @click="addTask" title="添加任务">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
@@ -28,57 +28,82 @@
     <div class="task-panel-list-container">
       <div v-if="tasks.length > 0" class="task-panel-list">
         <div v-for="task in sortedTasks" :key="task.id"
-          :class="['task-item', task.status || (task.completed ? 'done' : 'todo')]" :data-task-id="task.id"
+          :class="['task-panel-item', task.status || (task.completed ? 'done' : 'todo')]" :data-task-id="task.id"
           :data-status="task.status || (task.completed ? 'done' : 'todo')">
-          <div class="task-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
+          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
             <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
           </div>
 
-          <div class="task-content">
-            <div v-if="!isEditing(task.id)" class="task-text" @dblclick="startEditTask(task.id)" :title="'双击编辑'">
-              {{ task.content }}
-            </div>
-            <input v-else v-model="editingContent" class="task-edit-input" @keydown.enter="saveTaskEdit(task.id)"
-              @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
+          <div class="task-panel-content">
+            <div class="task-panel-main-row">
+              <div class="task-panel-text-container">
+                <div v-if="!isEditing(task.id)" class="task-panel-text" @dblclick="startEditTask(task.id)" :title="'双击编辑'">
+                  {{ task.content }}
+                </div>
+                <input v-else v-model="editingContent" class="task-panel-edit-input" @keydown.enter="saveTaskEdit(task.id)"
+                  @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
+              </div>
 
-            <div class="task-meta">
-              <span :class="['task-status', `status-${task.status || (task.completed ? 'done' : 'todo')}`]">
+              <div class="task-panel-actions">
+                <button 
+                  v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" 
+                  class="task-panel-action-btn pause-btn" 
+                  @click="pauseTask(task.id)" 
+                  title="暂停任务">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
+                  </svg>
+                </button>
+                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)" title="设置提醒">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
+                      fill="currentColor" />
+                  </svg>
+                </button>
+                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)" title="删除任务">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 元信息占满整行 -->
+            <div :class="['task-panel-meta', { 'compact': shouldUseCompactMode(task) }]">
+              <span :class="['task-panel-status', `status-${task.status || (task.completed ? 'done' : 'todo')}`]">
                 {{ getStatusText(task.status || (task.completed ? 'done' : 'todo')) }}
               </span>
 
+              <!-- 提醒时间信息 -->
+              <div v-if="task.reminderTime" :class="['task-panel-reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor" />
+                </svg>
+                {{ formatReminderTime(task.reminderTime) }}
+              </div>
+
               <!-- 时间追踪信息（仅显示进行中任务） -->
-              <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-duration">
+              <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-panel-duration">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                   <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2"/>
                 </svg>
                 进行中 {{ formatDurationCompact(getTaskTotalDuration(task)) }}
               </div>
-            </div>
-          </div>
 
-          <div class="task-actions">
-            <button class="action-button reminder-btn" @click="showReminderModal(task.id)" title="设置提醒">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                  fill="currentColor" />
-              </svg>
-            </button>
-            <button class="action-button delete-btn" @click="deleteTask(task.id)" title="删除任务">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
+              <!-- 占位元素，推动内容向右对齐 -->
+              <div class="task-panel-meta-spacer"></div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 空状态 -->
-      <div v-else class="empty-state show">
-        <div class="empty-icon">
+      <div v-else class="task-panel-empty show">
+        <div class="task-panel-empty-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
               d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
@@ -91,8 +116,8 @@
     </div>
 
     <!-- 提醒设置弹窗 -->
-    <div v-if="showReminder" class="reminder-modal show">
-      <div class="modal-content" @click.stop>
+    <div v-if="showReminder" class="task-panel-reminder-modal show">
+      <div class="task-panel-modal-content" @click.stop>
         <div class="modal-header">
           <h3>设置提醒</h3>
           <button class="modal-close-button" @click="hideReminderModal">
@@ -110,10 +135,10 @@
             <label for="reminderTime">时间</label>
             <input v-model="reminderTime" type="time" id="reminderTime" class="form-input">
           </div>
-          <div class="quick-time-buttons">
-            <button class="quick-time-btn" @click="setQuickTime(15)">15分钟后</button>
-            <button class="quick-time-btn" @click="setQuickTime(60)">1小时后</button>
-            <button class="quick-time-btn" @click="setQuickTime(24 * 60)">明天</button>
+          <div class="task-panel-quick-time-buttons">
+            <button class="task-panel-quick-time-btn" @click="setQuickTime(15)">15分钟后</button>
+            <button class="task-panel-quick-time-btn" @click="setQuickTime(60)">1小时后</button>
+            <button class="task-panel-quick-time-btn" @click="setQuickTime(24 * 60)">明天</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -124,8 +149,8 @@
     </div>
 
     <!-- 面板底部 -->
-    <div class="panel-footer">
-      <div class="footer-stats">{{ footerStats }}</div>
+    <div class="task-panel-footer">
+      <div class="task-panel-footer-stats">{{ footerStats }}</div>
     </div>
   </div>
 </template>
@@ -244,6 +269,17 @@ const deleteTask = async (taskId) => {
   }
 }
 
+const pauseTask = async (taskId) => {
+  try {
+    await taskStore.pauseTask(taskId)
+    await loadTasks()
+    // 重新启动定时器以调整更新频率
+    startUpdateTimer()
+  } catch (error) {
+    console.error('暂停任务失败:', error)
+  }
+}
+
 const isEditing = (taskId) => {
   return currentEditingTask.value === taskId
 }
@@ -291,13 +327,27 @@ const showReminderModal = (taskId) => {
   const task = tasks.value.find(t => t.id === taskId)
 
   if (task && task.reminderTime) {
-    const reminderDate = new Date(task.reminderTime)
-    reminderDate.value = reminderDate.toISOString().split('T')[0]
-    reminderTime.value = reminderDate.toTimeString().slice(0, 5)
+    const reminderDateTime = new Date(task.reminderTime)
+    // 使用本地时区格式化日期和时间
+    const year = reminderDateTime.getFullYear()
+    const month = String(reminderDateTime.getMonth() + 1).padStart(2, '0')
+    const day = String(reminderDateTime.getDate()).padStart(2, '0')
+    const hours = String(reminderDateTime.getHours()).padStart(2, '0')
+    const mins = String(reminderDateTime.getMinutes()).padStart(2, '0')
+    
+    reminderDate.value = `${year}-${month}-${day}`
+    reminderTime.value = `${hours}:${mins}`
   } else {
     const defaultTime = new Date(Date.now() + 60 * 60 * 1000)
-    reminderDate.value = defaultTime.toISOString().split('T')[0]
-    reminderTime.value = defaultTime.toTimeString().slice(0, 5)
+    // 使用本地时区格式化默认时间
+    const year = defaultTime.getFullYear()
+    const month = String(defaultTime.getMonth() + 1).padStart(2, '0')
+    const day = String(defaultTime.getDate()).padStart(2, '0')
+    const hours = String(defaultTime.getHours()).padStart(2, '0')
+    const mins = String(defaultTime.getMinutes()).padStart(2, '0')
+    
+    reminderDate.value = `${year}-${month}-${day}`
+    reminderTime.value = `${hours}:${mins}`
   }
 
   showReminder.value = true
@@ -309,9 +359,29 @@ const hideReminderModal = () => {
 }
 
 const setQuickTime = (minutes) => {
-  const targetTime = new Date(Date.now() + minutes * 60 * 1000)
-  reminderDate.value = targetTime.toISOString().split('T')[0]
-  reminderTime.value = targetTime.toTimeString().slice(0, 5)
+  const now = new Date()
+  let targetTime
+  
+  if (minutes === 24 * 60) {
+    // 明天9点提醒
+    const tomorrow = new Date(now)
+    tomorrow.setDate(now.getDate() + 1)
+    tomorrow.setHours(9, 0, 0, 0)
+    targetTime = tomorrow
+  } else {
+    // 从当前时间开始计算提醒时间（15分钟后、1小时后）
+    targetTime = new Date(now.getTime() + minutes * 60 * 1000)
+  }
+  
+  // 使用本地时区格式化日期和时间
+  const year = targetTime.getFullYear()
+  const month = String(targetTime.getMonth() + 1).padStart(2, '0')
+  const day = String(targetTime.getDate()).padStart(2, '0')
+  const hours = String(targetTime.getHours()).padStart(2, '0')
+  const mins = String(targetTime.getMinutes()).padStart(2, '0')
+  
+  reminderDate.value = `${year}-${month}-${day}`
+  reminderTime.value = `${hours}:${mins}`
 }
 
 const saveTaskReminder = async () => {
@@ -325,8 +395,12 @@ const saveTaskReminder = async () => {
     return
   }
 
-  const reminderDateTime = new Date(`${date}T${time}`)
+  // 使用本地时区创建日期对象
+  const [year, month, day] = date.split('-').map(Number)
+  const [hours, minutes] = time.split(':').map(Number)
+  const reminderDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
 
+  console.log("本地时区提醒时间:", reminderDateTime)
   if (reminderDateTime <= new Date()) {
     alert('提醒时间不能是过去的时间')
     return
@@ -405,6 +479,23 @@ const formatReminderTime = (date) => {
 
 const isReminderOverdue = (reminderTime) => {
   return new Date(reminderTime) < new Date()
+}
+
+// 判断是否需要使用紧凑模式
+const shouldUseCompactMode = (task) => {
+  // 计算当前任务的元信息项数量
+  let itemCount = 1 // 状态标签总是存在
+  
+  if (task.reminderTime) {
+    itemCount++
+  }
+  
+  if ((task.status || (task.completed ? 'done' : 'todo')) === 'doing') {
+    itemCount++
+  }
+  
+  // 如果有3个或更多项目，或者任务内容很长，使用紧凑模式
+  return itemCount >= 3 || (task.content && task.content.length > 30)
 }
 
 // 面板鼠标事件处理
@@ -496,5 +587,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Component-specific styles that override or extend base styles */
+@import '@/assets/styles/components/task-panel.css';
 </style>

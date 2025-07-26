@@ -11,11 +11,11 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false">
     
-    <button class="task-item-expand" v-if="task.description">
+    <!-- <button class="task-item-expand" v-if="task.description">
       <i class="fas fa-chevron-right"></i>
     </button>
     <div class="task-item-expand-placeholder" v-else></div>
-    
+     -->
     <div class="task-item-checkbox">
       <input 
         type="checkbox" 
