@@ -1,0 +1,381 @@
+/* Custom Title Bar Component Styles */
+
+.custom-titlebar {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-medium);
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  z-index: var(--z-overlay);
+  font-family: var(--font-family);
+}
+
+/* 左侧区域 */
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* 拖拽区域 */
+.titlebar-drag-region {
+  flex: 1;
+  height: 100%;
+  -webkit-app-region: drag;
+  app-region: drag;
+  min-width: 0;
+  /* 允许收缩 */
+}
+
+/* 控制按钮区域 */
+.titlebar-controls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.titlebar-button {
+  width: 46px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  font-size: 0;
+  outline: none;
+  position: relative;
+}
+
+.titlebar-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.titlebar-button:active {
+  background: var(--bg-active);
+  transform: scale(0.95);
+}
+
+/* 按钮图标 */
+.titlebar-button svg {
+  pointer-events: none;
+  transition: transform var(--transition-fast);
+}
+
+.titlebar-button:active svg {
+  transform: scale(0.9);
+}
+
+/* 最小化按钮 */
+.minimize-button:hover {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+/* 最大化按钮 */
+.maximize-button:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+/* 关闭按钮特殊样式 */
+.titlebar-close-button:hover {
+  background: #e81123;
+  color: white;
+}
+
+.titlebar-close-button:active {
+  background: #c50e1f;
+  color: white;
+}
+
+/* 焦点样式 */
+.titlebar-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* 禁用状态 */
+.titlebar-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 平台特定样式 */
+
+/* macOS 样式 */
+.titlebar-macos {
+  padding-left: 78px;
+  /* 为红绿灯按钮留出空间 */
+}
+
+.titlebar-macos .titlebar-left {
+  /* 在 macOS 上，标题和图标需要避开系统按钮 */
+  margin-left: 0;
+}
+
+.titlebar-macos .titlebar-drag-region {
+  /* 确保拖拽区域不覆盖系统按钮 */
+  margin-left: 0;
+}
+
+/* macOS 上隐藏自定义控制按钮，因为系统提供原生按钮 */
+.titlebar-macos .titlebar-controls {
+  display: none;
+}
+
+/* Windows 样式 */
+.titlebar-windows .titlebar-button {
+  width: 46px;
+  height: 32px;
+  border-radius: 0;
+}
+
+.titlebar-windows .titlebar-close-button:hover {
+  background: #e81123;
+}
+
+/* Linux 样式 */
+.titlebar-linux .titlebar-button {
+  width: 40px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  margin: 2px;
+}
+
+/* 深色主题适配 */
+[data-theme="dark"] .custom-titlebar {
+  background: var(--bg-secondary);
+  border-bottom-color: var(--border-medium);
+}
+
+[data-theme="dark"] .titlebar-button:hover {
+  background: var(--bg-hover);
+}
+
+[data-theme="dark"] .titlebar-close-button:hover {
+  background: #e81123;
+  color: white;
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .titlebar-button {
+    border: 1px solid var(--border-strong);
+  }
+
+  .titlebar-button:hover {
+    border-color: var(--color-primary);
+  }
+
+  .titlebar-close-button:hover {
+    border-color: #e81123;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .titlebar-button {
+    transition: none;
+  }
+
+  .titlebar-button svg {
+    transition: none;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .titlebar-button {
+    width: 40px;
+  }
+
+  .app-title {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .titlebar-left {
+    padding: 0 var(--spacing-md);
+  }
+
+  .app-title {
+    max-width: 100px;
+  }
+
+  .titlebar-button {
+    width: 36px;
+    height: 28px;
+  }
+}
+
+/* 窗口状态指示器 */
+.titlebar-status-indicator {
+  position: absolute;
+  top: 50%;
+  right: 140px;
+  /* 在控制按钮左侧 */
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.titlebar-status-indicator.active {
+  opacity: 1;
+}
+
+.titlebar-status-indicator.warning {
+  background: var(--color-warning);
+}
+
+.titlebar-status-indicator.error {
+  background: var(--color-danger);
+}
+
+/* 自定义上下文菜单样式 */
+.titlebar-context-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xs) 0;
+  min-width: 120px;
+  z-index: var(--z-tooltip);
+}
+
+.titlebar-context-menu-item {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  transition: background-color var(--transition-fast);
+}
+
+.titlebar-context-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.titlebar-context-menu-item:active {
+  background: var(--bg-active);
+}
+
+.titlebar-context-menu-separator {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--spacing-xs) 0;
+}
+
+/* 无障碍支持 */
+.titlebar-button[aria-pressed="true"] {
+  background: var(--bg-active);
+  color: var(--color-primary);
+}
+
+.titlebar-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 键盘导航支持 */
+.titlebar-controls:focus-within .titlebar-button:focus {
+  z-index: 1;
+}
+
+/* 工具提示样式 */
+.titlebar-button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-overlay);
+  color: var(--text-white);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+}
+
+/* 动画效果 */
+@keyframes titlebar-button-press {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.titlebar-button:active {
+  animation: titlebar-button-press 0.1s ease-in-out;
+}
+
+/* 窗口最大化状态下的样式调整 */
+.titlebar-maximized {
+  border-radius: 0;
+}
+
+.titlebar-maximized .titlebar-button {
+  border-radius: 0;
+}
+
+/* 窗口失焦状态 */
+.titlebar-unfocused {
+  opacity: 0.8;
+}
+
+.titlebar-unfocused .app-title {
+  color: var(--text-muted);
+}
+
+.titlebar-unfocused .titlebar-button {
+  color: var(--text-muted);
+}
