@@ -103,7 +103,7 @@
 }
 
 /* Task List Container */
-.task-list-container {
+.task-panel-list-container {
   flex: 1;
   min-height: 100px;
   max-height: calc(80vh - 200px);
@@ -111,7 +111,7 @@
   position: relative;
 }
 
-.task-list {
+.task-panel-list {
   padding: var(--spacing-sm) 0;
 }
 
@@ -422,20 +422,20 @@
 }
 
 /* Scrollbar Styles */
-.task-list-container::-webkit-scrollbar {
+.task-panel-list-container::-webkit-scrollbar {
   width: 4px;
 }
 
-.task-list-container::-webkit-scrollbar-track {
+.task-panel-list-container::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.task-list-container::-webkit-scrollbar-thumb {
+.task-panel-list-container::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 2px;
 }
 
-.task-list-container::-webkit-scrollbar-thumb:hover {
+.task-panel-list-container::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
 }
 

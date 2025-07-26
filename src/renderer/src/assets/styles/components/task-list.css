@@ -1,189 +1,80 @@
-/* TaskList 组件样式 */
+/* TaskList 组件样式 - 使用 Tailwind CSS */
+
 .task-list-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* 移除固定高度限制，让内容自然扩展 */
-  min-height: calc(100vh - 32px); /* 最小高度为视口减去标题栏 */
-  position: relative;
-  padding-bottom: 60px; /* 为底部stats-bar预留空间 */
+  @apply flex-1 flex flex-col relative pb-16;
 }
 
 /* 悬浮的添加任务输入框 */
-.floating-add-task {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
-  padding: var(--spacing-md);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  flex-shrink: 0; /* 防止输入框被压缩 */
+.task-list-floating-add {
+  @apply sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 backdrop-blur-sm flex-shrink-0;
 }
 
-.add-task-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: 600px;
-  margin: 0 auto;
+.task-list-add-input-container {
+  @apply relative flex items-center max-w-2xl mx-auto;
 }
 
-.add-task-input {
-  width: 100%;
-  padding: 12px 16px;
-  padding-right: 50px; /* 为按钮留出空间 */
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  outline: none;
+.task-list-add-input {
+  @apply w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-base bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-all duration-200 outline-none;
 }
 
-.add-task-input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.task-list-add-input:focus {
+  @apply border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900;
 }
 
-.add-task-input::placeholder {
-  color: var(--text-muted);
+.task-list-add-input::placeholder {
+  @apply text-gray-500 dark:text-gray-400;
 }
 
-.add-task-btn {
-  position: absolute;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--border-radius);
-  background: var(--color-primary);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 14px;
-}
-
-.add-task-btn:hover {
-  background: #2563eb;
-  transform: scale(1.05);
+.task-list-add-btn {
+  @apply absolute right-2 w-8 h-8 border-0 rounded bg-blue-600 text-white cursor-pointer flex items-center justify-center transition-all duration-200 text-sm hover:bg-blue-700 hover:scale-105;
 }
 
 /* 任务列表内容区域 */
 .task-list-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 允许flex子元素收缩 */
-  overflow-y: auto;
-  padding-bottom: 60px; /* 为统计信息条留出空间 */
+  @apply flex-1 flex flex-col overflow-y-auto;
+  min-height: 0;
+  height: calc(100vh - 180px);
 }
 
-.loading-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1; /* 占满剩余空间 */
-  min-height: 300px; /* 最小高度 */
-  color: var(--text-muted);
+.task-list-loading-state,
+.task-list-empty-state {
+  @apply flex flex-col items-center justify-center flex-1 text-gray-500 dark:text-gray-400;
+  min-height: 300px;
 }
 
-.loading-state i {
-  font-size: 24px;
-  margin-bottom: var(--spacing-md);
-  color: var(--color-primary);
+.task-list-loading-state i {
+  @apply text-2xl mb-4 text-blue-600;
 }
 
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: var(--spacing-lg);
-  opacity: 0.5;
+.task-list-empty-icon {
+  @apply text-5xl mb-6 opacity-50;
 }
 
-.empty-text {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--spacing-md);
+.task-list-empty-text {
+  @apply text-lg font-medium mb-4;
 }
 
-.empty-suggestion {
-  text-align: center;
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
+.task-list-empty-suggestion {
+  @apply text-center text-sm text-gray-500 dark:text-gray-400;
 }
 
-.empty-suggestion ul {
-  text-align: left;
-  margin: var(--spacing-sm) 0;
+.task-list-empty-suggestion ul {
+  @apply text-left my-2;
 }
 
-.empty-hint {
-  text-align: center;
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  padding: var(--spacing-md);
-  background: rgba(59, 130, 246, 0.05);
-  border-radius: var(--border-radius);
-  border: 1px dashed rgba(59, 130, 246, 0.2);
+.task-list-empty-hint {
+  @apply text-center text-sm text-gray-500 dark:text-gray-400 p-4 bg-blue-50 dark:bg-blue-900/20 rounded border border-dashed border-blue-200 dark:border-blue-700;
 }
 
-.task-list {
-  padding: var(--spacing-md);
+.task-list-items {
+  @apply p-4;
 }
 
-/* 移除原来的添加任务按钮样式 */
-.add-task-row {
-  display: none;
+/* 按钮样式 */
+.task-list-btn {
+  @apply px-6 py-3 border-0 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 inline-flex items-center gap-2;
 }
 
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-/* 暗色主题适配 */
-[data-theme="dark"] .floating-add-task {
-  background: var(--bg-primary);
-  border-bottom-color: var(--border-color);
-}
-
-[data-theme="dark"] .add-task-input {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-[data-theme="dark"] .add-task-input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-[data-theme="dark"] .empty-hint {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
+.task-list-btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5;
 }

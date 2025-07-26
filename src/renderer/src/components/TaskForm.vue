@@ -1,10 +1,22 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal modal-content" @click.stop>
-      <h3>{{ isEdit ? '编辑任务' : '添加新任务' }}</h3>
-      <form @submit.prevent="handleSubmit">
-        <div class="form-group">
-          <label for="task-content">任务内容</label>
+  <div 
+    v-if="show" 
+    class="task-form-overlay"
+    @click="handleOverlayClick"
+  >
+    <div 
+      class="task-form-content"
+      @click.stop
+    >
+      <h3 class="task-form-title">
+        {{ isEdit ? '编辑任务' : '添加新任务' }}
+      </h3>
+      
+      <form @submit.prevent="handleSubmit" class="task-form-form">
+        <div class="task-form-field">
+          <label for="task-content" class="task-form-label">
+            任务内容
+          </label>
           <input 
             id="task-content"
             v-model="formData.content" 
@@ -12,33 +24,48 @@
             placeholder="输入任务内容..." 
             ref="contentInput"
             required
+            class="task-form-input"
           />
         </div>
         
-        <div class="form-group">
-          <label for="task-description">任务描述（可选）</label>
+        <div class="task-form-field">
+          <label for="task-description" class="task-form-label">
+            任务描述（可选）
+          </label>
           <textarea 
             id="task-description"
             v-model="formData.description" 
             placeholder="输入任务描述..."
             rows="3"
+            class="task-form-textarea"
           ></textarea>
         </div>
         
-        <div class="form-group">
-          <label for="task-reminder">提醒时间（可选）</label>
+        <div class="task-form-field">
+          <label for="task-reminder" class="task-form-label">
+            提醒时间（可选）
+          </label>
           <input 
             id="task-reminder"
             v-model="formData.reminderTime" 
             type="datetime-local"
+            class="task-form-input"
           />
         </div>
         
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary" :disabled="!formData.content.trim()">
+        <div class="task-form-actions">
+          <button 
+            type="submit" 
+            :disabled="!formData.content.trim()"
+            class="task-form-btn-primary"
+          >
             {{ isEdit ? '保存' : '添加' }}
           </button>
-          <button type="button" class="btn btn-secondary" @click="handleCancel">
+          <button 
+            type="button" 
+            @click="handleCancel"
+            class="task-form-btn-secondary"
+          >
             取消
           </button>
         </div>
@@ -159,6 +186,6 @@ const handleOverlayClick = () => {
 }
 </script>
 
-<style>
+<style scoped>
 @import '../assets/styles/components/task-form.css';
 </style>

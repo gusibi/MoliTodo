@@ -372,9 +372,9 @@ class IpcHandlers {
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
-
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
+        console.log(`主进程: 已向 ${window.id} 窗口广播任务更新`);
         window.webContents.send('tasks-updated');
       }
     });

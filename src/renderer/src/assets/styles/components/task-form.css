@@ -1,163 +1,67 @@
-/* TaskForm 组件样式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
+/* 任务表单样式 */
+
+.task-form-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] opacity-100 visible pointer-events-auto;
 }
 
-.modal {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  min-width: 400px;
-  max-width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  position: relative;
-  z-index: 10000;
-  transform: scale(1);
-}
-
-[data-theme="dark"] .modal {
-  background: #374151;
-}
-
-.modal h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  font-family: inherit;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .form-group select {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #f9fafb;
-}
-
-[data-theme="dark"] .form-group input:focus,
-[data-theme="dark"] .form-group textarea:focus,
-[data-theme="dark"] .form-group select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.form-group textarea {
-  min-height: 80px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 80px;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
-}
-
-[data-theme="dark"] .btn-secondary {
-  background: #4b5563;
-  color: #d1d5db;
-}
-
-[data-theme="dark"] .btn-secondary:hover {
-  background: #6b7280;
-}
-
-/* 响应式设计 */
-@media (max-width: 480px) {
-  .modal {
-    min-width: 320px;
-    max-width: 90vw;
-    margin: 20px;
-  }
+/* 任务表单内容容器 */
+.task-form-content {
+  @apply bg-white dark:bg-gray-700 rounded-xl p-6 min-w-[400px] max-w-[500px] max-h-[80vh] overflow-y-auto shadow-2xl relative z-[10000] transform scale-100;
   
-  .modal-actions {
-    flex-direction: column;
-  }
+  /* 响应式设计 */
+  @apply sm:min-w-[320px] sm:max-w-[90vw] sm:mx-5;
+}
+
+/* 任务表单标题 */
+.task-form-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-5;
+}
+
+/* 任务表单容器 */
+.task-form-form {
+  @apply space-y-5;
+}
+
+/* 任务表单字段容器 */
+.task-form-field {
+  @apply space-y-1.5;
+}
+
+/* 任务表单标签 */
+.task-form-label {
+  @apply block text-sm font-medium text-gray-900 dark:text-white;
+}
+
+/* 任务表单输入框 */
+.task-form-input {
+  @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:focus:ring-blue-500/20;
+}
+
+/* 任务表单文本域 */
+.task-form-textarea {
+  @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 resize-y min-h-[80px];
+}
+
+/* 任务表单按钮容器 */
+.task-form-actions {
+  @apply flex gap-3 justify-end mt-6;
   
-  .btn {
-    width: 100%;
-  }
+  /* 响应式设计 */
+  @apply sm:flex-col;
+}
+
+/* 任务表单主要按钮 */
+.task-form-btn-primary {
+  @apply px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
+  
+  /* 响应式设计 */
+  @apply sm:w-full;
+}
+
+/* 任务表单次要按钮 */
+.task-form-btn-secondary {
+  @apply px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
+  
+  /* 响应式设计 */
+  @apply sm:w-full;
 }

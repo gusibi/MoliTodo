@@ -209,6 +209,125 @@ class Task {
   }
 
   /**
+   * 检查是否暂停中
+   * @returns {boolean}
+   */
+  isPaused() {
+    return this.status === 'paused';
+  }
+
+  /**
+   * 检查日期是否为今天
+   * @param {string|Date} dateString 日期字符串或Date对象
+   * @returns {boolean} 是否为今天
+   */
+  static isToday(dateString) {
+    if (!dateString) return false
+    
+    const today = new Date()
+    const date = new Date(dateString)
+    
+    return date.getFullYear() === today.getFullYear() &&
+           date.getMonth() === today.getMonth() &&
+           date.getDate() === today.getDate()
+  }
+
+  /**
+   * 检查任务是否属于收件箱分类
+   * 收件箱：待办状态且没有提醒时间的任务
+   * @returns {boolean}
+   */
+  isInboxTask() {
+    return this.status === 'todo' && !this.reminderTime;
+  }
+
+  /**
+   * 检查任务是否属于今日分类
+   * 今日：提醒时间是今天且未完成的任务，或正在进行中的任务
+   * @returns {boolean}
+   */
+  isTodayTask() {
+    return (Task.isToday(this.reminderTime) && this.status !== 'done') || 
+           (this.status === 'doing');
+  }
+
+  /**
+   * 检查任务是否属于计划分类
+   * 计划：有提醒时间的任务
+   * @returns {boolean}
+   */
+  isPlannedTask() {
+    return !!this.reminderTime;
+  }
+
+  /**
+   * 检查任务是否属于已完成分类
+   * @returns {boolean}
+   */
+  isCompletedTask() {
+    return this.status === 'done';
+  }
+
+  /**
+   * 检查任务是否属于进行中分类
+   * @returns {boolean}
+   */
+  isDoingTask() {
+    return this.status === 'doing';
+  }
+
+  /**
+   * 检查任务是否属于暂停中分类
+   * @returns {boolean}
+   */
+  isPausedTask() {
+    return this.status === 'paused';
+  }
+
+  /**
+   * 获取任务所属的分类
+   * @returns {string[]} 任务所属的分类数组
+   */
+  getCategories() {
+    const categories = ['all']; // 所有任务都属于'all'分类
+    
+    if (this.isInboxTask()) categories.push('inbox');
+    if (this.isTodayTask()) categories.push('today');
+    if (this.isDoingTask()) categories.push('doing');
+    if (this.isPausedTask()) categories.push('paused');
+    if (this.isPlannedTask()) categories.push('planned');
+    if (this.isCompletedTask()) categories.push('completed');
+    
+    return categories;
+  }
+
+  /**
+   * 检查任务是否属于指定分类
+   * @param {string} category 分类名称
+   * @returns {boolean}
+   */
+  belongsToCategory(category) {
+    switch (category) {
+      case 'all':
+        return true;
+      case 'inbox':
+        return this.isInboxTask();
+      case 'today':
+        return this.isTodayTask();
+      case 'doing':
+        return this.isDoingTask();
+      case 'paused':
+        return this.isPausedTask();
+      case 'planned':
+        return this.isPlannedTask();
+      case 'completed':
+        return this.isCompletedTask();
+      default:
+        return false;
+    }
+  }
+
+  /**
    * 设置提醒时间
    * @param {Date} reminderTime 提醒时间
    */

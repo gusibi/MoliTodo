@@ -213,6 +213,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { TaskStatisticsService } from '../services/taskStatisticsService.js'
 import { useTaskStore } from '@/store/taskStore'
 import { useTheme } from '@/composables/useTheme'
 import ThemeSwitcher from './ThemeSwitcher.vue'
@@ -303,7 +304,17 @@ const loadDatabaseStats = async () => {
 
 const loadTaskStats = async () => {
   try {
-    taskStats.value = await taskStore.getTaskStats()
+    await taskStore.getAllTasks()
+    const tasks = taskStore.tasks
+    const stats = TaskStatisticsService.calculateFullStatistics(tasks)
+    
+    taskStats.value = {
+      totalWorkTime: stats.duration.total,
+      totalCompletedTasks: stats.status.done,
+      currentActiveTime: 0, // 当前活动时间需要单独计算
+      inProgressTasksCount: stats.status.doing,
+      averageTaskTime: stats.duration.average
+    }
   } catch (error) {
     console.error('加载任务统计失败:', error)
   }

@@ -25,8 +25,8 @@
     </div>
 
     <!-- 任务列表 -->
-    <div class="task-list-container">
-      <div v-if="tasks.length > 0" class="task-list">
+    <div class="task-panel-list-container">
+      <div v-if="tasks.length > 0" class="task-panel-list">
         <div v-for="task in sortedTasks" :key="task.id"
           :class="['task-item', task.status || (task.completed ? 'done' : 'todo')]" :data-task-id="task.id"
           :data-status="task.status || (task.completed ? 'done' : 'todo')">
@@ -343,8 +343,7 @@ const saveTaskReminder = async () => {
 }
 
 const getStatusText = (status) => {
-  const statusMap = { 'todo': '待办', 'doing': '进行中', 'done': '已完成' }
-  return statusMap[status] || '待办'
+  return taskStore.getStatusText(status)
 }
 
 const getStatusIcon = (status) => {
@@ -401,17 +400,7 @@ const formatDurationCompact = (milliseconds) => {
 }
 
 const formatReminderTime = (date) => {
-  const now = new Date()
-  const today = now.toDateString()
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString()
-
-  if (date.toDateString() === today) {
-    return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else if (date.toDateString() === tomorrow) {
-    return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else {
-    return date.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  }
+  return taskStore.formatTimeDisplay(date, 'reminder')
 }
 
 const isReminderOverdue = (reminderTime) => {
