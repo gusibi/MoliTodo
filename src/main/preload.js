@@ -35,7 +35,12 @@ const electronAPI = {
     showTaskPanel: () => ipcRenderer.invoke('show-task-panel'),
     hideTaskPanel: () => ipcRenderer.invoke('hide-task-panel'),
     panelMouseEnter: () => ipcRenderer.invoke('panel-mouse-enter'),
-    panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave')
+    panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave'),
+    // 窗口控制 API
+    minimize: (windowType) => ipcRenderer.invoke('window-minimize', windowType),
+    maximize: (windowType) => ipcRenderer.invoke('window-maximize', windowType),
+    close: (windowType) => ipcRenderer.invoke('window-close', windowType),
+    isMaximized: (windowType) => ipcRenderer.invoke('window-is-maximized', windowType)
   },
 
   // 数据管理 API

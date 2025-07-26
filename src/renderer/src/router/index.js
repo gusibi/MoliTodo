@@ -3,9 +3,9 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 // 导入视图组件
 import MainView from '../views/MainView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import TaskManagerView from '../views/TaskManagerView.vue'
 
 // 导入组件作为页面级组件
-import TaskManager from '../components/TaskManager.vue'
 import TaskPanel from '../components/TaskPanel.vue'
 
 const routes = [
@@ -20,7 +20,7 @@ const routes = [
   {
     path: '/task-manager',
     name: 'TaskManager',
-    component: TaskManager,
+    component: TaskManagerView,
     meta: {
       title: '任务管理'
     }

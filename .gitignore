@@ -46,6 +46,7 @@ debug.log
 /coverage/
 .nyc_output/
 .kiro/
+molist/
 
 # ====================== #
 # 其他

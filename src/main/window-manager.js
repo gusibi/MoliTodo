@@ -106,6 +106,8 @@ class WindowManager {
       minWidth: 800,
       minHeight: 600,
       title: 'MoliTodo - 任务管理',
+      frame: false, // 禁用原生标题栏
+      titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
@@ -141,6 +143,8 @@ class WindowManager {
       height: 650,
       resizable: false,
       title: '设置',
+      frame: false, // 禁用原生标题栏
+      titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
@@ -337,6 +341,48 @@ class WindowManager {
     }
 
     return this.configStore.get(key);
+  }
+
+  // 窗口控制方法
+  minimizeWindow(windowType) {
+    const window = this.getWindowByType(windowType);
+    if (window && !window.isDestroyed()) {
+      window.minimize();
+    }
+  }
+
+  maximizeWindow(windowType) {
+    const window = this.getWindowByType(windowType);
+    if (window && !window.isDestroyed()) {
+      if (window.isMaximized()) {
+        window.unmaximize();
+      } else {
+        window.maximize();
+      }
+    }
+  }
+
+  closeWindow(windowType) {
+    const window = this.getWindowByType(windowType);
+    if (window && !window.isDestroyed()) {
+      window.close();
+    }
+  }
+
+  isWindowMaximized(windowType) {
+    const window = this.getWindowByType(windowType);
+    return window && !window.isDestroyed() ? window.isMaximized() : false;
+  }
+
+  getWindowByType(windowType) {
+    switch (windowType) {
+      case 'taskManager':
+        return this.taskManagerWindow;
+      case 'settings':
+        return this.settingsWindow;
+      default:
+        return null;
+    }
   }
 
   quit() {

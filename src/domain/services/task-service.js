@@ -124,7 +124,7 @@ class TaskService {
     if (!task) {
       throw new Error('任务不存在');
     }
-
+    console.log("taskId: ${taskId}, reminderTime: ", reminderTime)
     task.setReminder(reminderTime);
     return await this.taskRepository.save(task);
   }

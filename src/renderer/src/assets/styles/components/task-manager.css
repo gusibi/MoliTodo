@@ -5,7 +5,7 @@
   height: 100vh;
   background: var(--bg-primary);
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 修改为水平布局 */
   font-family: var(--font-family);
   overflow: hidden;
 }
@@ -268,8 +268,8 @@
   gap: var(--spacing-sm);
 }
 
-/* Close Button */
-.close-button {
+/* Modal Close Button */
+.modal-close-button {
   width: 24px;
   height: 24px;
   border: none;
@@ -283,7 +283,7 @@
   transition: all var(--transition-fast);
 }
 
-.close-button:hover {
+.modal-close-button:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }

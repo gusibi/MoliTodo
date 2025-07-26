@@ -170,6 +170,23 @@ class IpcHandlers {
         this.windowManager.floatingWindow.webContents.send('panel-mouse-leave');
       }
     });
+
+    // 窗口控制相关
+    ipcMain.handle('window-minimize', (event, windowType) => {
+      this.windowManager.minimizeWindow(windowType);
+    });
+
+    ipcMain.handle('window-maximize', (event, windowType) => {
+      this.windowManager.maximizeWindow(windowType);
+    });
+
+    ipcMain.handle('window-close', (event, windowType) => {
+      this.windowManager.closeWindow(windowType);
+    });
+
+    ipcMain.handle('window-is-maximized', (event, windowType) => {
+      return this.windowManager.isWindowMaximized(windowType);
+    });
   }
 
   setupDataHandlers() {

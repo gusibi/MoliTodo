@@ -56,11 +56,11 @@ class Task {
   }
 
   /**
-   * 开始任务 - 从待办状态开始计时
+   * 开始任务 - 从待办或暂停状态开始计时
    */
   startTask() {
-    if (this.status !== 'todo') {
-      throw new Error('只能从待办状态开始任务');
+    if (this.status !== 'todo' && this.status !== 'paused') {
+      throw new Error('只能从待办或暂停状态开始任务');
     }
     this.status = 'doing';
     this.startedAt = new Date();
@@ -79,7 +79,7 @@ class Task {
       const currentDuration = Date.now() - this.startedAt.getTime();
       this.totalDuration += currentDuration;
     }
-    this.status = 'todo';
+    this.status = 'paused';
     this.startedAt = null;
     this.completed = false;
     this.updatedAt = new Date();
