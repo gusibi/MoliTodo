@@ -1,22 +1,26 @@
 <template>
-  <div class="custom-titlebar" :class="{ 'titlebar-macos': isMacOS }" @dblclick="handleDoubleClick">
+  <div 
+    class="flex items-center h-8  select-none  z-50 transition-all "
+    :class="{ 'pl-20': isMacOS }" 
+    @dblclick="handleDoubleClick"
+  >
     <!-- 左侧：应用图标和标题 -->
-    <div class="titlebar-left">
-      <div class="app-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
-        </svg>
+    <div class="flex items-center gap-3 px-4 flex-shrink-0">
+      <div class="w-6 h-6 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+        <img src="/tray-icon.png" alt="MoliTodo" class="w-5 h-5 object-contain" />
       </div>
-      <div class="app-title">{{ title }}</div>
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+        MoliTodo
+      </span>
     </div>
 
     <!-- 中间：拖拽区域 -->
-    <div class="titlebar-drag-region"></div>
+    <div class="flex-1 h-full drag-region"></div>
 
     <!-- 右侧：窗口控制按钮（在 macOS 上隐藏，因为系统提供原生按钮） -->
-    <div v-if="!isMacOS" class="titlebar-controls">
+    <div v-if="!isMacOS" class="flex items-center flex-shrink-0 no-drag">
       <button 
-        class="titlebar-button minimize-button" 
+        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
         @click="minimizeWindow"
         title="最小化"
       >
@@ -27,7 +31,7 @@
       
       <button 
         v-if="showMaximize"
-        class="titlebar-button maximize-button" 
+        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
         @click="maximizeWindow"
         :title="isMaximized ? '还原' : '最大化'"
       >
@@ -41,7 +45,7 @@
       </button>
       
       <button 
-        class="titlebar-button titlebar-close-button" 
+        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-white hover:bg-red-500 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset"
         @click="closeWindow"
         title="关闭"
       >
@@ -50,6 +54,9 @@
         </svg>
       </button>
     </div>
+    
+    <!-- macOS 上的占位符，保持布局平衡 -->
+    <div v-else class="flex items-center flex-shrink-0 w-12"></div>
   </div>
 </template>
 
@@ -149,139 +156,42 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.custom-titlebar {
-  display: flex;
-  align-items: center;
-  height: 32px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-medium);
-  user-select: none;
-  -webkit-user-select: none;
-  position: relative;
-  z-index: 1000;
-}
-
-.titlebar-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0 var(--spacing-lg);
-  flex-shrink: 0;
-}
-
-.app-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-title {
-  font-size: 13px;
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.titlebar-drag-region {
-  flex: 1;
-  height: 100%;
+/* 拖拽区域样式 */
+.drag-region {
   -webkit-app-region: drag;
-  /* 在 Windows 和 Linux 上启用拖拽 */
   app-region: drag;
 }
 
-.titlebar-controls {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
+/* 禁用拖拽区域样式 */
+.no-drag {
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
 
-.titlebar-button {
-  width: 46px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  font-size: 0; /* 隐藏可能的文本 */
-}
-
-.titlebar-button:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.titlebar-button:active {
-  background: var(--bg-active);
-}
-
-/* 关闭按钮特殊样式 */
-.titlebar-close-button:hover {
-  background: #e81123;
-  color: white;
-}
-
-.titlebar-close-button:active {
-  background: #c50e1f;
-  color: white;
-}
-
-/* macOS 样式适配 - 通过 JavaScript 动态添加类名 */
-.custom-titlebar.titlebar-macos {
-  padding-left: 78px; /* 为 macOS 的红绿灯按钮留出空间 */
-}
-
-.custom-titlebar.titlebar-macos .titlebar-left {
-  /* 在 macOS 上，标题和图标需要避开系统按钮 */
-  margin-left: 0;
-}
-
-.custom-titlebar.titlebar-macos .titlebar-drag-region {
-  /* 确保拖拽区域不覆盖系统按钮 */
-  margin-left: 0;
-}
-
 /* 高对比度模式支持 */
 @media (prefers-contrast: high) {
-  .titlebar-button {
-    border: 1px solid var(--border-strong);
+  .w-12.h-8 {
+    @apply border border-gray-400;
   }
   
-  .titlebar-button:hover {
-    border-color: var(--color-primary);
+  .w-12.h-8:hover {
+    @apply border-blue-500;
   }
 }
 
 /* 减少动画模式支持 */
 @media (prefers-reduced-motion: reduce) {
-  .titlebar-button {
+  .transition-all {
     transition: none;
   }
 }
 
-/* 焦点样式 */
-.titlebar-button:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-}
-
 /* 禁用状态 */
-.titlebar-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.w-12.h-8:disabled {
+  @apply opacity-50 cursor-not-allowed;
 }
 
-.titlebar-button:disabled:hover {
-  background: transparent;
-  color: var(--text-secondary);
+.w-12.h-8:disabled:hover {
+  @apply bg-transparent text-gray-500;
 }
 </style>

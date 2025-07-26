@@ -1,11 +1,15 @@
 <template>
-  <div class="w-full min-h-screen flex flex-col bg-white dark:bg-gray-800">
+  <div class="w-full min-h-screen relative bg-white dark:bg-gray-800">
+    <!-- 绝对定位的透明标题栏，覆盖在 TaskManager 上方 -->
     <CustomTitleBar 
       title="MoliTodo - 任务管理" 
       window-type="taskManager"
       :show-maximize="true"
+      class="absolute top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm"
     />
-    <div class="flex-1 flex min-h-0">
+    
+    <!-- TaskManager 占据全屏，标题栏透明覆盖在上方 -->
+    <div class="w-full h-screen">
       <TaskManager />
     </div>
   </div>

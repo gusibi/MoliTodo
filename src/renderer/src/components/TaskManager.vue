@@ -1,16 +1,7 @@
 <template>
   <div class="task-manager">
     <!-- 左侧边栏 - 半透明毛玻璃效果 -->
-    <aside class="task-manager-sidebar">
-      <div class="task-manager-sidebar-header">
-        <div class="task-manager-user-profile">
-          <div class="task-manager-user-avatar">
-            <img src="/tray-icon.png" alt="MoliTodo" />
-          </div>
-          <span class="task-manager-user-name">MoliTodo</span>
-        </div>
-      </div>
-      
+    <aside class="task-manager-sidebar pt-8">
       <SidebarNav 
         :current-category="currentCategory"
         :category-counts="categoryCounts"
@@ -20,7 +11,7 @@
     </aside>
 
     <!-- 主要内容区域 -->
-    <main class="task-manager-main-content">
+    <main class="task-manager-main-content mt-8">
       <!-- 搜索区域 - 简化版 -->
       <div class="task-manager-search-section">
         <div class="task-manager-search-box">
