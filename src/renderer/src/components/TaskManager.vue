@@ -199,11 +199,17 @@
                 </span>
                 
                 <!-- 时间标签 -->
-                <span v-if="task.reminderTime" class="tag tag-date">
+                <span v-if="task.reminderTime" 
+                      class="tag tag-reminder tooltip-container" 
+                      @mouseenter="showTooltip($event, `提醒时间: ${formatReminderTime(task.reminderTime)}`)"
+                      @mouseleave="hideTooltip">
                   <i class="fas fa-calendar"></i>
                   {{ formatReminderTime(task.reminderTime) }}
                 </span>
-                <span v-else-if="task.createdAt" class="tag tag-date">
+                <span v-else-if="task.createdAt" 
+                      class="tag tag-created tooltip-container"
+                      @mouseenter="showTooltip($event, `创建时间: ${formatCreatedTime(task.createdAt)}`)"
+                      @mouseleave="hideTooltip">
                   <i class="fas fa-clock"></i>
                   {{ formatCreatedTime(task.createdAt) }}
                 </span>
@@ -298,6 +304,11 @@
         </div>
       </div>
     </div>
+
+    <!-- 自定义 Tooltip -->
+    <div v-if="tooltip.show" class="custom-tooltip" :style="tooltip.style">
+      {{ tooltip.text }}
+    </div>
   </div>
 </template>
 
@@ -328,6 +339,13 @@ const selectedTasks = ref([])
 const hoveredTask = ref(null)
 
 const showSearchOptions = ref(false)
+
+// Tooltip 相关
+const tooltip = ref({
+  show: false,
+  text: '',
+  style: {}
+})
 
 const loading = computed(() => taskStore.loading)
 
@@ -799,6 +817,26 @@ const formatCompletedTime = (completedAt) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// Tooltip 相关方法
+const showTooltip = (event, text) => {
+  const rect = event.target.getBoundingClientRect()
+  tooltip.value = {
+    show: true,
+    text: text,
+    style: {
+      position: 'fixed',
+      left: `${rect.left + rect.width / 2}px`,
+      top: `${rect.top - 35}px`,
+      transform: 'translateX(-50%)',
+      zIndex: 1000
+    }
+  }
+}
+
+const hideTooltip = () => {
+  tooltip.value.show = false
 }
 
 const formatDuration = (milliseconds) => {
@@ -1619,9 +1657,34 @@ onUnmounted(() => {
   background: #10b981;
 }
 
-.tag-date {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+.tag-reminder {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  font-weight: 500;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tag-reminder:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.tag-created {
+  background: rgba(107, 114, 128, 0.08);
+  color: #9ca3af;
+  font-size: 11px;
+  opacity: 0.8;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tag-created:hover {
+  background: rgba(107, 114, 128, 0.12);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .tag-completed-time {
@@ -1970,5 +2033,48 @@ onUnmounted(() => {
 .task-manager .btn-sm {
   padding: 4px 8px;
   font-size: 12px;
+}
+
+/* 自定义 Tooltip 样式 */
+.custom-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+.custom-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+[data-theme="dark"] .custom-tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1f2937;
+}
+
+[data-theme="dark"] .custom-tooltip::before {
+  border-top-color: rgba(255, 255, 255, 0.95);
 }
 </style>

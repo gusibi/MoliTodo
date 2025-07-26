@@ -30,6 +30,7 @@ yarn.lock
 *.deb
 *.AppImage
 *.snap
+dist/
 
 # ====================== #
 # 调试和开发环境
