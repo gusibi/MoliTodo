@@ -82,6 +82,45 @@ class TaskService {
   }
 
   /**
+   * 更新任务
+   * @param {string} taskId 任务ID
+   * @param {Object} updates 更新数据
+   * @returns {Promise<Task>}
+   */
+  async updateTask(taskId, updates) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    // 更新内容
+    if (updates.content !== undefined) {
+      task.updateContent(updates.content);
+    }
+
+    // 更新描述
+    if (updates.description !== undefined) {
+      task.description = updates.description;
+    }
+
+    // 更新状态
+    if (updates.status !== undefined) {
+      task.updateStatus(updates.status);
+    }
+
+    // 更新提醒时间
+    if (updates.reminderTime !== undefined) {
+      if (updates.reminderTime === null) {
+        task.clearReminder();
+      } else {
+        task.setReminder(new Date(updates.reminderTime));
+      }
+    }
+
+    return await this.taskRepository.save(task);
+  }
+
+  /**
    * 更新任务内容
    * @param {string} taskId 任务ID
    * @param {string} content 新内容

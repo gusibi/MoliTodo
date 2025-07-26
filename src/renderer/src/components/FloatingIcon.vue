@@ -249,11 +249,21 @@ const updateTaskCount = async () => {
     const count = await window.electronAPI.tasks.getCount()
     taskCount.value = count
 
-    // 检查是否有进行中的任务
-    const allTasks = await taskStore.getAllTasks()
-    hasInProgressTasks.value = allTasks.some(task => task.status === 'doing')
+    // 暂时简化，直接通过 API 检查是否有进行中的任务
+    try {
+      const allTasks = await window.electronAPI.tasks.getAll()
+      if (Array.isArray(allTasks)) {
+        hasInProgressTasks.value = allTasks.some(task => task.status === 'doing')
+      } else {
+        hasInProgressTasks.value = false
+      }
+    } catch (taskError) {
+      console.warn('获取任务列表失败，设置进行中任务为 false:', taskError)
+      hasInProgressTasks.value = false
+    }
   } catch (error) {
     console.error('更新任务数量失败:', error)
+    hasInProgressTasks.value = false
   }
 }
 

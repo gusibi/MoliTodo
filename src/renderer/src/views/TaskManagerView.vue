@@ -19,11 +19,11 @@ import TaskManager from '@/components/TaskManager.vue'
 <style scoped>
 .task-manager-view {
   width: 100%;
-  height: 100vh;
+  /* 移除高度限制，让内容自由扩展 */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  overflow: hidden;
 }
 
 [data-theme="dark"] .task-manager-view {
@@ -33,6 +33,7 @@ import TaskManager from '@/components/TaskManager.vue'
 .task-manager-content {
   flex: 1;
   display: flex;
-  overflow: hidden;
+  min-height: 0; /* 允许flex子元素收缩 */
+  /* 移除固定高度限制 */
 }
 </style>

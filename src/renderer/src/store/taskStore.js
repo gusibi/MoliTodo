@@ -54,7 +54,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const result = await window.electronAPI.tasks.create(taskData)
       if (result.success) {
-        await getIncompleteTasks() // 重新获取任务列表
+        await getAllTasks() // 重新获取任务列表
       }
       return result
     } catch (error) {
@@ -68,7 +68,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const result = await window.electronAPI.tasks.update(taskId, updates)
       if (result.success) {
-        await getIncompleteTasks() // 重新获取任务列表
+        await getAllTasks() // 重新获取任务列表
       }
       return result
     } catch (error) {
@@ -82,7 +82,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const result = await window.electronAPI.tasks.complete(taskId)
       if (result.success) {
-        await getIncompleteTasks() // 重新获取任务列表
+        await getAllTasks() // 重新获取任务列表
       }
       return result
     } catch (error) {
@@ -96,7 +96,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const result = await window.electronAPI.tasks.delete(taskId)
       if (result.success) {
-        await getIncompleteTasks() // 重新获取任务列表
+        await getAllTasks() // 重新获取任务列表
       }
       return result
     } catch (error) {
@@ -108,13 +108,20 @@ export const useTaskStore = defineStore('task', () => {
   // 开始任务
   const startTask = async (taskId) => {
     try {
+      console.log('taskStore.startTask 被调用，任务ID:', taskId)
       const result = await window.electronAPI.tasks.start(taskId)
+      console.log('startTask 结果:', result)
       if (result.success) {
-        await getIncompleteTasks()
+        await getAllTasks()
+      } else {
+        // 显示错误信息
+        console.error('开始任务失败:', result.error)
+        alert(`开始任务失败: ${result.error}`)
       }
       return result
     } catch (error) {
       console.error('开始任务失败:', error)
+      alert(`开始任务失败: ${error.message}`)
       return { success: false, error: error.message }
     }
   }
@@ -124,7 +131,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const result = await window.electronAPI.tasks.pause(taskId)
       if (result.success) {
-        await getIncompleteTasks()
+        await getAllTasks()
       }
       return result
     } catch (error) {

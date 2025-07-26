@@ -50,7 +50,21 @@ class IpcHandlers {
 
     // 更新任务
     ipcMain.handle('update-task', async (event, taskId, updates) => {
-      const task = await this.taskService.updateTaskContent(taskId, updates.content);
+      const task = await this.taskService.updateTask(taskId, updates);
+      
+      // 处理提醒时间的通知调度
+      if (updates.reminderTime !== undefined) {
+        // 先取消现有的提醒
+        this.notificationService.cancelTaskReminder(taskId);
+        
+        // 如果设置了新的提醒时间，则重新调度
+        if (task.reminderTime) {
+          this.notificationService.scheduleTaskReminder(task, (task) => {
+            this.handleTaskReminder(task);
+          });
+        }
+      }
+      
       this.broadcastTaskUpdates();
       return { success: true, task };
     });
@@ -73,22 +87,37 @@ class IpcHandlers {
 
     // 时间追踪相关
     ipcMain.handle('start-task', async (event, taskId) => {
-      const task = await this.taskService.startTask(taskId);
-      this.broadcastTaskUpdates();
-      return { success: true, task };
+      try {
+        const task = await this.taskService.startTask(taskId);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('开始任务失败:', error);
+        return { success: false, error: error.message };
+      }
     });
 
     ipcMain.handle('pause-task', async (event, taskId) => {
-      const task = await this.taskService.pauseTask(taskId);
-      this.broadcastTaskUpdates();
-      return { success: true, task };
+      try {
+        const task = await this.taskService.pauseTask(taskId);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('暂停任务失败:', error);
+        return { success: false, error: error.message };
+      }
     });
 
     ipcMain.handle('complete-task-with-tracking', async (event, taskId) => {
-      const task = await this.taskService.completeTaskWithTracking(taskId);
-      this.notificationService.cancelTaskReminder(taskId);
-      this.broadcastTaskUpdates();
-      return { success: true, task };
+      try {
+        const task = await this.taskService.completeTaskWithTracking(taskId);
+        this.notificationService.cancelTaskReminder(taskId);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('完成任务失败:', error);
+        return { success: false, error: error.message };
+      }
     });
 
     // 获取任务统计

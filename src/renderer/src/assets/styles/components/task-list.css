@@ -1,0 +1,189 @@
+/* TaskList 组件样式 */
+.task-list-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* 移除固定高度限制，让内容自然扩展 */
+  min-height: calc(100vh - 32px); /* 最小高度为视口减去标题栏 */
+  position: relative;
+  padding-bottom: 60px; /* 为底部stats-bar预留空间 */
+}
+
+/* 悬浮的添加任务输入框 */
+.floating-add-task {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  flex-shrink: 0; /* 防止输入框被压缩 */
+}
+
+.add-task-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.add-task-input {
+  width: 100%;
+  padding: 12px 16px;
+  padding-right: 50px; /* 为按钮留出空间 */
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-base);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.add-task-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-task-input::placeholder {
+  color: var(--text-muted);
+}
+
+.add-task-btn {
+  position: absolute;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--color-primary);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.add-task-btn:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+/* 任务列表内容区域 */
+.task-list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 允许flex子元素收缩 */
+  overflow-y: auto;
+  padding-bottom: 60px; /* 为统计信息条留出空间 */
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1; /* 占满剩余空间 */
+  min-height: 300px; /* 最小高度 */
+  color: var(--text-muted);
+}
+
+.loading-state i {
+  font-size: 24px;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-primary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-suggestion {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.empty-suggestion ul {
+  text-align: left;
+  margin: var(--spacing-sm) 0;
+}
+
+.empty-hint {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  padding: var(--spacing-md);
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: var(--border-radius);
+  border: 1px dashed rgba(59, 130, 246, 0.2);
+}
+
+.task-list {
+  padding: var(--spacing-md);
+}
+
+/* 移除原来的添加任务按钮样式 */
+.add-task-row {
+  display: none;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* 暗色主题适配 */
+[data-theme="dark"] .floating-add-task {
+  background: var(--bg-primary);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .add-task-input {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .add-task-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .empty-hint {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}

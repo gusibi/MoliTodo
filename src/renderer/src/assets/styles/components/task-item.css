@@ -1,0 +1,303 @@
+/* TaskItem 组件样式 */
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-bottom: var(--spacing-sm);
+  position: relative;
+}
+
+.task-row:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.task-row.selected {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.task-row.completed {
+  opacity: 0.7;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.task-row.in-progress {
+  border-left: 4px solid var(--color-warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.task-row.paused {
+  border-left: 4px solid var(--color-secondary);
+  background: rgba(107, 114, 128, 0.05);
+}
+
+[data-theme="dark"] .task-row {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .task-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+}
+
+/* 展开按钮 */
+.task-expand {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-expand:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+}
+
+.task-expand-placeholder {
+  width: 20px;
+  height: 20px;
+}
+
+/* 复选框样式 */
+.task-checkbox {
+  position: relative;
+}
+
+.task-checkbox input[type="checkbox"] {
+  opacity: 0;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.task-checkbox label {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.task-checkbox label::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.task-checkbox input[type="checkbox"]:checked + label {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.task-checkbox input[type="checkbox"]:checked + label::after {
+  opacity: 1;
+}
+
+/* 任务信息 */
+.task-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-xs);
+  word-break: break-word;
+}
+
+.task-row.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-xs);
+}
+
+/* 标签样式 */
+.task-tags {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tag i {
+  font-size: 10px;
+}
+
+.tag-status {
+  color: white;
+}
+
+.tag-doing {
+  background: var(--color-warning);
+}
+
+.tag-paused {
+  background: var(--color-secondary);
+}
+
+.tag-completed {
+  background: var(--color-success);
+}
+
+.tag-reminder {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary);
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tag-reminder:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.tag-created {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-secondary);
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tag-created:hover {
+  background: rgba(107, 114, 128, 0.2);
+  transform: translateY(-1px);
+}
+
+.tag-completed-time {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+/* 任务操作按钮 */
+.task-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.task-row:hover .task-actions,
+.task-row.selected .task-actions {
+  opacity: 1;
+}
+
+.btn-action {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.btn-action:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.btn-start:hover,
+.btn-resume:hover {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+}
+
+.btn-pause:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+}
+
+.btn-complete:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary);
+}
+
+.btn-restart:hover {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.btn-edit:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary);
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+}
+
+[data-theme="dark"] .btn-action {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .btn-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 高亮搜索结果 */
+.task-title mark {
+  background: rgba(255, 235, 59, 0.3);
+  color: inherit;
+  padding: 0;
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .task-title mark {
+  background: rgba(255, 235, 59, 0.4);
+}
