@@ -32,8 +32,9 @@
 
 /* 主要内容区域样式 */
 .task-manager-main-content {
-  @apply flex-1 flex flex-col overflow-hidden relative pb-12;
-  height: calc(100vh - 0px);
+  @apply flex-1 flex flex-col overflow-hidden relative;
+  height: calc(100vh - 48px); /* 减去底部统计条的高度 */
+  min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
 /* 搜索区域样式 */

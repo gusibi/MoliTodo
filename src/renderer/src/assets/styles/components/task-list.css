@@ -1,7 +1,8 @@
 /* TaskList 组件样式 - 使用 Tailwind CSS */
 
 .task-list-container {
-  @apply flex-1 flex flex-col relative pb-16;
+  @apply flex-1 flex flex-col relative;
+  min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
 /* 悬浮的添加任务输入框 */
@@ -32,8 +33,7 @@
 /* 任务列表内容区域 */
 .task-list-content {
   @apply flex-1 flex flex-col overflow-y-auto;
-  min-height: 0;
-  height: calc(100vh - 180px);
+  min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
 .task-list-loading-state,
@@ -67,7 +67,8 @@
 }
 
 .task-list-items {
-  @apply p-4;
+  @apply p-4 flex-1;
+  min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
 /* 按钮样式 */

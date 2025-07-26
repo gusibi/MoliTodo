@@ -213,7 +213,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { TaskStatisticsService } from '../services/taskStatisticsService.js'
 import { useTaskStore } from '@/store/taskStore'
 import { useTheme } from '@/composables/useTheme'
 import ThemeSwitcher from './ThemeSwitcher.vue'
@@ -305,8 +304,7 @@ const loadDatabaseStats = async () => {
 const loadTaskStats = async () => {
   try {
     await taskStore.getAllTasks()
-    const tasks = taskStore.tasks
-    const stats = TaskStatisticsService.calculateFullStatistics(tasks)
+    const stats = taskStore.fullStatistics
     
     taskStats.value = {
       totalWorkTime: stats.duration.total,

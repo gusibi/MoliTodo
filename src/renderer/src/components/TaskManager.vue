@@ -68,19 +68,19 @@
         </div>
         <div class="task-manager-stats-item">
           <span class="task-manager-stats-label">已完成:</span>
-          <span class="task-manager-stats-value">{{ TaskStatisticsService.calculateStatusCounts(displayTasks).done }}</span>
+          <span class="task-manager-stats-value">{{ taskStore.statusCounts.done }}</span>
         </div>
         <div class="task-manager-stats-item">
           <span class="task-manager-stats-label">进行中:</span>
-          <span class="task-manager-stats-value">{{ TaskStatisticsService.calculateStatusCounts(displayTasks).doing }}</span>
+          <span class="task-manager-stats-value">{{ taskStore.statusCounts.doing }}</span>
         </div>
         <div class="task-manager-stats-item">
           <span class="task-manager-stats-label">暂停中:</span>
-          <span class="task-manager-stats-value">{{ TaskStatisticsService.calculateStatusCounts(displayTasks).paused }}</span>
+          <span class="task-manager-stats-value">{{ taskStore.statusCounts.paused }}</span>
         </div>
         <div class="task-manager-stats-item">
           <span class="task-manager-stats-label">总耗时:</span>
-          <span class="task-manager-stats-value">{{ TaskStatisticsService.formatDuration(TaskStatisticsService.calculateTotalDuration(displayTasks)) }}</span>
+          <span class="task-manager-stats-value">{{ taskStore.formatDuration(taskStore.totalDuration) }}</span>
         </div>
       </div>
     </main>
@@ -105,7 +105,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
-import { TaskStatisticsService } from '../services/taskStatisticsService.js'
 import TaskList from './TaskList.vue'
 import TaskForm from './TaskForm.vue'
 import SidebarNav from './SidebarNav.vue'

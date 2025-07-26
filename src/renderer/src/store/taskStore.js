@@ -169,6 +169,106 @@ export const useTaskStore = defineStore('task', () => {
     }
   })
 
+  // 计算属性：状态统计（基于当前过滤的任务）
+  const statusCounts = computed(() => {
+    const currentTasks = filteredTasks.value
+    return {
+      todo: currentTasks.filter(task => task.status === 'todo').length,
+      doing: currentTasks.filter(task => task.status === 'doing').length,
+      paused: currentTasks.filter(task => task.status === 'paused').length,
+      done: currentTasks.filter(task => task.status === 'done').length,
+      total: currentTasks.length
+    }
+  })
+
+  // 计算属性：总耗时（基于当前过滤的任务）
+  const totalDuration = computed(() => {
+    const currentTasks = filteredTasks.value
+    return currentTasks.reduce((sum, task) => {
+      let taskDuration = task.totalDuration || 0
+      
+      // 如果任务正在进行中，加上当前进行时长
+      if (task.status === 'doing' && task.startedAt) {
+        const currentDuration = Date.now() - new Date(task.startedAt).getTime()
+        taskDuration += currentDuration
+      }
+      
+      return sum + taskDuration
+    }, 0)
+  })
+
+  // 格式化时长显示
+  const formatDuration = (milliseconds, compact = false) => {
+    if (!milliseconds || milliseconds < 1000) {
+      return compact ? '0m' : '0分钟'
+    }
+
+    const seconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+
+    if (compact) {
+      if (days > 0) {
+        return `${days}d${hours % 24}h`
+      } else if (hours > 0) {
+        return `${hours}h${minutes % 60}m`
+      } else {
+        return `${minutes}m`
+      }
+    } else {
+      if (days > 0) {
+        return `${days}天${hours % 24}小时`
+      } else if (hours > 0) {
+        return `${hours}小时${minutes % 60}分钟`
+      } else {
+        return `${minutes}分钟`
+      }
+    }
+  }
+
+  // 计算平均完成时间
+  const calculateAverageCompletionTime = (taskList) => {
+    const completedTasks = taskList.filter(task => task.status === 'done' && task.totalDuration)
+    if (completedTasks.length === 0) return 0
+    
+    const totalDuration = completedTasks.reduce((sum, task) => sum + (task.totalDuration || 0), 0)
+    return Math.floor(totalDuration / completedTasks.length)
+  }
+
+  // 计算属性：完整统计（用于Settings页面）
+  const fullStatistics = computed(() => {
+    const allTasks = tasks.value
+    const statusStats = {
+      todo: allTasks.filter(task => task.status === 'todo').length,
+      doing: allTasks.filter(task => task.status === 'doing').length,
+      paused: allTasks.filter(task => task.status === 'paused').length,
+      done: allTasks.filter(task => task.status === 'done').length,
+      total: allTasks.length
+    }
+
+    const totalDur = allTasks.reduce((sum, task) => {
+      let taskDuration = task.totalDuration || 0
+      if (task.status === 'doing' && task.startedAt) {
+        const currentDuration = Date.now() - new Date(task.startedAt).getTime()
+        taskDuration += currentDuration
+      }
+      return sum + taskDuration
+    }, 0)
+
+    return {
+      status: statusStats,
+      duration: {
+        total: totalDur,
+        average: calculateAverageCompletionTime(allTasks)
+      },
+      progress: {
+        completionRate: allTasks.length > 0 ? (statusStats.done / allTasks.length * 100).toFixed(1) : 0,
+        activeTasksCount: statusStats.doing + statusStats.paused
+      }
+    }
+  })
+
   // 获取所有任务
   const getAllTasks = async () => {
     try {
@@ -337,6 +437,9 @@ export const useTaskStore = defineStore('task', () => {
     // 计算属性
     filteredTasks,
     categoryCounts,
+    statusCounts,
+    totalDuration,
+    fullStatistics,
     
     // 任务操作方法
     getAllTasks,
@@ -357,6 +460,7 @@ export const useTaskStore = defineStore('task', () => {
     
     // 辅助函数
     getStatusText,
-    formatTimeDisplay
+    formatTimeDisplay,
+    formatDuration
   }
 })
