@@ -12,29 +12,65 @@
 
     <!-- 主要内容区域 -->
     <main class="task-manager-main-content mt-8">
-      <!-- 搜索区域 - 简化版 -->
-      <div class="task-manager-search-section">
-        <div class="task-manager-search-box">
-          <i class="fas fa-search task-manager-search-icon"></i>
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="搜索任务..." 
-            @keyup.escape="clearSearch"
-            @keydown.enter="performSearch"
-            @input="handleSearchInput"
-            ref="searchInput"
-            class="task-manager-search-input"
-          />
-          <button v-if="searchQuery" class="task-manager-clear-search" @click="clearSearch">
-            <i class="fas fa-times"></i>
-          </button>
+      <!-- 当前分类标题区域 -->
+      <div class="task-manager-category-header">
+        <div class="task-manager-category-title">
+          <i :class="getCategoryIcon(currentCategory)" class="task-manager-category-icon"></i>
+          <h1 class="task-manager-category-name">{{ getCategoryName(currentCategory) }}</h1>
+          <span class="task-manager-category-count">{{ getCategoryCount(currentCategory) }} 个任务</span>
         </div>
         
-        <!-- 搜索结果统计 -->
-        <div v-if="searchQuery" class="task-manager-search-results-info">
-          <span class="task-manager-search-query">搜索 "{{ searchQuery }}"</span>
-          <span class="task-manager-search-count">找到 {{ displayTasks.length }} 个结果</span>
+        <!-- 右侧按钮组 -->
+        <div class="task-manager-header-actions">
+          <!-- 搜索按钮/搜索框 -->
+          <div class="task-manager-search-container">
+            <!-- 搜索框 -->
+            <div v-if="showSearchBox" class="task-manager-inline-search">
+              <i class="fas fa-search task-manager-inline-search-icon"></i>
+              <input 
+                v-model="searchQuery" 
+                type="text" 
+                placeholder="搜索任务..." 
+                @keyup.escape="toggleSearch"
+                @keydown.enter="performSearch"
+                @input="handleSearchInput"
+                @blur="handleSearchBlur"
+                ref="searchInput"
+                class="task-manager-inline-search-input"
+              />
+              <button v-if="searchQuery" class="task-manager-inline-clear" @click="clearSearch">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <!-- 搜索按钮 -->
+            <button 
+              v-else
+              @click="toggleSearch" 
+              class="task-manager-action-btn"
+              title="搜索"
+            >
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+          
+          <!-- 列表视图按钮 -->
+          <button 
+            @click="setViewMode('list')" 
+            :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]"
+            title="列表视图"
+          >
+            <i class="fas fa-list"></i>
+          </button>
+          
+          <!-- 看板视图按钮 -->
+          <button 
+            @click="setViewMode('kanban')" 
+            :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]"
+            title="看板视图"
+          >
+            <i class="fas fa-columns"></i>
+          </button>
         </div>
       </div>
 
@@ -45,6 +81,7 @@
         :search-query="searchQuery"
         :selected-tasks="selectedTasks"
         @add-task="handleAddTask"
+        @update-task="handleUpdateTask"
         @select-task="selectTask"
         @edit-task="handleEditTask"
         @show-tooltip="showTooltip"
@@ -109,6 +146,10 @@ const updateTimer = ref(null)
 const selectedTasks = ref([])
 const showSearchOptions = ref(false)
 
+// 新增状态
+const showSearchBox = ref(false)
+const viewMode = ref('list') // 'list' 或 'kanban'
+
 // Tooltip 相关
 const tooltip = ref({
   show: false,
@@ -140,10 +181,26 @@ const switchCategory = (category) => {
   taskStore.clearSearch()
 }
 
-const handleAddTask = () => {
-  isEditMode.value = false
-  editingTask.value = null
-  showTaskForm.value = true
+const handleAddTask = async (taskData) => {
+  try {
+    // 如果传入的是字符串（向后兼容），转换为对象
+    if (typeof taskData === 'string') {
+      taskData = { content: taskData }
+    }
+    
+    // 直接创建任务，不打开表单
+    await taskStore.createTask(taskData)
+  } catch (error) {
+    console.error('添加任务失败:', error)
+  }
+}
+
+const handleUpdateTask = async (taskData) => {
+  try {
+    await taskStore.updateTask(taskData.id, taskData)
+  } catch (error) {
+    console.error('更新任务失败:', error)
+  }
 }
 
 const handleEditTask = (task) => {
@@ -196,6 +253,68 @@ const performSearch = () => {
 
 const handleSearchInput = () => {
   // 实时搜索，逻辑已在 store 中处理
+}
+
+const handleSearchBlur = () => {
+  // 如果搜索框为空且失去焦点，则收起搜索框
+  if (!searchQuery.value) {
+    setTimeout(() => {
+      showSearchBox.value = false
+    }, 100) // 延迟一点时间，避免点击清除按钮时立即收起
+  }
+}
+
+// 新增方法
+const toggleSearch = () => {
+  showSearchBox.value = !showSearchBox.value
+  if (showSearchBox.value) {
+    // 展开搜索框时自动聚焦
+    nextTick(() => {
+      if (searchInput.value) {
+        searchInput.value.focus()
+      }
+    })
+  } else {
+    // 收起搜索框时清空搜索
+    clearSearch()
+  }
+}
+
+const setViewMode = (mode) => {
+  viewMode.value = mode
+  // 这里可以添加视图模式切换的逻辑
+  console.log('切换到视图模式:', mode)
+}
+
+// 分类信息方法
+const getCategoryName = (category) => {
+  const categoryNames = {
+    inbox: '收件箱',
+    today: '今天',
+    doing: '进行中',
+    paused: '暂停中',
+    planned: '计划中',
+    all: '所有任务',
+    completed: '已完成'
+  }
+  return categoryNames[category] || '未知分类'
+}
+
+const getCategoryIcon = (category) => {
+  const categoryIcons = {
+    inbox: 'fas fa-inbox',
+    today: 'fas fa-calendar-day',
+    doing: 'fas fa-play-circle',
+    paused: 'fas fa-pause-circle',
+    planned: 'fas fa-calendar-week',
+    all: 'fas fa-list',
+    completed: 'fas fa-check-circle'
+  }
+  return categoryIcons[category] || 'fas fa-folder'
+}
+
+const getCategoryCount = (category) => {
+  return categoryCounts.value[category] || 0
 }
 
 // Tooltip 方法

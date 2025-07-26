@@ -2,6 +2,15 @@
   <nav class="sidebar-nav">
     <!-- 任务分类项 -->
     <div class="nav-section">
+       <div 
+        class="nav-item" 
+        :class="{ active: currentCategory === 'today' }" 
+        @click="switchCategory('today')"
+      >
+        <i class="fas fa-calendar-day"></i>
+        <span>今天</span>
+        <span class="nav-count">{{ categoryCounts.today || 0 }}</span>
+      </div>
       <div 
         class="nav-item" 
         :class="{ active: currentCategory === 'inbox' }" 
@@ -11,15 +20,7 @@
         <span>收件箱</span>
         <span class="nav-count">{{ categoryCounts.inbox || 0 }}</span>
       </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: currentCategory === 'today' }" 
-        @click="switchCategory('today')"
-      >
-        <i class="fas fa-calendar-day"></i>
-        <span>今天</span>
-        <span class="nav-count">{{ categoryCounts.today || 0 }}</span>
-      </div>
+     
       <div 
         class="nav-item" 
         :class="{ active: currentCategory === 'doing' }" 

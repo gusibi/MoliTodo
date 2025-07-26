@@ -1,52 +1,36 @@
 <template>
   <div class="task-list-container">
-    <!-- 悬浮的添加任务输入框 -->
-    <div class="task-list-floating-add">
-      <div class="task-list-add-input-container">
-        <input
-          ref="addTaskInput"
-          v-model="newTaskContent"
-          type="text"
-          placeholder="添加新任务..."
-          class="task-list-add-input"
-          @keyup.enter="handleAddTask"
-          @blur="handleInputBlur"
-        />
-        <button 
-          v-if="newTaskContent.trim()"
-          class="task-list-add-btn"
-          @click="handleAddTask"
-          title="添加任务"
-        >
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-    </div>
+    <!-- 添加任务区域 -->
+    <TaskEdit 
+      :task="editingTask"
+      :is-editing="isEditingTask"
+      @add-task="handleAddTask"
+      @update-task="handleUpdateTask"
+      @cancel-edit="handleCancelEdit"
+    />
 
     <!-- 任务列表内容区域 -->
     <div class="task-list-content">
       <!-- 加载状态 -->
       <div v-if="loading" class="task-list-loading-state">
         <i class="fas fa-spinner fa-spin"></i>
-        <span>加载中...</span>
+        <p>加载中...</p>
       </div>
       
       <!-- 空状态 -->
-      <div v-else-if="tasks.length === 0" class="task-list-empty-state">
-        <div class="task-list-empty-icon">
-          <i :class="searchQuery ? 'fas fa-search' : 'fas fa-tasks'"></i>
-        </div>
-        <div class="task-list-empty-text">{{ searchQuery ? '未找到匹配的任务' : '暂无任务' }}</div>
-        <div v-if="searchQuery" class="task-list-empty-suggestion">
-          <p>尝试：</p>
+      <div v-else-if="!tasks || tasks.length === 0" class="task-list-empty-state">
+        <div class="task-list-empty-icon">📝</div>
+        <div class="task-list-empty-text">暂无任务</div>
+        <div class="task-list-empty-suggestion">
+          <p>开始创建您的第一个任务吧！</p>
           <ul>
-            <li>使用不同的关键词</li>
-            <li>检查搜索选项设置</li>
-            <li>清除搜索条件查看所有任务</li>
+            <li>• 点击上方输入框添加任务</li>
+            <li>• 设置截止日期和提醒</li>
+            <li>• 开始高效管理您的时间</li>
           </ul>
         </div>
-        <div v-else class="task-list-empty-hint">
-          在上方输入框中输入任务内容并按回车键添加任务
+        <div class="task-list-empty-hint">
+          💡 提示：您可以使用快捷键 Ctrl+N (Windows) 或 Cmd+N (Mac) 快速添加任务
         </div>
       </div>
       
@@ -57,8 +41,8 @@
           :key="task.id"
           :task="task"
           :is-selected="selectedTasks.includes(task.id)"
-          :search-query="searchQuery"
           :current-duration="getCurrentDuration(task)"
+          :is-editing="isEditingTask && editingTask?.id === task.id"
           @select="handleTaskSelect"
           @edit="handleTaskEdit"
           @show-tooltip="handleShowTooltip"
@@ -72,7 +56,9 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import TaskItem from './TaskItem.vue'
+import TaskEdit from './TaskEdit.vue'
 
+// 定义 props
 const props = defineProps({
   tasks: {
     type: Array,
@@ -94,36 +80,24 @@ const props = defineProps({
 
 const emit = defineEmits([
   'add-task',
+  'update-task',
   'select-task',
   'edit-task',
   'show-tooltip',
   'hide-tooltip'
 ])
 
-// 新任务输入相关
-const newTaskContent = ref('')
-const addTaskInput = ref(null)
+// 编辑状态管理
+const editingTask = ref(null)
+const isEditingTask = ref(false)
 
 // 时间更新定时器和响应式更新触发器
 let timeUpdateTimer = null
 const timeUpdateTrigger = ref(0)
 
-// 处理添加任务
-const handleAddTask = () => {
-  const content = newTaskContent.value.trim()
-  if (content) {
-    emit('add-task', { content })
-    newTaskContent.value = ''
-    // 保持输入框焦点
-    setTimeout(() => {
-      addTaskInput.value?.focus()
-    }, 100)
-  }
-}
-
-// 处理输入框失焦
-const handleInputBlur = () => {
-  // 可以在这里添加失焦时的逻辑，比如自动保存草稿等
+// 添加任务处理
+const handleAddTask = (taskData) => {
+  emit('add-task', taskData)
 }
 
 // 获取任务当前持续时间
@@ -142,7 +116,24 @@ const handleTaskSelect = (taskId, event) => {
 
 // 任务编辑处理
 const handleTaskEdit = (task) => {
-  emit('edit-task', task)
+  // 如果任务已完成，不允许编辑
+  if (task.status === 'done') {
+    return
+  }
+  editingTask.value = task
+  isEditingTask.value = true
+}
+
+// 更新任务处理
+const handleUpdateTask = (taskData) => {
+  emit('update-task', taskData)
+  handleCancelEdit()
+}
+
+// 取消编辑处理
+const handleCancelEdit = () => {
+  editingTask.value = null
+  isEditingTask.value = false
 }
 
 // Tooltip 处理

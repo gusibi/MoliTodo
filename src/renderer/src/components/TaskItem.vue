@@ -7,7 +7,7 @@
       'task-item-selected': isSelected
     }]" 
     @click="$emit('select', task.id, $event)" 
-    @dblclick="handleEditTask" 
+    @dblclick="!isEditing && handleEditTask" 
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false">
     
@@ -109,6 +109,7 @@
         <i class="fas fa-redo"></i>
       </button>
       <button 
+        v-if="task.status !== 'done'"
         class="task-item-btn-action task-item-btn-edit" 
         @click.stop="handleEditTask" 
         title="编辑">
@@ -146,6 +147,10 @@ const props = defineProps({
   currentDuration: {
     type: Number,
     default: 0
+  },
+  isEditing: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -204,6 +209,11 @@ const handleDeleteTask = async () => {
 }
 
 const handleEditTask = () => {
+  // 如果任务已完成，不允许编辑
+  if (props.task.status === 'done') {
+    alert('已完成的任务不能编辑')
+    return
+  }
   emit('edit', props.task)
 }
 

@@ -2,6 +2,7 @@
 
 .sidebar-nav {
   @apply flex flex-col h-full px-4 py-2;
+  background-color: transparent;
 }
 
 /* 导航分组 */
@@ -11,17 +12,22 @@
 
 /* 底部导航分组 */
 .nav-section-bottom {
-  @apply flex flex-col space-y-1 mt-auto pb-4 mb-2 flex-shrink-0;
+  @apply flex flex-col space-y-1 mt-auto flex-shrink-0;
 }
 
 /* 导航项 */
 .nav-item {
-  @apply flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-all duration-200 min-h-[44px];
+  @apply flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-all duration-200 min-h-[44px];
+  background-color: transparent;
+}
+
+.nav-item:hover {
+  @apply bg-gray-100/50 dark:bg-gray-700/50;
 }
 
 /* 激活状态的导航项 */
 .nav-item.active {
-  @apply bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium;
+  @apply bg-blue-50/50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium;
 }
 
 /* 导航项图标 */

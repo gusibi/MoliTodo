@@ -33,9 +33,13 @@ class IpcHandlers {
     // 创建任务
     ipcMain.handle('create-task', async (event, taskData) => {
       const { content, reminderTime } = taskData;
+      
+      // 如果有提醒时间，转换为Date对象
+      const calculatedReminderTime = reminderTime ? new Date(reminderTime) : null;
+      
       const task = await this.taskService.createTask(
         content, 
-        reminderTime ? new Date(reminderTime) : null
+        calculatedReminderTime
       );
 
       if (task.reminderTime) {
