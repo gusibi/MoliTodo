@@ -1,0 +1,53 @@
+/* Theme Switcher Component Styles */
+
+.theme-switcher-container {
+  @apply flex gap-2 flex-wrap;
+}
+
+.theme-switcher-option {
+  @apply flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+         bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 
+         hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
+         text-sm font-medium cursor-pointer min-w-0 flex-shrink-0;
+}
+
+.theme-switcher-option:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
+}
+
+.theme-switcher-option.theme-switcher-active {
+  @apply bg-blue-500 text-white border-blue-500 hover:bg-blue-600 shadow-md;
+}
+
+.theme-switcher-icon {
+  @apply w-4 h-4 flex-shrink-0;
+}
+
+.theme-switcher-label {
+  @apply select-none whitespace-nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .theme-switcher-container {
+    @apply gap-1.5;
+  }
+  
+  .theme-switcher-option {
+    @apply px-2.5 py-1.5 text-xs;
+  }
+  
+  .theme-switcher-icon {
+    @apply w-3.5 h-3.5;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-switcher-container {
+    @apply flex-col gap-1;
+  }
+  
+  .theme-switcher-option {
+    @apply w-full justify-start;
+  }
+}

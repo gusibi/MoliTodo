@@ -1,11 +1,12 @@
 <template>
-  <div class="settings-view">
+  <div class="settings-view-container">
     <CustomTitleBar 
       title="MoliTodo - 设置" 
       window-type="settings"
       :show-maximize="false"
+      class="absolute top-0 left-0 right-0 z-50 "
     />
-    <div class="settings-content">
+    <div class="settings-view-content">
       <Settings />
     </div>
   </div>
@@ -14,19 +15,17 @@
 <script setup>
 import CustomTitleBar from '@/components/CustomTitleBar.vue'
 import Settings from '@/components/Settings.vue'
+import '@/assets/styles/settings.css'
 </script>
 
 <style scoped>
-.settings-view {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-primary);
+@import '../assets/styles/settings.css';
+
+.settings-view-container {
+  @apply w-full h-full flex flex-col bg-gray-50 dark:bg-gray-900;
 }
 
-.settings-content {
-  flex: 1;
-  overflow: hidden;
+.settings-view-content {
+  @apply flex-1 flex overflow-hidden;
 }
 </style>

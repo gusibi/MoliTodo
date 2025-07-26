@@ -1,14 +1,14 @@
 <template>
-  <div class="theme-switcher">
+  <div class="theme-switcher-container">
     <button
       v-for="theme in availableThemes"
       :key="theme.value"
-      :class="['theme-option', { active: currentTheme === theme.value }]"
+      :class="['theme-switcher-option', { 'theme-switcher-active': currentTheme === theme.value }]"
       @click="setTheme(theme.value)"
       :title="theme.description"
     >
-      <component :is="theme.icon" />
-      {{ theme.label }}
+      <component :is="theme.icon" class="theme-switcher-icon" />
+      <span class="theme-switcher-label">{{ theme.label }}</span>
     </button>
   </div>
 </template>
@@ -21,6 +21,16 @@ const { currentTheme, setTheme, themes } = useTheme()
 
 // Theme configuration with icons
 const availableThemes = computed(() => [
+  {
+    value: themes.system,
+    label: '跟随系统',
+    description: '跟随系统主题设置',
+    icon: () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+      h('rect', { x: 2, y: 3, width: 20, height: 14, rx: 2, ry: 2, stroke: 'currentColor', 'stroke-width': 2 }),
+      h('line', { x1: 8, y1: 21, x2: 16, y2: 21, stroke: 'currentColor', 'stroke-width': 2 }),
+      h('line', { x1: 12, y1: 17, x2: 12, y2: 21, stroke: 'currentColor', 'stroke-width': 2 })
+    ])
+  },
   {
     value: themes.light,
     label: '浅色',
@@ -42,5 +52,5 @@ const availableThemes = computed(() => [
 </script>
 
 <style scoped>
-/* Styles are handled by the global CSS */
+@import '../assets/styles/theme-switcher.css';
 </style>

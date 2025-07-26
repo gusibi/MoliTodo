@@ -157,10 +157,30 @@ class IpcHandlers {
       return this.windowManager.updateConfig(key, value);
     });
 
-    ipcMain.handle('save-config', (event, config) => {
-      Object.entries(config).forEach(([key, value]) => {
+    ipcMain.handle('save-config', () => {
+      // 配置已经通过 update-config 实时保存，这里只需要返回成功状态
+      return { success: true };
+    });
+
+    ipcMain.handle('reset-config', () => {
+      // 重置为默认配置
+      const defaultConfig = {
+        floatingIcon: {
+          x: 100,
+          y: 100,
+          size: 60,
+          opacity: 100,
+          visible: true
+        },
+        autoStart: false,
+        showNotifications: true,
+        theme: 'system'
+      };
+      
+      Object.entries(defaultConfig).forEach(([key, value]) => {
         this.windowManager.updateConfig(key, value);
       });
+      
       return { success: true };
     });
   }

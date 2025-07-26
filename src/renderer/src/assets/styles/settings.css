@@ -1,0 +1,226 @@
+/* Settings Component Styles with setting- prefix */
+
+/* 主容器 */
+.setting-main-container {
+  @apply w-full h-full flex bg-gray-50 dark:bg-gray-900;
+}
+
+/* 侧边栏 */
+.setting-sidebar {
+  @apply w-52 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700;
+  @apply flex flex-col py-5 px-4 ;
+  background-color: transparent;
+}
+
+.setting-sidebar-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mt-8 mb-6 px-2;
+}
+
+.setting-nav-list {
+  @apply space-y-1;
+}
+
+.setting-nav-item {
+  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
+  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+  @apply transition-colors duration-150;
+}
+
+.setting-nav-item.setting-nav-item-active {
+  @apply bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300;
+}
+
+.setting-nav-icon {
+  @apply w-5 h-5 mr-3 text-current;
+}
+
+/* 主设置区域 */
+.setting-main-area {
+  @apply flex-1 flex flex-col overflow-hidden mt-4;
+}
+
+.setting-content-area {
+  @apply flex-1 overflow-y-auto p-8;
+}
+
+.setting-content-inner {
+  @apply max-w-2xl;
+}
+
+/* 设置页面标题 */
+.setting-page-title {
+  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2;
+}
+
+.setting-page-description {
+  @apply text-gray-600 dark:text-gray-400 mb-8;
+}
+
+/* 设置分组 */
+.setting-group {
+  @apply mb-8;
+}
+
+.setting-group-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-4;
+}
+
+/* 设置项 */
+.setting-item {
+  @apply flex items-center justify-between py-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0;
+}
+
+.setting-item-info {
+  @apply flex-1 min-w-0 mr-6;
+}
+
+.setting-item-label {
+  @apply text-sm font-medium text-gray-900 dark:text-white;
+}
+
+.setting-item-description {
+  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+}
+
+.setting-item-control {
+  @apply flex-shrink-0;
+}
+
+/* 切换开关 */
+.setting-toggle {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full;
+  @apply bg-gray-200 dark:bg-gray-600 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply cursor-pointer;
+}
+
+.setting-toggle.setting-toggle-active {
+  @apply bg-blue-600;
+}
+
+.setting-toggle-button {
+  @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200;
+  @apply translate-x-1;
+}
+
+.setting-toggle.setting-toggle-active .setting-toggle-button {
+  @apply translate-x-6;
+}
+
+/* 滑动条 */
+.setting-slider-group {
+  @apply flex items-center space-x-4 min-w-0;
+}
+
+.setting-slider {
+  @apply flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply min-w-32;
+}
+
+.setting-slider::-webkit-slider-thumb {
+  @apply appearance-none w-5 h-5 bg-blue-600 rounded-full cursor-pointer;
+  @apply hover:bg-blue-700 transition-colors duration-150;
+  @apply shadow-md;
+}
+
+.setting-slider::-moz-range-thumb {
+  @apply w-5 h-5 bg-blue-600 rounded-full cursor-pointer border-0;
+  @apply hover:bg-blue-700 transition-colors duration-150;
+  @apply shadow-md;
+}
+
+.setting-slider-value {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300 min-w-12 text-right;
+}
+
+/* 按钮组 */
+.setting-button-group {
+  @apply flex flex-wrap gap-3;
+}
+
+.setting-btn {
+  @apply px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.setting-btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.setting-btn-secondary {
+  @apply bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white;
+  @apply hover:bg-gray-300 dark:hover:bg-gray-500 focus:ring-gray-500;
+}
+
+.setting-btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+/* 统计信息 */
+.setting-stats-container {
+  @apply mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700;
+}
+
+.setting-stats-title {
+  @apply text-base font-semibold text-gray-900 dark:text-white mb-3;
+}
+
+.setting-stats-item {
+  @apply flex justify-between items-center py-2;
+}
+
+.setting-stats-label {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.setting-stats-value {
+  @apply text-sm font-medium text-gray-900 dark:text-white;
+}
+
+/* 底部操作区 */
+.setting-actions {
+  @apply border-t border-gray-200 dark:border-gray-700 px-8 py-4;
+  @apply flex justify-end space-x-3 bg-white dark:bg-gray-800;
+}
+
+/* 消息提示 */
+.setting-message {
+  @apply fixed top-4 right-4 px-4 py-3 rounded-md text-white text-sm font-medium;
+  @apply shadow-lg z-50 transition-all duration-300;
+}
+
+.setting-message-success {
+  @apply bg-green-600;
+}
+
+.setting-message-error {
+  @apply bg-red-600;
+}
+
+.setting-message-info {
+  @apply bg-blue-600;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .setting-main-container {
+    @apply flex-col;
+  }
+  
+  .setting-sidebar {
+    @apply w-full border-r-0 border-b border-gray-200 dark:border-gray-700;
+  }
+  
+  .setting-content-area {
+    @apply p-4;
+  }
+  
+  .setting-item {
+    @apply flex-col items-start space-y-3;
+  }
+  
+  .setting-item-info {
+    @apply mr-0;
+  }
+}

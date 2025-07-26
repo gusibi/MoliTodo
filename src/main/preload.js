@@ -23,8 +23,11 @@ const electronAPI = {
   // 配置相关 API
   config: {
     get: () => ipcRenderer.invoke('get-config'),
+    getAll: () => ipcRenderer.invoke('get-config'),
+    set: (key, value) => ipcRenderer.invoke('update-config', key, value),
     update: (key, value) => ipcRenderer.invoke('update-config', key, value),
-    save: (config) => ipcRenderer.invoke('save-config', config)
+    save: () => ipcRenderer.invoke('save-config'),
+    reset: () => ipcRenderer.invoke('reset-config')
   },
 
   // 窗口相关 API
