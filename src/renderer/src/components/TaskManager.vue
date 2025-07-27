@@ -56,6 +56,7 @@
           
           <!-- 列表视图按钮 -->
           <button 
+          v-if="currentCategory === 'all'"
             @click="setViewMode('list')" 
             :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]"
             title="列表视图"
@@ -65,11 +66,22 @@
           
           <!-- 看板视图按钮 -->
           <button 
+          v-if="currentCategory === 'all'"
             @click="setViewMode('kanban')" 
             :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]"
             title="看板视图"
           >
             <i class="fas fa-columns"></i>
+          </button>
+          
+          <!-- 显示/隐藏已完成任务按钮 (仅在 all 分类下显示) -->
+          <button 
+            v-if="currentCategory === 'all' || currentCategory === 'today'"
+            @click="toggleCompletedTasks" 
+            :class="['task-manager-action-btn', { 'active': showCompletedTasks }]"
+            :title="showCompletedTasks ? '隐藏已完成任务' : '显示已完成任务'"
+          >
+            <i class="fas fa-check-circle"></i>
           </button>
         </div>
       </div>
@@ -149,6 +161,24 @@ const showSearchOptions = ref(false)
 // 新增状态
 const showSearchBox = ref(false)
 const viewMode = ref('list') // 'list' 或 'kanban'
+// 计算属性：根据当前分类获取对应的显示已完成任务状态
+const showCompletedTasks = computed({
+  get: () => {
+    if (currentCategory.value === 'all') {
+      return taskStore.showCompletedInAll
+    } else if (currentCategory.value === 'today') {
+      return taskStore.showCompletedInToday
+    }
+    return false
+  },
+  set: (value) => {
+    if (currentCategory.value === 'all') {
+      taskStore.setShowCompletedInAll(value)
+    } else if (currentCategory.value === 'today') {
+      taskStore.setShowCompletedInToday(value)
+    }
+  }
+})
 
 // Tooltip 相关
 const tooltip = ref({
@@ -286,6 +316,10 @@ const setViewMode = (mode) => {
   console.log('切换到视图模式:', mode)
 }
 
+const toggleCompletedTasks = () => {
+  showCompletedTasks.value = !showCompletedTasks.value
+}
+
 // 分类信息方法
 const getCategoryName = (category) => {
   const categoryNames = {
@@ -390,6 +424,8 @@ watch(() => taskStore.searchQuery, (newQuery) => {
     showSearchOptions.value = false
   }
 })
+
+// 不需要监听分类变化来重置状态，因为每个分类都有独立的状态
 </script>
 
 <style>
