@@ -81,20 +81,48 @@ class MoliTodoApp {
   }
 
   setupAppEvents() {
+    // 处理所有窗口关闭事件
     app.on('window-all-closed', (event) => {
-      if (!this.isQuitting) {
+      // 在 macOS 上，除非用户明确退出，否则应用应该保持运行
+      if (process.platform === 'darwin' && !this.isQuitting) {
         event.preventDefault();
+      } else if (!this.isQuitting) {
+        // 在其他平台上，如果不是主动退出，也阻止默认行为
+        event.preventDefault();
+      }
+      // 如果是主动退出（isQuitting = true），则允许应用正常退出
+    });
+
+    // 处理应用即将退出事件（Cmd+Q, Alt+F4 等）
+    app.on('before-quit', (event) => {
+      if (!this.isQuitting) {
+        this.isQuitting = true;
+        this.notificationService.clearAllSchedules();
+        
+        // 清理所有窗口但不重复调用 app.quit()
+        if (this.windowManager) {
+          this.windowManager.cleanup();
+        }
       }
     });
 
-    app.on('before-quit', () => {
-      this.isQuitting = true;
-      this.notificationService.clearAllSchedules();
-    });
-
+    // 处理应用激活事件（macOS dock 点击等）
     app.on('activate', () => {
       if (!this.windowManager.hasWindows()) {
         this.windowManager.createFloatingWindow();
+      }
+    });
+
+    // 处理第二个实例启动（单例模式）
+    app.on('second-instance', () => {
+      // 如果有任务管理窗口，聚焦它
+      if (this.windowManager.taskManagerWindow && !this.windowManager.taskManagerWindow.isDestroyed()) {
+        this.windowManager.taskManagerWindow.focus();
+      } else {
+        // 否则显示悬浮图标
+        if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
+          this.windowManager.floatingWindow.show();
+        }
       }
     });
   }

@@ -420,6 +420,31 @@ class WindowManager {
       app.quit();
     }
   }
+
+  // 清理窗口但不退出应用（用于 before-quit 事件）
+  cleanup() {
+    // Clean up windows
+    if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+      this.taskPanelWindow.close();
+    }
+    if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+      this.taskManagerWindow.close();
+    }
+    if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+      this.settingsWindow.close();
+    }
+
+    // Force close floating window even if closable is false
+    if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+      this.floatingWindow.setClosable(true);
+      this.floatingWindow.close();
+    }
+
+    // Destroy tray
+    if (this.tray) {
+      this.tray.destroy();
+    }
+  }
 }
 
 module.exports = WindowManager;

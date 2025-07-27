@@ -9,7 +9,8 @@
     "build": "npm run build:renderer && electron-builder",
     "build:renderer": "vite build --config src/renderer/vite.config.js",
     "build:mac": "npm run build",
-    "build:win": "npm run build"
+    "build:win": "npm run build",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "todo",
@@ -37,8 +38,9 @@
     "electron-store": "^8.1.0",
     "node-schedule": "^2.1.1",
     "pinia": "^2.1.7",
+    "rebuild": "^0.1.2",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.6",
+    "sqlite3": "^5.1.7",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   },
@@ -53,8 +55,11 @@
       "src/domain/**/*",
       "src/infrastructure/**/*",
       "src/application/**/*",
-      "src/renderer/dist/**/*"
+      "src/renderer/dist/**/*",
+      "node_modules/**/*"
     ],
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": true,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
