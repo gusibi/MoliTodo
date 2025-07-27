@@ -189,7 +189,7 @@
 }
 
 .task-panel-text {
-  @apply text-base text-gray-900 leading-relaxed break-words cursor-pointer;
+  @apply text-sm text-gray-900 leading-relaxed break-words cursor-pointer;
 }
 
 .task-panel-text:hover {
@@ -217,7 +217,7 @@
 }
 
 .task-panel-edit-input {
-  @apply text-base text-gray-900 leading-relaxed border border-blue-500 rounded px-1 bg-white outline-none w-full;
+  @apply text-sm text-gray-900 leading-relaxed border border-blue-500 rounded px-1 bg-white outline-none w-full;
 }
 
 .task-panel-edit-input:focus {
