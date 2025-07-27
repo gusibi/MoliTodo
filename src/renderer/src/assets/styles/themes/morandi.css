@@ -1,0 +1,213 @@
+/* Morandi Mist Theme */
+:root {
+    /* Core Background and Foreground */
+    --background: 40 20% 96%;
+    /* 柔和的杏仁白 */
+    --foreground: 220 10% 25%;
+    /* 深灰褐色 */
+
+    /* Card Components */
+    --card: 0 0% 100%;
+    /* 纯白卡片，形成微妙对比 */
+    --card-foreground: 220 10% 25%;
+
+    /* Popover Components */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 25%;
+
+    /* Primary Colors */
+    --primary: 210 25% 55%;
+    /* 雾霾蓝 (核心主题色) */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary Colors */
+    --secondary: 220 10% 45%;
+    /* 中性灰 */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted Colors */
+    --muted: 40 15% 92%;
+    /* 浅米色 */
+    --muted-foreground: 220 8% 45%;
+    /* 柔和的文字灰 */
+
+    /* Accent Colors */
+    --accent: 210 30% 95%;
+    /* 极浅的蓝灰色 */
+    --accent-foreground: 210 25% 50%;
+
+    /* Destructive Colors */
+    --destructive: 0 35% 68%;
+    /* 灰粉色 (代替刺眼的红色) */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success Colors */
+    --success: 140 20% 55%;
+    /* 鼠尾草绿 */
+    --success-foreground: 0 0% 100%;
+
+    /* Warning Colors */
+    --warning: 35 40% 65%;
+    /* 柔和赭石色 */
+    --warning-foreground: 220 10% 25%;
+
+    /* Info Colors */
+    --info: 210 25% 55%;
+    /* (同主色) */
+    --info-foreground: 0 0% 100%;
+
+    /* Border and Input */
+    --border: 40 10% 88%;
+    /* 边框灰 */
+    --input: 40 10% 92%;
+    /* 输入框背景 */
+    --ring: 210 25% 60%;
+
+    /* Chart Colors (和谐的莫兰迪色组合) */
+    --chart-1: 210 25% 55%;
+    /* 雾霾蓝 */
+    --chart-2: 140 20% 55%;
+    /* 鼠尾草绿 */
+    --chart-3: 35 40% 65%;
+    /* 柔和赭石色 */
+    --chart-4: 0 35% 68%;
+    /* 灰粉色 */
+    --chart-5: 220 10% 45%;
+    /* 中性灰 */
+
+    /* Status Colors for Tasks */
+    --status-todo: 220 10% 55%;
+    /* 状态灰 */
+    --status-doing: 35 40% 65%;
+    /* 柔和赭石色 */
+    --status-done: 140 20% 55%;
+    /* 鼠尾草绿 */
+    --status-paused: 220 10% 55%;
+
+    /* Sidebar Colors */
+    --sidebar: 30 25% 98%;
+    /* 极浅的奶油色 */
+    --sidebar-foreground: 220 10% 25%;
+    --sidebar-primary: 210 25% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 30% 94%;
+    --sidebar-accent-foreground: 210 25% 50%;
+    --sidebar-border: 40 10% 90%;
+    --sidebar-ring: 210 25% 60%;
+
+    /* Border Radius */
+    --radius: 0.8rem;
+    /* 莫兰迪风格通常搭配更柔和的圆角 */
+
+    /* Shadows (更柔和的阴影) */
+    --shadow-sm: 0 1px 2px 0 hsl(220 10% 30% / 0.05);
+    --shadow: 0 1px 3px 0 hsl(220 10% 30% / 0.1), 0 1px 2px -1px hsl(220 10% 30% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(220 10% 30% / 0.1), 0 2px 4px -2px hsl(220 10% 30% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(220 10% 30% / 0.1), 0 4px 6px -4px hsl(220 10% 30% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(220 10% 30% / 0.1), 0 8px 10px -6px hsl(220 10% 30% / 0.1);
+    --shadow-2xl: 0 25px 50px -12px hsl(220 10% 30% / 0.25);
+
+    /* Typography */
+    --font-sans: 'Inter', sans-serif;
+    /* 推荐使用更现代、干净的字体 */
+    --font-serif: Georgia, serif;
+    --font-mono: Menlo, monospace;
+}
+
+.dark {
+    /* Core Background and Foreground */
+    --background: 220 12% 8%;
+    /* 深邃的蓝灰色 */
+    --foreground: 210 15% 85%;
+    /* 柔和的浅灰 */
+
+    /* Card Components */
+    --card: 220 12% 12%;
+    /* 略亮的卡片背景 */
+    --card-foreground: 210 15% 85%;
+
+    /* Popover Components */
+    --popover: 220 12% 8%;
+    --popover-foreground: 210 15% 85%;
+
+    /* Primary Colors */
+    --primary: 210 30% 65%;
+    /* 提亮的雾霾蓝 */
+    --primary-foreground: 220 10% 10%;
+
+    /* Secondary Colors */
+    --secondary: 210 15% 85%;
+    --secondary-foreground: 220 10% 15%;
+
+    /* Muted Colors */
+    --muted: 220 12% 15%;
+    --muted-foreground: 210 10% 45%;
+
+    /* Accent Colors */
+    --accent: 220 12% 18%;
+    --accent-foreground: 210 25% 75%;
+
+    /* Destructive Colors */
+    --destructive: 0 40% 70%;
+    /* 提亮的灰粉色 */
+    --destructive-foreground: 220 10% 10%;
+
+    /* Success Colors */
+    --success: 140 25% 65%;
+    /* 提亮的鼠尾草绿 */
+    --success-foreground: 220 10% 10%;
+
+    /* Warning Colors */
+    --warning: 35 45% 70%;
+    /* 提亮的赭石色 */
+    --warning-foreground: 220 10% 10%;
+
+    /* Info Colors */
+    --info: 210 30% 65%;
+    /* (同主色) */
+    --info-foreground: 220 10% 10%;
+
+    /* Border and Input */
+    --border: 220 12% 18%;
+    --input: 220 12% 20%;
+    --ring: 210 25% 70%;
+
+    /* Chart Colors */
+    --chart-1: 210 30% 65%;
+    --chart-2: 140 25% 65%;
+    --chart-3: 35 45% 70%;
+    --chart-4: 0 40% 70%;
+    --chart-5: 210 10% 45%;
+
+    /* Status Colors for Tasks */
+    --status-todo: 210 10% 55%;
+    --status-doing: 35 45% 70%;
+    --status-done: 140 25% 65%;
+    --status-paused: 210 10% 55%;
+
+    /* Sidebar Colors */
+    --sidebar: 220 12% 12%;
+    --sidebar-foreground: 210 15% 85%;
+    --sidebar-primary: 210 30% 65%;
+    --sidebar-primary-foreground: 220 10% 10%;
+    --sidebar-accent: 220 12% 20%;
+    --sidebar-accent-foreground: 210 25% 75%;
+    --sidebar-border: 220 12% 22%;
+    --sidebar-ring: 210 25% 70%;
+
+    /* Border Radius */
+    --radius: 0.8rem;
+
+    /* Shadows (在暗色模式下，阴影通常更不明显) */
+    --shadow-sm: 0 1px 2px 0 hsl(220 10% 5% / 0.1);
+    --shadow: 0 1px 3px 0 hsl(220 10% 5% / 0.2), 0 1px 2px -1px hsl(220 10% 5% / 0.2);
+    --shadow-md: 0 4px 6px -1px hsl(220 10% 5% / 0.2), 0 2px 4px -2px hsl(220 10% 5% / 0.2);
+    --shadow-lg: 0 10px 15px -3px hsl(220 10% 5% / 0.2), 0 4px 6px -4px hsl(220 10% 5% / 0.2);
+    --shadow-xl: 0 20px 25px -5px hsl(220 10% 5% / 0.2), 0 8px 10px -6px hsl(220 10% 5% / 0.2);
+    --shadow-2xl: 0 25px 50px -12px hsl(220 10% 5% / 0.4);
+
+    /* Typography */
+    --font-sans: 'Inter', sans-serif;
+    --font-serif: Georgia, serif;
+    --font-mono: Menlo, monospace;
+}

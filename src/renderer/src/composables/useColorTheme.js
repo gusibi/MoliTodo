@@ -19,6 +19,12 @@ const availableColorThemes = [
     name: 'Vercel',
     description: 'Vercel 极简黑白主题',
     primaryColor: '#000000'
+  },
+  {
+    id: 'morandi',
+    name: 'Morandi Mist',
+    description: '莫兰迪雾霾蓝主题，柔和优雅',
+    primaryColor: '#7a9cc6'
   }
 ]
 
@@ -28,11 +34,69 @@ const currentColorTheme = ref('default')
 // 动态加载的样式元素
 let currentThemeStyleElement = null
 
+// Cross-window communication for color theme
+let colorThemeBroadcastChannel = null
+let colorThemeStorageListener = null
+
 // 主题文件映射
 const themeModules = {
   default: () => import('../assets/styles/themes/default.css?raw'),
   twitter: () => import('../assets/styles/themes/twitter.css?raw'),
-  vercel: () => import('../assets/styles/themes/vercel.css?raw')
+  vercel: () => import('../assets/styles/themes/vercel.css?raw'),
+  morandi: () => import('../assets/styles/themes/morandi.css?raw')
+}
+
+// Initialize broadcast channel for color theme cross-window communication
+const initializeColorThemeBroadcastChannel = () => {
+  if (typeof window !== 'undefined' && window.BroadcastChannel) {
+    try {
+      colorThemeBroadcastChannel = new BroadcastChannel('color-theme-sync')
+
+      colorThemeBroadcastChannel.addEventListener('message', (event) => {
+        if (event.data.type === 'color-theme-change') {
+          const { colorTheme } = event.data
+          if (colorTheme !== currentColorTheme.value) {
+            currentColorTheme.value = colorTheme
+            loadThemeStyles(colorTheme)
+          }
+        }
+      })
+    } catch (error) {
+      console.warn('BroadcastChannel not supported for color theme:', error)
+    }
+  }
+}
+
+// Broadcast color theme change to other windows
+const broadcastColorThemeChange = (colorTheme) => {
+  if (colorThemeBroadcastChannel) {
+    try {
+      colorThemeBroadcastChannel.postMessage({
+        type: 'color-theme-change',
+        colorTheme: colorTheme,
+        timestamp: Date.now()
+      })
+    } catch (error) {
+      console.warn('Failed to broadcast color theme change:', error)
+    }
+  }
+}
+
+// Listen for localStorage changes for color theme (fallback for cross-window sync)
+const initializeColorThemeStorageListener = () => {
+  if (typeof window !== 'undefined') {
+    colorThemeStorageListener = (event) => {
+      if (event.key === 'colorTheme' && event.newValue) {
+        const newColorTheme = event.newValue
+        if (availableColorThemes.find(theme => theme.id === newColorTheme) && newColorTheme !== currentColorTheme.value) {
+          currentColorTheme.value = newColorTheme
+          loadThemeStyles(newColorTheme)
+        }
+      }
+    }
+
+    window.addEventListener('storage', colorThemeStorageListener)
+  }
 }
 
 // 加载主题样式
@@ -75,7 +139,7 @@ const loadThemeStyles = async (themeId) => {
 }
 
 // 设置颜色主题
-const setColorTheme = async (themeId) => {
+const setColorTheme = async (themeId, shouldBroadcast = true) => {
   if (!availableColorThemes.find(theme => theme.id === themeId)) {
     console.warn(`未知的主题 ID: ${themeId}`)
     return
@@ -86,6 +150,11 @@ const setColorTheme = async (themeId) => {
 
   // 保存到 localStorage
   localStorage.setItem('colorTheme', themeId)
+
+  // Broadcast to other windows
+  if (shouldBroadcast) {
+    broadcastColorThemeChange(themeId)
+  }
 
   // 通知其他窗口
   if (window.electronAPI?.theme?.setColorTheme) {
@@ -104,19 +173,48 @@ const initializeColorTheme = async () => {
   const savedTheme = localStorage.getItem('colorTheme')
 
   if (savedTheme && availableColorThemes.find(theme => theme.id === savedTheme)) {
-    await setColorTheme(savedTheme)
+    await setColorTheme(savedTheme, false) // Don't broadcast on initialization
   } else {
-    await setColorTheme('default')
+    await setColorTheme('default', false)
+  }
+}
+
+// Cleanup function for color theme
+const cleanupColorTheme = () => {
+  if (colorThemeBroadcastChannel) {
+    colorThemeBroadcastChannel.close()
+    colorThemeBroadcastChannel = null
+  }
+
+  if (colorThemeStorageListener) {
+    window.removeEventListener('storage', colorThemeStorageListener)
+    colorThemeStorageListener = null
   }
 }
 
 // 导出 composable
 export const useColorTheme = () => {
+  // Initialize color theme broadcast and storage listeners on first use
+  if (!colorThemeBroadcastChannel && typeof window !== 'undefined') {
+    initializeColorThemeBroadcastChannel()
+    initializeColorThemeStorageListener()
+  }
+
   return {
     availableColorThemes: readonly(ref(availableColorThemes)),
     currentColorTheme: readonly(currentColorTheme),
     setColorTheme,
     getThemeInfo,
-    initializeColorTheme
+    initializeColorTheme,
+    cleanupColorTheme
   }
+}
+
+// Auto-initialize color theme broadcast when module loads
+if (typeof window !== 'undefined') {
+  initializeColorThemeBroadcastChannel()
+  initializeColorThemeStorageListener()
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', cleanupColorTheme)
 }

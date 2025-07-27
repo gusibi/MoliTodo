@@ -33,11 +33,11 @@
   --destructive-foreground: 0 0% 100%;
   
   /* Success Colors */
-  --success: 142 76% 36%;
+  --success: 145 63% 42%;
   --success-foreground: 0 0% 100%;
   
   /* Warning Colors */
-  --warning: 38 92% 50%;
+  --warning: 45 93% 47%;
   --warning-foreground: 0 0% 100%;
   
   /* Info Colors */
@@ -123,7 +123,7 @@
   --destructive-foreground: 0 0% 100%;
   
   /* Success Colors */
-  --success: 142 76% 36%;
+  --success: 145 63% 42%;
   --success-foreground: 0 0% 100%;
   
   /* Warning Colors */

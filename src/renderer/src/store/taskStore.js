@@ -37,28 +37,28 @@ export const useTaskStore = defineStore('task', () => {
     if (!dateString) return ''
     const date = new Date(dateString)
     const now = new Date()
-    
+
     if (type === 'reminder') {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
       const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
       const taskDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-      
+
       if (taskDate.getTime() === today.getTime()) {
         return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
       } else if (taskDate.getTime() === tomorrow.getTime()) {
         return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
       } else {
-        return date.toLocaleString('zh-CN', { 
-          month: 'short', 
+        return date.toLocaleString('zh-CN', {
+          month: 'short',
           day: 'numeric',
-          hour: '2-digit', 
-          minute: '2-digit' 
+          hour: '2-digit',
+          minute: '2-digit'
         })
       }
     } else {
       const diffMs = now - date
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      
+
       if (diffDays === 0) {
         return '今天'
       } else if (diffDays === 1) {
@@ -83,9 +83,9 @@ export const useTaskStore = defineStore('task', () => {
           return task.status === 'todo' && !task.reminderTime
         case 'today':
           // 今天视图：包含提醒日期是今天的任务、今天创建的任务、以及正在进行的任务
-          return (isToday(task.reminderTime) && task.status !== 'done') || 
-                 (isToday(task.createdAt) && task.status !== 'done') || 
-                 (task.status === 'doing')
+          return (isToday(task.reminderTime) && task.status !== 'done') ||
+            (isToday(task.createdAt) && task.status !== 'done') ||
+            (task.status === 'doing')
         case 'doing':
           return task.status === 'doing'
         case 'paused':
@@ -110,21 +110,21 @@ export const useTaskStore = defineStore('task', () => {
 
     return taskList.filter(task => {
       let matches = false
-      
+
       // 搜索内容和描述
       if (options.content) {
         const content = options.caseSensitive ? task.content : task.content.toLowerCase()
         const description = options.caseSensitive ? (task.description || '') : (task.description || '').toLowerCase()
         matches = matches || content.includes(searchQuery) || description.includes(searchQuery)
       }
-      
+
       // 搜索状态
       if (options.status) {
         const statusText = getStatusText(task.status)
         const status = options.caseSensitive ? statusText : statusText.toLowerCase()
         matches = matches || status.includes(searchQuery)
       }
-      
+
       // 搜索日期
       if (options.date) {
         const dateTexts = [
@@ -132,7 +132,7 @@ export const useTaskStore = defineStore('task', () => {
           task.reminderTime ? formatTimeDisplay(task.reminderTime, 'reminder') : '',
           task.completedAt ? formatTimeDisplay(task.completedAt, 'created') : ''
         ]
-        
+
         for (const dateText of dateTexts) {
           const date = options.caseSensitive ? dateText : dateText.toLowerCase()
           if (date.includes(searchQuery)) {
@@ -141,7 +141,7 @@ export const useTaskStore = defineStore('task', () => {
           }
         }
       }
-      
+
       return matches
     })
   }
@@ -163,7 +163,7 @@ export const useTaskStore = defineStore('task', () => {
         // 正在进行的任务优先级最高
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
-        
+
         // 有提醒时间的任务优先
         if (a.reminderTime && b.reminderTime) {
           return new Date(a.reminderTime) - new Date(b.reminderTime)
@@ -180,7 +180,7 @@ export const useTaskStore = defineStore('task', () => {
         // 正在进行的任务优先级最高
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
-        
+
         // 有提醒时间的任务优先
         if (a.reminderTime && b.reminderTime) {
           return new Date(a.reminderTime) - new Date(b.reminderTime)
@@ -200,9 +200,9 @@ export const useTaskStore = defineStore('task', () => {
   const categoryCounts = computed(() => {
     return {
       inbox: tasks.value.filter(t => t.status === 'todo' && !t.reminderTime).length,
-      today: tasks.value.filter(t => 
-        (isToday(t.reminderTime) && t.status !== 'done') || 
-        (isToday(t.createdAt) && t.status !== 'done') || 
+      today: tasks.value.filter(t =>
+        (isToday(t.reminderTime) && t.status !== 'done') ||
+        (isToday(t.createdAt) && t.status !== 'done') ||
         t.status === 'doing'
       ).length,
       doing: tasks.value.filter(t => t.status === 'doing').length,
@@ -230,13 +230,13 @@ export const useTaskStore = defineStore('task', () => {
     const currentTasks = filteredTasks.value
     return currentTasks.reduce((sum, task) => {
       let taskDuration = task.totalDuration || 0
-      
+
       // 如果任务正在进行中，加上当前进行时长
       if (task.status === 'doing' && task.startedAt) {
         const currentDuration = Date.now() - new Date(task.startedAt).getTime()
         taskDuration += currentDuration
       }
-      
+
       return sum + taskDuration
     }, 0)
   })
@@ -275,7 +275,7 @@ export const useTaskStore = defineStore('task', () => {
   const calculateAverageCompletionTime = (taskList) => {
     const completedTasks = taskList.filter(task => task.status === 'done' && task.totalDuration)
     if (completedTasks.length === 0) return 0
-    
+
     const totalDuration = completedTasks.reduce((sum, task) => sum + (task.totalDuration || 0), 0)
     return Math.floor(totalDuration / completedTasks.length)
   }
@@ -477,14 +477,14 @@ export const useTaskStore = defineStore('task', () => {
     currentCategory,
     searchQuery,
     searchOptions,
-    
+
     // 计算属性
     filteredTasks,
     categoryCounts,
     statusCounts,
     totalDuration,
     fullStatistics,
-    
+
     // 任务操作方法
     getAllTasks,
     getIncompleteTasks,
@@ -495,13 +495,13 @@ export const useTaskStore = defineStore('task', () => {
     deleteTask,
     startTask,
     pauseTask,
-    
+
     // 过滤和搜索方法
     setCurrentCategory,
     setSearchQuery,
     setSearchOptions,
     clearSearch,
-    
+
     // 辅助函数
     getStatusText,
     formatTimeDisplay,

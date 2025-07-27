@@ -33,15 +33,15 @@
   --destructive-foreground: 0 0% 100%;
   
   /* Success Colors */
-  --success: 142 76% 36%;
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
   
   /* Warning Colors */
-  --warning: 38 92% 50%;
+  --warning: 32 95% 44%;
   --warning-foreground: 0 0% 100%;
   
   /* Info Colors */
-  --info: 199 89% 48%;
+  --info: 217 91% 60%;
   --info-foreground: 0 0% 100%;
   
   /* Border and Input - #e5e7eb, #3b82f6 */
@@ -123,15 +123,15 @@
   --destructive-foreground: 0 0% 100%;
   
   /* Success Colors */
-  --success: 142 76% 36%;
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
   
   /* Warning Colors */
-  --warning: 38 92% 50%;
+  --warning: 32 95% 44%;
   --warning-foreground: 0 0% 100%;
   
   /* Info Colors */
-  --info: 199 89% 48%;
+  --info: 217 91% 60%;
   --info-foreground: 0 0% 100%;
   
   /* Border and Input - #404040, #3b82f6 */
