@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -27,6 +27,7 @@
     "concurrently": "^7.6.0",
     "electron": "^28.3.3",
     "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "vite": "^4.5.14",
