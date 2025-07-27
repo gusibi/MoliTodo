@@ -1,9 +1,10 @@
-name: Build and Release
+# Temporarily disabled
+# name: Build and Release
 
-on:
-  push:
-    tags:
-      - 'v*'  # 当推送以 v 开头的标签时触发，如 v1.0.0
+# on:
+#   push:
+#     tags:
+#       - 'v*'  # 当推送以 v 开头的标签时触发，如 v1.0.0
 
 permissions:
   contents: write  # 允许创建 Release 和上传文件
