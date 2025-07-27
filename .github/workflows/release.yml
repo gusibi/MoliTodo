@@ -1,5 +1,4 @@
 name: Build on Tag
-
 on:
   push:
     tags:
@@ -65,9 +64,11 @@ jobs:
           path: dist/
       - name: List all artifacts
         run: ls -la dist/
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/*.dmg
+            dist/*.exe
           generate_release_notes: true
           draft: false
           prerelease: false
@@ -75,12 +76,10 @@ jobs:
             ## 下载说明
             
             ### macOS 用户
-            - **Intel 芯片 Mac**: 下载 `MoliTodo-{version}-x64.dmg`
-            - **Apple Silicon (M1/M2/M3) Mac**: 下载 `MoliTodo-{version}-arm64.dmg`
+            - **Intel 芯片 Mac**: 下载 `MoliTodo-*.x64.dmg`
+            - **Apple Silicon (M1/M2/M3) Mac**: 下载 `MoliTodo-*.arm64.dmg`
             
             ### Windows 用户
-            - 下载 `MoliTodo Setup {version}.exe`
+            - 下载 `MoliTodo Setup *.exe`
             
             如果不确定你的 Mac 芯片类型，可以点击左上角苹果菜单 > 关于本机查看。
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
