@@ -12,14 +12,14 @@
 .floating-icon {
   width: 50px;
   height: 50px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all var(--transition-smooth);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(var(--shadow-md));
   -webkit-app-region: no-drag;
   pointer-events: auto;
@@ -31,14 +31,14 @@
 }
 
 .floating-icon:focus {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 
 /* Icon Content */
 .icon-content {
-  color: var(--text-white);
-  transition: all var(--transition-normal);
+  color: hsl(var(--primary-foreground));
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,7 @@
 
 /* Alert State */
 .floating-icon.alert {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  background: linear-gradient(135deg, hsl(var(--destructive)) 0%, #ee5a24 100%);
   animation: alertPulse 2s infinite;
 }
 
@@ -83,19 +83,19 @@
   right: -5px;
   min-width: 20px;
   height: 20px;
-  background: var(--color-danger);
+  background: hsl(var(--destructive));
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-white);
+  font-size: 11px;
+  font-weight: 700;
+  color: hsl(var(--destructive-foreground));
   border: 2px solid transparent;
   opacity: 0;
   transform: scale(0);
-  transition: all var(--transition-bounce);
-  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  font-family: var(--font-sans);
 }
 
 .badge.show {
@@ -105,7 +105,7 @@
 
 .badge span {
   line-height: 1;
-  padding: 0 var(--spacing-xs);
+  padding: 0 4px;
 }
 
 .floating-icon:hover .badge {
@@ -116,7 +116,7 @@
 .floating-icon.dragging {
   transform: scale(1.1);
   filter: drop-shadow(var(--shadow-xl));
-  z-index: var(--z-modal);
+  z-index: 1000;
 }
 
 /* Progress Indicator */
@@ -127,8 +127,8 @@
   transform: translateX(-50%);
   width: 8px;
   height: 8px;
-  background: var(--color-success);
-  border-radius: var(--radius-full);
+  background: hsl(var(--success));
+  border-radius: 50%;
   animation: blink 2s infinite;
   z-index: 10;
   pointer-events: none;

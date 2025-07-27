@@ -1,29 +1,29 @@
 /* TaskManager 组件样式 */
 
 .task-manager {
-  @apply flex min-h-full w-full bg-transparent text-gray-900 dark:text-gray-100 overflow-hidden flex-1;
+  @apply flex min-h-full w-full bg-transparent text-foreground overflow-hidden flex-1;
 }
 
 /* 左侧边栏样式 */
 .task-manager-sidebar {
-  @apply w-[280px] backdrop-blur-xl border-r border-gray-200/20 dark:border-gray-700/20 flex flex-col z-10;
+  @apply w-[280px] backdrop-blur-xl border-r border-sidebar-border flex flex-col z-10;
   height: 100vh;
   /* 关键：设置半透明背景色 */
-  @apply bg-white/90 dark:bg-gray-800/90;
+  @apply bg-sidebar/90;
   /* 添加 backdrop-filter 作为后备方案 */
   @apply backdrop-blur-xl;
 }
 
 /* 主要内容区域样式 */
 .task-manager-main-content {
-  @apply flex-1 flex flex-col overflow-hidden relative bg-white dark:bg-gray-900;
-  height: calc(100vh - 48px); /* 减去底部统计条的高度 */
+  @apply flex-1 flex flex-col overflow-hidden relative bg-background;
+  height: calc(100vh - 40px); /* 减去底部统计条的高度 */
   min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
 /* 分类标题区域样式 */
 .task-manager-category-header {
-  @apply px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-transparent flex items-center justify-between;
+  @apply px-6 py-4 border-b border-border/50 bg-transparent flex items-center justify-between;
 }
 
 .task-manager-category-title {
@@ -31,15 +31,15 @@
 }
 
 .task-manager-category-icon {
-  @apply text-xl text-blue-600 dark:text-blue-400;
+  @apply text-xl text-primary;
 }
 
 .task-manager-category-name {
-  @apply text-2xl font-bold text-gray-900 dark:text-gray-100;
+  @apply text-2xl font-bold text-foreground;
 }
 
 .task-manager-category-count {
-  @apply text-sm font-medium text-gray-500 dark:text-gray-400 ml-2;
+  @apply text-sm font-medium text-muted-foreground ml-2;
 }
 
 /* 右侧按钮组样式 */
@@ -54,28 +54,28 @@
 
 /* 内联搜索框样式 */
 .task-manager-inline-search {
-  @apply flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-3 min-w-[200px] transition-all duration-300 h-9; /* 固定高度 */
+  @apply flex items-center bg-background border border-border rounded-lg px-3 min-w-[200px] transition-all duration-300 h-9; /* 固定高度 */
 }
 
 .task-manager-inline-search-icon {
-  @apply text-gray-400 dark:text-gray-500 mr-2 text-sm flex-shrink-0;
+  @apply text-muted-foreground mr-2 text-sm flex-shrink-0;
 }
 
 .task-manager-inline-search-input {
-  @apply flex-1 bg-transparent border-none outline-none text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 min-w-0; /* 添加 min-w-0 防止溢出 */
+  @apply flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder-muted-foreground min-w-0; /* 添加 min-w-0 防止溢出 */
 }
 
 .task-manager-inline-clear {
-  @apply ml-2 w-5 h-5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200 flex-shrink-0;
+  @apply ml-2 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-200 flex-shrink-0;
 }
 
 /* 按钮样式 */
 .task-manager-action-btn {
-  @apply w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+  @apply w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50;
 }
 
 .task-manager-action-btn.active {
-  @apply bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-600;
+  @apply bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:border-primary/30;
 }
 
 .task-manager-action-btn i {
@@ -84,7 +84,7 @@
 
 /* 搜索区域样式 */
 .task-manager-search-section {
-  @apply p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900;
+  @apply p-4 border-b border-border/50 bg-background;
 }
 
 .task-manager-search-box {
@@ -92,32 +92,32 @@
 }
 
 .task-manager-search-icon {
-  @apply absolute left-4 text-gray-400 dark:text-gray-500 z-10;
+  @apply absolute left-4 text-muted-foreground z-10;
 }
 
 .task-manager-search-input {
-  @apply w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:focus:ring-blue-500/20;
+  @apply w-full pl-10 pr-10 py-3 border border-input rounded-lg bg-muted text-foreground text-sm transition-all duration-200 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/10;
 }
 
 .task-manager-clear-search {
-  @apply absolute right-4 bg-transparent border-none text-gray-400 dark:text-gray-500 cursor-pointer p-1 rounded transition-all duration-200 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+  @apply absolute right-4 bg-transparent border-none text-muted-foreground cursor-pointer p-1 rounded transition-all duration-200 hover:text-foreground hover:bg-accent;
 }
 
 .task-manager-search-results-info {
-  @apply flex items-center gap-4 mt-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm;
+  @apply flex items-center gap-4 mt-3 px-4 py-2 bg-primary/10 rounded-lg text-sm;
 }
 
 .task-manager-search-query {
-  @apply font-medium text-blue-600 dark:text-blue-400;
+  @apply font-medium text-primary;
 }
 
 .task-manager-search-count {
-  @apply text-gray-600 dark:text-gray-400;
+  @apply text-muted-foreground;
 }
 
 /* 统计信息条 */
 .task-manager-stats-bar {
-  @apply fixed bottom-0 left-[280px] right-0 flex items-center gap-6 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200/50 dark:border-gray-700/50 text-xs z-20;
+  @apply fixed bottom-0 left-[280px] right-0 flex items-center gap-6 px-4 py-3 bg-muted border-t border-border/50 text-xs z-20;
 }
 
 .task-manager-stats-item {
@@ -125,22 +125,23 @@
 }
 
 .task-manager-stats-label {
-  @apply text-gray-500 dark:text-gray-400;
+  @apply text-muted-foreground;
 }
 
 .task-manager-stats-value {
-  @apply text-gray-900 dark:text-gray-100 font-semibold;
+  @apply text-foreground font-semibold;
 }
 
 /* 自定义 Tooltip 样式 */
 .task-manager-custom-tooltip {
-  @apply bg-gray-900/90 dark:bg-white/95 text-white dark:text-gray-900 px-3 py-1.5 rounded-md text-xs whitespace-nowrap pointer-events-none shadow-lg;
+  @apply bg-popover text-popover-foreground px-3 py-1.5 rounded-md text-xs whitespace-nowrap pointer-events-none shadow-lg;
   animation: tooltip-fade-in 0.2s ease-out;
 }
 
 .task-manager-custom-tooltip::before {
   content: '';
-  @apply absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900/90 dark:border-t-white/95;
+  @apply absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent;
+  border-top-color: hsl(var(--popover));
 }
 
 @keyframes tooltip-fade-in {

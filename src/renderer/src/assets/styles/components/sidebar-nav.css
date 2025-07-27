@@ -17,32 +17,32 @@
 
 /* 导航项 */
 .nav-item {
-  @apply flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-all duration-200 min-h-[44px];
+  @apply flex items-center px-4 py-3 text-sm text-sidebar-foreground rounded-lg cursor-pointer transition-all duration-200 min-h-[44px];
   background-color: transparent;
 }
 
 .nav-item:hover {
-  @apply bg-gray-100/50 dark:bg-gray-700/50;
+  @apply bg-sidebar-accent/50;
 }
 
 /* 激活状态的导航项 */
 .nav-item.active {
-  @apply bg-blue-50/50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium;
+  @apply bg-sidebar-accent text-sidebar-primary font-medium;
 }
 
 /* 导航项图标 */
 .nav-item i {
-  @apply w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 transition-colors duration-200 flex-shrink-0 flex items-center justify-center;
+  @apply w-5 h-5 mr-3 text-muted-foreground transition-colors duration-200 flex-shrink-0 flex items-center justify-center;
 }
 
 /* 导航项悬停时的图标 */
 .nav-item:hover i {
-  @apply text-gray-700 dark:text-gray-200;
+  @apply text-sidebar-foreground;
 }
 
 /* 激活状态的图标 */
 .nav-item.active i {
-  @apply text-blue-600 dark:text-blue-400;
+  @apply text-sidebar-primary;
 }
 
 /* 导航项文本 */
@@ -52,19 +52,19 @@
 
 /* 导航项计数 */
 .nav-count {
-  @apply ml-auto px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full min-w-[20px] text-center flex-shrink-0 leading-4;
+  @apply ml-auto px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full min-w-[20px] text-center flex-shrink-0 leading-4;
 }
 
 /* 激活状态的计数 */
 .nav-item.active .nav-count {
-  @apply bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300;
+  @apply bg-sidebar-primary/10 text-sidebar-primary;
 }
 
 /* 悬停效果 */
 .nav-item:hover .nav-count {
-  @apply bg-gray-300 dark:bg-gray-500;
+  @apply bg-muted/80;
 }
 
 .nav-item.active:hover .nav-count {
-  @apply bg-blue-200 dark:bg-blue-700;
+  @apply bg-sidebar-primary/20;
 }

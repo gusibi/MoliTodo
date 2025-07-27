@@ -404,8 +404,4 @@ const formatSelectedDate = (date) => {
 
 <style>
 @import '../assets/styles/components/task-list.css';
-
-.task-edit-container {
-  @apply bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 backdrop-blur-sm flex-shrink-0;
-}
 </style>

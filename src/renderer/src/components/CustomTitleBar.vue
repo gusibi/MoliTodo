@@ -9,7 +9,7 @@
       <div class="w-6 h-6 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
         <img src="/tray-icon.png" alt="MoliTodo" class="w-5 h-5 object-contain" />
       </div>
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+      <span class="text-sm font-medium text-foreground whitespace-nowrap">
         MoliTodo
       </span>
     </div>
@@ -20,7 +20,7 @@
     <!-- 右侧：窗口控制按钮（在 macOS 上隐藏，因为系统提供原生按钮） -->
     <div v-if="!isMacOS" class="flex items-center flex-shrink-0 no-drag">
       <button 
-        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+        class="w-12 h-8 border-0 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset"
         @click="minimizeWindow"
         title="最小化"
       >
@@ -31,7 +31,7 @@
       
       <button 
         v-if="showMaximize"
-        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+        class="w-12 h-8 border-0 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset"
         @click="maximizeWindow"
         :title="isMaximized ? '还原' : '最大化'"
       >
@@ -45,7 +45,7 @@
       </button>
       
       <button 
-        class="w-12 h-8 border-0 bg-transparent text-gray-500 hover:text-white hover:bg-red-500 cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset"
+        class="w-12 h-8 border-0 bg-transparent text-muted-foreground hover:text-destructive-foreground hover:bg-destructive cursor-pointer flex items-center justify-center transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-inset"
         @click="closeWindow"
         title="关闭"
       >
@@ -171,11 +171,11 @@ onMounted(() => {
 /* 高对比度模式支持 */
 @media (prefers-contrast: high) {
   .w-12.h-8 {
-    @apply border border-gray-400;
+    @apply border border-border;
   }
   
   .w-12.h-8:hover {
-    @apply border-blue-500;
+    @apply border-ring;
   }
 }
 
@@ -192,6 +192,6 @@ onMounted(() => {
 }
 
 .w-12.h-8:disabled:hover {
-  @apply bg-transparent text-gray-500;
+  @apply bg-transparent text-muted-foreground;
 }
 </style>

@@ -6,7 +6,7 @@
 
 /* 任务表单内容容器 */
 .task-form-content {
-  @apply bg-white dark:bg-gray-700 rounded-xl p-6 min-w-[400px] max-w-[500px] max-h-[80vh] overflow-y-auto shadow-2xl relative z-[10000] transform scale-100;
+  @apply bg-card rounded-xl p-6 min-w-[400px] max-w-[500px] max-h-[80vh] overflow-y-auto shadow-2xl relative z-[10000] transform scale-100;
   
   /* 响应式设计 */
   @apply sm:min-w-[320px] sm:max-w-[90vw] sm:mx-5;
@@ -14,7 +14,7 @@
 
 /* 任务表单标题 */
 .task-form-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-white mb-5;
+  @apply text-lg font-semibold text-card-foreground mb-5;
 }
 
 /* 任务表单容器 */
@@ -29,17 +29,17 @@
 
 /* 任务表单标签 */
 .task-form-label {
-  @apply block text-sm font-medium text-gray-900 dark:text-white;
+  @apply block text-sm font-medium text-card-foreground;
 }
 
 /* 任务表单输入框 */
 .task-form-input {
-  @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:focus:ring-blue-500/20;
+  @apply w-full px-4 py-3 border border-input rounded-lg text-sm bg-background text-foreground transition-all duration-200 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20;
 }
 
 /* 任务表单文本域 */
 .task-form-textarea {
-  @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 resize-y min-h-[80px];
+  @apply w-full px-4 py-3 border border-input rounded-lg text-sm bg-background text-foreground transition-all duration-200 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20 resize-y min-h-[80px];
 }
 
 /* 任务表单按钮容器 */
@@ -52,7 +52,7 @@
 
 /* 任务表单主要按钮 */
 .task-form-btn-primary {
-  @apply px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
+  @apply px-5 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
   
   /* 响应式设计 */
   @apply sm:w-full;
@@ -60,7 +60,7 @@
 
 /* 任务表单次要按钮 */
 .task-form-btn-secondary {
-  @apply px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
+  @apply px-5 py-2.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium rounded-md transition-all duration-200 min-w-[80px];
   
   /* 响应式设计 */
   @apply sm:w-full;

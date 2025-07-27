@@ -5,18 +5,18 @@
 }
 
 .theme-switcher-option {
-  @apply flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-         bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 
-         hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
+  @apply flex items-center gap-2 px-3 py-2 rounded-lg border border-border 
+         bg-card text-card-foreground 
+         hover:bg-accent hover:text-accent-foreground transition-all duration-200
          text-sm font-medium cursor-pointer min-w-0 flex-shrink-0;
 }
 
 .theme-switcher-option:focus {
-  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
+  @apply outline-none ring-2 ring-ring ring-opacity-50;
 }
 
 .theme-switcher-option.theme-switcher-active {
-  @apply bg-blue-500 text-white border-blue-500 hover:bg-blue-600 shadow-md;
+  @apply bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-md;
 }
 
 .theme-switcher-icon {

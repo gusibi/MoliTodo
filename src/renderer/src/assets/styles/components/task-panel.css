@@ -2,66 +2,29 @@
 
 /* Task Panel Container */
 .task-panel {
-  @apply w-80 min-h-[200px] max-h-[80vh] bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 flex flex-col overflow-hidden relative select-none;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .task-panel {
-    @apply bg-gray-900/90 border-gray-700/30;
-  }
+  @apply w-80 min-h-[200px] max-h-[80vh] bg-card/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/20 flex flex-col overflow-hidden relative select-none;
 }
 
 /* Panel Header */
 .task-panel-header {
-  @apply px-6 py-4 pb-3 border-b border-gray-200/50 bg-gray-50/50;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-header {
-    @apply border-gray-700/50 bg-gray-800/50;
-  }
+  @apply px-6 py-4 pb-3 border-b border-border/50 bg-muted/50;
 }
 
 .task-panel-title {
-  @apply text-lg font-semibold text-gray-900 flex items-center gap-2;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-title {
-    @apply text-white;
-  }
+  @apply text-lg font-semibold text-card-foreground flex items-center gap-2;
 }
 
 .task-panel-title svg {
-  @apply text-blue-500;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-title svg {
-    @apply text-blue-400;
-  }
+  @apply text-primary;
 }
 
 .task-panel-count {
-  @apply text-sm text-gray-600 font-normal ml-2;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-count {
-    @apply text-gray-400;
-  }
+  @apply text-sm text-muted-foreground font-normal ml-2;
 }
 
 /* Quick Add Section */
 .task-panel-quick-add {
-  @apply px-6 py-4 border-b border-gray-200/50;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-quick-add {
-    @apply border-gray-700/50;
-  }
+  @apply px-6 py-4 border-b border-border/50;
 }
 
 .task-panel-input-container {
@@ -69,31 +32,15 @@
 }
 
 .task-panel-input {
-  @apply flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-base bg-white text-gray-900 transition-all duration-200 outline-none placeholder-gray-500;
+  @apply flex-1 px-3 py-2.5 border border-input rounded-lg text-base bg-background text-foreground transition-all duration-200 outline-none placeholder-muted-foreground;
 }
 
 .task-panel-input:focus {
-  @apply border-blue-500 ring-2 ring-blue-500/20;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-input {
-    @apply bg-gray-800 border-gray-600 text-white placeholder-gray-400;
-  }
-  
-  .task-panel-input:focus {
-    @apply border-blue-400 ring-blue-400/20;
-  }
+  @apply border-ring ring-2 ring-ring/20;
 }
 
 .task-panel-add-btn {
-  @apply w-9 h-9 border-0 rounded-lg bg-blue-500 text-white cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-blue-600 hover:scale-105 active:scale-95;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-add-btn {
-    @apply bg-blue-600 hover:bg-blue-700;
-  }
+  @apply w-9 h-9 border-0 rounded-lg bg-primary text-primary-foreground cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-primary/90 hover:scale-105 active:scale-95;
 }
 
 /* Task List Container */
@@ -107,71 +54,45 @@
 
 /* Task Items */
 .task-panel-item {
-  @apply px-6 py-3 border-b border-gray-100 flex items-start gap-3 transition-all duration-200 cursor-pointer relative;
+  @apply px-6 py-3 border-b border-border/30 flex items-start gap-3 transition-all duration-200 cursor-pointer relative;
   animation: task-panel-slide-in 0.3s ease-out;
 }
 
 .task-panel-item:hover {
-  @apply bg-gray-50;
+  @apply bg-accent/50;
 }
 
 .task-panel-item:last-child {
   @apply border-b-0;
 }
 
-@media (prefers-color-scheme: dark) {
-  .task-panel-item {
-    @apply border-gray-800;
-  }
-  
-  .task-panel-item:hover {
-    @apply bg-gray-800/50;
-  }
-}
-
 .task-panel-item.todo {
-  @apply border-l-4 border-l-gray-400;
+  @apply border-l-4 border-l-status-todo;
 }
 
 .task-panel-item.doing {
-  @apply border-l-4 border-l-yellow-500 bg-yellow-50/50;
+  @apply border-l-4 border-l-status-doing bg-warning/10;
 }
 
 .task-panel-item.done {
-  @apply border-l-4 border-l-green-500 bg-green-50/50;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-item.doing {
-    @apply bg-yellow-900/20;
-  }
-  
-  .task-panel-item.done {
-    @apply bg-green-900/20;
-  }
+  @apply border-l-4 border-l-status-done bg-success/10;
 }
 
 /* Task Status Indicator */
 .task-panel-status-indicator {
-  @apply w-5 h-5 cursor-pointer flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 rounded-full hover:scale-110 hover:bg-blue-100;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-status-indicator:hover {
-    @apply bg-blue-900/30;
-  }
+  @apply w-5 h-5 cursor-pointer flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 rounded-full hover:scale-110 hover:bg-primary/10;
 }
 
 .task-panel-item.todo .task-panel-status-indicator {
-  @apply text-gray-400;
+  @apply text-status-todo;
 }
 
 .task-panel-item.doing .task-panel-status-indicator {
-  @apply text-yellow-500;
+  @apply text-status-doing;
 }
 
 .task-panel-item.done .task-panel-status-indicator {
-  @apply text-green-500;
+  @apply text-status-done;
 }
 
 /* Task Content */
@@ -189,49 +110,23 @@
 }
 
 .task-panel-text {
-  @apply text-sm text-gray-900 leading-relaxed break-words cursor-pointer;
+  @apply text-sm text-card-foreground leading-relaxed break-words cursor-pointer;
 }
 
 .task-panel-text:hover {
-  @apply bg-gray-100 rounded px-1 -mx-1 my-0.5 -my-0.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-text {
-    @apply text-white;
-  }
-  
-  .task-panel-text:hover {
-    @apply bg-gray-700;
-  }
+  @apply bg-accent rounded px-1 -mx-1 my-0.5 -my-0.5;
 }
 
 .task-panel-item.done .task-panel-text {
-  @apply line-through text-gray-500;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-item.done .task-panel-text {
-    @apply text-gray-400;
-  }
+  @apply line-through text-muted-foreground;
 }
 
 .task-panel-edit-input {
-  @apply text-sm text-gray-900 leading-relaxed border border-blue-500 rounded px-1 bg-white outline-none w-full;
+  @apply text-sm text-foreground leading-relaxed border border-ring rounded px-1 bg-background outline-none w-full;
 }
 
 .task-panel-edit-input:focus {
-  @apply border-blue-600 ring-2 ring-blue-200;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-edit-input {
-    @apply text-white bg-gray-800 border-blue-400;
-  }
-  
-  .task-panel-edit-input:focus {
-    @apply border-blue-300 ring-blue-400/20;
-  }
+  @apply border-ring ring-2 ring-ring/20;
 }
 
 /* Task Meta - 占满整行 */
@@ -267,47 +162,23 @@
 }
 
 .task-panel-status.status-todo {
-  @apply bg-gray-200 text-gray-600;
+  @apply bg-muted text-muted-foreground;
 }
 
 .task-panel-status.status-doing {
-  @apply bg-yellow-100 text-yellow-700;
+  @apply bg-warning/20 text-warning-foreground;
 }
 
 .task-panel-status.status-paused {
-  @apply bg-orange-100 text-orange-700;
+  @apply bg-warning/30 text-warning-foreground;
 }
 
 .task-panel-status.status-done {
-  @apply bg-green-100 text-green-700;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-status.status-todo {
-    @apply bg-gray-700 text-gray-300;
-  }
-  
-  .task-panel-status.status-doing {
-    @apply bg-yellow-900/30 text-yellow-400;
-  }
-  
-  .task-panel-status.status-paused {
-    @apply bg-orange-900/30 text-orange-400;
-  }
-  
-  .task-panel-status.status-done {
-    @apply bg-green-900/30 text-green-400;
-  }
+  @apply bg-success/20 text-success-foreground;
 }
 
 .task-panel-duration {
-  @apply text-sm text-yellow-600 flex items-center gap-1 flex-shrink min-w-0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-duration {
-    @apply text-yellow-400;
-  }
+  @apply text-sm text-warning flex items-center gap-1 flex-shrink min-w-0;
 }
 
 .task-panel-duration svg {
@@ -315,21 +186,11 @@
 }
 
 .task-panel-reminder {
-  @apply text-sm text-blue-600 flex items-center gap-1 flex-shrink min-w-0;
+  @apply text-sm text-primary flex items-center gap-1 flex-shrink min-w-0;
 }
 
 .task-panel-reminder.overdue {
-  @apply text-red-600;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-reminder {
-    @apply text-blue-400;
-  }
-  
-  .task-panel-reminder.overdue {
-    @apply text-red-400;
-  }
+  @apply text-destructive;
 }
 
 .task-panel-reminder svg {
@@ -346,84 +207,40 @@
 }
 
 .task-panel-action-btn {
-  @apply w-6 h-6 border-0 rounded bg-black/5 cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-black/10;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-action-btn {
-    @apply bg-white/5 hover:bg-white/10;
-  }
+  @apply w-6 h-6 border-0 rounded bg-muted/50 cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-muted;
 }
 
 .task-panel-action-btn.reminder-btn {
-  @apply text-blue-600;
+  @apply text-primary;
 }
 
 .task-panel-action-btn.pause-btn {
-  @apply text-orange-600;
+  @apply text-warning;
 }
 
 .task-panel-action-btn.delete-btn {
-  @apply text-red-600;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-action-btn.reminder-btn {
-    @apply text-blue-400;
-  }
-  
-  .task-panel-action-btn.pause-btn {
-    @apply text-orange-400;
-  }
-  
-  .task-panel-action-btn.delete-btn {
-    @apply text-red-400;
-  }
+  @apply text-destructive;
 }
 
 /* Empty State */
 .task-panel-empty {
-  @apply hidden flex-col items-center justify-center px-6 py-10 text-center text-gray-600;
+  @apply hidden flex-col items-center justify-center px-6 py-10 text-center text-muted-foreground;
 }
 
 .task-panel-empty.show {
   @apply flex;
 }
 
-@media (prefers-color-scheme: dark) {
-  .task-panel-empty {
-    @apply text-gray-400;
-  }
-}
-
 .task-panel-empty-icon {
-  @apply mb-4 text-blue-600 opacity-60;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-empty-icon {
-    @apply text-blue-400;
-  }
+  @apply mb-4 text-primary opacity-60;
 }
 
 .task-panel-empty h3 {
-  @apply text-lg mb-2 text-gray-900;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-empty h3 {
-    @apply text-white;
-  }
+  @apply text-lg mb-2 text-card-foreground;
 }
 
 .task-panel-empty p {
-  @apply text-base text-gray-600;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-empty p {
-    @apply text-gray-400;
-  }
+  @apply text-base text-muted-foreground;
 }
 
 /* Reminder Modal */
@@ -444,34 +261,16 @@
 }
 
 .task-panel-quick-time-btn {
-  @apply px-3 py-2 border border-gray-300 rounded-full bg-white text-sm cursor-pointer transition-all duration-200 text-gray-900 hover:bg-blue-500 hover:text-white hover:border-blue-500;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-quick-time-btn {
-    @apply bg-gray-800 border-gray-600 text-white hover:bg-blue-600 hover:border-blue-600;
-  }
+  @apply px-3 py-2 border border-border rounded-full bg-background text-sm cursor-pointer transition-all duration-200 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary;
 }
 
 /* Panel Footer */
 .task-panel-footer {
-  @apply px-6 py-3 border-t border-gray-200/50 bg-gray-50/50;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-footer {
-    @apply border-gray-700/50 bg-gray-800/50;
-  }
+  @apply px-6 py-3 border-t border-border/50 bg-muted/50;
 }
 
 .task-panel-footer-stats {
-  @apply text-sm text-gray-600 text-center;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-footer-stats {
-    @apply text-gray-400;
-  }
+  @apply text-sm text-muted-foreground text-center;
 }
 
 /* Scrollbar Styles */
@@ -484,13 +283,7 @@
 }
 
 .task-panel-list-container::-webkit-scrollbar-thumb {
-  @apply bg-black/20 rounded-sm hover:bg-black/30;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-panel-list-container::-webkit-scrollbar-thumb {
-    @apply bg-white/20 hover:bg-white/30;
-  }
+  @apply bg-border rounded-sm hover:bg-border/80;
 }
 
 /* Animations */

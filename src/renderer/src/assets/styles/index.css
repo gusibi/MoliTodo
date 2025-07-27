@@ -1,8 +1,12 @@
-@import './variables.css';
+@import './theme-variables.css';
 @import './base.css';
+@import './settings.css';
 @import './components/floating-icon.css';
 @import './components/task-panel.css';
 @import './components/task-manager.css';
+@import './components/task-list.css';
+@import './components/task-item.css';
+@import './components/task-form.css';
 @import './components/custom-titlebar.css';
 
 /* Main CSS Entry Point */

@@ -7,16 +7,16 @@
 
 /* 侧边栏 */
 .setting-sidebar {
-  @apply w-52 border-r border-gray-200/50 dark:border-gray-700/50; /* 边框也调得半透明一些 */
+  @apply w-52 border-r border-sidebar-border/50;
   @apply flex flex-col py-5 px-4;
   /* 关键：设置半透明背景色 */
-  @apply bg-white/90 dark:bg-gray-800/90;
+  @apply bg-sidebar/90;
   /* 添加 backdrop-filter 作为后备方案 */
   @apply backdrop-blur-xl;
 }
 
 .setting-sidebar-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-white mt-8 mb-6 px-2;
+  @apply text-lg font-semibold text-sidebar-foreground mt-8 mb-6 px-2;
 }
 
 .setting-nav-list {
@@ -25,12 +25,12 @@
 
 .setting-nav-item {
   @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
-  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+  @apply text-sidebar-foreground hover:bg-sidebar-accent;
   @apply transition-colors duration-150;
 }
 
 .setting-nav-item.setting-nav-item-active {
-  @apply bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300;
+  @apply bg-sidebar-accent text-sidebar-primary;
 }
 
 .setting-nav-icon {
@@ -39,7 +39,7 @@
 
 /* 主设置区域 */
 .setting-main-area {
-  @apply flex-1 flex flex-col overflow-hidden pt-4 bg-gray-50 dark:bg-gray-900;
+  @apply flex-1 flex flex-col overflow-hidden pt-4 bg-background;
 }
 
 .setting-content-area {
@@ -52,11 +52,11 @@
 
 /* 设置页面标题 */
 .setting-page-title {
-  @apply text-2xl font-bold text-gray-900 dark:text-white mb-2;
+  @apply text-2xl font-bold text-foreground mb-2;
 }
 
 .setting-page-description {
-  @apply text-gray-600 dark:text-gray-400 mb-8;
+  @apply text-muted-foreground mb-8;
 }
 
 /* 设置分组 */
@@ -65,12 +65,12 @@
 }
 
 .setting-group-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-white mb-4;
+  @apply text-lg font-semibold text-foreground mb-4;
 }
 
 /* 设置项 */
 .setting-item {
-  @apply flex items-center justify-between py-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0;
+  @apply flex items-center justify-between py-4 border-b border-border last:border-b-0;
 }
 
 .setting-item-info {
@@ -78,11 +78,11 @@
 }
 
 .setting-item-label {
-  @apply text-sm font-medium text-gray-900 dark:text-white;
+  @apply text-sm font-medium text-foreground;
 }
 
 .setting-item-description {
-  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+  @apply text-sm text-muted-foreground mt-1;
 }
 
 .setting-item-control {
@@ -92,17 +92,17 @@
 /* 切换开关 */
 .setting-toggle {
   @apply relative inline-flex h-6 w-11 items-center rounded-full;
-  @apply bg-gray-200 dark:bg-gray-600 transition-colors duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply bg-input transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   @apply cursor-pointer;
 }
 
 .setting-toggle.setting-toggle-active {
-  @apply bg-blue-600;
+  @apply bg-primary;
 }
 
 .setting-toggle-button {
-  @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200;
+  @apply inline-block h-4 w-4 transform rounded-full bg-background transition-transform duration-200;
   @apply translate-x-1;
 }
 
@@ -116,25 +116,25 @@
 }
 
 .setting-slider {
-  @apply flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer;
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply flex-1 h-2 bg-input rounded-lg appearance-none cursor-pointer;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   @apply min-w-32;
 }
 
 .setting-slider::-webkit-slider-thumb {
-  @apply appearance-none w-5 h-5 bg-blue-600 rounded-full cursor-pointer;
-  @apply hover:bg-blue-700 transition-colors duration-150;
+  @apply appearance-none w-5 h-5 bg-primary rounded-full cursor-pointer;
+  @apply hover:bg-primary/90 transition-colors duration-150;
   @apply shadow-md;
 }
 
 .setting-slider::-moz-range-thumb {
-  @apply w-5 h-5 bg-blue-600 rounded-full cursor-pointer border-0;
-  @apply hover:bg-blue-700 transition-colors duration-150;
+  @apply w-5 h-5 bg-primary rounded-full cursor-pointer border-0;
+  @apply hover:bg-primary/90 transition-colors duration-150;
   @apply shadow-md;
 }
 
 .setting-slider-value {
-  @apply text-sm font-medium text-gray-700 dark:text-gray-300 min-w-12 text-right;
+  @apply text-sm font-medium text-foreground min-w-12 text-right;
 }
 
 /* 按钮组 */
@@ -148,25 +148,25 @@
 }
 
 .setting-btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring;
 }
 
 .setting-btn-secondary {
-  @apply bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white;
-  @apply hover:bg-gray-300 dark:hover:bg-gray-500 focus:ring-gray-500;
+  @apply bg-secondary text-secondary-foreground;
+  @apply hover:bg-secondary/80 focus:ring-ring;
 }
 
 .setting-btn-danger {
-  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-ring;
 }
 
 /* 统计信息 */
 .setting-stats-container {
-  @apply mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700;
+  @apply mt-6 p-4 bg-muted rounded-lg border border-border;
 }
 
 .setting-stats-title {
-  @apply text-base font-semibold text-gray-900 dark:text-white mb-3;
+  @apply text-base font-semibold text-foreground mb-3;
 }
 
 .setting-stats-item {
@@ -174,35 +174,35 @@
 }
 
 .setting-stats-label {
-  @apply text-sm text-gray-600 dark:text-gray-400;
+  @apply text-sm text-muted-foreground;
 }
 
 .setting-stats-value {
-  @apply text-sm font-medium text-gray-900 dark:text-white;
+  @apply text-sm font-medium text-foreground;
 }
 
 /* 底部操作区 */
 .setting-actions {
-  @apply border-t border-gray-200 dark:border-gray-700 px-8 py-4;
-  @apply flex justify-end space-x-3 bg-white dark:bg-gray-800;
+  @apply border-t border-border px-8 py-4;
+  @apply flex justify-end space-x-3 bg-background;
 }
 
 /* 消息提示 */
 .setting-message {
-  @apply fixed top-4 right-4 px-4 py-3 rounded-md text-white text-sm font-medium;
+  @apply fixed top-4 right-4 px-4 py-3 rounded-md text-sm font-medium;
   @apply shadow-lg z-50 transition-all duration-300;
 }
 
 .setting-message-success {
-  @apply bg-green-600;
+  @apply bg-success text-success-foreground;
 }
 
 .setting-message-error {
-  @apply bg-red-600;
+  @apply bg-destructive text-destructive-foreground;
 }
 
 .setting-message-info {
-  @apply bg-blue-600;
+  @apply bg-info text-info-foreground;
 }
 
 /* 响应式调整 */
@@ -212,7 +212,7 @@
   }
   
   .setting-sidebar {
-    @apply w-full border-r-0 border-b border-gray-200 dark:border-gray-700;
+    @apply w-full border-r-0 border-b border-border;
   }
   
   .setting-content-area {
