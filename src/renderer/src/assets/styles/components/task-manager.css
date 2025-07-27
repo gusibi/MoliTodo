@@ -1,13 +1,17 @@
 /* TaskManager 组件样式 */
 
 .task-manager {
-  @apply flex min-h-full w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden flex-1;
+  @apply flex min-h-full w-full bg-transparent text-gray-900 dark:text-gray-100 overflow-hidden flex-1;
 }
 
 /* 左侧边栏样式 */
 .task-manager-sidebar {
-  @apply w-[280px] bg-white/10 dark:bg-gray-200/10 backdrop-blur-xl border-r border-gray-200/20 dark:border-gray-700/20 flex flex-col z-10;
+  @apply w-[280px] backdrop-blur-xl border-r border-gray-200/20 dark:border-gray-700/20 flex flex-col z-10;
   height: 100vh;
+  /* 关键：设置半透明背景色 */
+  @apply bg-white/90 dark:bg-gray-800/90;
+  /* 添加 backdrop-filter 作为后备方案 */
+  @apply backdrop-blur-xl;
 }
 
 /* 主要内容区域样式 */

@@ -11,7 +11,7 @@
     </aside>
 
     <!-- 主要内容区域 -->
-    <main class="task-manager-main-content mt-8">
+    <main class="task-manager-main-content pt-8">
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
         <div class="task-manager-category-title">

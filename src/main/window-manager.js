@@ -46,7 +46,8 @@ class WindowManager {
       x: x,
       y: y,
       frame: false,
-      transparent: true,
+      transparent: true, // 设置窗口为透明背景
+      vibrancy: 'sidebar', // for macOS
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
@@ -109,6 +110,7 @@ class WindowManager {
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
+      transparent: true,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true
@@ -146,6 +148,8 @@ class WindowManager {
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
+      transparent: true,
+      // vibrancy: 'under-window', // 毛玻璃效果
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true

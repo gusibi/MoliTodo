@@ -22,7 +22,7 @@ import '@/assets/styles/settings.css'
 @import '../assets/styles/settings.css';
 
 .settings-view-container {
-  @apply w-full h-full flex flex-col bg-gray-50 dark:bg-gray-900;
+  @apply w-full h-full flex flex-col bg-transparent;
 }
 
 .settings-view-content {
