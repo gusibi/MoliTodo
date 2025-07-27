@@ -244,12 +244,20 @@ class WindowManager {
 
   createTray() {
     try {
-      const trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
+      // 在开发环境和生产环境下使用不同的路径
+      let trayIconPath;
+      if (process.env.NODE_ENV === 'development') {
+        trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
+      } else {
+        // 在打包后的应用中，资源文件位于应用根目录的 resources 文件夹
+        trayIconPath = path.join(process.resourcesPath, 'resources/tray-icon.png');
+      }
 
       // 检查图标文件是否存在
       const fs = require('fs');
       if (!fs.existsSync(trayIconPath)) {
         console.warn('托盘图标文件不存在，跳过托盘创建');
+        console.warn('尝试的路径:', trayIconPath);
         return;
       }
 
