@@ -9,7 +9,7 @@
 }
 
 .task-item-row.task-item-completed {
-  @apply opacity-70 bg-success/10;
+  @apply opacity-70 bg-success/20;
 }
 
 .task-item-row.task-item-in-progress {

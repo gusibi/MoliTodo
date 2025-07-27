@@ -1,0 +1,172 @@
+/* Default Theme */
+:root {
+  /* Core Background and Foreground - #ffffff, #333333 */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 20%;
+  
+  /* Card Components - #ffffff, #333333 */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 20%;
+  
+  /* Popover Components - #ffffff, #333333 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 20%;
+  
+  /* Primary Colors - #3b82f6, #ffffff */
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary Colors - #f3f4f6, #4b5563 */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 215 14% 34%;
+  
+  /* Muted Colors - #f9fafb, #6b7280 */
+  --muted: 210 20% 98%;
+  --muted-foreground: 220 9% 46%;
+  
+  /* Accent Colors - #e0f2fe, #1e3a8a */
+  --accent: 199 95% 94%;
+  --accent-foreground: 224 64% 33%;
+  
+  /* Destructive Colors - #ef4444, #ffffff */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info Colors */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input - #e5e7eb, #3b82f6 */
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 217 91% 60%;
+  
+  /* Chart Colors - #3b82f6, #2563eb, #1d4ed8, #1e40af, #1e3a8a */
+  --chart-1: 217 91% 60%;
+  --chart-2: 221 83% 53%;
+  --chart-3: 224 76% 48%;
+  --chart-4: 226 71% 40%;
+  --chart-5: 224 64% 33%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 220 9% 46%;
+  --status-doing: 38 92% 50%;
+  --status-done: 142 76% 36%;
+  --status-paused: 220 9% 46%;
+  
+  /* Sidebar Colors - #f9fafb, #333333, #3b82f6, #ffffff, #e0f2fe, #1e3a8a, #e5e7eb */
+  --sidebar: 210 20% 98%;
+  --sidebar-foreground: 0 0% 20%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 199 95% 94%;
+  --sidebar-accent-foreground: 224 64% 33%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217 91% 60%;
+  
+  /* Border Radius */
+  --radius: 0.375rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  
+  /* Typography */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: Source Serif 4, serif;
+  --font-mono: JetBrains Mono, monospace;
+}
+
+.dark {
+  /* Core Background and Foreground - #171717, #e5e5e5 */
+  --background: 0 0% 9%;
+  --foreground: 0 0% 90%;
+  
+  /* Card Components - #262626, #e5e5e5 */
+  --card: 0 0% 15%;
+  --card-foreground: 0 0% 90%;
+  
+  /* Popover Components - #262626, #e5e5e5 */
+  --popover: 0 0% 15%;
+  --popover-foreground: 0 0% 90%;
+  
+  /* Primary Colors - #3b82f6, #ffffff */
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary Colors - #262626, #e5e5e5 */
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 90%;
+  
+  /* Muted Colors - #262626, #a3a3a3 */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 64%;
+  
+  /* Accent Colors - #1e3a8a, #bfdbfe */
+  --accent: 224 64% 33%;
+  --accent-foreground: 213 97% 87%;
+  
+  /* Destructive Colors - #ef4444, #ffffff */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info Colors */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input - #404040, #3b82f6 */
+  --border: 0 0% 25%;
+  --input: 0 0% 25%;
+  --ring: 217 91% 60%;
+  
+  /* Chart Colors - #60a5fa, #3b82f6, #2563eb, #1d4ed8, #1e40af */
+  --chart-1: 213 93% 68%;
+  --chart-2: 217 91% 60%;
+  --chart-3: 221 83% 53%;
+  --chart-4: 224 76% 48%;
+  --chart-5: 226 71% 40%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 0 0% 64%;
+  --status-doing: 38 92% 50%;
+  --status-done: 142 76% 36%;
+  --status-paused: 0 0% 64%;
+  
+  /* Sidebar Colors - #171717, #e5e5e5, #3b82f6, #ffffff, #1e3a8a, #bfdbfe, #404040 */
+  --sidebar: 0 0% 9%;
+  --sidebar-foreground: 0 0% 90%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 224 64% 33%;
+  --sidebar-accent-foreground: 213 97% 87%;
+  --sidebar-border: 0 0% 25%;
+  --sidebar-ring: 217 91% 60%;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.15);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.20), 0 1px 2px -1px hsl(0 0% 0% / 0.20);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 2px 4px -1px hsl(0 0% 0% / 0.25);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.30), 0 4px 6px -1px hsl(0 0% 0% / 0.30);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.35), 0 8px 10px -1px hsl(0 0% 0% / 0.35);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.40);
+}

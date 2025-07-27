@@ -1,0 +1,172 @@
+/* Twitter Theme */
+:root {
+  /* Core Background and Foreground */
+  --background: 0 0% 100%;
+  --foreground: 210 25% 8%;
+  
+  /* Card Components */
+  --card: 210 11% 97%;
+  --card-foreground: 210 25% 8%;
+  
+  /* Popover Components */
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 25% 8%;
+  
+  /* Primary Colors */
+  --primary: 203 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary Colors */
+  --secondary: 210 25% 8%;
+  --secondary-foreground: 0 0% 100%;
+  
+  /* Muted Colors */
+  --muted: 210 17% 90%;
+  --muted-foreground: 210 25% 8%;
+  
+  /* Accent Colors */
+  --accent: 210 100% 95%;
+  --accent-foreground: 203 89% 53%;
+  
+  /* Destructive Colors */
+  --destructive: 348 83% 47%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info Colors */
+  --info: 203 89% 53%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input */
+  --border: 210 29% 89%;
+  --input: 210 20% 97%;
+  --ring: 203 100% 50%;
+  
+  /* Chart Colors */
+  --chart-1: 203 89% 53%;
+  --chart-2: 152 69% 31%;
+  --chart-3: 45 93% 47%;
+  --chart-4: 145 63% 42%;
+  --chart-5: 348 83% 47%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 210 25% 8%;
+  --status-doing: 45 93% 47%;
+  --status-done: 145 63% 42%;
+  --status-paused: 210 25% 8%;
+  
+  /* Sidebar Colors */
+  --sidebar: 210 11% 97%;
+  --sidebar-foreground: 210 25% 8%;
+  --sidebar-primary: 203 89% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 100% 95%;
+  --sidebar-accent-foreground: 203 89% 53%;
+  --sidebar-border: 210 29% 88%;
+  --sidebar-ring: 203 100% 50%;
+  
+  /* Border Radius */
+  --radius: 1.3rem;
+  
+  /* Shadows */
+  --shadow-sm: 0px 2px 0px 0px hsl(203 89% 53% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 1px 2px -1px hsl(203 89% 53% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 2px 4px -1px hsl(203 89% 53% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 4px 6px -1px hsl(203 89% 53% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 8px 10px -1px hsl(203 89% 53% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(203 89% 53% / 0.00);
+  
+  /* Typography */
+  --font-sans: 'Open Sans', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+}
+
+.dark {
+  /* Core Background and Foreground */
+  --background: 0 0% 0%;
+  --foreground: 210 9% 91%;
+  
+  /* Card Components */
+  --card: 215 28% 9%;
+  --card-foreground: 0 0% 85%;
+  
+  /* Popover Components */
+  --popover: 0 0% 0%;
+  --popover-foreground: 210 9% 91%;
+  
+  /* Primary Colors */
+  --primary: 203 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary Colors */
+  --secondary: 210 17% 95%;
+  --secondary-foreground: 210 25% 8%;
+  
+  /* Muted Colors */
+  --muted: 0 0% 9%;
+  --muted-foreground: 215 14% 48%;
+  
+  /* Accent Colors */
+  --accent: 215 100% 12%;
+  --accent-foreground: 203 89% 53%;
+  
+  /* Destructive Colors */
+  --destructive: 348 83% 47%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 45 93% 47%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info Colors */
+  --info: 203 89% 53%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input */
+  --border: 215 28% 15%;
+  --input: 200 50% 19%;
+  --ring: 203 100% 50%;
+  
+  /* Chart Colors */
+  --chart-1: 203 89% 53%;
+  --chart-2: 152 69% 31%;
+  --chart-3: 45 93% 47%;
+  --chart-4: 145 63% 42%;
+  --chart-5: 348 83% 47%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 0 0% 85%;
+  --status-doing: 45 93% 47%;
+  --status-done: 145 63% 42%;
+  --status-paused: 0 0% 85%;
+  
+  /* Sidebar Colors */
+  --sidebar: 215 28% 9%;
+  --sidebar-foreground: 0 0% 85%;
+  --sidebar-primary: 203 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 100% 12%;
+  --sidebar-accent-foreground: 203 89% 53%;
+  --sidebar-border: 200 13% 28%;
+  --sidebar-ring: 203 100% 50%;
+  
+  /* Shadows */
+  --shadow-sm: 0px 2px 0px 0px hsl(203 89% 53% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 1px 2px -1px hsl(203 89% 53% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 2px 4px -1px hsl(203 89% 53% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 4px 6px -1px hsl(203 89% 53% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(203 89% 53% / 0.00), 0px 8px 10px -1px hsl(203 89% 53% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(203 89% 53% / 0.00);
+}

@@ -75,12 +75,16 @@
               <div class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">主题模式</div>
-                  <div class="setting-item-description">选择应用的外观主题</div>
+                  <div class="setting-item-description">选择浅色或深色模式</div>
                 </div>
                 <div class="setting-item-control">
                   <ThemeSwitcher />
                 </div>
               </div>
+            </div>
+
+            <div class="setting-group">
+              <ColorThemeSwitcher />
             </div>
 
             <div class="setting-group">
@@ -235,6 +239,7 @@
 <script setup>
 import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
+import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 
 // 响应式数据
 const activeCategory = ref('general')

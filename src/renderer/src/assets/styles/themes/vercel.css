@@ -1,0 +1,172 @@
+/* Vercel Theme */
+:root {
+  /* Core Background and Foreground */
+  --background: 0 0% 99%;
+  --foreground: 0 0% 0%;
+  
+  /* Card Components */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  
+  /* Popover Components */
+  --popover: 0 0% 99%;
+  --popover-foreground: 0 0% 0%;
+  
+  /* Primary Colors */
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary Colors */
+  --secondary: 0 0% 92%;
+  --secondary-foreground: 0 0% 0%;
+  
+  /* Muted Colors */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 32%;
+  
+  /* Accent Colors */
+  --accent: 0 0% 92%;
+  --accent-foreground: 0 0% 0%;
+  
+  /* Destructive Colors */
+  --destructive: 1 83% 63%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info Colors */
+  --info: 217 91% 60%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input */
+  --border: 0 0% 89%;
+  --input: 0 0% 92%;
+  --ring: 0 0% 0%;
+  
+  /* Chart Colors */
+  --chart-1: 38 100% 51%;
+  --chart-2: 224 100% 58%;
+  --chart-3: 0 0% 64%;
+  --chart-4: 0 0% 89%;
+  --chart-5: 0 0% 45%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 0 0% 32%;
+  --status-doing: 38 100% 51%;
+  --status-done: 142 76% 36%;
+  --status-paused: 0 0% 32%;
+  
+  /* Sidebar Colors */
+  --sidebar: 0 0% 99%;
+  --sidebar-foreground: 0 0% 0%;
+  --sidebar-primary: 0 0% 0%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 92%;
+  --sidebar-accent-foreground: 0 0% 0%;
+  --sidebar-border: 0 0% 92%;
+  --sidebar-ring: 0 0% 0%;
+  
+  /* Border Radius */
+  --radius: 0.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+  
+  /* Typography */
+  --font-sans: 'Geist', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: 'Geist Mono', monospace;
+}
+
+.dark {
+  /* Core Background and Foreground */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  
+  /* Card Components */
+  --card: 0 0% 4%;
+  --card-foreground: 0 0% 100%;
+  
+  /* Popover Components */
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 100%;
+  
+  /* Primary Colors */
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  
+  /* Secondary Colors */
+  --secondary: 0 0% 13%;
+  --secondary-foreground: 0 0% 100%;
+  
+  /* Muted Colors */
+  --muted: 0 0% 11%;
+  --muted-foreground: 0 0% 64%;
+  
+  /* Accent Colors */
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 100%;
+  
+  /* Destructive Colors */
+  --destructive: 0 100% 67%;
+  --destructive-foreground: 0 0% 0%;
+  
+  /* Success Colors */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning Colors */
+  --warning: 38 100% 51%;
+  --warning-foreground: 0 0% 0%;
+  
+  /* Info Colors */
+  --info: 224 100% 58%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Border and Input */
+  --border: 0 0% 14%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 64%;
+  
+  /* Chart Colors */
+  --chart-1: 38 100% 51%;
+  --chart-2: 225 100% 60%;
+  --chart-3: 0 0% 45%;
+  --chart-4: 0 0% 32%;
+  --chart-5: 0 0% 89%;
+  
+  /* Status Colors for Tasks */
+  --status-todo: 0 0% 64%;
+  --status-doing: 38 100% 51%;
+  --status-done: 142 76% 36%;
+  --status-paused: 0 0% 64%;
+  
+  /* Sidebar Colors */
+  --sidebar: 0 0% 7%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 0 0% 100%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 0 0% 20%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 20%;
+  --sidebar-ring: 0 0% 64%;
+  
+  /* Shadows */
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+}

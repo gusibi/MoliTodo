@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue'
+import { useColorTheme } from './useColorTheme'
 
 // Theme state
 const currentTheme = ref('system')
@@ -99,7 +100,7 @@ const applyThemeToDOM = (theme) => {
 }
 
 // Initialize theme from localStorage or system preference
-const initializeTheme = () => {
+const initializeTheme = async () => {
   const savedTheme = localStorage.getItem('theme')
   
   if (savedTheme && Object.values(themes).includes(savedTheme)) {
@@ -107,6 +108,10 @@ const initializeTheme = () => {
   } else {
     setTheme(themes.system, false)
   }
+  
+  // 初始化颜色主题
+  const { initializeColorTheme } = useColorTheme()
+  await initializeColorTheme()
 }
 
 // Set theme
@@ -181,6 +186,8 @@ export const useTheme = () => {
     initializeStorageListener()
   }
   
+  const { availableColorThemes, currentColorTheme, setColorTheme, getThemeInfo } = useColorTheme()
+  
   return {
     currentTheme: readonly(currentTheme),
     isDark: readonly(isDark),
@@ -189,7 +196,12 @@ export const useTheme = () => {
     toggleTheme,
     initializeTheme,
     getSystemPreference,
-    cleanup
+    cleanup,
+    // 颜色主题相关
+    availableColorThemes,
+    currentColorTheme,
+    setColorTheme,
+    getThemeInfo
   }
 }
 
