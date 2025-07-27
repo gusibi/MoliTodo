@@ -10,7 +10,7 @@
   @apply w-52 border-r border-sidebar-border/50;
   @apply flex flex-col py-5 px-4;
   /* 关键：设置半透明背景色 */
-  @apply bg-sidebar/90;
+  @apply bg-sidebar/50;
   /* 添加 backdrop-filter 作为后备方案 */
   @apply backdrop-blur-xl;
 }

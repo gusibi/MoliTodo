@@ -110,6 +110,7 @@ class WindowManager {
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
+      vibrancy: 'sidebar',
       transparent: true,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
@@ -149,7 +150,7 @@ class WindowManager {
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
       transparent: true,
-      // vibrancy: 'under-window', // 毛玻璃效果
+      vibrancy: 'under-window', // 毛玻璃效果
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true
