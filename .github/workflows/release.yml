@@ -16,12 +16,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
       - name: Setup Python (macOS)
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: npm ci
+      - run: npm install
       - run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,8 +41,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

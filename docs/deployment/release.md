@@ -96,3 +96,15 @@ npm run build:mac
 # 检查生成的文件
 ls -la dist/
 ```
+
+### 故障排除
+
+#### 缓存相关错误
+如果遇到 "Dependencies lock file is not found" 错误：
+- 本项目不使用 lock 文件，已移除 GitHub Actions 中的缓存配置
+- 使用 `npm install` 而不是 `npm ci`
+
+#### 构建失败
+- 检查 package.json 中的构建脚本是否正确
+- 确保所有依赖都已正确安装
+- 查看 GitHub Actions 日志获取详细错误信息
