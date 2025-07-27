@@ -8,6 +8,8 @@
     "dev:renderer": "vite --config src/renderer/vite.config.js",
     "build:renderer": "vite build --config src/renderer/vite.config.js",
     "build": "npm run build:renderer && electron-builder", 
+    "build:mac": "npm run build",
+    "build:win": "npm run build",
     "postinstall": "electron-builder install-app-deps" 
   },
   "keywords": [
