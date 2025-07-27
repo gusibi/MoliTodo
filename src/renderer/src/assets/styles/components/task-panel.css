@@ -270,7 +270,7 @@
 }
 
 .task-panel-footer-stats {
-  @apply text-sm text-muted-foreground text-center;
+  @apply text-sm text-muted-foreground text-center cursor-pointer transition-all duration-200 rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground;
 }
 
 /* Scrollbar Styles */

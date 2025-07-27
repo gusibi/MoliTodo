@@ -37,19 +37,18 @@
           <div class="task-panel-content">
             <div class="task-panel-main-row">
               <div class="task-panel-text-container">
-                <div v-if="!isEditing(task.id)" class="task-panel-text" @dblclick="startEditTask(task.id)" :title="'双击编辑'">
+                <div v-if="!isEditing(task.id)" class="task-panel-text" @dblclick="startEditTask(task.id)"
+                  :title="'双击编辑'">
                   {{ task.content }}
                 </div>
-                <input v-else v-model="editingContent" class="task-panel-edit-input" @keydown.enter="saveTaskEdit(task.id)"
-                  @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
+                <input v-else v-model="editingContent" class="task-panel-edit-input"
+                  @keydown.enter="saveTaskEdit(task.id)" @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)"
+                  ref="editInput" />
               </div>
 
               <div class="task-panel-actions">
-                <button 
-                  v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" 
-                  class="task-panel-action-btn pause-btn" 
-                  @click="pauseTask(task.id)" 
-                  title="暂停任务">
+                <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
+                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)" title="暂停任务">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
                   </svg>
@@ -78,9 +77,12 @@
               </span>
 
               <!-- 提醒时间信息 -->
-              <div v-if="task.reminderTime" :class="['task-panel-reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
+              <div v-if="task.reminderTime"
+                :class="['task-panel-reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" fill="currentColor" />
+                  <path
+                    d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
+                    fill="currentColor" />
                 </svg>
                 {{ formatReminderTime(task.reminderTime) }}
               </div>
@@ -88,8 +90,8 @@
               <!-- 时间追踪信息（仅显示进行中任务） -->
               <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-panel-duration">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" />
                 </svg>
                 进行中 {{ formatDurationCompact(getTaskTotalDuration(task)) }}
               </div>
@@ -150,7 +152,7 @@
 
     <!-- 面板底部 -->
     <div class="task-panel-footer">
-      <div class="task-panel-footer-stats">{{ footerStats }}</div>
+      <div class="task-panel-footer-stats" @click="openTaskManager" title="点击打开任务管理">{{ footerStats }}</div>
     </div>
   </div>
 </template>
@@ -334,7 +336,7 @@ const showReminderModal = (taskId) => {
     const day = String(reminderDateTime.getDate()).padStart(2, '0')
     const hours = String(reminderDateTime.getHours()).padStart(2, '0')
     const mins = String(reminderDateTime.getMinutes()).padStart(2, '0')
-    
+
     reminderDate.value = `${year}-${month}-${day}`
     reminderTime.value = `${hours}:${mins}`
   } else {
@@ -345,7 +347,7 @@ const showReminderModal = (taskId) => {
     const day = String(defaultTime.getDate()).padStart(2, '0')
     const hours = String(defaultTime.getHours()).padStart(2, '0')
     const mins = String(defaultTime.getMinutes()).padStart(2, '0')
-    
+
     reminderDate.value = `${year}-${month}-${day}`
     reminderTime.value = `${hours}:${mins}`
   }
@@ -361,7 +363,7 @@ const hideReminderModal = () => {
 const setQuickTime = (minutes) => {
   const now = new Date()
   let targetTime
-  
+
   if (minutes === 24 * 60) {
     // 明天9点提醒
     const tomorrow = new Date(now)
@@ -372,14 +374,14 @@ const setQuickTime = (minutes) => {
     // 从当前时间开始计算提醒时间（15分钟后、1小时后）
     targetTime = new Date(now.getTime() + minutes * 60 * 1000)
   }
-  
+
   // 使用本地时区格式化日期和时间
   const year = targetTime.getFullYear()
   const month = String(targetTime.getMonth() + 1).padStart(2, '0')
   const day = String(targetTime.getDate()).padStart(2, '0')
   const hours = String(targetTime.getHours()).padStart(2, '0')
   const mins = String(targetTime.getMinutes()).padStart(2, '0')
-  
+
   reminderDate.value = `${year}-${month}-${day}`
   reminderTime.value = `${hours}:${mins}`
 }
@@ -485,17 +487,26 @@ const isReminderOverdue = (reminderTime) => {
 const shouldUseCompactMode = (task) => {
   // 计算当前任务的元信息项数量
   let itemCount = 1 // 状态标签总是存在
-  
+
   if (task.reminderTime) {
     itemCount++
   }
-  
+
   if ((task.status || (task.completed ? 'done' : 'todo')) === 'doing') {
     itemCount++
   }
-  
+
   // 如果有3个或更多项目，或者任务内容很长，使用紧凑模式
   return itemCount >= 3 || (task.content && task.content.length > 30)
+}
+
+// 打开任务管理页面
+const openTaskManager = async () => {
+  try {
+    await window.electronAPI.windows.showTaskManager()
+  } catch (error) {
+    console.error('打开任务管理窗口失败:', error)
+  }
 }
 
 // 面板鼠标事件处理
@@ -539,20 +550,20 @@ const startUpdateTimer = () => {
   if (updateTimer) {
     clearInterval(updateTimer)
   }
-  
+
   const updateDisplay = () => {
     // 强制更新进行中任务的时长显示
     tasks.value = [...tasks.value]
-    
+
     // 重新设置定时器间隔
     const interval = hasRecentDoingTasks() ? 1000 : 30000 // 一小时内每秒更新，否则每30秒更新
-    
+
     if (updateTimer) {
       clearInterval(updateTimer)
     }
     updateTimer = setInterval(updateDisplay, interval)
   }
-  
+
   // 初始设置
   const initialInterval = hasRecentDoingTasks() ? 1000 : 30000
   updateTimer = setInterval(updateDisplay, initialInterval)
