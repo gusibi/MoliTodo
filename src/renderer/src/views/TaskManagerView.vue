@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full min-h-screen relative bg-transparent">
+  <div class="task-manager-view-container">
     <!-- 绝对定位的透明标题栏，覆盖在 TaskManager 上方 -->
     <CustomTitleBar 
       title="MoliTodo - 任务管理" 
@@ -9,7 +9,7 @@
     />
     
     <!-- TaskManager 占据全屏，标题栏透明覆盖在上方 -->
-    <div class="w-full h-screen">
+    <div class="task-manager-view-content">
       <TaskManager />
     </div>
   </div>
@@ -21,5 +21,5 @@ import TaskManager from '@/components/TaskManager.vue'
 </script>
 
 <style scoped>
-/* 使用 Tailwind CSS，不再需要自定义样式 */
+@import '@/assets/styles/views/task-manager-view.css';
 </style>

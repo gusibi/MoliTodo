@@ -17,33 +17,37 @@
 
 /* 导航项 */
 .nav-item {
-  @apply flex items-center px-4 py-3 text-sm text-sidebar-foreground rounded-lg cursor-pointer transition-all duration-200 min-h-[44px];
-  background-color: transparent;
+  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
+  @apply text-sidebar-foreground hover:bg-sidebar-accent;
+  @apply transition-colors duration-150;
+}
+
+/* 暗色主题下的导航项优化 */
+.dark .nav-item {
+  @apply text-sidebar-foreground hover:bg-sidebar-accent/50;
 }
 
 .nav-item:hover {
-  @apply bg-sidebar-accent/50;
+  /* 悬停效果已在nav-item中定义 */
 }
 
 /* 激活状态的导航项 */
 .nav-item.active {
-  @apply bg-sidebar-accent text-sidebar-primary font-medium;
+  @apply bg-sidebar-accent text-sidebar-primary;
+}
+
+/* 暗色主题下的激活状态优化 */
+.dark .nav-item.active {
+  @apply bg-sidebar-accent/30 text-sidebar-primary;
 }
 
 /* 导航项图标 */
 .nav-item i {
-  @apply w-5 h-5 mr-3 text-muted-foreground transition-colors duration-200 flex-shrink-0 flex items-center justify-center;
+  @apply w-5 h-5 mr-3 text-current flex-shrink-0;
+  @apply flex items-center justify-center;
 }
 
-/* 导航项悬停时的图标 */
-.nav-item:hover i {
-  @apply text-sidebar-foreground;
-}
-
-/* 激活状态的图标 */
-.nav-item.active i {
-  @apply text-sidebar-primary;
-}
+/* 移除不必要的悬停和激活状态图标样式 */
 
 /* 导航项文本 */
 .nav-item span:not(.nav-count) {
@@ -52,19 +56,16 @@
 
 /* 导航项计数 */
 .nav-count {
-  @apply ml-auto px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full min-w-[20px] text-center flex-shrink-0 leading-4;
+  @apply ml-auto px-2 py-0.5 text-xs rounded-full min-w-[20px] text-center flex-shrink-0 leading-4;
+  @apply text-muted-foreground;
+}
+
+/* 暗色主题下的计数样式优化 */
+.dark .nav-count {
+  @apply text-sidebar-foreground/70;
 }
 
 /* 激活状态的计数 */
 .nav-item.active .nav-count {
-  @apply bg-sidebar-primary/10 text-sidebar-primary;
-}
-
-/* 悬停效果 */
-.nav-item:hover .nav-count {
-  @apply bg-muted/80;
-}
-
-.nav-item.active:hover .nav-count {
-  @apply bg-sidebar-primary/20;
+  @apply text-sidebar-primary;
 }

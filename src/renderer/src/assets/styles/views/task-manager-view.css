@@ -1,0 +1,13 @@
+/* TaskManagerView 视图样式 */
+
+.task-manager-view-container {
+  @apply w-full min-h-screen relative;
+  /* 关键：设置半透明背景色 */
+  @apply bg-sidebar/50;
+  /* 添加 backdrop-filter 作为后备方案 */
+  @apply backdrop-blur-xl;
+}
+
+.task-manager-view-content {
+  @apply w-full h-screen;
+}

@@ -6,18 +6,16 @@
 
 /* 左侧边栏样式 */
 .task-manager-sidebar {
-  @apply w-[280px] backdrop-blur-xl border-r border-sidebar-border flex flex-col z-10;
+  @apply w-[280px]   flex flex-col z-10;
   height: 100vh;
-  /* 关键：设置半透明背景色 */
-  @apply bg-sidebar/50;
-  /* 添加 backdrop-filter 作为后备方案 */
-  @apply backdrop-blur-xl;
+  /* 设置为完全透明 */
+  background-color: transparent;
 }
 
 /* 主要内容区域样式 */
 .task-manager-main-content {
-  @apply flex-1 flex flex-col overflow-hidden relative bg-background;
-  height: calc(100vh - 40px); /* 减去底部统计条的高度 */
+  @apply flex-1 flex flex-col overflow-hidden relative bg-background m-2 rounded-lg;
+  height: calc(100vh - 16px); /* 减去margin */
   min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 
@@ -117,7 +115,7 @@
 
 /* 统计信息条 */
 .task-manager-stats-bar {
-  @apply fixed bottom-0 left-[280px] right-0 flex items-center gap-6 px-4 py-3 bg-muted border-t border-border/50 text-xs z-20;
+  @apply flex items-center gap-6 px-4 py-3 bg-muted border-t border-border/50 text-xs flex-shrink-0;
 }
 
 .task-manager-stats-item {

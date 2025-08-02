@@ -275,6 +275,7 @@ const handleAddTask = () => {
   if (selectedReminder.value) {
     const now = new Date()
     
+    console.log("selectedReminder.value", selectedReminder)
     if (selectedReminder.value.value === 'tomorrow') {
       // 明天9点提醒
       const tomorrow = new Date(now)
@@ -300,6 +301,10 @@ const handleAddTask = () => {
         reminderTime = new Date(now.getTime() + 60 * 60 * 1000).toISOString()
       }
     }
+  } else if (selectedDate.value && selectedTime.value) {
+    // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
+    const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
+    reminderTime = new Date(customReminderStr).toISOString()
   }
   
   const taskData = {
@@ -308,6 +313,7 @@ const handleAddTask = () => {
     dueTime: selectedTime.value,
     reminderTime: reminderTime
   }
+  console.log("taskData", taskData)
   
   if (props.isEditing && props.task) {
     // 编辑模式，发送更新事件
@@ -345,15 +351,21 @@ const clearReminder = () => {
 
 // 验证提醒时间是否有效
 const isReminderTimeValid = () => {
-  if (!selectedReminder.value) return true
+  if (!selectedReminder.value && !selectedDate.value) return true
   
-  if (selectedReminder.value.value === 'custom') {
+  if (selectedReminder.value && selectedReminder.value.value === 'custom') {
     if (selectedDate.value && selectedTime.value) {
       const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
       const customReminderTime = new Date(customReminderStr)
       const now = new Date()
       return customReminderTime > now
     }
+  } else if (!selectedReminder.value && selectedDate.value && selectedTime.value) {
+    // 当没有选择提醒类型，但设置了日期和时间时，也需要验证时间
+    const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
+    const customReminderTime = new Date(customReminderStr)
+    const now = new Date()
+    return customReminderTime > now
   }
   
   return true

@@ -11,7 +11,7 @@
     </aside>
 
     <!-- 主要内容区域 -->
-    <main class="task-manager-main-content pt-8">
+    <main class="task-manager-main-content pt-4">
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
         <div class="task-manager-category-title">
@@ -125,15 +125,6 @@
       </div>
     </main>
 
-    <!-- 任务表单组件 -->
-    <TaskForm
-      :show="showTaskForm"
-      :task="editingTask"
-      :is-edit="isEditMode"
-      @submit="handleTaskSubmit"
-      @cancel="handleTaskCancel"
-      @close="handleTaskCancel"
-    />
 
     <!-- 自定义 Tooltip -->
     <div v-if="tooltip.show" class="task-manager-custom-tooltip" :style="tooltip.style">
@@ -146,11 +137,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import TaskList from './TaskList.vue'
-import TaskForm from './TaskForm.vue'
 import SidebarNav from './SidebarNav.vue'
 
 const taskStore = useTaskStore()
-const showTaskForm = ref(false)
 const isEditMode = ref(false)
 const editingTask = ref(null)
 const searchInput = ref(null)
@@ -236,28 +225,9 @@ const handleUpdateTask = async (taskData) => {
 const handleEditTask = (task) => {
   isEditMode.value = true
   editingTask.value = { ...task }
-  showTaskForm.value = true
 }
 
-const handleTaskSubmit = async (taskData) => {
-  try {
-    if (isEditMode.value) {
-      await taskStore.updateTask(editingTask.value.id, taskData)
-    } else {
-      await taskStore.createTask(taskData)
-    }
-    // 不需要手动调用 loadTasks()，taskStore 会自动更新
-    showTaskForm.value = false
-  } catch (error) {
-    console.error('保存任务失败:', error)
-  }
-}
 
-const handleTaskCancel = () => {
-  showTaskForm.value = false
-  editingTask.value = null
-  isEditMode.value = false
-}
 
 const selectTask = (taskId, event) => {
   if (event.ctrlKey || event.metaKey) {
