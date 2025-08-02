@@ -6,10 +6,8 @@
 
 /* 左侧边栏样式 */
 .task-manager-sidebar {
-  @apply w-[280px]   flex flex-col z-10;
+  @apply w-[280px] flex flex-col z-10;
   height: 100vh;
-  /* 设置为完全透明 */
-  background-color: transparent;
 }
 
 /* 主要内容区域样式 */

@@ -2,7 +2,6 @@
 
 .sidebar-nav {
   @apply flex flex-col h-full px-4 py-2;
-  background-color: transparent;
 }
 
 /* 导航分组 */
