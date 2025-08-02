@@ -3,7 +3,7 @@
  * 领域层核心实体，包含任务的所有业务逻辑
  */
 class Task {
-  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}) {
+  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}) {
     this.id = id;
     this.content = content;
     this.status = status; // 'todo', 'doing', 'done'
@@ -15,6 +15,10 @@ class Task {
     this.startedAt = timeTracking.startedAt || null;
     this.completedAt = timeTracking.completedAt || null;
     this.totalDuration = timeTracking.totalDuration || 0; // milliseconds
+    
+    // List management fields
+    this.listId = listId || 0; // 0 表示默认清单
+    this.metadata = metadata || {}; // JSON 元数据，包含备注等信息
     
     // Keep backward compatibility
     this.completed = status === 'done';
@@ -370,6 +374,79 @@ class Task {
   }
 
   /**
+   * 移动任务到指定清单
+   * @param {number} listId 目标清单ID
+   */
+  moveToList(listId) {
+    if (typeof listId !== 'number' || listId < 0) {
+      throw new Error('清单ID必须是非负整数');
+    }
+    this.listId = listId;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 更新任务元数据
+   * @param {Object} metadata 元数据对象
+   */
+  updateMetadata(metadata) {
+    if (typeof metadata !== 'object' || metadata === null) {
+      throw new Error('元数据必须是对象');
+    }
+    this.metadata = { ...this.metadata, ...metadata };
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 设置任务备注
+   * @param {string} comment 备注内容
+   */
+  setComment(comment) {
+    if (comment && typeof comment !== 'string') {
+      throw new Error('备注必须是字符串');
+    }
+    
+    if (comment && comment.length > 1000) {
+      throw new Error('备注不能超过1000个字符');
+    }
+    
+    this.updateMetadata({ comment: comment ? comment.trim() : null });
+  }
+
+  /**
+   * 获取任务备注
+   * @returns {string|null}
+   */
+  getComment() {
+    return this.metadata.comment || null;
+  }
+
+  /**
+   * 检查任务是否有备注
+   * @returns {boolean}
+   */
+  hasComment() {
+    return !!(this.metadata.comment && this.metadata.comment.trim());
+  }
+
+  /**
+   * 检查任务是否属于指定清单
+   * @param {number} listId 清单ID
+   * @returns {boolean}
+   */
+  belongsToList(listId) {
+    return this.listId === listId;
+  }
+
+  /**
+   * 检查任务是否在默认清单中
+   * @returns {boolean}
+   */
+  isInDefaultList() {
+    return this.listId === 0;
+  }
+
+  /**
    * 检查是否需要提醒
    * @returns {boolean}
    */
@@ -425,7 +502,9 @@ class Task {
       updatedAt: this.updatedAt.toISOString(),
       startedAt: this.startedAt ? this.startedAt.toISOString() : null,
       completedAt: this.completedAt ? this.completedAt.toISOString() : null,
-      totalDuration: this.totalDuration
+      totalDuration: this.totalDuration,
+      listId: this.listId,
+      metadata: this.metadata
     };
   }
 
@@ -452,7 +531,9 @@ class Task {
       status,
       new Date(data.createdAt),
       data.reminderTime ? new Date(data.reminderTime) : null,
-      timeTracking
+      timeTracking,
+      data.listId || 0,
+      data.metadata || {}
     );
   }
 

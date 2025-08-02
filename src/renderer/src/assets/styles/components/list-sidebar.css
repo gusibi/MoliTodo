@@ -1,0 +1,9 @@
+/* 清单侧边栏样式 - 集成到 SidebarNav 中 */
+.list-sidebar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* 继承父容器的样式，不需要额外的背景和边框 */
+}
+
+/* ListSidebar 组件使用 SidebarNav 的样式类，无需额外样式 */

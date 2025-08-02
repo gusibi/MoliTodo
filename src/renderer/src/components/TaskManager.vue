@@ -1,7 +1,7 @@
 <template>
   <div class="task-manager">
-    <!-- 左侧边栏 - 半透明毛玻璃效果 -->
-    <aside class="task-manager-sidebar pt-8">
+    <!-- 左侧边栏 - 导航 -->
+    <aside class="task-manager-sidebar">
       <SidebarNav 
         :current-category="currentCategory"
         :category-counts="categoryCounts"
@@ -15,9 +15,9 @@
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
         <div class="task-manager-category-title">
-          <i :class="getCategoryIcon(currentCategory)" class="task-manager-category-icon"></i>
-          <h1 class="task-manager-category-name">{{ getCategoryName(currentCategory) }}</h1>
-          <span class="task-manager-category-count">{{ getCategoryCount(currentCategory) }} 个任务</span>
+          <i :class="getCurrentIcon()" class="task-manager-category-icon" :style="getCurrentIconStyle()"></i>
+          <h1 class="task-manager-category-name">{{ getCurrentTitle() }}</h1>
+          <span class="task-manager-category-count">{{ getCurrentCount() }} 个任务</span>
         </div>
         
         <!-- 右侧按钮组 -->
@@ -181,6 +181,8 @@ const loading = computed(() => taskStore.loading)
 const displayTasks = computed(() => taskStore.filteredTasks)
 const categoryCounts = computed(() => taskStore.categoryCounts)
 const currentCategory = computed(() => taskStore.currentCategory)
+const currentListId = computed(() => taskStore.currentListId)
+const currentList = computed(() => taskStore.currentList)
 const searchQuery = computed({
   get: () => taskStore.searchQuery,
   set: (value) => taskStore.setSearchQuery(value)
@@ -197,6 +199,7 @@ const loadTasks = async () => {
 
 const switchCategory = (category) => {
   taskStore.setCurrentCategory(category)
+  taskStore.setCurrentListId(null) // 切换智能分类时清除清单选择
   taskStore.clearSearch()
 }
 
@@ -205,6 +208,11 @@ const handleAddTask = async (taskData) => {
     // 如果传入的是字符串（向后兼容），转换为对象
     if (typeof taskData === 'string') {
       taskData = { content: taskData }
+    }
+    
+    // 如果当前选中了清单，将任务添加到该清单
+    if (currentListId.value !== null) {
+      taskData.listId = currentListId.value
     }
     
     // 直接创建任务，不打开表单
@@ -321,6 +329,36 @@ const getCategoryCount = (category) => {
   return categoryCounts.value[category] || 0
 }
 
+// 新增：获取当前视图的标题、图标和计数
+const getCurrentTitle = () => {
+  if (currentListId.value !== null && currentList.value) {
+    return currentList.value.name
+  }
+  return getCategoryName(currentCategory.value)
+}
+
+const getCurrentIcon = () => {
+  if (currentListId.value !== null && currentList.value) {
+    return `icon-${currentList.value.icon}`
+  }
+  return getCategoryIcon(currentCategory.value)
+}
+
+const getCurrentIconStyle = () => {
+  if (currentListId.value !== null && currentList.value) {
+    return { color: currentList.value.color }
+  }
+  return {}
+}
+
+const getCurrentCount = () => {
+  if (currentListId.value !== null) {
+    // 显示当前清单的任务数量
+    return displayTasks.value.length
+  }
+  return getCategoryCount(currentCategory.value)
+}
+
 // Tooltip 方法
 const showTooltip = (data) => {
   // 处理从TaskList传递过来的数据对象
@@ -367,11 +405,18 @@ const openSettings = () => {
 }
 
 // 生命周期
-onMounted(() => {
-  loadTasks()
+onMounted(async () => {
+  // 加载清单和任务数据
+  await Promise.all([
+    taskStore.getAllLists(),
+    loadTasks()
+  ])
   
-  // 监听任务更新事件
+  // 监听任务和清单更新事件
   window.electronAPI.events.on('tasks-updated', loadTasks)
+  window.electronAPI.events.on('lists-updated', () => {
+    taskStore.getAllLists()
+  })
   
   // 定时更新任务状态
   updateTimer.value = setInterval(() => {
@@ -386,6 +431,7 @@ onUnmounted(() => {
   
   // 清理事件监听器
   window.electronAPI.events.removeAllListeners('tasks-updated')
+  window.electronAPI.events.removeAllListeners('lists-updated')
 })
 
 // 监听搜索查询变化

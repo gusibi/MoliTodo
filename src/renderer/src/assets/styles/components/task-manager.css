@@ -6,7 +6,7 @@
 
 /* 左侧边栏样式 */
 .task-manager-sidebar {
-  @apply w-[280px] flex flex-col z-10;
+  @apply w-[280px] flex flex-col z-10 pt-8;
   height: 100vh;
 }
 

@@ -2,14 +2,16 @@ const { ipcMain, dialog } = require('electron');
 const fs = require('fs').promises;
 
 class IpcHandlers {
-  constructor({ taskService, notificationService, windowManager }) {
+  constructor({ taskService, listService, notificationService, windowManager }) {
     this.taskService = taskService;
+    this.listService = listService;
     this.notificationService = notificationService;
     this.windowManager = windowManager;
   }
 
   initialize() {
     this.setupTaskHandlers();
+    this.setupListHandlers();
     this.setupConfigHandlers();
     this.setupWindowHandlers();
     this.setupDataHandlers();
@@ -32,15 +34,27 @@ class IpcHandlers {
 
     // 创建任务
     ipcMain.handle('create-task', async (event, taskData) => {
-      const { content, reminderTime } = taskData;
+      const { content, reminderTime, listId, metadata } = taskData;
       
       // 如果有提醒时间，转换为Date对象
       const calculatedReminderTime = reminderTime ? new Date(reminderTime) : null;
       
-      const task = await this.taskService.createTask(
-        content, 
-        calculatedReminderTime
-      );
+      let task;
+      if (listId !== undefined || metadata !== undefined) {
+        // 使用扩展的创建方法
+        task = await this.taskService.createTaskInList(
+          content, 
+          listId || 0,
+          calculatedReminderTime,
+          metadata || {}
+        );
+      } else {
+        // 使用原有的创建方法（向后兼容）
+        task = await this.taskService.createTask(
+          content, 
+          calculatedReminderTime
+        );
+      }
 
       if (task.reminderTime) {
         this.notificationService.scheduleTaskReminder(task, (task) => {
@@ -125,8 +139,89 @@ class IpcHandlers {
     });
 
     // 获取任务统计
-    ipcMain.handle('get-task-stats', async () => {
-      return await this.taskService.getTimeStats();
+    ipcMain.handle('get-task-stats', async (event, { listId } = {}) => {
+      return await this.taskService.getTimeStats(listId);
+    });
+
+    // 移动任务到清单
+    ipcMain.handle('task:moveToList', async (event, { taskId, targetListId }) => {
+      try {
+        const task = await this.taskService.moveTaskToList(taskId, targetListId);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('移动任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 批量移动任务到清单
+    ipcMain.handle('task:batchMoveToList', async (event, { taskIds, targetListId }) => {
+      try {
+        const tasks = await this.taskService.batchMoveTasksToList(taskIds, targetListId);
+        this.broadcastTaskUpdates();
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('批量移动任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 更新任务元数据
+    ipcMain.handle('task:updateMetadata', async (event, { taskId, metadata }) => {
+      try {
+        const task = await this.taskService.updateTaskMetadata(taskId, metadata);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('更新任务元数据失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 设置任务备注
+    ipcMain.handle('task:setComment', async (event, { taskId, comment }) => {
+      try {
+        const task = await this.taskService.setTaskComment(taskId, comment);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('设置任务备注失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 按分类获取任务
+    ipcMain.handle('task:getByCategory', async (event, { category, listId }) => {
+      try {
+        const tasks = await this.taskService.getTasksByCategory(category, listId);
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('按分类获取任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 搜索任务
+    ipcMain.handle('task:search', async (event, { query, listId }) => {
+      try {
+        const tasks = await this.taskService.searchTasks(query, listId);
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('搜索任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取任务时间信息
+    ipcMain.handle('task:getTimeInfo', async (event, { taskId }) => {
+      try {
+        const timeInfo = await this.taskService.getTaskTimeInfo(taskId);
+        return { success: true, timeInfo };
+      } catch (error) {
+        console.error('获取任务时间信息失败:', error);
+        return { success: false, error: error.message };
+      }
     });
 
     // 设置任务提醒
@@ -145,6 +240,123 @@ class IpcHandlers {
       this.notificationService.cancelTaskReminder(taskId);
       this.broadcastTaskUpdates();
       return { success: true, task };
+    });
+  }
+
+  setupListHandlers() {
+    // 获取所有清单
+    ipcMain.handle('list:getAll', async () => {
+      try {
+        const lists = await this.listService.getAllLists();
+        return { success: true, lists };
+      } catch (error) {
+        console.error('获取清单列表失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 根据ID获取清单
+    ipcMain.handle('list:getById', async (event, listId) => {
+      try {
+        const list = await this.listService.getListById(listId);
+        return { success: true, list };
+      } catch (error) {
+        console.error('获取清单失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 创建清单
+    ipcMain.handle('list:create', async (event, { name, color, icon }) => {
+      try {
+        const list = await this.listService.createList(name, color, icon);
+        this.broadcastListUpdates();
+        return { success: true, list };
+      } catch (error) {
+        console.error('创建清单失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 更新清单
+    ipcMain.handle('list:update', async (event, { listId, updates }) => {
+      try {
+        const list = await this.listService.updateList(listId, updates);
+        this.broadcastListUpdates();
+        return { success: true, list };
+      } catch (error) {
+        console.error('更新清单失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 删除清单
+    ipcMain.handle('list:delete', async (event, { listId, taskHandling }) => {
+      try {
+        const success = await this.listService.deleteList(listId, taskHandling);
+        this.broadcastListUpdates();
+        this.broadcastTaskUpdates(); // 任务可能被移动或删除
+        return { success };
+      } catch (error) {
+        console.error('删除清单失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取清单的任务
+    ipcMain.handle('list:getTasks', async (event, { listId }) => {
+      try {
+        const tasks = await this.taskService.getTasksByListId(listId);
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('获取清单任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取清单任务统计
+    ipcMain.handle('list:getTaskStats', async (event, { listId }) => {
+      try {
+        const stats = await this.listService.getListStatistics(listId);
+        return { success: true, stats };
+      } catch (error) {
+        console.error('获取清单统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取所有清单的任务统计
+    ipcMain.handle('list:getAllTaskCounts', async () => {
+      try {
+        const counts = await this.listService.getAllListTaskCounts();
+        return { success: true, counts };
+      } catch (error) {
+        console.error('获取清单任务统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 重新排序清单
+    ipcMain.handle('list:reorder', async (event, { sortOrders }) => {
+      try {
+        await this.listService.reorderLists(sortOrders);
+        this.broadcastListUpdates();
+        return { success: true };
+      } catch (error) {
+        console.error('重新排序清单失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 搜索清单
+    ipcMain.handle('list:search', async (event, { query }) => {
+      try {
+        const lists = await this.listService.searchLists(query);
+        return { success: true, lists };
+      } catch (error) {
+        console.error('搜索清单失败:', error);
+        return { success: false, error: error.message };
+      }
     });
   }
 
@@ -256,10 +468,12 @@ class IpcHandlers {
 
         if (!result.canceled && result.filePath) {
           const allTasks = await this.taskService.getAllTasks();
+          const allLists = this.listService ? await this.listService.getAllLists() : [];
           const exportData = {
-            version: '1.0.0',
+            version: '2.0.0', // 升级版本以支持清单
             exportDate: new Date().toISOString(),
             tasks: allTasks.map(task => task.toJSON()),
+            lists: allLists.map(list => list.toJSON()),
             config: this.windowManager.getConfig()
           };
 
@@ -298,6 +512,20 @@ class IpcHandlers {
           await this.taskService.clearAllTasks();
           this.notificationService.clearAllSchedules();
 
+          // 导入清单（如果存在）
+          let importedLists = 0;
+          if (this.listService && importData.lists && Array.isArray(importData.lists)) {
+            try {
+              const result = await this.listService.importListData(importData, {
+                overwriteExisting: true,
+                handleNameConflicts: 'rename'
+              });
+              importedLists = result.importedLists;
+            } catch (error) {
+              console.warn('导入清单失败:', error);
+            }
+          }
+
           // 导入任务
           for (const taskData of importData.tasks) {
             await this.taskService.importTask(taskData);
@@ -311,7 +539,15 @@ class IpcHandlers {
           }
 
           this.broadcastTaskUpdates();
-          return { success: true, taskCount: importData.tasks.length };
+          if (this.listService) {
+            this.broadcastListUpdates();
+          }
+          
+          return { 
+            success: true, 
+            taskCount: importData.tasks.length,
+            listCount: importedLists
+          };
         }
 
         return { success: false, canceled: true };
@@ -400,6 +636,21 @@ class IpcHandlers {
       if (window && !window.isDestroyed()) {
         console.log(`主进程: 已向 ${window.id} 窗口广播任务更新`);
         window.webContents.send('tasks-updated');
+      }
+    });
+  }
+
+  // 广播清单更新到所有窗口
+  broadcastListUpdates() {
+    const windows = [
+      this.windowManager.floatingWindow,
+      this.windowManager.taskManagerWindow,
+      this.windowManager.settingsWindow
+    ];
+    windows.forEach(window => {
+      if (window && !window.isDestroyed()) {
+        console.log(`主进程: 已向 ${window.id} 窗口广播清单更新`);
+        window.webContents.send('lists-updated');
       }
     });
   }

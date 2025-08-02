@@ -3,8 +3,11 @@ import { ref, computed } from 'vue'
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref([])
+  const lists = ref([])
   const loading = ref(false)
+  const listsLoading = ref(false)
   const currentCategory = ref('today')
+  const currentListId = ref(null) // null表示显示所有清单的任务
   const searchQuery = ref('')
   const searchOptions = ref({
     content: true,
@@ -113,6 +116,14 @@ export const useTaskStore = defineStore('task', () => {
     return filteredTasks
   }
 
+  // 计算属性：根据清单过滤任务
+  const filterTasksByList = (taskList, listId) => {
+    if (listId === null) {
+      return taskList // 显示所有清单的任务
+    }
+    return taskList.filter(task => task.listId === listId)
+  }
+
   // 计算属性：根据搜索条件过滤任务
   const searchTasks = (taskList, query, options) => {
     if (!query) {
@@ -163,6 +174,9 @@ export const useTaskStore = defineStore('task', () => {
   const filteredTasks = computed(() => {
     let result = tasks.value
 
+    // 根据清单过滤
+    result = filterTasksByList(result, currentListId.value)
+
     // 根据分类过滤
     result = filterTasksByCategory(result, currentCategory.value)
 
@@ -211,18 +225,53 @@ export const useTaskStore = defineStore('task', () => {
 
   // 计算属性：分类统计
   const categoryCounts = computed(() => {
-    const todayTasks = tasks.value.filter(t => isTodayTask(t))
+    // 根据当前选中的清单过滤任务
+    const currentTasks = filterTasksByList(tasks.value, currentListId.value)
+    const todayTasks = currentTasks.filter(t => isTodayTask(t))
     const todayCount = showCompletedInToday.value ? todayTasks.length : todayTasks.filter(t => t.status !== 'done').length
     
     return {
-      inbox: tasks.value.filter(t => t.status === 'todo' && !t.reminderTime).length,
+      inbox: currentTasks.filter(t => t.status === 'todo' && !t.reminderTime).length,
       today: todayCount,
-      doing: tasks.value.filter(t => t.status === 'doing').length,
-      paused: tasks.value.filter(t => t.status === 'paused').length,
-      planned: tasks.value.filter(t => !!t.reminderTime && t.status !== 'done').length,
-      all: showCompletedInAll.value ? tasks.value.length : tasks.value.filter(t => t.status !== 'done').length,
-      completed: tasks.value.filter(t => t.status === 'done').length
+      doing: currentTasks.filter(t => t.status === 'doing').length,
+      paused: currentTasks.filter(t => t.status === 'paused').length,
+      planned: currentTasks.filter(t => !!t.reminderTime && t.status !== 'done').length,
+      all: showCompletedInAll.value ? currentTasks.length : currentTasks.filter(t => t.status !== 'done').length,
+      completed: currentTasks.filter(t => t.status === 'done').length
     }
+  })
+
+  // 计算属性：清单任务统计
+  const listTaskCounts = computed(() => {
+    const counts = {}
+    lists.value.forEach(list => {
+      const listTasks = tasks.value.filter(task => task.listId === list.id)
+      counts[list.id] = {
+        total: listTasks.length,
+        incomplete: listTasks.filter(task => task.status !== 'done').length,
+        completed: listTasks.filter(task => task.status === 'done').length,
+        doing: listTasks.filter(task => task.status === 'doing').length,
+        paused: listTasks.filter(task => task.status === 'paused').length
+      }
+    })
+    return counts
+  })
+
+  // 计算属性：当前选中的清单
+  const currentList = computed(() => {
+    if (currentListId.value === null) return null
+    return lists.value.find(list => list.id === currentListId.value) || null
+  })
+
+  // 计算属性：排序后的清单列表
+  const sortedLists = computed(() => {
+    return [...lists.value].sort((a, b) => {
+      // 默认清单始终在最前面
+      if (a.isDefault) return -1
+      if (b.isDefault) return 1
+      // 其他清单按排序顺序排列
+      return (a.sortOrder || 0) - (b.sortOrder || 0)
+    })
   })
 
   // 计算属性：状态统计（基于当前过滤的任务）
@@ -462,6 +511,84 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 移动任务到清单
+  const moveTaskToList = async (taskId, targetListId) => {
+    try {
+      const result = await window.electronAPI.invoke('task:moveToList', { taskId, targetListId })
+      if (result.success) {
+        await getAllTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('移动任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 批量移动任务到清单
+  const batchMoveTasksToList = async (taskIds, targetListId) => {
+    try {
+      const result = await window.electronAPI.invoke('task:batchMoveToList', { taskIds, targetListId })
+      if (result.success) {
+        await getAllTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('批量移动任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 更新任务元数据
+  const updateTaskMetadata = async (taskId, metadata) => {
+    try {
+      const result = await window.electronAPI.invoke('task:updateMetadata', { taskId, metadata })
+      if (result.success) {
+        await getAllTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('更新任务元数据失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 设置任务备注
+  const setTaskComment = async (taskId, comment) => {
+    try {
+      const result = await window.electronAPI.invoke('task:setComment', { taskId, comment })
+      if (result.success) {
+        await getAllTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('设置任务备注失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 按分类获取任务
+  const getTasksByCategory = async (category, listId = null) => {
+    try {
+      const result = await window.electronAPI.invoke('task:getByCategory', { category, listId })
+      return result.success ? result.tasks : []
+    } catch (error) {
+      console.error('按分类获取任务失败:', error)
+      return []
+    }
+  }
+
+  // 搜索任务
+  const searchTasksInBackend = async (query, listId = null) => {
+    try {
+      const result = await window.electronAPI.invoke('task:search', { query, listId })
+      return result.success ? result.tasks : []
+    } catch (error) {
+      console.error('搜索任务失败:', error)
+      return []
+    }
+  }
+
   // 设置当前分类
   const setCurrentCategory = (category) => {
     currentCategory.value = category
@@ -492,11 +619,142 @@ export const useTaskStore = defineStore('task', () => {
     showCompletedInToday.value = show
   }
 
+  // 设置当前清单
+  const setCurrentListId = (listId) => {
+    currentListId.value = listId
+  }
+
+  // 获取所有清单
+  const getAllLists = async () => {
+    try {
+      listsLoading.value = true
+      const result = await window.electronAPI.invoke('list:getAll')
+      if (result.success) {
+        lists.value = result.lists
+      }
+      return result.success ? result.lists : []
+    } catch (error) {
+      console.error('获取清单列表失败:', error)
+      return []
+    } finally {
+      listsLoading.value = false
+    }
+  }
+
+  // 创建清单
+  const createList = async (name, color = '#007AFF', icon = 'list') => {
+    try {
+      const result = await window.electronAPI.invoke('list:create', { name, color, icon })
+      if (result.success) {
+        await getAllLists()
+      }
+      return result
+    } catch (error) {
+      console.error('创建清单失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 更新清单
+  const updateList = async (listId, updates) => {
+    try {
+      const result = await window.electronAPI.invoke('list:update', { listId, updates })
+      if (result.success) {
+        await getAllLists()
+      }
+      return result
+    } catch (error) {
+      console.error('更新清单失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 删除清单
+  const deleteList = async (listId, taskHandling = 'move') => {
+    try {
+      const result = await window.electronAPI.invoke('list:delete', { listId, taskHandling })
+      if (result.success) {
+        await getAllLists()
+        await getAllTasks() // 任务可能被移动或删除
+        
+        // 如果删除的是当前选中的清单，清除选择
+        if (currentListId.value === listId) {
+          currentListId.value = null
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('删除清单失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 获取清单任务统计
+  const getListTaskStats = async (listId) => {
+    try {
+      const result = await window.electronAPI.invoke('list:getTaskStats', { listId })
+      return result.success ? result.stats : null
+    } catch (error) {
+      console.error('获取清单统计失败:', error)
+      return null
+    }
+  }
+
+  // 获取所有清单的任务统计
+  const getAllListTaskCounts = async () => {
+    try {
+      const result = await window.electronAPI.invoke('list:getAllTaskCounts')
+      return result.success ? result.counts : {}
+    } catch (error) {
+      console.error('获取清单任务统计失败:', error)
+      return {}
+    }
+  }
+
+  // 重新排序清单
+  const reorderLists = async (sortOrders) => {
+    try {
+      const result = await window.electronAPI.invoke('list:reorder', { sortOrders })
+      if (result.success) {
+        await getAllLists()
+      }
+      return result
+    } catch (error) {
+      console.error('重新排序清单失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 搜索清单
+  const searchLists = async (query) => {
+    try {
+      const result = await window.electronAPI.invoke('list:search', { query })
+      return result.success ? result.lists : []
+    } catch (error) {
+      console.error('搜索清单失败:', error)
+      return []
+    }
+  }
+
+  // 根据ID获取清单
+  const getListById = (listId) => {
+    return lists.value.find(list => list.id === listId) || null
+  }
+
+  // 获取清单名称
+  const getListName = (listId) => {
+    const list = getListById(listId)
+    return list ? list.name : '未知清单'
+  }
+
   return {
     // 状态
     tasks,
+    lists,
     loading,
+    listsLoading,
     currentCategory,
+    currentListId,
     searchQuery,
     searchOptions,
     showCompletedInAll,
@@ -505,6 +763,9 @@ export const useTaskStore = defineStore('task', () => {
     // 计算属性
     filteredTasks,
     categoryCounts,
+    listTaskCounts,
+    currentList,
+    sortedLists,
     statusCounts,
     totalDuration,
     fullStatistics,
@@ -519,9 +780,28 @@ export const useTaskStore = defineStore('task', () => {
     deleteTask,
     startTask,
     pauseTask,
+    moveTaskToList,
+    batchMoveTasksToList,
+    updateTaskMetadata,
+    setTaskComment,
+    getTasksByCategory,
+    searchTasksInBackend,
+
+    // 清单操作方法
+    getAllLists,
+    createList,
+    updateList,
+    deleteList,
+    getListTaskStats,
+    getAllListTaskCounts,
+    reorderLists,
+    searchLists,
+    getListById,
+    getListName,
 
     // 过滤和搜索方法
     setCurrentCategory,
+    setCurrentListId,
     setSearchQuery,
     setSearchOptions,
     clearSearch,

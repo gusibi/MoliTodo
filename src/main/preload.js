@@ -60,6 +60,7 @@ const electronAPI = {
       const validChannels = [
         'tasks-updated',
         'task-updated', 
+        'lists-updated',
         'config-updated',
         'task-reminder',
         'panel-mouse-enter',
@@ -91,6 +92,38 @@ const electronAPI = {
   // 工具 API
   utils: {
     log: (message, ...args) => ipcRenderer.invoke('log-message', message, ...args)
+  },
+
+  // 通用 IPC 调用 API（用于清单等新功能）
+  invoke: (channel, ...args) => {
+    // 定义允许的 IPC 通道
+    const allowedChannels = [
+      // 清单相关
+      'list:getAll',
+      'list:getById', 
+      'list:create',
+      'list:update',
+      'list:delete',
+      'list:getTasks',
+      'list:getTaskStats',
+      'list:getAllTaskCounts',
+      'list:reorder',
+      'list:search',
+      // 任务清单相关
+      'task:moveToList',
+      'task:batchMoveToList',
+      'task:updateMetadata',
+      'task:setComment',
+      'task:getByCategory',
+      'task:search',
+      'task:getTimeInfo'
+    ];
+    
+    if (allowedChannels.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args);
+    } else {
+      throw new Error(`IPC channel "${channel}" is not allowed`);
+    }
   }
 };
 

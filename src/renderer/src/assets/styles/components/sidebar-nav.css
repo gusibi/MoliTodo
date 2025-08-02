@@ -1,12 +1,16 @@
 /* 侧边栏导航样式 */
-
 .sidebar-nav {
   @apply flex flex-col h-full px-4 py-2;
 }
 
+/* 主要内容区域 */
+.nav-main-content {
+  @apply flex-1 overflow-y-auto;
+}
+
 /* 导航分组 */
 .nav-section {
-  @apply flex flex-col space-y-1 mb-6 flex-1 overflow-y-auto;
+  @apply flex flex-col space-y-1;
 }
 
 /* 底部导航分组 */
@@ -46,8 +50,6 @@
   @apply flex items-center justify-center;
 }
 
-/* 移除不必要的悬停和激活状态图标样式 */
-
 /* 导航项文本 */
 .nav-item span:not(.nav-count) {
   @apply flex-1 truncate leading-5;
@@ -67,4 +69,149 @@
 /* 激活状态的计数 */
 .nav-item.active .nav-count {
   @apply text-sidebar-primary;
+}
+
+/* === 清单功能相关样式 - 简化版 === */
+
+/* 分组标题 */
+.nav-section-title {
+  @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider;
+  @apply px-3 py-2 mt-2 mb-1;
+}
+
+/* 深色模式下的分组标题 */
+.dark .nav-section-title {
+  @apply text-sidebar-foreground/70;
+}
+
+/* 底部图标按钮 */
+.nav-icon-buttons {
+  @apply flex flex-row justify-between;
+}
+
+.nav-icon-btn {
+  @apply w-10 h-10 flex items-center justify-center rounded-lg cursor-pointer;
+  @apply text-sidebar-foreground hover:bg-sidebar-accent transition-colors;
+}
+
+.nav-icon-btn i {
+  @apply text-base;
+}
+
+/* 清单项特殊样式 */
+.nav-item.is-default {
+  @apply font-semibold;
+}
+
+.nav-item .nav-count.has-active {
+  @apply bg-orange-500 text-white;
+}
+
+.nav-item.active .nav-count.has-active {
+  @apply bg-orange-400;
+}
+
+/* 上下文菜单 */
+.nav-context-menu {
+  @apply fixed bg-popover border border-border rounded-lg shadow-lg py-1 min-w-40 z-50;
+}
+
+.nav-context-item {
+  @apply h-8 px-3 flex items-center gap-2 cursor-pointer text-sm text-popover-foreground;
+  @apply transition-colors hover:bg-accent hover:text-accent-foreground;
+}
+
+.nav-context-item.danger {
+  @apply text-destructive hover:bg-destructive/10;
+}
+
+.nav-context-item.disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-transparent hover:text-popover-foreground;
+}
+
+.nav-context-divider {
+  @apply h-px bg-border my-1;
+}
+
+/* 模态框 */
+.nav-modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.nav-delete-dialog {
+  @apply bg-card rounded-xl shadow-2xl w-96 max-w-[90vw];
+}
+
+.nav-dialog-header {
+  @apply p-5 pb-0;
+}
+
+.nav-dialog-header h3 {
+  @apply m-0 text-base font-semibold text-card-foreground;
+}
+
+.nav-dialog-body {
+  @apply p-4 px-5;
+}
+
+.nav-dialog-body p {
+  @apply m-0 mb-3 text-sm text-muted-foreground leading-relaxed;
+}
+
+.nav-warning-text {
+  @apply text-orange-500 font-medium;
+}
+
+.nav-task-handling-options {
+  @apply mt-4;
+}
+
+.nav-radio-option {
+  @apply flex items-center gap-2 mb-2 cursor-pointer text-sm text-card-foreground;
+}
+
+.nav-radio-option input[type="radio"] {
+  @apply m-0;
+}
+
+.nav-danger-text {
+  @apply text-destructive;
+}
+
+.nav-dialog-footer {
+  @apply px-5 pb-5 flex gap-3 justify-end;
+}
+
+.nav-btn-cancel,
+.nav-btn-danger {
+  @apply h-9 px-4 border-0 rounded-lg text-sm font-medium cursor-pointer transition-colors;
+}
+
+.nav-btn-cancel {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.nav-btn-danger {
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+}
+
+.nav-btn-danger:disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-destructive;
+}
+
+/* 滚动条样式 */
+.nav-lists-container::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.nav-lists-container::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.nav-lists-container::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-sm;
+}
+
+.nav-lists-container::-webkit-scrollbar-thumb:hover {
+  @apply bg-border/80;
 }

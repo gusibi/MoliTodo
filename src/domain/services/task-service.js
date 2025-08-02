@@ -32,6 +32,37 @@ class TaskService {
   }
 
   /**
+   * 在指定清单中创建任务
+   * @param {string} content 任务内容
+   * @param {number} listId 清单ID
+   * @param {Date|null} reminderTime 提醒时间
+   * @param {Object} metadata 元数据
+   * @returns {Promise<Task>}
+   */
+  async createTaskInList(content, listId = 0, reminderTime = null, metadata = {}) {
+    if (!content || content.trim().length === 0) {
+      throw new Error('任务内容不能为空');
+    }
+
+    if (typeof listId !== 'number' || listId < 0) {
+      throw new Error('清单ID必须是非负整数');
+    }
+
+    const task = new Task(
+      Task.generateId(),
+      content.trim(),
+      'todo',
+      new Date(),
+      reminderTime,
+      {}, // timeTracking
+      listId,
+      metadata
+    );
+
+    return await this.taskRepository.save(task);
+  }
+
+  /**
    * 完成任务
    * @param {string} taskId 任务ID
    * @returns {Promise<Task>}
@@ -115,6 +146,16 @@ class TaskService {
       } else {
         task.setReminder(new Date(updates.reminderTime));
       }
+    }
+
+    // 更新清单关联
+    if (updates.listId !== undefined) {
+      task.moveToList(updates.listId);
+    }
+
+    // 更新元数据
+    if (updates.metadata !== undefined) {
+      task.updateMetadata(updates.metadata);
     }
 
     return await this.taskRepository.save(task);
@@ -269,13 +310,220 @@ class TaskService {
   }
 
   /**
-   * 获取时间统计信息
+   * 获取指定清单中的任务
+   * @param {number} listId 清单ID
+   * @returns {Promise<Task[]>}
+   */
+  async getTasksByListId(listId) {
+    if (this.taskRepository.findByListId) {
+      return await this.taskRepository.findByListId(listId);
+    } else {
+      // 如果仓储没有实现按清单查询，则从所有任务中过滤
+      const allTasks = await this.getAllTasks();
+      return allTasks.filter(task => task.belongsToList(listId));
+    }
+  }
+
+  /**
+   * 移动任务到指定清单
+   * @param {string} taskId 任务ID
+   * @param {number} targetListId 目标清单ID
+   * @returns {Promise<Task>}
+   */
+  async moveTaskToList(taskId, targetListId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    if (typeof targetListId !== 'number' || targetListId < 0) {
+      throw new Error('目标清单ID必须是非负整数');
+    }
+
+    task.moveToList(targetListId);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 批量移动任务到指定清单
+   * @param {string[]} taskIds 任务ID数组
+   * @param {number} targetListId 目标清单ID
+   * @returns {Promise<Task[]>}
+   */
+  async batchMoveTasksToList(taskIds, targetListId) {
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      throw new Error('任务ID数组不能为空');
+    }
+
+    if (typeof targetListId !== 'number' || targetListId < 0) {
+      throw new Error('目标清单ID必须是非负整数');
+    }
+
+    const updatedTasks = [];
+    
+    for (const taskId of taskIds) {
+      try {
+        const task = await this.moveTaskToList(taskId, targetListId);
+        updatedTasks.push(task);
+      } catch (error) {
+        console.warn(`移动任务 ${taskId} 失败:`, error.message);
+      }
+    }
+
+    return updatedTasks;
+  }
+
+  /**
+   * 更新任务元数据
+   * @param {string} taskId 任务ID
+   * @param {Object} metadata 元数据
+   * @returns {Promise<Task>}
+   */
+  async updateTaskMetadata(taskId, metadata) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    if (typeof metadata !== 'object' || metadata === null) {
+      throw new Error('元数据必须是对象');
+    }
+
+    task.updateMetadata(metadata);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 设置任务备注
+   * @param {string} taskId 任务ID
+   * @param {string} comment 备注内容
+   * @returns {Promise<Task>}
+   */
+  async setTaskComment(taskId, comment) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.setComment(comment);
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 获取指定清单的未完成任务
+   * @param {number} listId 清单ID
+   * @returns {Promise<Task[]>}
+   */
+  async getIncompleteTasksByListId(listId) {
+    const tasks = await this.getTasksByListId(listId);
+    return tasks.filter(task => !task.isCompleted());
+  }
+
+  /**
+   * 获取指定清单的已完成任务
+   * @param {number} listId 清单ID
+   * @returns {Promise<Task[]>}
+   */
+  async getCompletedTasksByListId(listId) {
+    const tasks = await this.getTasksByListId(listId);
+    return tasks.filter(task => task.isCompleted());
+  }
+
+  /**
+   * 按分类获取任务（支持清单过滤）
+   * @param {string} category 分类名称
+   * @param {number|null} listId 清单ID，null表示所有清单
+   * @returns {Promise<Task[]>}
+   */
+  async getTasksByCategory(category, listId = null) {
+    let tasks;
+    
+    if (listId !== null) {
+      tasks = await this.getTasksByListId(listId);
+    } else {
+      tasks = await this.getAllTasks();
+    }
+
+    return tasks.filter(task => task.belongsToCategory(category));
+  }
+
+  /**
+   * 搜索任务（支持清单过滤）
+   * @param {string} query 搜索关键词
+   * @param {number|null} listId 清单ID，null表示所有清单
+   * @returns {Promise<Task[]>}
+   */
+  async searchTasks(query, listId = null) {
+    if (!query || query.trim().length === 0) {
+      return listId !== null ? await this.getTasksByListId(listId) : await this.getAllTasks();
+    }
+
+    let tasks;
+    if (listId !== null) {
+      tasks = await this.getTasksByListId(listId);
+    } else {
+      tasks = await this.getAllTasks();
+    }
+
+    const searchTerm = query.trim().toLowerCase();
+    
+    return tasks.filter(task => {
+      // 搜索任务内容
+      if (task.content.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      
+      // 搜索备注内容
+      const comment = task.getComment();
+      if (comment && comment.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      
+      return false;
+    });
+  }
+
+  /**
+   * 获取任务时间信息
+   * @param {string} taskId 任务ID
    * @returns {Promise<Object>}
    */
-  async getTimeStats() {
-    const allTasks = await this.getAllTasks();
+  async getTaskTimeInfo(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    return {
+      taskId: task.id,
+      status: task.status,
+      createdAt: task.createdAt,
+      startedAt: task.startedAt,
+      completedAt: task.completedAt,
+      currentDuration: task.getCurrentDuration(),
+      totalDuration: task.totalDuration,
+      totalWorkDuration: task.getTotalWorkDuration(),
+      formattedDuration: task.getFormattedDuration(),
+      formattedCompactDuration: task.getFormattedDuration(true)
+    };
+  }
+
+  /**
+   * 获取时间统计信息（支持清单过滤）
+   * @param {number|null} listId 清单ID，null表示所有清单
+   * @returns {Promise<Object>}
+   */
+  async getTimeStats(listId = null) {
+    let allTasks;
+    if (listId !== null) {
+      allTasks = await this.getTasksByListId(listId);
+    } else {
+      allTasks = await this.getAllTasks();
+    }
+
     const completedTasks = allTasks.filter(task => task.isCompleted());
     const inProgressTasks = allTasks.filter(task => task.isInProgress());
+    const pausedTasks = allTasks.filter(task => task.isPaused());
     
     let totalWorkTime = 0;
     let totalCompletedTasks = 0;
@@ -291,12 +539,21 @@ class TaskService {
       totalWorkTime += task.getTotalWorkDuration();
     });
 
+    pausedTasks.forEach(task => {
+      totalWorkTime += task.getTotalWorkDuration();
+    });
+
     return {
+      listId,
+      totalTasks: allTasks.length,
+      completedTasks: completedTasks.length,
+      inProgressTasks: inProgressTasks.length,
+      pausedTasks: pausedTasks.length,
+      todoTasks: allTasks.filter(task => task.isTodo()).length,
       totalWorkTime,
-      totalCompletedTasks,
       currentActiveTime,
-      inProgressTasksCount: inProgressTasks.length,
-      averageTaskTime: totalCompletedTasks > 0 ? Math.floor(totalWorkTime / totalCompletedTasks) : 0
+      averageTaskTime: totalCompletedTasks > 0 ? Math.floor(totalWorkTime / totalCompletedTasks) : 0,
+      completionRate: allTasks.length > 0 ? (completedTasks.length / allTasks.length) * 100 : 0
     };
   }
 }

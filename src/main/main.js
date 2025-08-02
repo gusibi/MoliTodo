@@ -5,7 +5,9 @@ const IpcHandlers = require('./ipc-handlers');
 // 导入业务层
 const FileTaskRepository = require('../infrastructure/persistence/file-task-repository');
 const SqliteTaskRepository = require('../infrastructure/persistence/sqlite-task-repository');
+const SqliteListRepository = require('../infrastructure/persistence/sqlite-list-repository');
 const TaskService = require('../domain/services/task-service');
+const ListService = require('../domain/services/list-service');
 const NotificationService = require('../infrastructure/notification/notification-service');
 
 class MoliTodoApp {
@@ -15,7 +17,9 @@ class MoliTodoApp {
     
     // 业务服务
     this.taskRepository = null;
+    this.listRepository = null;
     this.taskService = null;
+    this.listService = null;
     this.notificationService = new NotificationService();
     
     this.isQuitting = false;
@@ -41,6 +45,7 @@ class MoliTodoApp {
       // 初始化 IPC 处理器
       this.ipcHandlers = new IpcHandlers({
         taskService: this.taskService,
+        listService: this.listService,
         notificationService: this.notificationService,
         windowManager: this.windowManager
       });
@@ -62,17 +67,23 @@ class MoliTodoApp {
       this.taskRepository = new SqliteTaskRepository();
       await this.taskRepository.initialize();
       
+      // 初始化清单仓储（使用相同的数据库连接）
+      this.listRepository = new SqliteListRepository(this.taskRepository.db);
+      
+      // 初始化服务
       this.taskService = new TaskService(this.taskRepository);
+      this.listService = new ListService(this.listRepository, this.taskRepository);
       
       console.log('业务服务初始化完成 - 使用 SQLite');
     } catch (error) {
       console.error('SQLite 初始化失败，回退到文件存储:', error);
       try {
-        // 回退到文件存储
+        // 回退到文件存储（暂时不支持清单功能）
         this.taskRepository = new FileTaskRepository();
         await this.taskRepository.initialize();
         this.taskService = new TaskService(this.taskRepository);
-        console.log('业务服务初始化完成 - 使用文件存储');
+        this.listService = null; // 文件存储暂不支持清单
+        console.log('业务服务初始化完成 - 使用文件存储（不支持清单功能）');
       } catch (fallbackError) {
         console.error('文件存储初始化也失败:', fallbackError);
         throw fallbackError;
