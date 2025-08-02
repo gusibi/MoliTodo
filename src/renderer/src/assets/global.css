@@ -1,0 +1,26 @@
+/* 全局样式 - 确保完全透明背景 */
+html, body {
+  background-color: transparent !important;
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+/* body的pointer-events设置移到具体组件中处理 */
+
+#app {
+  background: transparent !important;
+  width: 100%;
+  height: 100%;
+}
+
+/* 确保所有可能的容器都是透明的 */
+* {
+  box-sizing: border-box;
+}

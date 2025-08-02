@@ -5,7 +5,17 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 import FloatingIcon from '@/components/FloatingIcon.vue'
+
+// 只在悬浮图标页面设置body的pointer-events
+onMounted(() => {
+  document.body.style.pointerEvents = 'none'
+})
+
+onUnmounted(() => {
+  document.body.style.pointerEvents = 'auto'
+})
 </script>
 
 <style scoped>
@@ -15,7 +25,8 @@ import FloatingIcon from '@/components/FloatingIcon.vue'
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
   overflow: hidden !important;
   position: fixed;
   top: 0;

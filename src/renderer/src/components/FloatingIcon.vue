@@ -413,35 +413,12 @@ onUnmounted(() => {
 })
 </script>
 
-<style>
-/* 全局样式 - 确保背景透明 */
-:global(html),
-:global(body) {
-  background: transparent !important;
-  background-color: transparent !important;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-app-region: no-drag;
-}
 
-:global(body) {
-  pointer-events: none;
-}
-
-:global(#app) {
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-}
-</style>
 
 <style scoped>
 /* 悬浮图标样式 */
+
+/* 悬浮图标特定样式 */
 
 .floating-icon-container {
   width: 100%;
@@ -449,9 +426,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* 关键：使用 filter: drop-shadow 创建真实的阴影 */
-  /* 这比 box-shadow 效果好得多，因为它会跟随内容的形状 */
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  /* 移除容器的阴影，让图标本身处理阴影 */
 }
 
 .floating-icon {
@@ -465,8 +440,8 @@ onUnmounted(() => {
   cursor: grab;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* 使用 filter: drop-shadow() 创建更逼真的阴影效果 */
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  /* 图标本身的阴影效果 */
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   /* 恢复app-region设置，但通过JS控制拖拽 */
   -webkit-app-region: no-drag;
   /* 只有图标本身接收鼠标事件 */

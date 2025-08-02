@@ -6,7 +6,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  filter: drop-shadow(var(--shadow-sm));
+
 }
 
 .floating-icon {
@@ -23,11 +23,15 @@
   filter: drop-shadow(var(--shadow-md));
   -webkit-app-region: no-drag;
   pointer-events: auto;
+
+  /* 将阴影移动到这里！*/
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); 
 }
 
 .floating-icon:hover {
   transform: scale(1.1);
-  filter: drop-shadow(var(--shadow-lg));
+  /* 悬停时增强阴影效果 */
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
 }
 
 .floating-icon:focus {

@@ -5,6 +5,7 @@ import router from './router'
 
 // Import global styles
 import './assets/styles/index.css'
+import './assets/global.css'
 
 // 创建应用
 const app = createApp(App)

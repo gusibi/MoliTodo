@@ -17,7 +17,7 @@ class WindowManager {
         floatingIcon: {
           x: 100,
           y: 100,
-          size: 60,
+          size: 50,
           opacity: 100,
           visible: true
         },
@@ -51,7 +51,6 @@ class WindowManager {
       y: y,
       frame: false,
       transparent: true, // 设置窗口为透明背景
-      vibrancy: 'sidebar', // for macOS
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
@@ -86,6 +85,11 @@ class WindowManager {
     this.floatingWindow.once('ready-to-show', () => {
       this.floatingWindow.show();
       this.applyFloatingIconConfig();
+      
+      // 开发环境下开启开发者工具用于调试
+      if (process.env.NODE_ENV === 'development') {
+        this.floatingWindow.webContents.openDevTools({ mode: 'detach' });
+      }
     });
 
     this.floatingWindow.on('moved', () => {
