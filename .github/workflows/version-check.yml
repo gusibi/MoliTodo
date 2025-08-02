@@ -1,0 +1,55 @@
+name: Version Check and Tag
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'package.json' ]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+      
+      - name: Get previous version
+        id: previous_version
+        run: |
+          git checkout HEAD~1 -- package.json 2>/dev/null || echo "No previous version"
+          if [ -f package.json ]; then
+            PREV_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
+          else
+            PREV_VERSION="0.0.0"
+          fi
+          echo "previous_version=$PREV_VERSION" >> $GITHUB_OUTPUT
+          echo "Previous version: $PREV_VERSION"
+          git checkout HEAD -- package.json
+      
+      - name: Check if version changed
+        id: version_changed
+        run: |
+          if [ "${{ steps.current_version.outputs.version }}" != "${{ steps.previous_version.outputs.previous_version }}" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed from ${{ steps.previous_version.outputs.previous_version }} to ${{ steps.current_version.outputs.version }}"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version not changed"
+          fi
+      
+      - name: Create tag
+        if: steps.version_changed.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v${{ steps.current_version.outputs.version }}" -m "Release v${{ steps.current_version.outputs.version }}"
+          git push origin "v${{ steps.current_version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

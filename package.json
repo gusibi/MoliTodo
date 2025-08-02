@@ -12,7 +12,11 @@
     "build": "npm run build:renderer && electron-builder", 
     "build:mac": "npm run build",
     "build:win": "npm run build",
-    "postinstall": "electron-builder install-app-deps" 
+    "postinstall": "electron-builder install-app-deps",
+    "version:patch": "node scripts/bump-version.js patch",
+    "version:minor": "node scripts/bump-version.js minor",
+    "version:major": "node scripts/bump-version.js major",
+    "release": "npm run version:patch"
   },
   "keywords": [
     "todo",
