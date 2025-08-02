@@ -1,0 +1,392 @@
+/* ListCreateDialog 组件样式 - 使用主题系统 */
+
+.list-create-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.list-create-dialog {
+  background: hsl(var(--card));
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 28rem;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid hsl(var(--border));
+}
+
+.list-create-dialog-header {
+  padding: 1.5rem 1.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.list-create-dialog-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.list-create-header-btn {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.list-create-header-btn:hover {
+  background: hsl(var(--accent));
+}
+
+.list-create-header-btn.list-create-btn-cancel {
+  color: hsl(var(--muted-foreground));
+}
+
+.list-create-header-btn.list-create-btn-cancel:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--accent));
+}
+
+.list-create-header-btn.list-create-btn-confirm {
+  color: hsl(var(--primary));
+}
+
+.list-create-header-btn.list-create-btn-confirm:hover:not(:disabled) {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.list-create-header-btn.list-create-btn-confirm:disabled {
+  color: hsl(var(--muted-foreground));
+  cursor: not-allowed;
+}
+
+.list-create-header-btn.list-create-btn-confirm:disabled:hover {
+  background: transparent;
+}
+
+.list-create-dialog-body {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.list-create-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.list-create-form-group:last-child {
+  margin-bottom: 0;
+}
+
+.list-create-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.5rem;
+}
+
+.list-create-form-input {
+  width: 100%;
+  height: 2.75rem;
+  padding: 0 1rem;
+  border: 2px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.list-create-form-input:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+.list-create-form-input.list-create-error {
+  border-color: hsl(var(--destructive));
+}
+
+.list-create-form-input.list-create-error:focus {
+  border-color: hsl(var(--destructive));
+  box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.1);
+}
+
+.list-create-error-message {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(var(--destructive));
+}
+
+.list-create-char-count {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  text-align: right;
+}
+
+/* 颜色选择器 */
+.list-create-color-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.75rem;
+}
+
+.list-create-color-option {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.list-create-color-option:hover {
+  transform: scale(1.05);
+}
+
+.list-create-color-option.list-create-active {
+  border-color: hsl(var(--foreground));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.list-create-color-option i {
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.list-create-custom-color {
+  background: linear-gradient(45deg, 
+    #ff0000 0%, #ff8000 14%, #ffff00 28%, 
+    #80ff00 42%, #00ff00 57%, #00ff80 71%, 
+    #00ffff 85%, #0080ff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.list-create-custom-color-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.list-create-custom-color i {
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* 图标选择器 */
+.list-create-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.5rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.3);
+}
+
+.list-create-icon-option {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: hsl(var(--background));
+}
+
+.list-create-icon-option:hover {
+  border-color: hsl(var(--muted-foreground));
+  transform: scale(1.05);
+}
+
+.list-create-icon-option.list-create-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+}
+
+.list-create-icon-option i {
+  font-size: 1.125rem;
+  transition: color 0.2s ease;
+}
+
+/* 图标字体定义 */
+.icon-list::before { content: "📋"; }
+.icon-inbox::before { content: "📥"; }
+.icon-star::before { content: "⭐"; }
+.icon-heart::before { content: "❤️"; }
+.icon-bookmark::before { content: "🔖"; }
+.icon-flag::before { content: "🚩"; }
+.icon-folder::before { content: "📁"; }
+.icon-briefcase::before { content: "💼"; }
+.icon-home::before { content: "🏠"; }
+.icon-user::before { content: "👤"; }
+.icon-calendar::before { content: "📅"; }
+.icon-clock::before { content: "🕐"; }
+.icon-target::before { content: "🎯"; }
+.icon-trophy::before { content: "🏆"; }
+.icon-book::before { content: "📚"; }
+.icon-music::before { content: "🎵"; }
+.icon-close::before { content: "✕"; }
+.icon-check::before { content: "✓"; }
+.icon-palette::before { content: "🎨"; }
+
+/* 预览区域 */
+.list-create-preview-container {
+  padding: 1rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+}
+
+.list-create-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--background));
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+}
+
+.list-create-preview-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.list-create-preview-name {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.list-create-preview-count {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.75rem;
+  min-width: 1.25rem;
+  text-align: center;
+}
+
+/* 移除底部按钮区域的样式，因为按钮已移到头部 */
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 滚动条样式 */
+.list-create-dialog-body::-webkit-scrollbar,
+.list-create-icon-picker::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list-create-dialog-body::-webkit-scrollbar-track,
+.list-create-icon-picker::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list-create-dialog-body::-webkit-scrollbar-thumb,
+.list-create-icon-picker::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.list-create-dialog-body::-webkit-scrollbar-thumb:hover,
+.list-create-icon-picker::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .list-create-dialog {
+    width: 95vw;
+    margin: 1.25rem;
+  }
+  
+  .list-create-color-picker {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .list-create-icon-picker {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .list-create-dialog-header,
+  .list-create-dialog-body,
+  .list-create-dialog-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

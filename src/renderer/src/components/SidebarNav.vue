@@ -58,38 +58,43 @@
   </nav>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
 import ListSidebar from './ListSidebar.vue'
 
-export default {
-  name: 'SidebarNav',
-  components: {
-    ListSidebar
+// Props
+const props = defineProps({
+  currentCategory: {
+    type: String,
+    required: true
   },
-  props: {
-    currentCategory: {
-      type: String,
-      required: true
-    },
-    categoryCounts: {
-      type: Object,
-      default: () => ({})
-    }
-  },
-  emits: ['category-change', 'open-settings'],
-  methods: {
-    switchCategory(category) {
-      this.$emit('category-change', category);
-    },
-    openSettings() {
-      this.$emit('open-settings');
-    },
-    createNewList() {
-      // 调用 ListSidebar 的创建清单方法
-      if (this.$refs.listSidebar) {
-        this.$refs.listSidebar.showCreateDialog = true;
-      }
-    }
+  categoryCounts: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+// Emits
+const emit = defineEmits(['category-change', 'open-settings', 'create-list'])
+
+// Refs
+const listSidebar = ref(null)
+
+// Methods
+const switchCategory = (category) => {
+  emit('category-change', category)
+}
+
+const openSettings = () => {
+  emit('open-settings')
+}
+
+const createNewList = () => {
+  console.log("createNewList in SidebarNav clicked")
+  if (listSidebar.value) {
+    listSidebar.value.openCreateDialog()
+  } else {
+    console.error("ListSidebar component instance is not available.")
   }
 }
 </script>

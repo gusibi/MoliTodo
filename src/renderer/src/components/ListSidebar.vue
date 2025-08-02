@@ -14,61 +14,64 @@
     </div>
   </template>
 
-  <!-- 清单创建/编辑对话框 -->
-  <ListCreateDialog v-if="showCreateDialog" :visible="showCreateDialog" :editing-list="editingList"
-    @close="closeCreateDialog" @confirm="handleListCreate" />
+  <!-- 使用 Teleport 将弹出元素传送到 body -->
+  <Teleport to="body">
+    <!-- 清单创建/编辑对话框 -->
+    <ListCreateDialog v-if="showCreateDialog" :visible="showCreateDialog" :editing-list="editingList"
+      @close="closeCreateDialog" @confirm="handleListCreate" />
 
-  <!-- 清单上下文菜单 -->
-  <div v-if="showContextMenu" class="nav-context-menu" :style="contextMenuStyle" @click.stop>
-    <div class="nav-context-item" @click="editList(contextMenuList)">
-      <i class="fas fa-edit"></i>
-      <span>重命名</span>
-    </div>
-    <div class="nav-context-item" @click="duplicateList(contextMenuList)">
-      <i class="fas fa-copy"></i>
-      <span>复制清单</span>
-    </div>
-    <div class="nav-context-divider"></div>
-    <div class="nav-context-item danger" @click="deleteList(contextMenuList)"
-      :class="{ disabled: contextMenuList?.isDefault }">
-      <i class="fas fa-trash"></i>
-      <span>删除清单</span>
-    </div>
-  </div>
-
-  <!-- 删除确认对话框 -->
-  <div v-if="showDeleteDialog" class="nav-modal-overlay" @click="closeDeleteDialog">
-    <div class="nav-delete-dialog" @click.stop>
-      <div class="nav-dialog-header">
-        <h3>删除清单</h3>
+    <!-- 清单上下文菜单 -->
+    <div v-if="showContextMenu" class="nav-context-menu" :style="contextMenuStyle" @click.stop>
+      <div class="nav-context-item" @click="editList(contextMenuList)">
+        <i class="fas fa-edit"></i>
+        <span>重命名</span>
       </div>
-      <div class="nav-dialog-body">
-        <p>确定要删除清单 "{{ deletingList?.name }}" 吗？</p>
-        <p v-if="getListTaskCount(deletingList?.id) > 0" class="nav-warning-text">
-          该清单中有 {{ getListTaskCount(deletingList?.id) }} 个任务，请选择处理方式：
-        </p>
-        <div v-if="getListTaskCount(deletingList?.id) > 0" class="nav-task-handling-options">
-          <label class="nav-radio-option">
-            <input type="radio" v-model="taskHandling" value="move" />
-            <span>移动到默认清单</span>
-          </label>
-          <label class="nav-radio-option">
-            <input type="radio" v-model="taskHandling" value="delete" />
-            <span class="nav-danger-text">同时删除所有任务</span>
-          </label>
+      <div class="nav-context-item" @click="duplicateList(contextMenuList)">
+        <i class="fas fa-copy"></i>
+        <span>复制清单</span>
+      </div>
+      <div class="nav-context-divider"></div>
+      <div class="nav-context-item danger" @click="deleteList(contextMenuList)"
+        :class="{ disabled: contextMenuList?.isDefault }">
+        <i class="fas fa-trash"></i>
+        <span>删除清单</span>
+      </div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div v-if="showDeleteDialog" class="nav-modal-overlay" @click="closeDeleteDialog">
+      <div class="nav-delete-dialog" @click.stop>
+        <div class="nav-dialog-header">
+          <h3>删除清单</h3>
+        </div>
+        <div class="nav-dialog-body">
+          <p>确定要删除清单 "{{ deletingList?.name }}" 吗？</p>
+          <p v-if="getListTaskCount(deletingList?.id) > 0" class="nav-warning-text">
+            该清单中有 {{ getListTaskCount(deletingList?.id) }} 个任务，请选择处理方式：
+          </p>
+          <div v-if="getListTaskCount(deletingList?.id) > 0" class="nav-task-handling-options">
+            <label class="nav-radio-option">
+              <input type="radio" v-model="taskHandling" value="move" />
+              <span>移动到默认清单</span>
+            </label>
+            <label class="nav-radio-option">
+              <input type="radio" v-model="taskHandling" value="delete" />
+              <span class="nav-danger-text">同时删除所有任务</span>
+            </label>
+          </div>
+        </div>
+        <div class="nav-dialog-footer">
+          <button class="nav-btn-cancel" @click="closeDeleteDialog">取消</button>
+          <button class="nav-btn-danger" @click="confirmDeleteList"
+            :disabled="getListTaskCount(deletingList?.id) > 0 && !taskHandling">删除</button>
         </div>
       </div>
-      <div class="nav-dialog-footer">
-        <button class="nav-btn-cancel" @click="closeDeleteDialog">取消</button>
-        <button class="nav-btn-danger" @click="confirmDeleteList"
-          :disabled="getListTaskCount(deletingList?.id) > 0 && !taskHandling">删除</button>
-      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
 import { useTaskStore } from '../store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
 
@@ -155,7 +158,9 @@ export default {
     }
 
     const editList = (list) => {
+      console.log("editList clicked: ", list)
       editingList.value = list
+      console.log("editList clicked: ", editingList.value)
       showCreateDialog.value = true
       closeContextMenu()
     }
@@ -238,6 +243,18 @@ export default {
       document.removeEventListener('click', handleClickOutside)
     })
 
+    // 暴露给父组件的方法
+    const openCreateDialog = () => {
+      console.log("Opening create dialog from ListSidebar")
+      showCreateDialog.value = true
+      console.log("Opening create dialog from ListSidebar", showCreateDialog.value)
+    }
+
+    // 使用 defineExpose 暴露方法给父组件
+    defineExpose({
+      openCreateDialog
+    })
+
     return {
       // 响应式数据
       showCreateDialog,
@@ -266,12 +283,10 @@ export default {
       closeDeleteDialog,
       confirmDeleteList,
       closeCreateDialog,
-      handleListCreate
+      handleListCreate,
+      openCreateDialog
     }
-  },
-
-  // 暴露方法给父组件
-  expose: ['showCreateDialog']
+  }
 }
 
 </script>

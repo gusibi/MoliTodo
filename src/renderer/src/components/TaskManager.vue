@@ -130,6 +130,7 @@
     <div v-if="tooltip.show" class="task-manager-custom-tooltip" :style="tooltip.style">
       {{ tooltip.text }}
     </div>
+
   </div>
 </template>
 
@@ -138,6 +139,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import TaskList from './TaskList.vue'
 import SidebarNav from './SidebarNav.vue'
+
 
 const taskStore = useTaskStore()
 const isEditMode = ref(false)
