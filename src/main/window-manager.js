@@ -26,6 +26,10 @@ class WindowManager {
         theme: 'system'
       }
     });
+    
+    // 获取开发服务器端口
+    this.devPort = process.env.VITE_DEV_PORT || '5173';
+    this.devBaseUrl = `http://localhost:${this.devPort}`;
   }
 
   async initialize() {
@@ -67,7 +71,7 @@ class WindowManager {
 
     // 开发环境加载开发服务器，生产环境加载构建文件
     if (process.env.NODE_ENV === 'development') {
-      this.floatingWindow.loadURL('http://localhost:5173').catch(error => {
+      this.floatingWindow.loadURL(this.devBaseUrl).catch(error => {
         console.error('无法加载开发服务器:', error);
         // 尝试加载本地文件作为后备
         const fallbackPath = path.join(__dirname, '../renderer/dist/index.html');
@@ -119,7 +123,7 @@ class WindowManager {
     });
 
     if (process.env.NODE_ENV === 'development') {
-      this.taskManagerWindow.loadURL('http://localhost:5173/#/task-manager');
+      this.taskManagerWindow.loadURL(`${this.devBaseUrl}/#/task-manager`);
     } else {
       this.taskManagerWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
         hash: 'task-manager'
@@ -158,7 +162,7 @@ class WindowManager {
     });
 
     if (process.env.NODE_ENV === 'development') {
-      this.settingsWindow.loadURL('http://localhost:5173/#/settings');
+      this.settingsWindow.loadURL(`${this.devBaseUrl}/#/settings`);
     } else {
       this.settingsWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
         hash: 'settings'
@@ -217,7 +221,7 @@ class WindowManager {
     });
 
     if (process.env.NODE_ENV === 'development') {
-      this.taskPanelWindow.loadURL('http://localhost:5173/#/task-panel');
+      this.taskPanelWindow.loadURL(`${this.devBaseUrl}/#/task-panel`);
     } else {
       this.taskPanelWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
         hash: 'task-panel'

@@ -4,8 +4,10 @@
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
-    "dev": "node dev-start.js",
+    "dev": "npm run rebuild && node dev-start.js",
     "dev:renderer": "vite --config src/renderer/vite.config.js",
+    "dev:clean": "npm run rebuild && npm run dev",
+    "rebuild": "electron-rebuild",
     "build:renderer": "vite build --config src/renderer/vite.config.js",
     "build": "npm run build:renderer && electron-builder", 
     "build:mac": "npm run build",
