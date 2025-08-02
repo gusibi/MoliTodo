@@ -26,7 +26,7 @@ class WindowManager {
         theme: 'system'
       }
     });
-    
+
     // 获取开发服务器端口
     this.devPort = process.env.VITE_DEV_PORT || '5173';
     this.devBaseUrl = `http://localhost:${this.devPort}`;
@@ -55,7 +55,7 @@ class WindowManager {
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
-      movable: true,
+      movable: false,
       minimizable: false,
       maximizable: false,
       closable: false,

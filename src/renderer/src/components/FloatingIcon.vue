@@ -155,10 +155,13 @@ const handleMouseDown = (event) => {
   let hasMoved = false
   let startTime = Date.now()
   let initialWindowPos = null
-  let finalPosition = null
+  let lastIpcTime = 0
+  let pendingUpdate = false
+  const ipcThrottle = 40 // IPC调用节流，25fps
+  const floatingIcon = document.querySelector('.floating-icon')
 
   isDragging.value = true
-  dragStartPos.value = { x: event.clientX, y: event.clientY }
+  dragStartPos.value = { x: event.screenX, y: event.screenY }
 
   // 阻止显示面板的定时器
   if (hoverTimeout) {
@@ -167,16 +170,27 @@ const handleMouseDown = (event) => {
     console.log('清除悬停显示定时器')
   }
 
+  // 添加pending状态，改善初始延迟体验
+  floatingIcon.classList.add('pending-drag')
+  
   // 获取当前窗口位置
   window.electronAPI.drag.getWindowPosition().then(pos => {
     initialWindowPos = pos
+    floatingIcon.classList.remove('pending-drag')
+    console.log('Initial window position received:', pos)
+  }).catch(error => {
+    console.error('获取窗口位置失败:', error)
+    floatingIcon.classList.remove('pending-drag')
   })
 
   const handleMouseMove = (moveEvent) => {
-    if (!isDragging.value || !initialWindowPos) return
+    if (!isDragging.value) return
+    
+    // 如果初始位置还没获取到，暂时不处理
+    if (!initialWindowPos) return
 
-    const deltaX = moveEvent.clientX - dragStartPos.value.x
-    const deltaY = moveEvent.clientY - dragStartPos.value.y
+    const deltaX = moveEvent.screenX - dragStartPos.value.x
+    const deltaY = moveEvent.screenY - dragStartPos.value.y
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
     // 如果移动距离超过阈值，认为是拖拽
@@ -184,17 +198,42 @@ const handleMouseDown = (event) => {
       if (!hasMoved) {
         console.log('开始拖拽模式')
         hasMoved = true
+        // 添加拖拽样式
+        floatingIcon.classList.add('dragging')
+        // 确保开始时没有残留的transform
+        floatingIcon.style.transform = ''
       }
 
-      // 计算最终位置，但不立即发送IPC
-      finalPosition = {
-        x: initialWindowPos.x + deltaX,
-        y: initialWindowPos.y + deltaY
+      // 1. 立即更新视觉反馈 - 60fps丝滑体验
+      floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.15)`
+
+      // 2. 节流的IPC调用 - 让真实窗口跟上视觉元素
+      if (initialWindowPos) {
+        const now = Date.now()
+        if (now - lastIpcTime >= ipcThrottle && !pendingUpdate) {
+          lastIpcTime = now
+          pendingUpdate = true
+
+          const newPosition = {
+            x: initialWindowPos.x + deltaX,
+            y: initialWindowPos.y + deltaY
+          }
+
+          // 异步更新真实窗口位置，不阻塞UI
+          window.electronAPI.drag.dragWindow(newPosition)
+            .then(() => {
+              pendingUpdate = false
+            })
+            .catch((error) => {
+              console.error('窗口位置更新失败:', error)
+              pendingUpdate = false
+            })
+        }
       }
     }
   }
 
-  const handleMouseUp = async () => {
+  const handleMouseUp = async (upEvent) => {
     if (!isDragging.value) return
 
     const endTime = Date.now()
@@ -205,18 +244,51 @@ const handleMouseDown = (event) => {
     isDragging.value = false
 
     if (hasMoved) {
-      // 这是拖拽操作 - 只在拖拽结束时进行一次IPC调用
-      console.log('拖拽操作完成，同步最终位置')
+      // 拖拽操作完成
+      console.log('拖拽操作完成')
+      
+      // 计算最终位移
+      const finalDeltaX = upEvent.screenX - dragStartPos.value.x
+      const finalDeltaY = upEvent.screenY - dragStartPos.value.y
+      
+      // 3. 发送最终精确位置，确保视觉和实际位置对齐
+      if (initialWindowPos) {
+        const finalPosition = {
+          x: initialWindowPos.x + finalDeltaX,
+          y: initialWindowPos.y + finalDeltaY
+        }
 
-      if (finalPosition) {
         try {
+          // 先同步最终位置
           await window.electronAPI.drag.dragWindow(finalPosition)
           console.log('最终位置已同步', finalPosition)
+          
+          // 位置同步后，平滑地移除transform
+          floatingIcon.style.transition = 'transform 0.15s ease-out'
+          floatingIcon.style.transform = ''
+          
+          // 移除拖拽样式
+          floatingIcon.classList.remove('dragging')
+          
+          // 短暂延迟后移除transition，恢复默认
+          setTimeout(() => {
+            if (floatingIcon) {
+              floatingIcon.style.transition = ''
+            }
+          }, 150)
+          
         } catch (error) {
-          console.error('拖拽失败:', error)
+          console.error('最终位置同步失败:', error)
+          // 如果失败，也要清理样式
+          floatingIcon.style.transform = ''
+          floatingIcon.classList.remove('dragging')
         }
+      } else {
+        // 如果没有初始位置，直接清理样式
+        floatingIcon.style.transform = ''
+        floatingIcon.classList.remove('dragging')
       }
-
+      
       try {
         await window.electronAPI.drag.endDrag()
       } catch (error) {
@@ -231,7 +303,10 @@ const handleMouseDown = (event) => {
     // 重置状态
     hasMoved = false
     initialWindowPos = null
-    finalPosition = null
+    pendingUpdate = false
+    
+    // 清理所有可能的样式类
+    floatingIcon.classList.remove('pending-drag', 'dragging')
 
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
@@ -338,31 +413,35 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-/* 悬浮图标样式 */
-/* 关键：让 HTML 和 body 透明 */
-html,
-body {
-  background-color: transparent;
+<style>
+/* 全局样式 - 确保背景透明 */
+:global(html),
+:global(body) {
+  background: transparent !important;
+  background-color: transparent !important;
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  /* 防止出现滚动条 */
-}
-
-body {
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   -webkit-app-region: no-drag;
-  /* 让body不接收鼠标事件 */
+}
+
+:global(body) {
   pointer-events: none;
 }
+
+:global(#app) {
+  background: transparent !important;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<style scoped>
+/* 悬浮图标样式 */
 
 .floating-icon-container {
   width: 100%;
@@ -383,7 +462,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: grab;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* 使用 filter: drop-shadow() 创建更逼真的阴影效果 */
@@ -482,12 +561,22 @@ body {
   transform: scale(1.1);
 }
 
+/* 等待拖拽状态 */
+.floating-icon.pending-drag {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
 /* 拖拽状态 */
 .floating-icon.dragging {
-  transform: scale(1.1);
   /* 拖拽时使用更强烈的阴影效果 */
-  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.4));
   z-index: 1000;
+  /* 拖拽时禁用过渡动画，让移动更跟手 */
+  transition: none;
+  cursor: grabbing;
+  /* 确保transform变换的原点在中心 */
+  transform-origin: center;
 }
 
 .progress-indicator {
