@@ -265,6 +265,25 @@ onMounted(async () => {
   }
 })
 
+// 重置所有状态的函数
+const resetAllStates = () => {
+  isAddingTask.value = false
+  newTaskContent.value = ''
+  selectedDate.value = ''
+  selectedTime.value = '09:00'
+  selectedReminder.value = null
+  showDatePicker.value = false
+  showReminderPicker.value = false
+  showListPicker.value = false
+  
+  // 重新设置默认列表
+  if (taskStore.currentListId) {
+    selectedListId.value = taskStore.currentListId
+  } else if (availableLists.value.length > 0) {
+    selectedListId.value = availableLists.value[0].id
+  }
+}
+
 // 加载可用列表
 const loadAvailableLists = async () => {
   try {
@@ -293,14 +312,7 @@ const handleCancelAdding = () => {
     emit('cancel-edit')
   } else {
     // 添加模式下，重置状态
-    isAddingTask.value = false
-    newTaskContent.value = ''
-    selectedDate.value = ''
-    selectedTime.value = '09:00'
-    selectedReminder.value = null
-    showDatePicker.value = false
-    showReminderPicker.value = false
-    showListPicker.value = false
+    resetAllStates()
   }
 }
 
@@ -311,12 +323,22 @@ watch(() => props.task, (newTask) => {
   }
 }, { immediate: true })
 
+// 监听当前列表变化，重置状态
+watch(() => taskStore.currentListId, (newListId, oldListId) => {
+  resetAllStates()
+})
+
 // 监听编辑状态变化，填充数据
 watch(() => props.isEditing, (newIsEditing) => {
   if (newIsEditing && props.task) {
     // 编辑模式，填充现有数据
     isAddingTask.value = true
     newTaskContent.value = props.task.content || ''
+    
+    // 重置其他状态
+    selectedDate.value = ''
+    selectedTime.value = '09:00'
+    selectedReminder.value = null
     
     // 处理日期时间
     if (props.task.dueDate) {
@@ -362,6 +384,58 @@ watch(() => props.isEditing, (newIsEditing) => {
     handleCancelAdding()
   }
 }, { immediate: true })
+
+// 监听 props.task 的变化，当任务内容变化时更新编辑区
+watch(() => [props.task, props.isEditing], ([newTask, newIsEditing]) => {
+  if (newIsEditing && newTask) {
+    // 编辑模式下，当任务变化时重新填充数据
+    isAddingTask.value = true
+    newTaskContent.value = newTask.content || ''
+    
+    // 重置其他状态
+    selectedDate.value = ''
+    selectedTime.value = '09:00'
+    selectedReminder.value = null
+    
+    // 处理日期时间
+    if (newTask.dueDate) {
+      selectedDate.value = newTask.dueDate
+    }
+    if (newTask.dueTime) {
+      selectedTime.value = newTask.dueTime
+    }
+    
+    // 处理提醒时间
+    if (newTask.reminderTime) {
+      const reminderDate = new Date(newTask.reminderTime)
+      const now = new Date()
+      const diffMinutes = Math.round((reminderDate.getTime() - now.getTime()) / (1000 * 60))
+      
+      if (diffMinutes === 30) {
+        selectedReminder.value = reminderOptions.value.find(r => r.value === 30)
+      } else if (diffMinutes === 60) {
+        selectedReminder.value = reminderOptions.value.find(r => r.value === 60)
+      } else {
+        selectedReminder.value = reminderOptions.value.find(r => r.value === 'custom')
+        selectedDate.value = reminderDate.toISOString().split('T')[0]
+        selectedTime.value = reminderDate.toTimeString().slice(0, 5)
+      }
+    }
+    
+    // 处理列表信息
+    if (newTask.listId) {
+      selectedListId.value = newTask.listId
+    }
+    
+    // 聚焦到输入框
+    nextTick(() => {
+      if (addTaskInput.value) {
+        addTaskInput.value.focus()
+        addTaskInput.value.select()
+      }
+    })
+  }
+}, { immediate: true, deep: true })
 
 // 输入框失去焦点
 const handleInputBlur = () => {
