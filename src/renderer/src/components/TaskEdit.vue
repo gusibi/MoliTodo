@@ -38,6 +38,18 @@
         <!-- 扩展选项 -->
         <div v-if="isAddingTask" class="task-add-options">
           <div class="task-add-options-row">
+            <!-- 列表选择器 -->
+            <div class="task-add-option-group">
+              <button 
+                class="task-add-option-btn"
+                @click="toggleListPicker"
+                :class="{ 'active': showListPicker }"
+              >
+                <i class="fas fa-list"></i>
+                <span>{{ getSelectedListName() }}</span>
+              </button>
+            </div>
+            
             <!-- 日期时间选择器 -->
             <button 
               class="task-add-option-btn"
@@ -92,6 +104,63 @@
             </button>
           </div>
           
+          <!-- 列表选择器下拉 -->
+          <div v-if="showListPicker" class="task-add-dropdown">
+            <div class="task-add-list-options">
+              <!-- 编辑模式 -->
+              <template v-if="props.isEditing">
+                <!-- 当前任务所属列表 -->
+                <div v-if="props.task && props.task.listId" class="task-add-current-list">
+                  <div class="task-add-current-list-label">当前列表</div>
+                  <button 
+                    class="task-add-list-option task-add-current-list-option"
+                    :class="{ 'active': selectedListId === props.task.listId }"
+                    @click="selectList(getCurrentTaskList())"
+                  >
+                    <div class="task-add-list-icon" :style="{ color: getCurrentTaskList()?.color }">
+                      <i :class="`fas fa-${getCurrentTaskList()?.icon}`" ></i>
+                    </div>
+                    <span class="task-add-list-option-name">{{ getCurrentTaskList()?.name }}</span>
+                  </button>
+                </div>
+                
+                <!-- 分隔线 -->
+                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="task-add-list-separator"></div>
+                
+                <!-- 其他可选列表 -->
+                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="task-add-other-lists-label">移动到其他列表</div>
+                <button 
+                  v-for="list in getOtherLists()"
+                  :key="list.id"
+                  class="task-add-list-option"
+                  :class="{ 'active': selectedListId === list.id }"
+                  @click="selectList(list)"
+                >
+                  <div class="task-add-list-icon" :style="{ color: list.color }">
+                    <i :class="`fas fa-${list.icon}`"></i>
+                  </div>
+                  <span class="task-add-list-option-name">{{ list.name }}</span>
+                </button>
+              </template>
+              
+              <!-- 添加模式：显示所有列表 -->
+              <template v-else>
+                <button 
+                  v-for="list in availableLists"
+                  :key="list.id"
+                  class="task-add-list-option"
+                  :class="{ 'active': selectedListId === list.id }"
+                  @click="selectList(list)"
+                >
+                  <div class="task-add-list-icon" :style="{ color: list.color }">
+                    <i :class="`fas fa-${list.icon}`"></i>
+                  </div>
+                  <span class="task-add-list-option-name">{{ list.name }}</span>
+                </button>
+              </template>
+            </div>
+          </div>
+          
           <!-- 日期选择器下拉 -->
           <div v-if="showDatePicker" class="task-add-dropdown">
             <div class="task-add-date-picker">
@@ -129,7 +198,8 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed, onMounted } from 'vue'
+import { useTaskStore } from '../store/taskStore'
 
 // 定义 props
 const props = defineProps({
@@ -146,6 +216,9 @@ const props = defineProps({
 // 定义事件
 const emit = defineEmits(['add-task', 'update-task', 'cancel-edit'])
 
+// 使用 taskStore
+const taskStore = useTaskStore()
+
 // 添加任务相关状态
 const newTaskContent = ref('')
 const addTaskInput = ref(null)
@@ -160,6 +233,11 @@ const showDatePicker = ref(false)
 const selectedReminder = ref(null)
 const showReminderPicker = ref(false)
 
+// 列表选择相关状态
+const selectedListId = ref(null)
+const showListPicker = ref(false)
+const availableLists = ref([])
+
 // 提醒选项
 const reminderOptions = ref([
   { value: 30, label: '30分钟后', icon: 'fas fa-clock' },
@@ -168,6 +246,35 @@ const reminderOptions = ref([
   { value: 'next_week', label: '下周9点', icon: 'fas fa-calendar-week' },
   { value: 'custom', label: '自定义', icon: 'fas fa-cog' }
 ])
+
+// 组件挂载时初始化
+onMounted(async () => {
+  // 获取所有列表
+  await loadAvailableLists()
+  
+  // 设置默认选中的列表
+  if (props.isEditing && props.task && props.task.listId) {
+    // 编辑模式：使用任务当前所属的列表
+    selectedListId.value = props.task.listId
+  } else if (taskStore.currentListId) {
+    // 添加模式：使用当前选中的列表
+    selectedListId.value = taskStore.currentListId
+  } else if (availableLists.value.length > 0) {
+    // 如果没有当前列表，选择第一个列表
+    selectedListId.value = availableLists.value[0].id
+  }
+})
+
+// 加载可用列表
+const loadAvailableLists = async () => {
+  try {
+    await taskStore.getAllLists()
+    availableLists.value = taskStore.lists
+  } catch (error) {
+    console.error('加载列表失败:', error)
+    availableLists.value = []
+  }
+}
 
 // 开始添加任务
 const handleStartAdding = () => {
@@ -193,8 +300,16 @@ const handleCancelAdding = () => {
     selectedReminder.value = null
     showDatePicker.value = false
     showReminderPicker.value = false
+    showListPicker.value = false
   }
 }
+
+// 监听 props.task 变化，更新列表选择
+watch(() => props.task, (newTask) => {
+  if (newTask && newTask.listId) {
+    selectedListId.value = newTask.listId
+  }
+}, { immediate: true })
 
 // 监听编辑状态变化，填充数据
 watch(() => props.isEditing, (newIsEditing) => {
@@ -230,6 +345,11 @@ watch(() => props.isEditing, (newIsEditing) => {
       }
     }
     
+    // 处理列表信息
+    if (props.task.listId) {
+      selectedListId.value = props.task.listId
+    }
+    
     // 聚焦到输入框
     nextTick(() => {
       if (addTaskInput.value) {
@@ -251,7 +371,7 @@ const handleInputBlur = () => {
     const hasTextContent = newTaskContent.value.trim()
     const hasDateSelected = selectedDate.value
     const hasReminderSelected = selectedReminder.value
-    const hasDropdownOpen = showDatePicker.value || showReminderPicker.value
+    const hasDropdownOpen = showDatePicker.value || showReminderPicker.value || showListPicker.value
     
     // 只有在没有任何内容且没有下拉框打开时才收起
     if (!hasTextContent && !hasDateSelected && !hasReminderSelected && !hasDropdownOpen) {
@@ -311,9 +431,9 @@ const handleAddTask = () => {
     content: newTaskContent.value.trim(),
     dueDate: selectedDate.value,
     dueTime: selectedTime.value,
-    reminderTime: reminderTime
+    reminderTime: reminderTime,
+    listId: selectedListId.value
   }
-  console.log("taskData", taskData)
   
   if (props.isEditing && props.task) {
     // 编辑模式，发送更新事件
@@ -326,16 +446,25 @@ const handleAddTask = () => {
   }
 }
 
+// 切换列表选择器
+const toggleListPicker = () => {
+  showListPicker.value = !showListPicker.value
+  showDatePicker.value = false
+  showReminderPicker.value = false
+}
+
 // 切换日期选择器
 const toggleDatePicker = () => {
   showDatePicker.value = !showDatePicker.value
   showReminderPicker.value = false
+  showListPicker.value = false
 }
 
 // 切换提醒选择器
 const toggleReminderPicker = () => {
   showReminderPicker.value = !showReminderPicker.value
   showDatePicker.value = false
+  showListPicker.value = false
 }
 
 // 清除提醒
@@ -383,6 +512,39 @@ const getReminderDisplayText = () => {
   }
   
   return selectedReminder.value.label
+}
+
+// 获取当前任务所属的列表
+const getCurrentTaskList = () => {
+  if (props.task && props.task.listId) {
+    return availableLists.value.find(list => list.id === props.task.listId)
+  }
+  return null
+}
+
+// 获取除当前任务所属列表外的其他列表
+const getOtherLists = () => {
+  if (props.task && props.task.listId) {
+    return availableLists.value.filter(list => list.id !== props.task.listId)
+  }
+  return availableLists.value
+}
+
+// 选择列表
+const selectList = (list) => {
+  selectedListId.value = list.id
+  showListPicker.value = false
+}
+
+// 获取选中的列表名称
+const getSelectedListName = () => {
+  const list = availableLists.value.find(l => l.id === selectedListId.value)
+  return list ? list.name : '选择列表'
+}
+
+// 获取列表任务数量
+const getListTaskCount = (listId) => {
+  return taskStore.listTaskCounts[listId] || 0
 }
 
 // 选择提醒
