@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="flex items-center h-8  select-none  z-50 transition-all "
+    class="flex items-center h-10  select-none  z-50 transition-all "
     :class="{ 'pl-20': isMacOS }" 
     @dblclick="handleDoubleClick"
   >

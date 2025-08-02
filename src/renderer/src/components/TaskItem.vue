@@ -4,9 +4,8 @@
       'task-item-completed': task.status === 'done',
       'task-item-in-progress': task.status === 'doing',
       'task-item-paused': task.status === 'paused',
-      'task-item-selected': isSelected
+      'task-item-editing': isEditing
     }]" 
-    @click="$emit('select', task.id, $event)" 
     @dblclick="!isEditing && handleEditTask" 
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false">
@@ -72,7 +71,7 @@
     </div>
     
     <!-- 任务操作按钮 - 悬浮时显示 -->
-    <div v-show="isHovered || isSelected" class="task-item-actions">
+    <div v-show="isHovered || isEditing" class="task-item-actions">
       <button 
         v-if="task.status === 'todo'" 
         class="task-item-btn-action task-item-btn-start" 
@@ -136,10 +135,6 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  isSelected: {
-    type: Boolean,
-    default: false
-  },
   searchQuery: {
     type: String,
     default: ''
@@ -155,7 +150,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'select',
   'edit',
   'show-tooltip',
   'hide-tooltip'

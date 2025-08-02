@@ -40,10 +40,8 @@
           v-for="task in tasks"
           :key="task.id"
           :task="task"
-          :is-selected="selectedTasks.includes(task.id)"
           :current-duration="getCurrentDuration(task)"
           :is-editing="isEditingTask && editingTask?.id === task.id"
-          @select="handleTaskSelect"
           @edit="handleTaskEdit"
           @show-tooltip="handleShowTooltip"
           @hide-tooltip="handleHideTooltip"
@@ -71,17 +69,12 @@ const props = defineProps({
   searchQuery: {
     type: String,
     default: ''
-  },
-  selectedTasks: {
-    type: Array,
-    default: () => []
   }
 })
 
 const emit = defineEmits([
   'add-task',
   'update-task',
-  'select-task',
   'edit-task',
   'show-tooltip',
   'hide-tooltip'
@@ -107,11 +100,6 @@ const getCurrentDuration = (task) => {
   
   if (task.status !== 'doing' || !task.startedAt) return 0
   return Date.now() - new Date(task.startedAt).getTime() + (task.totalDuration || 0)
-}
-
-// 任务选择处理
-const handleTaskSelect = (taskId, event) => {
-  emit('select-task', taskId, event)
 }
 
 // 任务编辑处理

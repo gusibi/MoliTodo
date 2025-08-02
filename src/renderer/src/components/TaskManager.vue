@@ -91,10 +91,8 @@
         :tasks="displayTasks"
         :loading="loading"
         :search-query="searchQuery"
-        :selected-tasks="selectedTasks"
         @add-task="handleAddTask"
         @update-task="handleUpdateTask"
-        @select-task="selectTask"
         @edit-task="handleEditTask"
         @show-tooltip="showTooltip"
         @hide-tooltip="hideTooltip"
@@ -146,7 +144,6 @@ const isEditMode = ref(false)
 const editingTask = ref(null)
 const searchInput = ref(null)
 const updateTimer = ref(null)
-const selectedTasks = ref([])
 const showSearchOptions = ref(false)
 
 // 新增状态
@@ -238,19 +235,6 @@ const handleEditTask = (task) => {
 }
 
 
-
-const selectTask = (taskId, event) => {
-  if (event.ctrlKey || event.metaKey) {
-    const index = selectedTasks.value.indexOf(taskId)
-    if (index > -1) {
-      selectedTasks.value.splice(index, 1)
-    } else {
-      selectedTasks.value.push(taskId)
-    }
-  } else {
-    selectedTasks.value = [taskId]
-  }
-}
 
 const clearSearch = () => {
   taskStore.clearSearch()

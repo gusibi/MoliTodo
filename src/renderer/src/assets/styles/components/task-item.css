@@ -4,7 +4,7 @@
   @apply flex items-center gap-4 p-4 border border-border rounded-lg bg-card transition-all duration-200 cursor-pointer mb-2 relative hover:border-primary hover:shadow-lg hover:-translate-y-0.5;
 }
 
-.task-item-row.task-item-selected {
+.task-item-row.task-item-editing {
   @apply border-primary bg-primary/10;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .task-item-row:hover .task-item-actions,
-.task-item-row.task-item-selected .task-item-actions {
+.task-item-row.task-item-editing .task-item-actions {
   @apply opacity-100;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "0.6.6",
+  "version": "0.7.0",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
