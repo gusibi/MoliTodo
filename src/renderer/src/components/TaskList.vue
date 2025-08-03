@@ -1,7 +1,7 @@
 <template>
   <div class="task-list-container">
     <!-- 添加任务区域 -->
-    <TaskEdit :task="editingTask" :is-editing="isEditingTask" @add-task="handleAddTask" @update-task="handleUpdateTask"
+    <TaskEdit ref="taskEditRef" :task="editingTask" :is-editing="isEditingTask" @add-task="handleAddTask" @update-task="handleUpdateTask"
       @cancel-edit="handleCancelEdit" />
 
     <!-- 任务列表内容区域 -->
@@ -25,7 +25,7 @@
           </ul>
         </div>
         <div class="task-list-empty-hint">
-          💡 提示：您可以使用快捷键 Ctrl+N (Windows) 或 Cmd+N (Mac) 快速添加任务
+          💡 提示：您可以使用快捷键 {{ getShortcutText() }} 快速添加任务
         </div>
       </div>
 
@@ -87,6 +87,9 @@ const emit = defineEmits([
 // 编辑状态管理
 const editingTask = ref(null)
 const isEditingTask = ref(false)
+
+// TaskEdit组件引用
+const taskEditRef = ref(null)
 
 // 时间更新定时器和响应式更新触发器
 let timeUpdateTimer = null
@@ -204,6 +207,30 @@ const handleHideTooltip = () => {
   emit('hide-tooltip')
 }
 
+// 快捷键处理
+const handleKeydown = (event) => {
+  // 检查是否按下了 Ctrl+N (Windows/Linux) 或 Cmd+N (Mac)
+  const isCtrlOrCmd = event.ctrlKey || event.metaKey
+  
+  if (isCtrlOrCmd && event.key === 'n') {
+    event.preventDefault() // 阻止浏览器默认行为
+    focusAddTaskInput()
+  }
+}
+
+// 聚焦到添加任务输入框
+const focusAddTaskInput = () => {
+  if (taskEditRef.value && taskEditRef.value.focusInput) {
+    taskEditRef.value.focusInput()
+  }
+}
+
+// 获取快捷键文本
+const getShortcutText = () => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+  return isMac ? 'Cmd+N' : 'Ctrl+N'
+}
+
 // 启动时间更新定时器
 const startTimeUpdateTimer = () => {
   if (timeUpdateTimer) {
@@ -235,11 +262,17 @@ onMounted(async () => {
     await taskStore.getAllLists()
   }
   startTimeUpdateTimer()
+  
+  // 添加快捷键监听器
+  document.addEventListener('keydown', handleKeydown)
 })
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
   stopTimeUpdateTimer()
+  
+  // 移除快捷键监听器
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 

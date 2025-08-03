@@ -198,7 +198,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, computed, onMounted } from 'vue'
+import { ref, nextTick, watch, computed, onMounted, defineExpose } from 'vue'
 import { useTaskStore } from '../store/taskStore'
 
 // 定义 props
@@ -648,6 +648,18 @@ const formatSelectedDate = (date) => {
     return `${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${selectedTime.value}`
   }
 }
+
+// 聚焦到输入框（供父组件调用）
+const focusInput = () => {
+  if (addTaskInput.value) {
+    addTaskInput.value.focus()
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  focusInput
+})
 </script>
 
 <style>
