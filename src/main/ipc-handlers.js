@@ -641,9 +641,19 @@ class IpcHandlers {
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
+    
+    // 向主要窗口广播
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
         console.log(`主进程: 已向 ${window.id} 窗口广播任务更新`);
+        window.webContents.send('tasks-updated');
+      }
+    });
+
+    // 向所有悬浮任务窗口广播
+    this.windowManager.floatingTaskWindows.forEach((window, taskId) => {
+      if (window && !window.isDestroyed()) {
+        console.log(`主进程: 已向悬浮任务窗口 ${taskId} 广播任务更新`);
         window.webContents.send('tasks-updated');
       }
     });
@@ -656,9 +666,19 @@ class IpcHandlers {
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
+    
+    // 向主要窗口广播
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
         console.log(`主进程: 已向 ${window.id} 窗口广播清单更新`);
+        window.webContents.send('lists-updated');
+      }
+    });
+
+    // 向所有悬浮任务窗口广播
+    this.windowManager.floatingTaskWindows.forEach((window, taskId) => {
+      if (window && !window.isDestroyed()) {
+        console.log(`主进程: 已向悬浮任务窗口 ${taskId} 广播清单更新`);
         window.webContents.send('lists-updated');
       }
     });
