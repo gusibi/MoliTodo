@@ -1,0 +1,162 @@
+/* 悬浮任务组件样式 - 基于TaskItem样式 */
+
+/* 容器 - 半透明背景 */
+.floating-task-container {
+  @apply relative w-80 min-w-80 p-2;
+  /* 关键：设置半透明背景色 */
+  @apply bg-sidebar/50;
+  /* 添加 backdrop-filter 作为后备方案 */
+  @apply backdrop-blur-xl;
+  border-radius: 16px;
+}
+
+/* 拖拽区域 - 覆盖整个容器 */
+.floating-task-drag-area {
+  @apply absolute inset-0 rounded-2xl;
+  -webkit-app-region: drag;
+  z-index: 1;
+}
+
+/* 任务卡片 - 类似TaskItem的样式 */
+.floating-task-item {
+  @apply flex items-center gap-4 p-2 border border-border rounded-lg bg-card transition-all duration-200 relative shadow-sm;
+  position: relative;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+}
+
+.floating-task-item.task-completed {
+  @apply opacity-70 bg-success/20;
+}
+
+.floating-task-item.task-in-progress {
+  @apply border-l-4 border-l-warning bg-warning/50;
+}
+
+.floating-task-item.task-paused {
+  @apply border-l-4 border-l-muted-foreground bg-muted/50;
+}
+
+/* 关闭按钮 */
+.floating-task-close {
+  @apply absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs cursor-pointer transition-all duration-200 hover:scale-110 shadow-md;
+  z-index: 10;
+  -webkit-app-region: no-drag;
+}
+
+/* 复选框样式 - 复用TaskItem的样式 */
+.task-checkbox {
+  @apply relative mr-2;
+  -webkit-app-region: no-drag;
+}
+
+.task-checkbox input[type="checkbox"] {
+  @apply opacity-0 absolute w-5 h-5 m-0 cursor-pointer;
+}
+
+.task-checkbox label {
+  @apply block w-5 h-5 border-2 border-border rounded bg-background cursor-pointer transition-all duration-200 relative;
+}
+
+.task-checkbox label::after {
+  content: '';
+  @apply absolute top-0.5 left-1.5 w-1.5 h-2.5 border-success-foreground border-r-2 border-b-2 transform rotate-45 opacity-0 transition-opacity duration-200;
+}
+
+.task-checkbox input[type="checkbox"]:checked + label {
+  @apply bg-success border-success;
+}
+
+.task-checkbox input[type="checkbox"]:checked + label::after {
+  @apply opacity-100;
+}
+
+/* 任务信息 */
+.task-info {
+  @apply flex-1 min-w-0;
+  -webkit-app-region: no-drag;
+}
+
+/* 标题和按钮在同一行 */
+.task-header {
+  @apply flex items-center justify-between gap-2 mb-2;
+}
+
+.task-title {
+  @apply text-sm font-medium text-card-foreground leading-relaxed break-words flex-1 p-1;
+  /* 限制最多显示两行 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  max-height: 2.8em; /* 2行的高度 */
+}
+
+.floating-task-item.task-completed .task-title {
+  @apply line-through text-muted-foreground;
+}
+
+/* 标签样式 - 复用TaskItem的样式 */
+.task-tags {
+  @apply flex gap-1 flex-wrap p-1;
+}
+
+.task-tag {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap;
+}
+
+.task-tag i {
+  @apply text-xs;
+}
+
+.task-tag-status {
+  @apply text-white;
+}
+
+.task-tag-doing {
+  @apply bg-warning;
+}
+
+.task-tag-paused {
+  @apply bg-muted-foreground;
+}
+
+.task-tag-completed {
+  @apply bg-success;
+}
+
+.task-tag-reminder {
+  @apply bg-primary/10 text-primary;
+}
+
+.task-tag-overdue {
+  @apply bg-destructive/10 text-destructive;
+}
+
+/* 任务操作按钮 */
+.task-actions {
+  @apply flex flex-col gap-1 opacity-100 transition-opacity duration-200 flex-shrink-0;
+  -webkit-app-region: no-drag;
+}
+
+.task-btn-action {
+  @apply w-8 h-8 border-0 rounded bg-muted text-muted-foreground cursor-pointer flex items-center justify-center transition-all duration-200 text-xs hover:bg-accent hover:text-foreground hover:-translate-y-0.5;
+}
+
+.task-btn-start:hover,
+.task-btn-resume:hover {
+  @apply bg-success/10 text-success;
+}
+
+.task-btn-pause:hover {
+  @apply bg-warning/10 text-warning;
+}
+
+.task-btn-complete:hover {
+  @apply bg-primary/10 text-primary;
+}
+
+.task-btn-restart:hover {
+  @apply bg-accent text-accent-foreground;
+}
