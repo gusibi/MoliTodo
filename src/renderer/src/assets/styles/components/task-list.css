@@ -259,3 +259,37 @@
 .task-edit-container {
   @apply bg-background border-b border-border p-4 backdrop-blur-sm flex-shrink-0;
 }
+
+/* 任务分组样式 */
+.task-group {
+  @apply mb-6;
+}
+
+.task-group:last-child {
+  @apply mb-0;
+}
+
+/* 在清单视图中，如果没有分组标题，减少间距 */
+.task-group:not(:has(.task-group-header)) {
+  @apply mb-0;
+}
+
+.task-group-header {
+  @apply mb-3 pb-2 border-b border-border/50;
+}
+
+.task-group-title {
+  @apply flex items-center gap-2 text-sm font-medium text-muted-foreground;
+}
+
+.task-group-title i {
+  @apply text-xs;
+}
+
+.task-group-count {
+  @apply text-xs bg-muted px-2 py-0.5 rounded-full;
+}
+
+.task-group-items {
+  @apply space-y-1;
+}

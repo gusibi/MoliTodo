@@ -3,7 +3,7 @@
     <div class="floating-icon" :class="{ alert: isAlert }" @click="handleClick" @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave" @mousedown="handleMouseDown">
       <!-- 默认图标 -->
-      <div class="icon-content default-icon">
+      <div class="icon-content default-icon" :class="{ 'in-progress': hasInProgressTasks }">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
@@ -23,8 +23,7 @@
         <span>{{ taskCount > 99 ? '99+' : taskCount }}</span>
       </div>
 
-      <!-- 进行中任务指示器 -->
-      <div v-if="hasInProgressTasks" class="progress-indicator"></div>
+
     </div>
   </div>
 </template>
@@ -172,7 +171,7 @@ const handleMouseDown = (event) => {
 
   // 添加pending状态，改善初始延迟体验
   floatingIcon.classList.add('pending-drag')
-  
+
   // 获取当前窗口位置
   window.electronAPI.drag.getWindowPosition().then(pos => {
     initialWindowPos = pos
@@ -185,7 +184,7 @@ const handleMouseDown = (event) => {
 
   const handleMouseMove = (moveEvent) => {
     if (!isDragging.value) return
-    
+
     // 如果初始位置还没获取到，暂时不处理
     if (!initialWindowPos) return
 
@@ -246,11 +245,11 @@ const handleMouseDown = (event) => {
     if (hasMoved) {
       // 拖拽操作完成
       console.log('拖拽操作完成')
-      
+
       // 计算最终位移
       const finalDeltaX = upEvent.screenX - dragStartPos.value.x
       const finalDeltaY = upEvent.screenY - dragStartPos.value.y
-      
+
       // 3. 发送最终精确位置，确保视觉和实际位置对齐
       if (initialWindowPos) {
         const finalPosition = {
@@ -262,21 +261,21 @@ const handleMouseDown = (event) => {
           // 先同步最终位置
           await window.electronAPI.drag.dragWindow(finalPosition)
           console.log('最终位置已同步', finalPosition)
-          
+
           // 位置同步后，平滑地移除transform
           floatingIcon.style.transition = 'transform 0.15s ease-out'
           floatingIcon.style.transform = ''
-          
+
           // 移除拖拽样式
           floatingIcon.classList.remove('dragging')
-          
+
           // 短暂延迟后移除transition，恢复默认
           setTimeout(() => {
             if (floatingIcon) {
               floatingIcon.style.transition = ''
             }
           }, 150)
-          
+
         } catch (error) {
           console.error('最终位置同步失败:', error)
           // 如果失败，也要清理样式
@@ -288,7 +287,7 @@ const handleMouseDown = (event) => {
         floatingIcon.style.transform = ''
         floatingIcon.classList.remove('dragging')
       }
-      
+
       try {
         await window.electronAPI.drag.endDrag()
       } catch (error) {
@@ -304,7 +303,7 @@ const handleMouseDown = (event) => {
     hasMoved = false
     initialWindowPos = null
     pendingUpdate = false
-    
+
     // 清理所有可能的样式类
     floatingIcon.classList.remove('pending-drag', 'dragging')
 
@@ -346,7 +345,7 @@ const handleTaskReminder = (event, task) => {
   console.log('收到任务提醒事件:', event, task)
   isAlert.value = true
   console.log('设置提醒状态为 true，isAlert.value =', isAlert.value)
-  
+
   // 不自动清除提醒状态，只有用户悬浮到图标上时才清除
   // 提醒状态将持续显示直到用户交互
 }
@@ -467,6 +466,27 @@ onUnmounted(() => {
   opacity: 1;
 }
 
+/* 进行中任务时的绿色闪烁效果 */
+.default-icon.in-progress {
+  color: #2ed573;
+  animation: progressBlink 1.5s infinite;
+}
+
+@keyframes progressBlink {
+
+  0%,
+  50% {
+    color: #2ed573;
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    color: #2ed573;
+    opacity: 0.4;
+  }
+}
+
 .alert-icon {
   opacity: 0;
   position: absolute;
@@ -554,34 +574,7 @@ onUnmounted(() => {
   transform-origin: center;
 }
 
-.progress-indicator {
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  background: #2ed573;
-  border-radius: 50%;
-  animation: blink 2s infinite;
-  z-index: 10;
-  /* 确保指示器在最上层 */
-  pointer-events: none;
-  /* 防止指示器干扰点击 */
-}
 
-@keyframes blink {
-
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  51%,
-  100% {
-    opacity: 0.3;
-  }
-}
 
 /* 响应式调整 */
 @media (max-width: 768px) {
