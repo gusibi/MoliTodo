@@ -29,7 +29,8 @@
       <div v-if="tasks.length > 0" class="task-panel-list">
         <div v-for="task in sortedTasks" :key="task.id"
           :class="['task-panel-item', task.status || (task.completed ? 'done' : 'todo')]" :data-task-id="task.id"
-          :data-status="task.status || (task.completed ? 'done' : 'todo')">
+          :data-status="task.status || (task.completed ? 'done' : 'todo')"
+          @contextmenu="showTaskContextMenu($event, task)">
           <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
             <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
           </div>
@@ -154,6 +155,20 @@
     <div class="task-panel-footer">
       <div class="task-panel-footer-stats" @click="openTaskManager" title="点击打开任务管理">{{ footerStats }}</div>
     </div>
+
+    <!-- 右键菜单 -->
+    <div v-if="showContextMenu" class="task-context-menu" :style="contextMenuStyle" @click.stop>
+      <div class="context-menu-item" @click="createFloatingTask">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            fill="currentColor" />
+        </svg>
+        创建悬浮任务
+      </div>
+    </div>
+
+    <!-- 遮罩层，用于关闭右键菜单 -->
+    <div v-if="showContextMenu" class="context-menu-overlay" @click="hideContextMenu"></div>
   </div>
 </template>
 
@@ -173,6 +188,11 @@ const currentReminderTask = ref(null)
 const reminderDate = ref('')
 const reminderTime = ref('')
 const completedTasksCount = ref(0)
+
+// 右键菜单相关
+const showContextMenu = ref(false)
+const contextMenuStyle = ref({})
+const selectedTask = ref(null)
 
 // 引用
 const quickAddInput = ref(null)
@@ -506,6 +526,38 @@ const openTaskManager = async () => {
     await window.electronAPI.windows.showTaskManager()
   } catch (error) {
     console.error('打开任务管理窗口失败:', error)
+  }
+}
+
+// 右键菜单相关方法
+const showTaskContextMenu = (event, task) => {
+  event.preventDefault()
+  selectedTask.value = task
+
+  const rect = event.currentTarget.getBoundingClientRect()
+  contextMenuStyle.value = {
+    position: 'fixed',
+    left: `${event.clientX}px`,
+    top: `${event.clientY}px`,
+    zIndex: 1000
+  }
+
+  showContextMenu.value = true
+}
+
+const hideContextMenu = () => {
+  showContextMenu.value = false
+  selectedTask.value = null
+}
+
+const createFloatingTask = async () => {
+  if (!selectedTask.value) return
+
+  try {
+    await window.electronAPI.windows.createFloatingTask(selectedTask.value.id)
+    hideContextMenu()
+  } catch (error) {
+    console.error('创建悬浮任务失败:', error)
   }
 }
 

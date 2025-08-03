@@ -436,6 +436,15 @@ class IpcHandlers {
       }
     });
 
+    // 悬浮任务相关
+    ipcMain.handle('create-floating-task', (event, taskId) => {
+      this.windowManager.createFloatingTask(taskId);
+    });
+
+    ipcMain.handle('close-floating-task', (event, taskId) => {
+      this.windowManager.closeFloatingTask(taskId);
+    });
+
     // 窗口控制相关
     ipcMain.handle('window-minimize', (event, windowType) => {
       this.windowManager.minimizeWindow(windowType);

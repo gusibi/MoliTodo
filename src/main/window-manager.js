@@ -8,6 +8,7 @@ class WindowManager {
     this.taskPanelWindow = null;
     this.taskManagerWindow = null;
     this.settingsWindow = null;
+    this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
     this.tray = null;
     this.appInstance = appInstance;
 
@@ -406,6 +407,73 @@ class WindowManager {
     }
   }
 
+  createFloatingTask(taskId) {
+    // 如果已经存在该任务的悬浮窗口，则聚焦它
+    if (this.floatingTaskWindows.has(taskId)) {
+      const existingWindow = this.floatingTaskWindows.get(taskId);
+      if (!existingWindow.isDestroyed()) {
+        existingWindow.focus();
+        return;
+      } else {
+        this.floatingTaskWindows.delete(taskId);
+      }
+    }
+
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    
+    // 随机位置，避免重叠
+    const x = Math.floor(Math.random() * (width - 280)) + 20;
+    const y = Math.floor(Math.random() * (height - 200)) + 20;
+
+    const floatingTaskWindow = new BrowserWindow({
+      width: 340,
+      height: 120,
+      x: x,
+      y: y,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      resizable: false,
+      movable: true, // 允许移动
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        enableRemoteModule: false,
+        nodeIntegration: false
+      }
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      floatingTaskWindow.loadURL(`${this.devBaseUrl}/#/floating-task/${taskId}`);
+      floatingTaskWindow.webContents.openDevTools({ mode: 'detach' });
+
+    } else {
+      floatingTaskWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
+        hash: `floating-task/${taskId}`
+      });
+    }
+
+    floatingTaskWindow.once('ready-to-show', () => {
+      floatingTaskWindow.show();
+    });
+
+    floatingTaskWindow.on('closed', () => {
+      this.floatingTaskWindows.delete(taskId);
+    });
+
+    this.floatingTaskWindows.set(taskId, floatingTaskWindow);
+  }
+
+  closeFloatingTask(taskId) {
+    const window = this.floatingTaskWindows.get(taskId);
+    if (window && !window.isDestroyed()) {
+      window.close();
+    }
+    this.floatingTaskWindows.delete(taskId);
+  }
+
   quit() {
     // Clean up windows before quitting
     if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
@@ -417,6 +485,14 @@ class WindowManager {
     if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
       this.settingsWindow.close();
     }
+
+    // Close all floating task windows
+    this.floatingTaskWindows.forEach((window, taskId) => {
+      if (!window.isDestroyed()) {
+        window.close();
+      }
+    });
+    this.floatingTaskWindows.clear();
 
     // Force close floating window even if closable is false
     if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
@@ -449,6 +525,14 @@ class WindowManager {
     if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
       this.settingsWindow.close();
     }
+
+    // Close all floating task windows
+    this.floatingTaskWindows.forEach((window, taskId) => {
+      if (!window.isDestroyed()) {
+        window.close();
+      }
+    });
+    this.floatingTaskWindows.clear();
 
     // Force close floating window even if closable is false
     if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {

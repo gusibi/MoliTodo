@@ -7,6 +7,7 @@ import TaskManagerView from '../views/TaskManagerView.vue'
 
 // 导入组件作为页面级组件
 import TaskPanel from '../components/TaskPanel.vue'
+import FloatingTask from '../components/FloatingTask.vue'
 
 const routes = [
   {
@@ -39,6 +40,15 @@ const routes = [
     component: TaskPanel,
     meta: {
       title: '任务面板'
+    }
+  },
+  {
+    path: '/floating-task/:taskId',
+    name: 'FloatingTask',
+    component: FloatingTask,
+    props: true,
+    meta: {
+      title: '悬浮任务'
     }
   }
 ]
