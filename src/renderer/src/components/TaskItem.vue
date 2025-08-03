@@ -1,31 +1,22 @@
 <template>
-  <div 
-    :class="['task-item-row', {
-      'task-item-completed': task.status === 'done',
-      'task-item-in-progress': task.status === 'doing',
-      'task-item-paused': task.status === 'paused',
-      'task-item-editing': isEditing
-    }]" 
-    @dblclick="!isEditing && handleEditTask" 
-    @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false">
-    
+  <div :class="['task-item-row', {
+    'task-item-completed': task.status === 'done',
+    'task-item-in-progress': task.status === 'doing',
+    'task-item-paused': task.status === 'paused',
+    'task-item-editing': isEditing
+  }]" @dblclick="!isEditing && handleEditTask" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+
     <!-- <button class="task-item-expand" v-if="task.description">
       <i class="fas fa-chevron-right"></i>
     </button>
     <div class="task-item-expand-placeholder" v-else></div>
      -->
     <div class="task-item-checkbox">
-      <input 
-        type="checkbox" 
-        :id="`task-${task.id}`"
-        :checked="task.status === 'done'" 
-        @change="handleToggleComplete(task)"
-        @click.stop 
-      />
+      <input type="checkbox" :id="`task-${task.id}`" :checked="task.status === 'done'"
+        @change="handleToggleComplete(task)" @click.stop />
       <label :for="`task-${task.id}`"></label>
     </div>
-    
+
     <div class="task-item-info">
       <div class="task-item-title" v-html="highlightedContent"></div>
       <div class="task-item-description" v-if="task.description">{{ task.description }}</div>
@@ -43,25 +34,21 @@
           <i class="fas fa-check"></i>
           用时 {{ formatDuration(task.totalDuration || 0) }}
         </span>
-        
+
         <!-- 时间标签 -->
-        <span 
-          v-if="task.reminderTime" 
-          class="task-item-tag task-item-tag-reminder tooltip-container" 
-          @mouseenter="showTooltip($event, `提醒时间: ${formatReminderTime(task.reminderTime)}`)"
+        <span v-if="task.reminderTime" :class="['task-item-tag', 'task-item-tag-reminder', 'tooltip-container', {
+          'task-item-tag-overdue': isReminderOverdue
+        }]" @mouseenter="showTooltip($event, `提醒时间: ${formatReminderTime(task.reminderTime)}`)"
           @mouseleave="hideTooltip">
           <i class="fas fa-calendar"></i>
           {{ formatReminderTime(task.reminderTime) }}
         </span>
-        <span 
-          v-else-if="task.createdAt" 
-          class="task-item-tag task-item-tag-created tooltip-container"
-          @mouseenter="showTooltip($event, `创建时间: ${formatCreatedTime(task.createdAt)}`)"
-          @mouseleave="hideTooltip">
+        <span v-else-if="task.createdAt" class="task-item-tag task-item-tag-created tooltip-container"
+          @mouseenter="showTooltip($event, `创建时间: ${formatCreatedTime(task.createdAt)}`)" @mouseleave="hideTooltip">
           <i class="fas fa-clock"></i>
           {{ formatCreatedTime(task.createdAt) }}
         </span>
-        
+
         <!-- 完成时间标签 -->
         <span v-if="task.completedAt" class="task-item-tag task-item-tag-completed-time">
           <i class="fas fa-check-circle"></i>
@@ -69,55 +56,34 @@
         </span>
       </div>
     </div>
-    
+
     <!-- 任务操作按钮 - 悬浮时显示 -->
     <div v-show="isHovered || isEditing" class="task-item-actions">
-      <button 
-        v-if="task.status === 'todo'" 
-        class="task-item-btn-action task-item-btn-start" 
-        @click.stop="handleStartTask" 
-        title="开始">
+      <button v-if="task.status === 'todo'" class="task-item-btn-action task-item-btn-start"
+        @click.stop="handleStartTask" title="开始">
         <i class="fas fa-play"></i>
       </button>
-      <button 
-        v-if="task.status === 'doing'" 
-        class="task-item-btn-action task-item-btn-pause" 
-        @click.stop="handlePauseTask" 
-        title="暂停">
+      <button v-if="task.status === 'doing'" class="task-item-btn-action task-item-btn-pause"
+        @click.stop="handlePauseTask" title="暂停">
         <i class="fas fa-pause"></i>
       </button>
-      <button 
-        v-if="task.status === 'paused'" 
-        class="task-item-btn-action task-item-btn-resume" 
-        @click.stop="handleResumeTask" 
-        title="继续">
+      <button v-if="task.status === 'paused'" class="task-item-btn-action task-item-btn-resume"
+        @click.stop="handleResumeTask" title="继续">
         <i class="fas fa-play"></i>
       </button>
-      <button 
-        v-if="task.status === 'doing' || task.status === 'paused'" 
-        class="task-item-btn-action task-item-btn-complete" 
-        @click.stop="handleCompleteTask" 
-        title="完成">
+      <button v-if="task.status === 'doing' || task.status === 'paused'"
+        class="task-item-btn-action task-item-btn-complete" @click.stop="handleCompleteTask" title="完成">
         <i class="fas fa-check"></i>
       </button>
-      <button 
-        v-if="task.status === 'done'" 
-        class="task-item-btn-action task-item-btn-restart" 
-        @click.stop="handleRestartTask" 
-        title="重新开始">
+      <button v-if="task.status === 'done'" class="task-item-btn-action task-item-btn-restart"
+        @click.stop="handleRestartTask" title="重新开始">
         <i class="fas fa-redo"></i>
       </button>
-      <button 
-        v-if="task.status !== 'done'"
-        class="task-item-btn-action task-item-btn-edit" 
-        @click.stop="handleEditTask" 
+      <button v-if="task.status !== 'done'" class="task-item-btn-action task-item-btn-edit" @click.stop="handleEditTask"
         title="编辑">
         <i class="fas fa-edit"></i>
       </button>
-      <button 
-        class="task-item-btn-action task-item-btn-delete" 
-        @click.stop="handleDeleteTask" 
-        title="删除">
+      <button class="task-item-btn-action task-item-btn-delete" @click.stop="handleDeleteTask" title="删除">
         <i class="fas fa-trash"></i>
       </button>
     </div>
@@ -188,8 +154,8 @@ const handleCompleteTask = async () => {
 }
 
 const handleRestartTask = async () => {
-  await taskStore.updateTask(props.task.id, { 
-    status: 'todo', 
+  await taskStore.updateTask(props.task.id, {
+    status: 'todo',
     completedAt: null,
     startTime: null,
     totalDuration: 0
@@ -214,19 +180,25 @@ const handleEditTask = () => {
 // 高亮搜索词
 const highlightedContent = computed(() => {
   if (!props.searchQuery) return props.task.content
-  
+
   const regex = new RegExp(`(${props.searchQuery})`, 'gi')
   return props.task.content.replace(regex, '<mark>$1</mark>')
+})
+
+// 判断提醒时间是否已过期
+const isReminderOverdue = computed(() => {
+  if (!props.task.reminderTime) return false
+  return new Date(props.task.reminderTime) < new Date()
 })
 
 // 格式化持续时间
 const formatDuration = (duration) => {
   if (!duration) return '0分钟'
-  
+
   const hours = Math.floor(duration / 3600000)
   const minutes = Math.floor((duration % 3600000) / 60000)
   const seconds = Math.floor((duration % 60000) / 1000)
-  
+
   if (hours > 0) {
     return `${hours}小时${minutes}分钟`
   } else if (minutes > 0) {
@@ -264,5 +236,4 @@ const hideTooltip = () => {
 
 <style>
 @import '../assets/styles/components/task-item.css';
-
 </style>

@@ -7,7 +7,9 @@
     <div :class="['floating-task-item', {
       'task-completed': currentStatus === 'done',
       'task-in-progress': currentStatus === 'doing',
-      'task-paused': currentStatus === 'paused'
+      'task-paused': currentStatus === 'paused',
+      'task-reminder-overdue': isReminderOverdue,
+      'animate-pulse': isReminderOverdue
     }]">
 
       <!-- 关闭按钮 -->
@@ -22,7 +24,10 @@
         <div class="task-tags">
           <!-- 提醒时间标签 -->
           <span v-if="task?.reminderTime"
-            :class="['task-tag', 'task-tag-reminder', { 'task-tag-overdue': isReminderOverdue }]">
+            :class="['task-tag', 'task-tag-reminder', { 
+              'task-tag-overdue': isReminderOverdue,
+              'animate-bounce': isReminderOverdue
+            }]">
             <i class="fas fa-calendar"></i>
             {{ formatReminderTime(task.reminderTime) }}
           </span>

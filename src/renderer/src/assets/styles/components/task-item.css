@@ -109,6 +109,10 @@
   @apply bg-primary/10 text-primary cursor-help transition-all duration-200 hover:bg-primary/20 hover:-translate-y-0.5;
 }
 
+.task-item-tag-overdue {
+  @apply bg-destructive/10 text-destructive hover:bg-destructive/20;
+}
+
 .task-item-tag-created {
   @apply bg-muted text-muted-foreground cursor-help transition-all duration-200 hover:bg-muted/80 hover:-translate-y-0.5;
 }

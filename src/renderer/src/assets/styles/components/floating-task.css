@@ -63,11 +63,11 @@
   @apply absolute top-0.5 left-1.5 w-1.5 h-2.5 border-success-foreground border-r-2 border-b-2 transform rotate-45 opacity-0 transition-opacity duration-200;
 }
 
-.task-checkbox input[type="checkbox"]:checked + label {
+.task-checkbox input[type="checkbox"]:checked+label {
   @apply bg-success border-success;
 }
 
-.task-checkbox input[type="checkbox"]:checked + label::after {
+.task-checkbox input[type="checkbox"]:checked+label::after {
   @apply opacity-100;
 }
 
@@ -83,14 +83,15 @@
 }
 
 .task-title {
-  @apply text-sm font-medium text-card-foreground leading-relaxed break-words flex-1 p-1;
+  @apply text-sm font-medium text-card-foreground leading-relaxed break-words flex-1 p-1 mb-2;
   /* 限制最多显示两行 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
-  max-height: 2.8em; /* 2行的高度 */
+  max-height: 2.8em;
+  /* 2行的高度 */
 }
 
 .floating-task-item.task-completed .task-title {
@@ -130,8 +131,13 @@
   @apply bg-primary/10 text-primary;
 }
 
+/* 过期提醒样式 - 使用Tailwind CSS类 */
+.floating-task-item.task-reminder-overdue {
+  @apply bg-destructive/20 border-warning;
+}
+
 .task-tag-overdue {
-  @apply bg-destructive/10 text-destructive;
+  @apply bg-warning text-warning-foreground;
 }
 
 /* 任务操作按钮 */
