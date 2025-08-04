@@ -90,54 +90,54 @@
 }
 
 .dark {
-  /* Core Background and Foreground */
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
+  /* Core Background and Foreground - 更柔和的深色背景 */
+  --background: 0 0% 8%;
+  --foreground: 0 0% 98%;
   
-  /* Card Components */
-  --card: 0 0% 4%;
-  --card-foreground: 0 0% 100%;
+  /* Card Components - 略亮的卡片背景 */
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 98%;
   
-  /* Popover Components */
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 100%;
+  /* Popover Components - 与背景保持一致 */
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 98%;
   
   /* Primary Colors */
-  --primary: 0 0% 100%;
-  --primary-foreground: 0 0% 0%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
   
-  /* Secondary Colors */
-  --secondary: 0 0% 13%;
-  --secondary-foreground: 0 0% 100%;
+  /* Secondary Colors - 更柔和的次要色 */
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 98%;
   
-  /* Muted Colors */
-  --muted: 0 0% 11%;
+  /* Muted Colors - 更柔和的静音色 */
+  --muted: 0 0% 15%;
   --muted-foreground: 0 0% 64%;
   
-  /* Accent Colors */
-  --accent: 0 0% 20%;
-  --accent-foreground: 0 0% 100%;
+  /* Accent Colors - 更温和的强调色 */
+  --accent: 0 0% 18%;
+  --accent-foreground: 0 0% 98%;
   
   /* Destructive Colors */
-  --destructive: 0 100% 67%;
-  --destructive-foreground: 0 0% 0%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
   
   /* Success Colors */
-  --success: 120 100% 40%;
-  --success-foreground: 0 0% 0%;
+  --success: 120 100% 25%;
+  --success-foreground: 0 0% 98%;
   
   /* Warning Colors */
-  --warning: 38 100% 51%;
-  --warning-foreground: 0 0% 0%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 9%;
   
   /* Info Colors */
-  --info: 0 0% 64%;
-  --info-foreground: 0 0% 0%;
+  --info: 200 100% 50%;
+  --info-foreground: 0 0% 98%;
   
-  /* Border and Input */
-  --border: 0 0% 14%;
+  /* Border and Input - 更柔和的边框色 */
+  --border: 0 0% 20%;
   --input: 0 0% 20%;
-  --ring: 0 0% 64%;
+  --ring: 0 0% 83%;
   
   /* Chart Colors */
   --chart-1: 38 100% 51%;

@@ -90,16 +90,16 @@
 }
 
 .dark {
-  /* Core Background and Foreground */
-  --background: 0 0% 0%;
+  /* Core Background and Foreground - 更柔和的深色背景 */
+  --background: 215 15% 8%;
   --foreground: 210 9% 91%;
   
-  /* Card Components */
-  --card: 215 28% 9%;
+  /* Card Components - 略亮的卡片背景 */
+  --card: 215 20% 12%;
   --card-foreground: 0 0% 85%;
   
-  /* Popover Components */
-  --popover: 0 0% 0%;
+  /* Popover Components - 与背景保持一致 */
+  --popover: 215 15% 8%;
   --popover-foreground: 210 9% 91%;
   
   /* Primary Colors */
@@ -110,12 +110,12 @@
   --secondary: 210 17% 95%;
   --secondary-foreground: 210 25% 8%;
   
-  /* Muted Colors */
-  --muted: 0 0% 9%;
+  /* Muted Colors - 更柔和的静音色 */
+  --muted: 215 15% 12%;
   --muted-foreground: 215 14% 48%;
   
-  /* Accent Colors */
-  --accent: 215 100% 12%;
+  /* Accent Colors - 更温和的强调色 */
+  --accent: 215 25% 15%;
   --accent-foreground: 203 89% 53%;
   
   /* Destructive Colors */
@@ -134,9 +134,9 @@
   --info: 203 89% 53%;
   --info-foreground: 0 0% 100%;
   
-  /* Border and Input */
-  --border: 215 28% 15%;
-  --input: 200 50% 19%;
+  /* Border and Input - 更柔和的边框色 */
+  --border: 215 20% 18%;
+  --input: 215 25% 20%;
   --ring: 203 100% 50%;
   
   /* Chart Colors */

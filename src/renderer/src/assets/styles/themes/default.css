@@ -90,32 +90,32 @@
 }
 
 .dark {
-  /* Core Background and Foreground - #171717, #e5e5e5 */
-  --background: 0 0% 9%;
+  /* Core Background and Foreground - 更柔和的深灰背景 */
+  --background: 220 8% 12%;
   --foreground: 0 0% 90%;
   
-  /* Card Components - #262626, #e5e5e5 */
-  --card: 0 0% 15%;
+  /* Card Components - 略亮的卡片背景 */
+  --card: 220 8% 16%;
   --card-foreground: 0 0% 90%;
   
-  /* Popover Components - #262626, #e5e5e5 */
-  --popover: 0 0% 15%;
+  /* Popover Components - 与卡片保持一致 */
+  --popover: 220 8% 16%;
   --popover-foreground: 0 0% 90%;
   
   /* Primary Colors - #3b82f6, #ffffff */
   --primary: 217 91% 60%;
   --primary-foreground: 0 0% 100%;
   
-  /* Secondary Colors - #262626, #e5e5e5 */
-  --secondary: 0 0% 15%;
+  /* Secondary Colors - 更柔和的次要色 */
+  --secondary: 220 8% 16%;
   --secondary-foreground: 0 0% 90%;
   
-  /* Muted Colors - #262626, #a3a3a3 */
-  --muted: 0 0% 15%;
+  /* Muted Colors - 柔和的静音色 */
+  --muted: 220 8% 16%;
   --muted-foreground: 0 0% 64%;
   
-  /* Accent Colors - #1e3a8a, #bfdbfe */
-  --accent: 224 64% 33%;
+  /* Accent Colors - 更温和的强调色 */
+  --accent: 220 12% 20%;
   --accent-foreground: 213 97% 87%;
   
   /* Destructive Colors - #ef4444, #ffffff */
@@ -134,9 +134,9 @@
   --info: 217 91% 60%;
   --info-foreground: 0 0% 100%;
   
-  /* Border and Input - #404040, #3b82f6 */
-  --border: 0 0% 25%;
-  --input: 0 0% 25%;
+  /* Border and Input - 更柔和的边框色 */
+  --border: 220 10% 22%;
+  --input: 220 10% 22%;
   --ring: 217 91% 60%;
   
   /* Chart Colors - #60a5fa, #3b82f6, #2563eb, #1d4ed8, #1e40af */
@@ -152,14 +152,14 @@
   --status-done: 142 76% 36%;
   --status-paused: 0 0% 64%;
   
-  /* Sidebar Colors - #171717, #e5e5e5, #3b82f6, #ffffff, #1e3a8a, #bfdbfe, #404040 */
-  --sidebar: 0 0% 9%;
+  /* Sidebar Colors - 更柔和的侧边栏色彩 */
+  --sidebar: 220 8% 12%;
   --sidebar-foreground: 0 0% 90%;
   --sidebar-primary: 217 91% 60%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 224 64% 33%;
+  --sidebar-accent: 220 12% 20%;
   --sidebar-accent-foreground: 213 97% 87%;
-  --sidebar-border: 0 0% 25%;
+  --sidebar-border: 220 10% 22%;
   --sidebar-ring: 217 91% 60%;
   
   /* Shadows */
