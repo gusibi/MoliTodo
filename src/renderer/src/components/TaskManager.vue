@@ -74,6 +74,16 @@
             <i class="fas fa-columns"></i>
           </button>
           
+          <!-- 周视图按钮 -->
+          <button 
+          v-if="currentCategory === 'all'"
+            @click="setViewMode('weekly')" 
+            :class="['task-manager-action-btn', { 'active': viewMode === 'weekly' }]"
+            title="周视图"
+          >
+            <i class="fas fa-calendar-week"></i>
+          </button>
+          
           <!-- 显示/隐藏已完成任务按钮 (仅在 all 分类下显示) -->
           <button 
             v-if="currentCategory === 'all' || currentCategory === 'today'"
@@ -86,8 +96,10 @@
         </div>
       </div>
 
-      <!-- 任务列表组件 -->
+      <!-- 任务视图组件 -->
+      <!-- 列表视图 -->
       <TaskList
+        v-if="viewMode === 'list'"
         :tasks="displayTasks"
         :loading="loading"
         :search-query="searchQuery"
@@ -97,6 +109,22 @@
         @show-tooltip="showTooltip"
         @hide-tooltip="hideTooltip"
       />
+      
+      <!-- 周视图 -->
+      <WeeklyView
+        v-else-if="viewMode === 'weekly'"
+        :tasks="displayTasks"
+        :loading="loading"
+        :search-query="searchQuery"
+        @edit-task="handleEditTask"
+        @show-tooltip="showTooltip"
+        @hide-tooltip="hideTooltip"
+      />
+      
+      <!-- 看板视图 (待实现) -->
+      <div v-else-if="viewMode === 'kanban'" class="flex items-center justify-center py-16 text-muted-foreground text-base">
+        <p>看板视图开发中...</p>
+      </div>
 
       <!-- 统计信息条 -->
       <div class="task-manager-stats-bar">
@@ -136,6 +164,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import TaskList from './TaskList.vue'
+import WeeklyView from './WeeklyView.vue'
 import SidebarNav from './SidebarNav.vue'
 
 
@@ -148,7 +177,7 @@ const showSearchOptions = ref(false)
 
 // 新增状态
 const showSearchBox = ref(false)
-const viewMode = ref('list') // 'list' 或 'kanban'
+const viewMode = ref('list') // 'list', 'kanban', 或 'weekly'
 // 计算属性：根据当前分类获取对应的显示已完成任务状态
 const showCompletedTasks = computed({
   get: () => {
@@ -432,4 +461,5 @@ watch(() => taskStore.searchQuery, (newQuery) => {
 
 <style>
 @import '../assets/styles/components/task-manager.css';
+@import '../assets/styles/components/weekly-view.css';
 </style>

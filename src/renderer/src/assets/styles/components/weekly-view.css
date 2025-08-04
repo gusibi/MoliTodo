@@ -1,0 +1,365 @@
+/* Weekly View Styles - Apple Calendar Inspired with Tailwind CSS */
+
+/* Main weekly view container */
+.weekly-view {
+  @apply flex flex-col h-full bg-background rounded-xl overflow-hidden shadow-sm;
+}
+
+/* Weekly navigation styles */
+.weekly-navigation {
+  @apply flex items-center justify-center gap-3 py-3 px-4 bg-background border-b border-border mb-4;
+}
+
+.weekly-nav-btn {
+  @apply flex items-center justify-center w-9 h-9 border border-border bg-card text-foreground rounded-lg cursor-pointer transition-all duration-200 text-sm hover:bg-accent hover:text-accent-foreground hover:border-primary active:scale-95;
+}
+
+.weekly-nav-prev,
+.weekly-nav-next {
+  @apply w-9 p-2;
+}
+
+.weekly-nav-today {
+  @apply w-auto px-4 font-medium min-w-[60px];
+}
+
+.weekly-nav-today-active {
+  @apply bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90;
+}
+
+.weekly-nav-range {
+  @apply flex items-center justify-center min-w-[200px];
+}
+
+.weekly-nav-range-text {
+  @apply text-lg font-semibold text-foreground text-center;
+}
+
+/* Weekly grid layout */
+.weekly-grid {
+  @apply grid grid-cols-7 gap-px bg-border border border-border rounded-lg overflow-hidden min-h-[500px];
+}
+
+.weekly-column {
+  @apply bg-background flex flex-col min-h-[500px] border-r border-border last:border-r-0;
+}
+
+.weekly-column-today {
+  @apply bg-accent/20;
+}
+
+/* Column headers */
+.weekly-column-header {
+  @apply py-4 px-3 text-center border-b border-border bg-background sticky top-0 z-10;
+}
+
+.weekly-column-today .weekly-column-header {
+  @apply bg-accent/20;
+}
+
+.weekly-column-day-name {
+  @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1;
+}
+
+.weekly-column-day-number {
+  @apply text-xl font-semibold text-foreground mt-0.5;
+}
+
+.weekly-column-day-number-today {
+  @apply bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center mx-auto text-base;
+}
+
+/* Task container */
+.weekly-column-tasks {
+  @apply flex-1 p-3 overflow-y-auto;
+}
+
+.weekly-column-task-list {
+  @apply flex flex-col gap-1.5;
+}
+
+/* Task cards */
+.weekly-task-card-base {
+  @apply relative bg-card border border-border rounded-md p-2 cursor-pointer transition-all duration-200 overflow-hidden hover:bg-accent/50 hover:-translate-y-px hover:shadow-md;
+}
+
+.weekly-task-card-status-bar {
+  @apply absolute left-0 top-0 bottom-0 w-1;
+}
+
+.weekly-task-card-content {
+  @apply ml-2 flex flex-col gap-1;
+}
+
+.weekly-task-card-time {
+  @apply text-xs font-medium text-muted-foreground;
+}
+
+.weekly-task-card-title {
+  @apply text-sm text-foreground leading-tight break-words;
+}
+
+.weekly-task-card-status-icon {
+  @apply absolute top-2 right-2 text-xs text-muted-foreground opacity-70;
+}
+
+/* Status-specific task card styles */
+.weekly-task-card-todo {
+  /* Default styling */
+}
+
+.weekly-task-card-doing {
+  @apply bg-success/10 hover:bg-success/20;
+}
+
+.weekly-task-card-paused {
+  @apply bg-warning/10 hover:bg-warning/20;
+}
+
+.weekly-task-card-done {
+  @apply bg-muted/50 opacity-80 hover:bg-muted/70;
+}
+
+/* Empty states */
+.weekly-column-empty {
+  @apply flex-1 flex flex-col items-center justify-center py-10 px-5 text-muted-foreground text-center;
+}
+
+.weekly-column-empty-icon {
+  @apply text-2xl mb-2 opacity-50;
+}
+
+.weekly-column-empty-text {
+  @apply text-xs opacity-70;
+}
+
+.weekly-view-empty {
+  @apply flex flex-col items-center justify-center py-16 px-5 text-muted-foreground text-center;
+}
+
+.weekly-view-empty-icon {
+  @apply text-5xl mb-4 opacity-50;
+}
+
+.weekly-view-empty-text {
+  @apply text-lg font-medium mb-2 text-foreground;
+}
+
+.weekly-view-empty-hint {
+  @apply text-sm opacity-70 max-w-xs leading-relaxed;
+}
+
+/* Loading and error states */
+.weekly-view-loading {
+  @apply flex flex-col items-center justify-center py-16 text-muted-foreground;
+}
+
+.weekly-view-loading i {
+  @apply text-2xl mb-3 animate-spin;
+}
+
+.weekly-view-error {
+  @apply flex flex-col items-center justify-center py-16 px-5 text-muted-foreground text-center;
+}
+
+.weekly-view-error-icon {
+  @apply text-5xl mb-4 opacity-70;
+}
+
+.weekly-view-error-text {
+  @apply text-base font-medium mb-4 text-foreground;
+}
+
+.weekly-view-retry-btn {
+  @apply px-4 py-2 bg-primary text-primary-foreground border-none rounded-md cursor-pointer text-sm transition-colors hover:bg-primary/90 active:scale-95;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .weekly-grid {
+    @apply min-h-[400px];
+  }
+
+  .weekly-column {
+    @apply min-h-[400px];
+  }
+
+  .weekly-column-header {
+    @apply py-3 px-2;
+  }
+
+  .weekly-column-tasks {
+    @apply p-2;
+  }
+}
+
+@media (max-width: 768px) {
+  .weekly-navigation {
+    @apply py-3 px-4 gap-2;
+  }
+
+  .weekly-nav-range-text {
+    @apply text-base min-w-[150px];
+  }
+
+  .weekly-nav-btn {
+    @apply w-8 h-8 text-xs;
+  }
+
+  .weekly-nav-prev,
+  .weekly-nav-next {
+    @apply w-8 p-1.5;
+  }
+
+  .weekly-nav-today {
+    @apply px-3 min-w-[50px];
+  }
+
+  .weekly-grid {
+    @apply min-h-[350px] grid-cols-7;
+  }
+
+  .weekly-column {
+    @apply min-h-[350px];
+  }
+
+  .weekly-column-header {
+    @apply py-2.5 px-1.5;
+  }
+
+  .weekly-column-day-name {
+    @apply text-[10px];
+  }
+
+  .weekly-column-day-number {
+    @apply text-base;
+  }
+
+  .weekly-column-day-number-today {
+    @apply w-7 h-7 text-sm;
+  }
+
+  .weekly-task-card-base {
+    @apply p-1.5;
+  }
+
+  .weekly-task-card-title {
+    @apply text-xs;
+  }
+
+  .weekly-task-card-time {
+    @apply text-[10px];
+  }
+}
+
+@media (max-width: 480px) {
+  .weekly-navigation {
+    @apply py-2 px-3 gap-1.5;
+  }
+
+  .weekly-nav-range-text {
+    @apply text-sm min-w-[120px];
+  }
+
+  .weekly-grid {
+    @apply min-h-[300px];
+  }
+
+  .weekly-column {
+    @apply min-h-[300px];
+  }
+
+  .weekly-column-header {
+    @apply py-2 px-1;
+  }
+
+  .weekly-column-day-name {
+    @apply text-[9px];
+  }
+
+  .weekly-column-day-number {
+    @apply text-sm;
+  }
+
+  .weekly-column-day-number-today {
+    @apply w-6 h-6 text-xs;
+  }
+
+  .weekly-column-tasks {
+    @apply p-1.5;
+  }
+
+  .weekly-task-card-base {
+    @apply p-1;
+  }
+
+  .weekly-task-card-title {
+    @apply text-[11px];
+  }
+
+  .weekly-task-card-time {
+    @apply text-[9px];
+  }
+
+  .weekly-view-empty {
+    @apply py-10 px-4;
+  }
+
+  .weekly-view-empty-icon {
+    @apply text-4xl;
+  }
+
+  .weekly-view-empty-text {
+    @apply text-base;
+  }
+
+  .weekly-view-empty-hint {
+    @apply text-xs;
+  }
+}
+
+/* Print styles */
+@media print {
+  .weekly-view {
+    @apply shadow-none border border-border;
+  }
+
+  .weekly-navigation {
+    @apply hidden;
+  }
+
+  .weekly-grid {
+    min-height: auto;
+  }
+
+  .weekly-column {
+    min-height: auto;
+    break-inside: avoid;
+  }
+
+  .weekly-task-card-base {
+    @apply shadow-none;
+    break-inside: avoid;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+
+  .weekly-task-card-base,
+  .weekly-nav-btn {
+    @apply transition-none;
+  }
+
+  .weekly-task-card-base:hover {
+    @apply transform-none;
+  }
+
+  .weekly-nav-btn:active {
+    @apply scale-100;
+  }
+
+  .weekly-view-loading i {
+    @apply animate-none;
+  }
+}
