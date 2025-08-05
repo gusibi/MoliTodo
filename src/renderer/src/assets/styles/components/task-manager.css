@@ -130,8 +130,13 @@
 
 /* 自定义 Tooltip 样式 */
 .task-manager-custom-tooltip {
-  @apply bg-popover text-popover-foreground px-3 py-1.5 rounded-md text-xs whitespace-nowrap pointer-events-none shadow-lg;
+  @apply bg-popover text-popover-foreground px-3 py-1.5 rounded-md text-xs pointer-events-none shadow-lg;
   animation: tooltip-fade-in 0.2s ease-out;
+  max-width: 300px;
+  min-width: 120px;
+  white-space: pre-wrap; /* 支持换行 */
+  word-wrap: break-word; /* 长单词换行 */
+  line-height: 1.4;
 }
 
 .task-manager-custom-tooltip::before {

@@ -293,3 +293,20 @@
 .task-group-items {
   @apply space-y-1;
 }
+
+/* 滚动条样式 */
+.task-list-content::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.task-list-content::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.task-list-content::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-sm;
+}
+
+.task-list-content::-webkit-scrollbar-thumb:hover {
+  @apply bg-border/80;
+}

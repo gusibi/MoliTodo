@@ -33,7 +33,7 @@
           'line-through text-muted-foreground': task.status === 'done'
         }]"
       >
-        {{ task.content }}
+        {{ truncatedContent }}
       </div>
       
       <!-- Status icon -->
@@ -68,6 +68,14 @@ const emit = defineEmits([
   'show-tooltip',
   'hide-tooltip'
 ])
+
+// Computed property for truncated content
+const truncatedContent = computed(() => {
+  if (!props.task.content) return ''
+  return props.task.content.length > 12 
+    ? props.task.content.substring(0, 12) + '...' 
+    : props.task.content
+})
 
 // Format time for display
 const formatTime = (timestamp) => {

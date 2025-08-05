@@ -56,7 +56,7 @@
           
           <!-- 列表视图按钮 -->
           <button 
-          v-if="currentCategory === 'all'"
+          v-if="supportsMultipleViews"
             @click="setViewMode('list')" 
             :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]"
             title="列表视图"
@@ -66,7 +66,7 @@
           
           <!-- 看板视图按钮 -->
           <button 
-          v-if="currentCategory === 'all'"
+          v-if="supportsMultipleViews"
             @click="setViewMode('kanban')" 
             :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]"
             title="看板视图"
@@ -76,7 +76,7 @@
           
           <!-- 周视图按钮 -->
           <button 
-          v-if="currentCategory === 'all'"
+          v-if="supportsWeeklyView"
             @click="setViewMode('weekly')" 
             :class="['task-manager-action-btn', { 'active': viewMode === 'weekly' }]"
             title="周视图"
@@ -211,6 +211,17 @@ const categoryCounts = computed(() => taskStore.categoryCounts)
 const currentCategory = computed(() => taskStore.currentCategory)
 const currentListId = computed(() => taskStore.currentListId)
 const currentList = computed(() => taskStore.currentList)
+
+// 计算属性：判断当前分类是否支持多种视图
+const supportsMultipleViews = computed(() => {
+  return ['all', 'planned'].includes(currentCategory.value)
+})
+
+// 计算属性：判断当前分类是否支持周视图
+const supportsWeeklyView = computed(() => {
+  return ['all', 'planned'].includes(currentCategory.value)
+})
+
 const searchQuery = computed({
   get: () => taskStore.searchQuery,
   set: (value) => taskStore.setSearchQuery(value)
@@ -229,6 +240,11 @@ const switchCategory = (category) => {
   taskStore.setCurrentCategory(category)
   taskStore.setCurrentListId(null) // 切换智能分类时清除清单选择
   taskStore.clearSearch()
+  
+  // 如果切换到不支持周视图的分类，且当前是周视图，则自动切换到列表视图
+  if (viewMode.value === 'weekly' && !['all', 'planned'].includes(category)) {
+    viewMode.value = 'list'
+  }
 }
 
 const handleAddTask = async (taskData) => {
@@ -380,33 +396,62 @@ const showTooltip = (data) => {
   const event = data.event || data
   const text = data.text || data
   
+  let rect
+  
   // 如果是直接传递的event和text参数（向后兼容）
   if (typeof data === 'object' && data.target) {
-    const rect = data.target.getBoundingClientRect()
-    tooltip.value = {
-      show: true,
-      text: text,
-      style: {
-        position: 'fixed',
-        left: rect.left + rect.width / 2 + 'px',
-        top: rect.top - 10 + 'px',
-        transform: 'translate(-50%, -100%)',
-        zIndex: 10000
-      }
-    }
+    rect = data.target.getBoundingClientRect()
   } else if (data.event && data.text) {
     // 处理从子组件传递的数据对象
-    const rect = data.event.target.getBoundingClientRect()
-    tooltip.value = {
-      show: true,
-      text: data.text,
-      style: {
-        position: 'fixed',
-        left: rect.left + rect.width / 2 + 'px',
-        top: rect.top - 10 + 'px',
-        transform: 'translate(-50%, -100%)',
-        zIndex: 10000
-      }
+    rect = data.event.target.getBoundingClientRect()
+  } else {
+    return
+  }
+  
+  // 获取窗口尺寸
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+  
+  // 估算tooltip的尺寸（基于文本长度）
+  const tooltipWidth = Math.min(300, Math.max(120, (data.text || text).length * 8))
+  const tooltipHeight = 60 // 预估高度，支持多行
+  
+  // 计算最佳位置
+  let left = rect.left + rect.width / 2
+  let top = rect.top - 10
+  let transform = 'translate(-50%, -100%)'
+  
+  // 水平位置调整
+  if (left - tooltipWidth / 2 < 10) {
+    // 左侧空间不足，左对齐
+    left = rect.left
+    transform = 'translate(0, -100%)'
+  } else if (left + tooltipWidth / 2 > windowWidth - 10) {
+    // 右侧空间不足，右对齐
+    left = rect.right
+    transform = 'translate(-100%, -100%)'
+  }
+  
+  // 垂直位置调整
+  if (top - tooltipHeight < 10) {
+    // 上方空间不足，显示在下方
+    top = rect.bottom + 10
+    if (transform.includes('-100%')) {
+      transform = transform.replace('-100%', '0')
+    } else {
+      transform = transform.replace('-100%', '0')
+    }
+  }
+  
+  tooltip.value = {
+    show: true,
+    text: data.text || text,
+    style: {
+      position: 'fixed',
+      left: left + 'px',
+      top: top + 'px',
+      transform: transform,
+      zIndex: 10000
     }
   }
 }
