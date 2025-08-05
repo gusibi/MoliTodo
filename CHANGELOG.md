@@ -5,6 +5,35 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2025-01-25
+
+### ✨ UI/UX 改进
+
+#### 周视图滚动优化 (Weekly View Scroll Enhancement)
+- **统一滚动容器**: 将左侧时间列和右侧日期内容合并到统一的滚动容器中，实现完美联动滚动
+- **隐藏滚动条**: 完全隐藏滚动条但保持滚动功能，避免滚动条挤占内容空间导致与header错位
+- **防压缩布局**: 为导航栏、表头和时间槽行添加 `flex-shrink: 0` 属性，确保布局稳定性
+- **今天日期突出显示**: 为今天的日期数字添加圆形主题色背景，提升视觉识别度
+- **背景色统一**: 统一时间列头部和时间槽标签的背景色，与右侧日期区域保持一致
+
+#### 周视图布局重构
+- **模板结构优化**: 重构 `WeeklyGrid.vue` 模板，创建 `weekly-grid-headers` 和 `weekly-grid-content` 布局
+- **脚本逻辑简化**: 移除不再需要的 `daySlotRefs` 和 `setDaySlotRef` 函数，简化 `syncSlotHeights` 逻辑
+- **CSS样式更新**: 新增网格头部和内容区域样式，优化时间标签和日期槽布局
+
+### 🔧 技术改进
+
+#### 滚动体验优化
+- **跨浏览器兼容**: 使用 `scrollbar-width: none`、`-ms-overflow-style: none` 和 `::-webkit-scrollbar` 实现全浏览器滚动条隐藏
+- **容器高度管理**: 设置 `max-h-[calc(100vh-200px)]` 确保滚动容器有合适的高度限制
+- **内容保护**: 所有关键布局元素添加防压缩属性，确保内容完整显示
+
+#### 视觉一致性提升
+- **固定尺寸设计**: 今天日期使用固定的 `w-6 h-6` 圆形背景，确保切换周时header高度不变
+- **主题色集成**: 今天日期背景使用 `bg-primary` 和 `text-primary-foreground`，与整体主题保持一致
+
+---
+
 ## [0.7.2] - 2025-08-03
 
 ### 🎉 Major Features Added

@@ -5,9 +5,15 @@
   @apply flex flex-col h-full bg-background rounded-xl overflow-hidden shadow-sm;
 }
 
+/* Weekly view content wrapper */
+.weekly-view-content {
+  @apply flex flex-col h-full overflow-hidden;
+}
+
 /* Weekly navigation styles */
 .weekly-navigation {
-  @apply flex items-center justify-center gap-3 py-3 px-4 bg-background border-b border-border mb-4;
+  @apply flex items-center justify-center gap-3 py-3 px-4 bg-background border-b border-border;
+  flex-shrink: 0;
 }
 
 .weekly-nav-btn {
@@ -35,48 +41,103 @@
   @apply text-lg font-semibold text-foreground text-center;
 }
 
-/* Weekly grid layout */
-.weekly-grid {
-  @apply grid grid-cols-7 gap-px bg-border border border-border rounded-lg overflow-hidden min-h-[500px];
+/* Weekly Grid Container */
+.weekly-grid-container {
+  @apply flex-1 bg-background flex flex-col h-full;
+  /* 确保容器宽度计算包含滚动条 */
+  overflow: hidden;
 }
 
-.weekly-column {
-  @apply bg-background flex flex-col min-h-[500px] border-r border-border last:border-r-0;
+/* Headers */
+.weekly-grid-headers {
+  @apply flex border-b border-border/30;
+  flex-shrink: 0;
 }
 
-.weekly-column-today {
-  @apply bg-accent/20;
+.weekly-time-column-header {
+  @apply w-20 px-3 py-2 text-sm font-medium text-muted-foreground bg-background border-r border-border/30 flex items-center justify-center;
 }
 
-/* Column headers */
-.weekly-column-header {
-  @apply py-4 px-3 text-center border-b border-border bg-background sticky top-0 z-10;
+.weekly-days-header {
+  @apply flex-1 flex;
 }
 
-.weekly-column-today .weekly-column-header {
-  @apply bg-accent/20;
+.weekly-day-header {
+  @apply flex-1 px-3 py-2 text-center border-r border-border/30 last:border-r-0;
 }
 
-.weekly-column-day-name {
-  @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1;
+.weekly-day-header-today {
+  @apply bg-primary/5;
 }
 
-.weekly-column-day-number {
-  @apply text-xl font-semibold text-foreground mt-0.5;
+.weekly-day-name {
+  @apply text-xs text-muted-foreground;
 }
 
-.weekly-column-day-number-today {
-  @apply bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center mx-auto text-base;
+.weekly-day-number {
+  @apply text-sm font-medium;
 }
 
-/* Task container */
-.weekly-column-tasks {
-  @apply flex-1 p-3 overflow-y-auto;
+.weekly-day-number-today {
+  @apply text-primary font-semibold inline-flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs;
 }
 
-.weekly-column-task-list {
+/* Scrollable Content */
+.weekly-grid-content {
+  @apply flex-1 max-h-[calc(100vh-200px)];
+  /* 隐藏滚动条但保持滚动功能 */
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* 隐藏Webkit浏览器的滚动条 */
+.weekly-grid-content::-webkit-scrollbar {
+  display: none;
+}
+
+.weekly-time-slot-row {
+  @apply flex border-b border-border/30 min-h-[80px] transition-all duration-200;
+  flex-shrink: 0;
+}
+
+.weekly-time-slot-row.expanded {
+  @apply min-h-[120px];
+}
+
+.weekly-time-slot-label {
+  @apply w-20 px-3 py-2 text-xs text-muted-foreground bg-background border-r border-border/30 flex items-start justify-center pt-3;
+}
+
+.weekly-day-slots {
+  @apply flex-1 flex;
+}
+
+.weekly-day-slot {
+  @apply flex-1 px-2 py-1 border-r border-border/30 last:border-r-0 relative;
+}
+
+.weekly-day-slot-today {
+  @apply bg-primary/5;
+}
+
+.weekly-day-slot-tasks {
+  @apply h-full;
+}
+
+.weekly-day-slot-task-list {
   @apply flex flex-col gap-1.5;
 }
+
+.weekly-day-slot-more {
+  @apply mt-2 px-2 py-1 text-xs text-primary bg-primary/10 rounded-md cursor-pointer text-center transition-colors hover:bg-primary/20 hover:text-primary-foreground;
+}
+
+.weekly-day-slot-empty {
+  @apply h-full;
+}
+
+/* Remove old styles that are no longer needed */
 
 /* Task cards */
 .weekly-task-card-base {
@@ -176,20 +237,28 @@
 
 /* Responsive design */
 @media (max-width: 1024px) {
-  .weekly-grid {
+  .weekly-grid-container {
     @apply min-h-[400px];
   }
 
-  .weekly-column {
-    @apply min-h-[400px];
+  .weekly-time-column {
+    @apply w-28;
   }
 
-  .weekly-column-header {
+  .weekly-time-column-header {
     @apply py-3 px-2;
   }
 
-  .weekly-column-tasks {
-    @apply p-2;
+  .weekly-day-header {
+    @apply py-3 px-2;
+  }
+
+  .weekly-day-slot-tasks {
+    @apply p-1.5;
+  }
+
+  .weekly-time-slot-label {
+    @apply px-2 py-1.5;
   }
 }
 
@@ -215,28 +284,40 @@
     @apply px-3 min-w-[50px];
   }
 
-  .weekly-grid {
-    @apply min-h-[350px] grid-cols-7;
-  }
-
-  .weekly-column {
+  .weekly-grid-container {
     @apply min-h-[350px];
   }
 
-  .weekly-column-header {
+  .weekly-time-column {
+    @apply w-24;
+  }
+
+  .weekly-time-column-header {
     @apply py-2.5 px-1.5;
   }
 
-  .weekly-column-day-name {
+  .weekly-day-name {
     @apply text-[10px];
   }
 
-  .weekly-column-day-number {
+  .weekly-day-number {
     @apply text-base;
   }
 
-  .weekly-column-day-number-today {
+  .weekly-day-number-today {
     @apply w-7 h-7 text-sm;
+  }
+
+  .weekly-day-header {
+    @apply py-2.5 px-1.5;
+  }
+
+  .weekly-day-slot-tasks {
+    @apply p-1;
+  }
+
+  .weekly-time-slot-label {
+    @apply px-1.5 py-1;
   }
 
   .weekly-task-card-base {
@@ -261,32 +342,42 @@
     @apply text-sm min-w-[120px];
   }
 
-  .weekly-grid {
+  .weekly-grid-container {
     @apply min-h-[300px];
   }
 
-  .weekly-column {
-    @apply min-h-[300px];
+  .weekly-time-column {
+    @apply w-20;
   }
 
-  .weekly-column-header {
+  .weekly-time-column-header {
     @apply py-2 px-1;
   }
 
-  .weekly-column-day-name {
+  .weekly-day-name {
     @apply text-[9px];
   }
 
-  .weekly-column-day-number {
+  .weekly-day-number {
     @apply text-sm;
   }
 
-  .weekly-column-day-number-today {
+  .weekly-day-number-today {
     @apply w-6 h-6 text-xs;
   }
 
-  .weekly-column-tasks {
-    @apply p-1.5;
+  .weekly-day-header {
+    @apply py-2 px-1;
+  }
+
+  .weekly-day-slot-tasks {
+    @apply p-0.5;
+  }
+
+
+
+  .weekly-time-slot-label {
+    @apply px-1 py-0.5 text-[10px];
   }
 
   .weekly-task-card-base {
@@ -328,11 +419,11 @@
     @apply hidden;
   }
 
-  .weekly-grid {
+  .weekly-grid-container {
     min-height: auto;
   }
 
-  .weekly-column {
+  .weekly-day-slot {
     min-height: auto;
     break-inside: avoid;
   }
