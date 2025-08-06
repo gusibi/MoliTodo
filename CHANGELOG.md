@@ -5,6 +5,28 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6] - 2025-01-26
+
+### ✨ UI/UX 改进
+
+#### 任务提醒时间联动功能 (Task Reminder Time Linkage)
+- **智能时间联动**: 当设置任务日期时，提醒时间自动同步到同一天，提升用户体验
+- **时间一致性**: 确保任务日期和提醒时间保持逻辑一致，避免设置错误
+- **用户友好**: 减少手动设置步骤，提高任务创建效率
+
+
+### 🔧 技术改进
+
+#### 任务编辑组件优化
+- **TaskEdit.vue 增强**: 优化任务编辑组件中日期和提醒时间的联动逻辑
+- **响应式设计**: 确保时间联动功能在不同屏幕尺寸下正常工作
+- **状态管理**: 改进日期和时间状态的管理和同步机制
+
+#### 样式系统完善
+- **维护性提升**: 移除冗余的自定义 CSS 规则，统一使用 Tailwind CSS 类
+
+---
+
 ## [0.7.5] - 2025-01-25
 
 ### ✨ UI/UX 改进

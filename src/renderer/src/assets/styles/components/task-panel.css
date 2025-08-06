@@ -2,7 +2,7 @@
 
 /* Task Panel Container */
 .task-panel {
-  @apply w-80 min-h-[200px] max-h-[80vh] bg-card/90 backdrop-blur-xl rounded-2xl shadow-lg border border-border/20 flex flex-col overflow-hidden relative select-none;
+  @apply w-80 min-h-[200px] h-full bg-card/90 backdrop-blur-xl rounded-2xl shadow-lg border border-border/20 flex flex-col overflow-hidden relative select-none;
 }
 
 /* Panel Header */
@@ -45,7 +45,7 @@
 
 /* Task List Container */
 .task-panel-list-container {
-  @apply flex-1 min-h-[100px] max-h-[calc(80vh-200px)] overflow-y-auto relative;
+  @apply flex-1 min-h-[100px]  overflow-y-auto relative;
 }
 
 .task-panel-list {

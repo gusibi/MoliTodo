@@ -203,7 +203,7 @@ class WindowManager {
     }
 
     // 确保不超出屏幕顶部和底部
-    const maxHeight = Math.min(600, workArea.height * 0.8);
+    const maxHeight = Math.min(480, workArea.height * 0.7);
     if (panelY + maxHeight > workArea.y + workArea.height) {
       panelY = workArea.y + workArea.height - maxHeight;
     }
@@ -219,6 +219,7 @@ class WindowManager {
       skipTaskbar: true,
       resizable: false,
       show: false,
+      vibrancy: 'sidebar', // 毛玻璃效果
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true
@@ -426,8 +427,8 @@ class WindowManager {
     const y = Math.floor(Math.random() * (height - 200)) + 20;
 
     const floatingTaskWindow = new BrowserWindow({
-      width: 340,
-      height: 120,
+      width: 360, // 扩大窗口宽度以适配内容
+      height: 120, // 扩大窗口高度以适配内容
       x: x,
       y: y,
       frame: false,
@@ -437,6 +438,7 @@ class WindowManager {
       resizable: false,
       movable: true, // 允许移动
       show: false,
+      vibrancy: 'sidebar', // 毛玻璃效果
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,

@@ -626,9 +626,29 @@ const selectReminder = (reminder) => {
   selectedReminder.value = reminder
   showReminderPicker.value = false
   
-  // 如果选择自定义提醒，自动打开日期选择器
+  // 根据选择的提醒类型自动更新日期时间选择器
+  const now = new Date()
+  
   if (reminder.value === 'custom') {
+    // 如果选择自定义提醒，自动打开日期选择器
     showDatePicker.value = true
+  } else if (reminder.value === 'tomorrow') {
+    // 明天9点
+    const tomorrow = new Date(now)
+    tomorrow.setDate(now.getDate() + 1)
+    selectedDate.value = tomorrow.toISOString().split('T')[0]
+    selectedTime.value = '09:00'
+  } else if (reminder.value === 'next_week') {
+    // 下周同一天9点
+    const nextWeek = new Date(now)
+    nextWeek.setDate(now.getDate() + 7)
+    selectedDate.value = nextWeek.toISOString().split('T')[0]
+    selectedTime.value = '09:00'
+  } else if (typeof reminder.value === 'number') {
+    // 从当前时间开始计算（30分钟后、1小时后等）
+    const targetTime = new Date(now.getTime() + reminder.value * 60 * 1000)
+    selectedDate.value = targetTime.toISOString().split('T')[0]
+    selectedTime.value = targetTime.toTimeString().slice(0, 5) // HH:MM格式
   }
 }
 

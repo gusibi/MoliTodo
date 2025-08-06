@@ -96,7 +96,7 @@ const currentStatus = computed(() => {
 
 const isReminderOverdue = computed(() => {
   if (!task.value?.reminderTime) return false
-  return new Date(task.value.reminderTime) < new Date()
+  return new Date(task.value.reminderTime) < new Date() && (currentStatus.value === 'paused' || currentStatus.value === 'todo')
 })
 
 // 移除了拖拽相关代码，现在使用CSS的-webkit-app-region实现原生拖拽

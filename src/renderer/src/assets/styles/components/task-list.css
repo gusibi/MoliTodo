@@ -75,7 +75,11 @@
 }
 
 .task-add-option-btn i {
-  @apply text-xs;
+  @apply text-xs text-muted-foreground;
+}
+
+.task-add-option-btn.active i {
+  @apply text-primary;
 }
 
 /* 提交按钮 */
@@ -99,6 +103,11 @@
   @apply px-3 py-2 border border-input rounded-md;
   @apply bg-background text-foreground text-sm;
   @apply focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none;
+}
+
+.task-add-date-input::-webkit-calendar-picker-indicator,
+.task-add-time-input::-webkit-calendar-picker-indicator {
+  @apply dark:invert;
 }
 
 /* 提醒选项 */
