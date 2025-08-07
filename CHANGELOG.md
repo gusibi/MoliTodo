@@ -5,6 +5,36 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.7] - 2025-01-26
+
+### ✨ UI/UX 改进
+
+#### 悬浮任务卡片视觉优化 (Floating Task Card Visual Enhancement)
+- **颜色搭配优化**: 优化悬浮任务卡片的背景色和边框颜色，提高内容可读性和视觉层次
+- **留白平衡调整**: 统一悬浮任务卡片的上下左右留白为 `p-2`，实现视觉平衡
+- **卡片尺寸扩大**: 将悬浮任务窗口尺寸从 360x120px 扩大到 420x140px，提供更大的内容空间
+- **标签字体优化**: 任务标签字体大小调整为 `text-2xs`，使标签更加精致
+- **拖拽功能修复**: 修复悬浮任务卡片的拖拽功能，确保窗口移动正常工作
+
+#### Today分类逻辑统一 (Today Category Logic Unification)
+- **逻辑一致性**: 统一TaskPanel.vue和SidebarNav.vue中today分类的判断逻辑
+- **智能任务筛选**: today分类现在包含今天创建的任务、今天提醒到期的任务以及正在进行中的任务
+- **数据同步**: 确保任务面板显示的任务数量与侧边栏计数保持一致
+
+### 🔧 技术改进
+
+#### 样式系统完善
+- **Tailwind CSS 扩展**: 在tailwind.config.js中添加自定义 `text-2xs` 字体大小定义
+- **CSS 类优化**: 优化悬浮任务相关的CSS类，提升样式维护性
+- **响应式布局**: 改进悬浮任务卡片的自适应宽度设计
+
+#### 窗口管理优化
+- **窗口尺寸配置**: 优化悬浮任务窗口的默认尺寸设置
+- **容器布局**: 改进悬浮任务容器的padding和布局逻辑
+- **拖拽区域**: 修复拖拽区域的覆盖范围，确保拖拽功能正常
+
+---
+
 ## [0.7.6] - 2025-01-26
 
 ### ✨ UI/UX 改进
