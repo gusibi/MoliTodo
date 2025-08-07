@@ -6,7 +6,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
-        待办事项
+        今日任务
         <span class="task-panel-count">{{ taskCount }} 个任务</span>
       </h2>
     </div>
@@ -237,10 +237,25 @@ const loadTasks = async () => {
     const currentListId = taskStore.currentListId
     
     if (currentCategory === 'today') {
-      // 获取今天的任务（包括未完成和已完成）
-      const allTasks = await taskStore.getTasksByCategory('today', currentListId)
-      tasks.value = allTasks.filter(task => task.status !== 'done')
-      completedTasksCount.value = allTasks.filter(task => task.status === 'done').length
+      // 获取今天的任务：今天创建的或者今天提醒到期的任务，以及正在进行中的任务
+      const allTasks = await taskStore.getAllTasks()
+      
+      // 根据清单过滤
+      let filteredTasks = currentListId ? allTasks.filter(task => task.listId === currentListId) : allTasks
+      
+      // 应用today分类逻辑：今天创建的 OR 今天提醒到期的 OR 正在进行中的任务
+      const todayTasks = filteredTasks.filter(task => {
+        const isToday = (date) => {
+          if (!date) return false
+          const today = new Date()
+          const targetDate = new Date(date)
+          return today.toDateString() === targetDate.toDateString()
+        }
+        return isToday(task.reminderTime) || isToday(task.createdAt) || task.status === 'doing'
+      })
+      
+      tasks.value = todayTasks.filter(task => task.status !== 'done')
+      completedTasksCount.value = todayTasks.filter(task => task.status === 'done').length
     } else {
       // 其他分类保持原有逻辑
       tasks.value = await taskStore.getIncompleteTasks()

@@ -2,7 +2,7 @@
 
 /* 容器 - 半透明背景 */
 .floating-task-container {
-  @apply relative w-full h-full flex items-center justify-center;
+  @apply relative w-full h-full p-2;
   /* 关键：设置半透明背景色 */
   @apply bg-background/70;
   /* 添加 backdrop-filter 作为后备方案 */
@@ -19,7 +19,7 @@
 
 /* 任务卡片 - 类似TaskItem的样式 */
 .floating-task-item {
-  @apply flex items-center gap-4 p-2 border border-border rounded-xl bg-card backdrop-blur-sm duration-200 relative shadow-lg w-80 min-w-80;
+  @apply flex items-center gap-4 p-2 border border-border rounded-xl bg-card backdrop-blur-sm duration-200 relative shadow-lg w-full;
   position: relative;
   z-index: 2;
   -webkit-app-region: no-drag;
@@ -108,11 +108,11 @@
 }
 
 .task-tag {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shadow-sm;
+  @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-2xs font-medium whitespace-nowrap shadow-sm;
 }
 
 .task-tag i {
-  @apply text-xs;
+  @apply text-2xs;
 }
 
 .task-tag-status {

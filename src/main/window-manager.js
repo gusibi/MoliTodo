@@ -427,8 +427,8 @@ class WindowManager {
     const y = Math.floor(Math.random() * (height - 200)) + 20;
 
     const floatingTaskWindow = new BrowserWindow({
-      width: 360, // 扩大窗口宽度以适配内容
-      height: 120, // 扩大窗口高度以适配内容
+      width: 420, // 扩大窗口宽度以适配内容
+      height: 140, // 扩大窗口高度以适配内容
       x: x,
       y: y,
       frame: false,

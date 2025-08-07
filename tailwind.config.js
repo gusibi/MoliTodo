@@ -87,6 +87,9 @@ module.exports = {
         serif: 'var(--font-serif)',
         mono: 'var(--font-mono)',
       },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.75rem' }], // 10px
+      },
     },
   },
   plugins: [],
