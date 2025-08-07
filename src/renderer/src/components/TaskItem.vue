@@ -1,7 +1,8 @@
 <template>
   <div :class="['task-item-row', {
     'task-item-completed': task.status === 'done',
-    'task-item-in-progress': task.status === 'doing',
+    'task-item-in-progress': task.status === 'doing' && !isTaskOvertime,
+    'task-item-overtime': task.status === 'doing' && isTaskOvertime,
     'task-item-paused': task.status === 'paused',
     'task-item-editing': isEditing
   }]" @dblclick="!isEditing && handleEditTask" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
@@ -22,9 +23,13 @@
       <div class="task-item-description" v-if="task.description">{{ task.description }}</div>
       <div class="task-item-tags">
         <!-- 状态标签 -->
-        <span v-if="task.status === 'doing'" class="task-item-tag task-item-tag-status task-item-tag-doing">
+        <span v-if="task.status === 'doing' && !isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-doing">
           <i class="fas fa-play"></i>
           进行中 {{ formatDuration(currentDuration) }}
+        </span>
+        <span v-else-if="task.status === 'doing' && isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-overtime">
+          <i class="fas fa-clock"></i>
+          超时 {{ formatDuration(currentDuration) }}
         </span>
         <span v-else-if="task.status === 'paused'" class="task-item-tag task-item-tag-status task-item-tag-paused">
           <i class="fas fa-pause"></i>
@@ -188,6 +193,12 @@ const highlightedContent = computed(() => {
 // 判断提醒时间是否已过期
 const isReminderOverdue = computed(() => {
   if (!props.task.reminderTime) return false
+  return new Date(props.task.reminderTime) < new Date()
+})
+
+// 判断任务是否超时（进行中且已超过提醒时间）
+const isTaskOvertime = computed(() => {
+  if (props.task.status !== 'doing' || !props.task.reminderTime) return false
   return new Date(props.task.reminderTime) < new Date()
 })
 

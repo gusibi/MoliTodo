@@ -71,11 +71,15 @@
 }
 
 .task-panel-item.doing {
-  @apply border-l-4 border-l-status-doing bg-warning/10;
+  @apply border-l-4 border-l-status-doing bg-status-doing/10;
 }
 
 .task-panel-item.done {
   @apply border-l-4 border-l-status-done bg-success/10;
+}
+
+.task-panel-item.overtime {
+  @apply border-l-4 border-l-status-overtime bg-status-overtime/10;
 }
 
 /* Task Status Indicator */
@@ -175,6 +179,10 @@
 
 .task-panel-status.status-done {
   @apply bg-success/20 text-success-foreground;
+}
+
+.task-panel-status.status-overtime {
+  @apply bg-status-overtime text-white;
 }
 
 .task-panel-duration {

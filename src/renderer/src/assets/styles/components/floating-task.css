@@ -4,7 +4,7 @@
 .floating-task-container {
   @apply relative w-full h-full flex items-center justify-center;
   /* 关键：设置半透明背景色 */
-  @apply bg-sidebar/50;
+  @apply bg-background/70;
   /* 添加 backdrop-filter 作为后备方案 */
   @apply backdrop-blur-xl;
   @apply rounded-2xl;
@@ -19,22 +19,26 @@
 
 /* 任务卡片 - 类似TaskItem的样式 */
 .floating-task-item {
-  @apply flex items-center gap-4 p-2 border border-border rounded-lg bg-card transition-all duration-200 relative shadow-sm w-80 min-w-80;
+  @apply flex items-center gap-4 p-2 border border-border rounded-xl bg-card backdrop-blur-sm duration-200 relative shadow-lg w-80 min-w-80;
   position: relative;
   z-index: 2;
   -webkit-app-region: no-drag;
 }
 
 .floating-task-item.task-completed {
-  @apply opacity-70 bg-success/20;
+  @apply opacity-80 bg-success/10 border-success/30;
 }
 
 .floating-task-item.task-in-progress {
-  @apply border-l-4 border-l-warning bg-warning/50;
+  @apply border-l-4 border-l-status-doing bg-status-doing/10 border-status-doing/30;
+}
+
+.floating-task-item.task-overtime {
+  @apply border-l-4 border-l-status-overtime bg-status-overtime/10 border-status-overtime/30;
 }
 
 .floating-task-item.task-paused {
-  @apply border-l-4 border-l-muted-foreground bg-muted/50;
+  @apply border-l-4 border-l-muted-foreground bg-muted/10 border-muted/30;
 }
 
 /* 关闭按钮 */
@@ -83,7 +87,7 @@
 }
 
 .task-title {
-  @apply text-sm font-medium text-card-foreground leading-relaxed break-words flex-1 p-1 mb-2;
+  @apply text-sm font-medium text-card-foreground leading-relaxed break-words flex-1 p-1 mb-3;
   /* 限制最多显示两行 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -104,7 +108,7 @@
 }
 
 .task-tag {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shadow-sm;
 }
 
 .task-tag i {
@@ -112,57 +116,61 @@
 }
 
 .task-tag-status {
-  @apply text-white;
+  @apply text-white font-semibold;
 }
 
 .task-tag-doing {
-  @apply bg-warning;
+  @apply bg-status-doing text-white;
+}
+
+.task-tag-overtime {
+  @apply bg-status-overtime text-white;
 }
 
 .task-tag-paused {
-  @apply bg-muted-foreground;
+  @apply bg-muted-foreground text-white;
 }
 
 .task-tag-completed {
-  @apply bg-success;
+  @apply bg-success text-white;
 }
 
 .task-tag-reminder {
-  @apply bg-primary/10 text-primary;
+  @apply bg-primary/15 text-primary border border-primary/20;
 }
 
 /* 过期提醒样式 - 使用Tailwind CSS类 */
 .floating-task-item.task-reminder-overdue {
-  @apply bg-destructive/20 border-warning;
+  @apply bg-destructive/10 border-destructive/30;
 }
 
 .task-tag-overdue {
-  @apply bg-warning text-warning-foreground;
+  @apply bg-destructive text-white;
 }
 
 /* 任务操作按钮 */
 .task-actions {
-  @apply flex flex-col gap-1 opacity-100 transition-opacity duration-200 flex-shrink-0;
+  @apply flex flex-col gap-2 opacity-100 transition-opacity duration-200 flex-shrink-0;
   -webkit-app-region: no-drag;
 }
 
 .task-btn-action {
-  @apply w-8 h-8 border-0 rounded bg-muted text-muted-foreground cursor-pointer flex items-center justify-center transition-all duration-200 text-xs hover:bg-accent hover:text-foreground hover:-translate-y-0.5;
+  @apply w-9 h-9 border-0 rounded-lg bg-background/80 text-foreground cursor-pointer flex items-center justify-center transition-all duration-200 text-xs hover:bg-accent hover:text-accent-foreground hover:scale-105 shadow-sm border border-border/50;
 }
 
 .task-btn-start:hover,
 .task-btn-resume:hover {
-  @apply bg-success/10 text-success;
+  @apply bg-success/15 text-success border-success/30;
 }
 
 .task-btn-pause:hover {
-  @apply bg-warning/10 text-warning;
+  @apply bg-warning/15 text-warning border-warning/30;
 }
 
 .task-btn-complete:hover {
-  @apply bg-primary/10 text-primary;
+  @apply bg-primary/15 text-primary border-primary/30;
 }
 
 .task-btn-restart:hover {
-  @apply bg-accent text-accent-foreground;
+  @apply bg-accent text-accent-foreground border-accent/30;
 }

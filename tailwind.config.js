@@ -58,6 +58,7 @@ module.exports = {
         'status-doing': 'hsl(var(--status-doing))',
         'status-done': 'hsl(var(--status-done))',
         'status-paused': 'hsl(var(--status-paused))',
+        'status-overtime': 'hsl(var(--status-overtime))',
         // Sidebar colors
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar))',

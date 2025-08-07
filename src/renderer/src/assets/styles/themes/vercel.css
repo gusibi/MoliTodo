@@ -58,9 +58,10 @@
   
   /* Status Colors for Tasks */
   --status-todo: 0 0% 32%;
-  --status-doing: 38 100% 51%;
+  --status-doing: 224 100% 58%; /* 使用蓝色系 */
   --status-done: 142 76% 36%;
   --status-paused: 0 0% 32%;
+  --status-overtime: 38 100% 51%; /* 原doing颜色改为overtime */
   
   /* Sidebar Colors */
   --sidebar: 0 0% 99%;
@@ -148,9 +149,10 @@
   
   /* Status Colors for Tasks */
   --status-todo: 0 0% 64%;
-  --status-doing: 38 100% 51%;
+  --status-doing: 225 100% 60%; /* 使用蓝色系 */
   --status-done: 142 76% 36%;
   --status-paused: 0 0% 64%;
+  --status-overtime: 38 100% 51%; /* 原doing颜色改为overtime */
   
   /* Sidebar Colors */
   --sidebar: 0 0% 7%;

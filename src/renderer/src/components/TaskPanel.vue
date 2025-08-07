@@ -28,7 +28,13 @@
     <div class="task-panel-list-container">
       <div v-if="tasks.length > 0" class="task-panel-list">
         <div v-for="task in sortedTasks" :key="task.id"
-          :class="['task-panel-item', task.status || (task.completed ? 'done' : 'todo')]" :data-task-id="task.id"
+          :class="[
+            'task-panel-item', 
+            (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime) 
+              ? 'overtime' 
+              : task.status || (task.completed ? 'done' : 'todo')
+          ]" 
+          :data-task-id="task.id"
           :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
           <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
@@ -173,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 
 const taskStore = useTaskStore()
@@ -226,9 +232,21 @@ const footerStats = computed(() => {
 // 方法
 const loadTasks = async () => {
   try {
-    tasks.value = await taskStore.getIncompleteTasks()
-    const completedTasks = await taskStore.getCompletedTasks()
-    completedTasksCount.value = completedTasks.length
+    // 根据当前分类获取任务
+    const currentCategory = taskStore.currentCategory
+    const currentListId = taskStore.currentListId
+    
+    if (currentCategory === 'today') {
+      // 获取今天的任务（包括未完成和已完成）
+      const allTasks = await taskStore.getTasksByCategory('today', currentListId)
+      tasks.value = allTasks.filter(task => task.status !== 'done')
+      completedTasksCount.value = allTasks.filter(task => task.status === 'done').length
+    } else {
+      // 其他分类保持原有逻辑
+      tasks.value = await taskStore.getIncompleteTasks()
+      const completedTasks = await taskStore.getCompletedTasks()
+      completedTasksCount.value = completedTasks.length
+    }
   } catch (error) {
     console.error('加载任务失败:', error)
   }
@@ -647,6 +665,11 @@ onMounted(async () => {
     window.electronAPI.events.removeAllListeners('tasks-updated')
   })
 })
+
+// 监听分类和清单变化，重新加载任务
+watch(() => [taskStore.currentCategory, taskStore.currentListId], () => {
+  loadTasks()
+}, { immediate: false })
 </script>
 
 <style scoped>

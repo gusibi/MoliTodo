@@ -6,7 +6,8 @@
     <!-- 任务卡片 -->
     <div :class="['floating-task-item', {
       'task-completed': currentStatus === 'done',
-      'task-in-progress': currentStatus === 'doing',
+      'task-in-progress': currentStatus === 'doing' && !isTaskOvertime,
+      'task-overtime': currentStatus === 'doing' && isTaskOvertime,
       'task-paused': currentStatus === 'paused',
       'task-reminder-overdue': isReminderOverdue,
       'animate-pulse': isReminderOverdue
@@ -31,8 +32,12 @@
             {{ formatReminderTime(task.reminderTime) }}
           </span>
           <!-- 状态标签 -->
-          <span v-if="currentStatus === 'doing'" class="task-tag task-tag-status task-tag-doing">
+          <span v-if="currentStatus === 'doing' && !isTaskOvertime" class="task-tag task-tag-status task-tag-doing">
             <i class="fas fa-play"></i>
+            {{ formatDuration(currentDuration) }}
+          </span>
+          <span v-else-if="currentStatus === 'doing' && isTaskOvertime" class="task-tag task-tag-status task-tag-overtime">
+            <i class="fas fa-clock"></i>
             {{ formatDuration(currentDuration) }}
           </span>
           <span v-else-if="currentStatus === 'paused'" class="task-tag task-tag-status task-tag-paused">
@@ -97,6 +102,12 @@ const currentStatus = computed(() => {
 const isReminderOverdue = computed(() => {
   if (!task.value?.reminderTime) return false
   return new Date(task.value.reminderTime) < new Date() && (currentStatus.value === 'paused' || currentStatus.value === 'todo')
+})
+
+// 判断任务是否超时（进行中且已超过提醒时间）
+const isTaskOvertime = computed(() => {
+  if (currentStatus.value !== 'doing' || !task.value?.reminderTime) return false
+  return new Date(task.value.reminderTime) < new Date()
 })
 
 // 移除了拖拽相关代码，现在使用CSS的-webkit-app-region实现原生拖拽

@@ -13,7 +13,11 @@
 }
 
 .task-item-row.task-item-in-progress {
-  @apply border-l-4 border-l-warning bg-warning/10;
+  @apply border-l-4 border-l-status-doing bg-status-doing/10;
+}
+
+.task-item-row.task-item-overtime {
+  @apply border-l-4 border-l-status-overtime bg-status-overtime/10;
 }
 
 .task-item-row.task-item-paused {
@@ -65,7 +69,7 @@
 }
 
 .task-item-title {
-  @apply text-base font-medium text-card-foreground leading-relaxed mb-1 break-words;
+  @apply text-sm font-medium text-card-foreground leading-relaxed mb-1 break-words;
 }
 
 .task-item-row.task-item-completed .task-item-title {
@@ -73,7 +77,7 @@
 }
 
 .task-item-description {
-  @apply text-sm text-muted-foreground leading-relaxed mb-1;
+  @apply text-xs text-muted-foreground leading-relaxed mb-1;
 }
 
 /* 标签样式 */
@@ -95,6 +99,10 @@
 
 .task-item-tag-doing {
   @apply bg-warning;
+}
+
+.task-item-tag-overtime {
+  @apply bg-status-overtime text-white;
 }
 
 .task-item-tag-paused {
