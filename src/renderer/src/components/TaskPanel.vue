@@ -208,17 +208,8 @@ const editInput = ref(null)
 const taskCount = computed(() => tasks.value.length)
 
 const sortedTasks = computed(() => {
-  return [...tasks.value].sort((a, b) => {
-    // 有提醒时间的任务优先
-    if (a.reminderTime && b.reminderTime) {
-      return new Date(a.reminderTime) - new Date(b.reminderTime)
-    }
-    if (a.reminderTime && !b.reminderTime) return -1
-    if (!a.reminderTime && b.reminderTime) return 1
-
-    // 按创建时间排序
-    return new Date(a.createdAt) - new Date(b.createdAt)
-  })
+  // 直接返回已经排序的任务，因为 taskStore.getSortedTasks 已经处理了排序
+  return tasks.value
 })
 
 const footerStats = computed(() => {
@@ -232,36 +223,19 @@ const footerStats = computed(() => {
 // 方法
 const loadTasks = async () => {
   try {
-    // 根据当前分类获取任务
+    // 确保任务数据已加载
+    await taskStore.getAllTasks()
+    
+    // 使用 taskStore 的统一过滤方法
     const currentCategory = taskStore.currentCategory
     const currentListId = taskStore.currentListId
     
-    if (currentCategory === 'today') {
-      // 获取今天的任务：今天创建的或者今天提醒到期的任务，以及正在进行中的任务
-      const allTasks = await taskStore.getAllTasks()
-      
-      // 根据清单过滤
-      let filteredTasks = currentListId ? allTasks.filter(task => task.listId === currentListId) : allTasks
-      
-      // 应用today分类逻辑：今天创建的 OR 今天提醒到期的 OR 正在进行中的任务
-      const todayTasks = filteredTasks.filter(task => {
-        const isToday = (date) => {
-          if (!date) return false
-          const today = new Date()
-          const targetDate = new Date(date)
-          return today.toDateString() === targetDate.toDateString()
-        }
-        return isToday(task.reminderTime) || isToday(task.createdAt) || task.status === 'doing'
-      })
-      
-      tasks.value = todayTasks.filter(task => task.status !== 'done')
-      completedTasksCount.value = todayTasks.filter(task => task.status === 'done').length
-    } else {
-      // 其他分类保持原有逻辑
-      tasks.value = await taskStore.getIncompleteTasks()
-      const completedTasks = await taskStore.getCompletedTasks()
-      completedTasksCount.value = completedTasks.length
-    }
+    // 获取过滤后的任务（不包含已完成任务）
+    tasks.value = taskStore.getSortedTasks(currentCategory, currentListId, false)
+    
+    // 获取已完成任务的计数
+    const stats = taskStore.getCategoryStats(currentCategory, currentListId)
+    completedTasksCount.value = stats.completed
   } catch (error) {
     console.error('加载任务失败:', error)
   }

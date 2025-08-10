@@ -28,7 +28,26 @@ export const useTaskStore = defineStore('task', () => {
 
   // 辅助函数：判断日期是否为今天
   const isTodayTask = (task) => {
-    return isToday(task.reminderTime) || isToday(task.createdAt)  || task.status === 'doing'
+    // 1. 提醒日期是今天的任务
+    if (isToday(task.reminderTime)) return true
+    
+    // 2. 今天创建的任务
+    if (isToday(task.createdAt)) return true
+    
+    // 3. 正在进行的任务
+    if (task.status === 'doing') return true
+    
+    // 4. 有提醒时间，且已经过期还未完成的任务
+    if (task.reminderTime && task.status !== 'done') {
+      const reminderDate = new Date(task.reminderTime)
+      const today = new Date()
+      // 如果提醒时间早于今天，说明已经过期
+      if (reminderDate < today && !isToday(task.reminderTime)) {
+        return true
+      }
+    }
+    
+    return false
   }
 
   // 辅助函数：获取状态显示文本
@@ -40,6 +59,118 @@ export const useTaskStore = defineStore('task', () => {
       'done': '已完成'
     }
     return statusMap[status] || status
+  }
+
+  // 统一的任务过滤方法
+  const getTasksByFilter = (category, listId = null, includeCompleted = null) => {
+    let filteredTasks = tasks.value
+
+    // 根据清单过滤
+    if (listId !== null) {
+      filteredTasks = filteredTasks.filter(task => task.listId === listId)
+    }
+
+    // 根据分类过滤
+    switch (category) {
+      case 'inbox':
+        filteredTasks = filteredTasks.filter(task => task.status === 'todo' && !task.reminderTime)
+        break
+      case 'today':
+        filteredTasks = filteredTasks.filter(task => isTodayTask(task))
+        // 根据设置决定是否包含已完成任务
+        if (includeCompleted === false || (includeCompleted === null && !showCompletedInToday.value)) {
+          filteredTasks = filteredTasks.filter(task => task.status !== 'done')
+        }
+        break
+      case 'doing':
+        filteredTasks = filteredTasks.filter(task => task.status === 'doing')
+        break
+      case 'paused':
+        filteredTasks = filteredTasks.filter(task => task.status === 'paused')
+        break
+      case 'planned':
+        filteredTasks = filteredTasks.filter(task => !!task.reminderTime && task.status !== 'done')
+        break
+      case 'all':
+        // 根据设置决定是否包含已完成任务
+        if (includeCompleted === false || (includeCompleted === null && !showCompletedInAll.value)) {
+          filteredTasks = filteredTasks.filter(task => task.status !== 'done')
+        }
+        break
+      case 'completed':
+        filteredTasks = filteredTasks.filter(task => task.status === 'done')
+        break
+      default:
+        break
+    }
+
+    return filteredTasks
+  }
+
+  // 获取分类任务计数
+  const getCategoryCount = (category, listId = null) => {
+    const filteredTasks = getTasksByFilter(category, listId)
+    return filteredTasks.length
+  }
+
+  // 获取分类的完整统计信息
+  const getCategoryStats = (category, listId = null) => {
+    const allTasks = getTasksByFilter(category, listId, true) // 包含所有状态的任务
+    const incompleteTasks = allTasks.filter(task => task.status !== 'done')
+    const completedTasks = allTasks.filter(task => task.status === 'done')
+
+    return {
+      total: allTasks.length,
+      incomplete: incompleteTasks.length,
+      completed: completedTasks.length,
+      doing: allTasks.filter(task => task.status === 'doing').length,
+      paused: allTasks.filter(task => task.status === 'paused').length,
+      todo: allTasks.filter(task => task.status === 'todo').length
+    }
+  }
+
+  // 获取排序后的任务列表
+  const getSortedTasks = (category, listId = null, includeCompleted = null) => {
+    let filteredTasks = getTasksByFilter(category, listId, includeCompleted)
+
+    // 排序逻辑
+    if (category === 'today') {
+      // 今天视图的特殊排序
+      filteredTasks = [...filteredTasks].sort((a, b) => {
+        // 正在进行的任务优先级最高
+        if (a.status === 'doing' && b.status !== 'doing') return -1
+        if (a.status !== 'doing' && b.status === 'doing') return 1
+
+        // 有提醒时间的任务优先
+        if (a.reminderTime && b.reminderTime) {
+          return new Date(a.reminderTime) - new Date(b.reminderTime)
+        }
+        if (a.reminderTime && !b.reminderTime) return -1
+        if (!a.reminderTime && b.reminderTime) return 1
+
+        // 都没有提醒时间，按创建时间排序（最新的在上方）
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      })
+    } else {
+      // 其他视图的默认排序
+      filteredTasks = [...filteredTasks].sort((a, b) => {
+        // 正在进行的任务优先级最高
+        if (a.status === 'doing' && b.status !== 'doing') return -1
+        if (a.status !== 'doing' && b.status === 'doing') return 1
+
+        // 有提醒时间的任务优先
+        if (a.reminderTime && b.reminderTime) {
+          return new Date(a.reminderTime) - new Date(b.reminderTime)
+        }
+        if (a.reminderTime && !b.reminderTime) return -1
+        if (!a.reminderTime && b.reminderTime) return 1
+
+        // 按创建时间排序（最新的在上方）
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      })
+    }
+
+    return filteredTasks
   }
 
   // 辅助函数：格式化时间显示
@@ -811,6 +942,14 @@ export const useTaskStore = defineStore('task', () => {
     // 辅助函数
     getStatusText,
     formatTimeDisplay,
-    formatDuration
+    formatDuration,
+    isToday,
+    isTodayTask,
+
+    // 统一过滤和计数方法
+    getTasksByFilter,
+    getCategoryCount,
+    getCategoryStats,
+    getSortedTasks
   }
 })

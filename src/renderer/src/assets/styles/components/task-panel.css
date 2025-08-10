@@ -194,7 +194,7 @@
 }
 
 .task-panel-reminder {
-  @apply text-sm text-primary flex items-center gap-1 flex-shrink min-w-0;
+  @apply text-xs text-primary flex items-center gap-1 flex-shrink min-w-0;
 }
 
 .task-panel-reminder.overdue {

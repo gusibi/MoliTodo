@@ -4,7 +4,6 @@
     <aside class="task-manager-sidebar">
       <SidebarNav 
         :current-category="currentCategory"
-        :category-counts="categoryCounts"
         @category-change="switchCategory"
         @open-settings="openSettings"
       />
@@ -206,8 +205,15 @@ const tooltip = ref({
 
 // 计算属性
 const loading = computed(() => taskStore.loading)
-const displayTasks = computed(() => taskStore.filteredTasks)
-const categoryCounts = computed(() => taskStore.categoryCounts)
+const displayTasks = computed(() => {
+  // 使用 taskStore 的统一过滤方法
+  const currentCategory = taskStore.currentCategory
+  const currentListId = taskStore.currentListId
+  
+  // 根据当前分类和是否显示已完成任务来获取任务
+  const includeCompleted = showCompletedTasks.value
+  return taskStore.getSortedTasks(currentCategory, currentListId, includeCompleted)
+})
 const currentCategory = computed(() => taskStore.currentCategory)
 const currentListId = computed(() => taskStore.currentListId)
 const currentList = computed(() => taskStore.currentList)
@@ -357,7 +363,7 @@ const getCategoryIcon = (category) => {
 }
 
 const getCategoryCount = (category) => {
-  return categoryCounts.value[category] || 0
+  return taskStore.getCategoryCount(category)
 }
 
 // 新增：获取当前视图的标题、图标和计数
