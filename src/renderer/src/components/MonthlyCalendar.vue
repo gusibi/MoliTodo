@@ -163,11 +163,30 @@ function renderEventContent(eventInfo) {
     const task = eventInfo.event.extendedProps.originalTask
     const hasTime = eventInfo.event.extendedProps.hasTime
     const isCompleted = task.status === 'done'
+    
+    // Get status indicator color class based on task status (matching WeeklyTaskCard)
+    let indicatorColorClass = ''
+    switch (task.status) {
+        case 'todo':
+            indicatorColorClass = 'bg-border'
+            break
+        case 'doing':
+            indicatorColorClass = 'bg-warning'
+            break
+        case 'paused':
+            indicatorColorClass = 'bg-muted-foreground'
+            break
+        case 'done':
+            indicatorColorClass = 'bg-success'
+            break
+        default:
+            indicatorColorClass = 'bg-border'
+    }
 
     return {
         html: `
       <div class="monthly-event-content ${isCompleted ? 'monthly-event-content-completed' : ''}">
-        <div class="monthly-event-indicator" style="background-color: ${eventInfo.event.borderColor}"></div>
+        <div class="monthly-event-indicator ${indicatorColorClass}"></div>
         <div class="monthly-event-title ${isCompleted ? 'monthly-event-title-completed' : ''}">${eventInfo.event.title}</div>
         ${hasTime ? `<div class="monthly-event-time ${isCompleted ? 'monthly-event-time-completed' : ''}">${formatEventTime(eventInfo.event.start)}</div>` : ''}
         ${isCompleted ? '<i class="fas fa-check monthly-event-check-icon"></i>' : ''}

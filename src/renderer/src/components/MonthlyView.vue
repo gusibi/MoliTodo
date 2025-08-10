@@ -5,39 +5,28 @@
       <i class="fas fa-spinner fa-spin"></i>
       <p>加载中...</p>
     </div>
-    
+
     <!-- Error state -->
     <div v-else-if="hasError" class="monthly-view-error">
       <div class="monthly-view-error-icon">⚠️</div>
       <div class="monthly-view-error-text">{{ error }}</div>
-      <button 
-        v-if="canRetry" 
-        @click="retryOperation" 
-        class="monthly-view-retry-btn"
-      >
+      <button v-if="canRetry" @click="retryOperation" class="monthly-view-retry-btn">
         重试 ({{ retryCount }}/{{ maxRetries }})
       </button>
     </div>
-    
+
     <!-- Monthly view content -->
     <div v-else class="monthly-view-content">
       <!-- Month navigation -->
       <div class="monthly-view-navigation">
-        <MonthlyNavigation
-          :current-month="currentMonth"
-          @navigate-month="navigateMonth"
-          @go-to-today="goToCurrentMonth"
-        />
+        <MonthlyNavigation :current-month="currentMonth" @navigate-month="navigateMonth"
+          @go-to-today="goToCurrentMonth" />
       </div>
-      
+
       <!-- Monthly calendar - scrollable -->
       <div class="monthly-view-calendar-container">
-        <MonthlyCalendar
-          :events="calendarEvents"
-          :current-date="currentMonth"
-          @date-click="handleDateClick"
-          @event-click="handleEventClick"
-        />
+        <MonthlyCalendar :events="calendarEvents" :current-date="currentMonth" @date-click="handleDateClick"
+          @event-click="handleEventClick" />
       </div>
     </div>
   </div>
@@ -89,8 +78,8 @@ const getMonthEnd = (date) => {
 
 const isSameDay = (date1, date2) => {
   return date1.getFullYear() === date2.getFullYear() &&
-         date1.getMonth() === date2.getMonth() &&
-         date1.getDate() === date2.getDate()
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
 }
 
 // Initialize current month with error handling
@@ -111,17 +100,17 @@ const monthlyTasks = computed(() => {
   if (!props.tasks || props.tasks.length === 0) {
     return []
   }
-  
+
   const monthStart = getMonthStart(currentMonth.value)
   const monthEnd = getMonthEnd(currentMonth.value)
-  
+
   return props.tasks.filter(task => {
     if (!task.reminderTime) return false
-    
+
     try {
       const reminderDate = new Date(task.reminderTime)
       if (isNaN(reminderDate.getTime())) return false
-      
+
       return reminderDate >= monthStart && reminderDate <= monthEnd
     } catch (error) {
       console.warn('Invalid reminder time for task:', task.id, error)
@@ -134,21 +123,19 @@ const monthlyTasks = computed(() => {
 const calendarEvents = computed(() => {
   return monthlyTasks.value.map(task => {
     const reminderDate = new Date(task.reminderTime)
-    
+
     return {
       id: task.id,
       title: task.content,
       start: reminderDate,
       allDay: !hasSpecificTime(task.reminderTime),
-      backgroundColor: getStatusColor(task.status),
-      borderColor: getPriorityColor(task.priority || 'normal'),
-      textColor: '#ffffff',
       extendedProps: {
         taskId: task.id,
         status: task.status,
         priority: task.priority || 'normal',
         listId: task.listId,
-        originalTask: task
+        originalTask: task,
+        hasTime: hasSpecificTime(task.reminderTime)
       }
     }
   })
@@ -160,23 +147,7 @@ const hasSpecificTime = (dateTime) => {
   return date.getHours() !== 0 || date.getMinutes() !== 0
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    completed: '#10b981', // green
-    pending: '#f59e0b',   // amber
-    overdue: '#ef4444'    // red
-  }
-  return colors[status] || '#6b7280' // gray default
-}
-
-const getPriorityColor = (priority) => {
-  const colors = {
-    high: '#ef4444',     // red
-    medium: '#f59e0b',   // amber
-    normal: '#6b7280'    // gray
-  }
-  return colors[priority] || '#6b7280'
-}
+// Color functions removed - now using Tailwind CSS classes directly in renderEventContent
 
 // Navigate month
 const navigateMonth = (direction) => {
@@ -234,4 +205,3 @@ watch(() => props.tasks, () => {
 <style>
 @import '../assets/styles/components/monthly-calendar.css';
 </style>
-

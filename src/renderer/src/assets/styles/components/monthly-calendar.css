@@ -131,6 +131,19 @@
   @apply rounded px-1.5 py-0.5 my-0.5 text-xs cursor-pointer transition-all duration-200 border-l-2 bg-card text-card-foreground;
 }
 
+/* Override FullCalendar default event styles */
+.fc-event {
+  @apply border-border bg-card text-card-foreground !important;
+}
+
+.fc-event:hover {
+  @apply border-accent bg-accent text-accent-foreground !important;
+}
+
+.fc-event:focus {
+  @apply border-primary bg-primary/10 text-foreground outline-none !important;
+}
+
 .monthly-task-event:hover {
   @apply bg-accent text-accent-foreground opacity-90;
 }
@@ -147,21 +160,37 @@
   @apply font-semibold border-l-4;
 }
 
-/* Task status specific styles */
+/* Task status specific styles - matching WeeklyTaskCard color scheme */
+.task-status-todo {
+  @apply bg-card border-l-border;
+}
+
+.task-status-todo.fc-event {
+  @apply border-border bg-card text-card-foreground !important;
+}
+
 .task-status-doing {
-  @apply border-l-green-500;
+  @apply bg-warning/10 hover:bg-warning/20 border-l-warning;
+}
+
+.task-status-doing.fc-event {
+  @apply border-warning bg-warning/10 text-foreground !important;
 }
 
 .task-status-paused {
-  @apply border-l-amber-500;
+  @apply bg-muted/10 hover:bg-muted/20 border-l-muted-foreground;
+}
+
+.task-status-paused.fc-event {
+  @apply border-muted-foreground bg-muted/10 text-foreground !important;
 }
 
 .task-status-done {
-  @apply border-l-gray-400;
+  @apply bg-success/10 hover:bg-success/20 border-l-success opacity-80;
 }
 
-.task-status-todo {
-  @apply border-l-blue-500;
+.task-status-done.fc-event {
+  @apply border-success bg-success/10 text-foreground opacity-80 !important;
 }
 
 /* Task hover effects */
@@ -172,7 +201,7 @@
 
 /* Event content styles */
 .monthly-event-content {
-  @apply flex items-center gap-1 text-xs;
+  @apply flex items-center gap-1 text-xs text-foreground;
 }
 
 .monthly-event-content-completed {
@@ -183,8 +212,10 @@
   @apply w-2 h-2 rounded-full flex-shrink-0;
 }
 
+/* Status indicator colors are handled by Tailwind classes directly in the HTML */
+
 .monthly-event-title {
-  @apply truncate flex-1;
+  @apply truncate flex-1 text-foreground;
 }
 
 .monthly-event-title-completed {
@@ -192,7 +223,7 @@
 }
 
 .monthly-event-time {
-  @apply text-xs opacity-75;
+  @apply text-xs opacity-75 text-foreground;
 }
 
 .monthly-event-time-completed {
