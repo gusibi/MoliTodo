@@ -22,24 +22,6 @@
       <div class="task-item-title" v-html="highlightedContent"></div>
       <div class="task-item-description" v-if="task.description">{{ task.description }}</div>
       <div class="task-item-tags">
-        <!-- 状态标签 -->
-        <span v-if="task.status === 'doing' && !isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-doing">
-          <i class="fas fa-play"></i>
-          进行中 {{ formatDuration(currentDuration) }}
-        </span>
-        <span v-else-if="task.status === 'doing' && isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-overtime">
-          <i class="fas fa-clock"></i>
-          超时 {{ formatDuration(currentDuration) }}
-        </span>
-        <span v-else-if="task.status === 'paused'" class="task-item-tag task-item-tag-status task-item-tag-paused">
-          <i class="fas fa-pause"></i>
-          暂停中 {{ formatDuration(task.totalDuration || 0) }}
-        </span>
-        <span v-else-if="task.status === 'done'" class="task-item-tag task-item-tag-status task-item-tag-completed">
-          <i class="fas fa-check"></i>
-          用时 {{ formatDuration(task.totalDuration || 0) }}
-        </span>
-
         <!-- 时间标签 -->
         <span v-if="task.reminderTime" :class="['task-item-tag', 'task-item-tag-reminder', 'tooltip-container', {
           'task-item-tag-overdue': isReminderOverdue
@@ -52,6 +34,24 @@
           @mouseenter="showTooltip($event, `创建时间: ${formatCreatedTime(task.createdAt)}`)" @mouseleave="hideTooltip">
           <i class="fas fa-clock"></i>
           {{ formatCreatedTime(task.createdAt) }}
+        </span>
+
+        <!-- 状态标签 -->
+        <span v-if="task.status === 'doing' && !isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-doing">
+          <i class="fas fa-play"></i>
+          进行中 {{ formatDuration(currentDuration) }}
+        </span>
+        <span v-else-if="task.status === 'doing' && isTaskOvertime" class="task-item-tag task-item-tag-status task-item-tag-overtime">
+          <i class="fas fa-clock"></i>
+          进行中 {{ formatDuration(currentDuration) }}
+        </span>
+        <span v-else-if="task.status === 'paused'" class="task-item-tag task-item-tag-status task-item-tag-paused">
+          <i class="fas fa-pause"></i>
+          暂停中 {{ formatDuration(task.totalDuration || 0) }}
+        </span>
+        <span v-else-if="task.status === 'done'" class="task-item-tag task-item-tag-status task-item-tag-completed">
+          <i class="fas fa-check"></i>
+          用时 {{ formatDuration(task.totalDuration || 0) }}
         </span>
 
         <!-- 完成时间标签 -->

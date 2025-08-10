@@ -297,7 +297,7 @@
 
 /* 任务分组样式 */
 .task-group {
-  @apply mb-8;
+  @apply pb-2;
 }
 
 .task-group:last-child {
@@ -310,8 +310,8 @@
 }
 
 .task-group-header {
-  @apply mb-4 pb-2 border-b border-border/50 cursor-pointer select-none;
-  @apply hover:bg-accent/30 rounded-md px-4 py-2;
+  @apply border-b border-border/50 cursor-pointer select-none;
+  @apply hover:bg-accent/70 rounded-md px-4 py-2;
   @apply active:bg-accent/60 active:border-accent/40;
   /* 使用更平滑的过渡效果，移除可能导致跳动的缩放 */
   transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
@@ -325,7 +325,7 @@
 }
 
 .task-group-title {
-  @apply flex items-center justify-between w-full text-sm font-medium text-muted-foreground;
+  @apply flex items-center justify-between w-full text-base font-medium text-muted-foreground;
   transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -360,27 +360,15 @@
 }
 
 .task-group-items {
-  @apply overflow-hidden;
-  max-height: 2000px; /* 足够大的值来容纳所有任务 */
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: max-height, opacity;
-  /* TaskItem 已经有 mb-2，所以这里不需要额外的 space-y */
+  @apply overflow-hidden pt-2 pb-2 relative z-0;
+  @apply transition-all duration-300 ease-out;
+  @apply opacity-100;
 }
 
 .task-group-collapsed {
+  @apply opacity-0 mt-0 mb-0 pt-0 pb-0;
+  @apply transition-all duration-300 ease-out;
   max-height: 0 !important;
-  opacity: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s cubic-bezier(0.4, 0, 0.2), 
-         margin 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 /* 滚动条样式 */
 .task-list-content::-webkit-scrollbar {
