@@ -62,6 +62,72 @@
                   </button>
                 </div>
               </div>
+              
+              <div class="setting-item">
+                <div class="setting-item-info">
+                  <div class="setting-item-label">通知音效</div>
+                  <div class="setting-item-description">通知时播放提示音</div>
+                </div>
+                <div class="setting-item-control">
+                  <button 
+                    class="setting-toggle"
+                    :class="{ 'setting-toggle-active': config.notificationSound.enabled }"
+                    @click="toggleNotificationSound"
+                  >
+                    <span class="setting-toggle-button"></span>
+                  </button>
+                </div>
+              </div>
+              
+              <div v-if="config.notificationSound.enabled" class="setting-item">
+                <div class="setting-item-info">
+                  <div class="setting-item-label">音效选择</div>
+                  <div class="setting-item-description">选择通知音效</div>
+                </div>
+                <div class="setting-item-control">
+                  <div class="setting-sound-selector">
+                    <select 
+                      v-model="config.notificationSound.soundFile"
+                      @change="updateNotificationSound"
+                      class="setting-select"
+                    >
+                      <option 
+                        v-for="sound in availableSounds" 
+                        :key="sound.value" 
+                        :value="sound.value"
+                      >
+                        {{ sound.label }}
+                      </option>
+                    </select>
+                    <button 
+                      class="setting-btn setting-btn-small"
+                      @click="testNotificationSound"
+                    >
+                      试听
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-if="config.notificationSound.enabled" class="setting-item">
+                <div class="setting-item-info">
+                  <div class="setting-item-label">音量</div>
+                  <div class="setting-item-description">调整通知音效音量</div>
+                </div>
+                <div class="setting-item-control">
+                  <div class="setting-slider-group">
+                    <input 
+                      type="range"
+                      class="setting-slider"
+                      min="0" 
+                      max="100" 
+                      v-model="config.notificationSound.volume"
+                      @input="updateConfig('notificationSound.volume', parseInt(config.notificationSound.volume))"
+                    />
+                    <span class="setting-slider-value">{{ config.notificationSound.volume }}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -240,12 +306,18 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
+import { playNotificationSound, getAvailableSounds } from '../utils/notificationSound.js'
 
 // 响应式数据
 const activeCategory = ref('general')
 const config = reactive({
   autoStart: false,
   showNotifications: true,
+  notificationSound: {
+    enabled: true,
+    soundFile: 'ding-126626.mp3',
+    volume: 50
+  },
   floatingIcon: {
     visible: true,
     size: 60,
@@ -255,6 +327,7 @@ const config = reactive({
 
 const databaseStats = ref(null)
 const taskStats = ref(null)
+const availableSounds = ref(getAvailableSounds())
 const message = reactive({
   visible: false,
   text: '',
@@ -368,6 +441,38 @@ const toggleNotifications = async () => {
   } catch (error) {
     console.error('切换通知失败:', error)
     showMessage('设置失败', 'error')
+  }
+}
+
+const toggleNotificationSound = async () => {
+  try {
+    config.notificationSound.enabled = !config.notificationSound.enabled
+    await updateConfig('notificationSound.enabled', config.notificationSound.enabled)
+    showMessage(config.notificationSound.enabled ? '已启用通知音效' : '已禁用通知音效', 'success')
+  } catch (error) {
+    console.error('切换通知音效失败:', error)
+    showMessage('设置失败', 'error')
+  }
+}
+
+const updateNotificationSound = async () => {
+  try {
+    await updateConfig('notificationSound.soundFile', config.notificationSound.soundFile)
+    showMessage('音效已更新', 'success')
+  } catch (error) {
+    console.error('更新音效失败:', error)
+    showMessage('设置失败', 'error')
+  }
+}
+
+const testNotificationSound = async () => {
+  const success = await playNotificationSound(
+    config.notificationSound.soundFile, 
+    config.notificationSound.volume
+  )
+  
+  if (!success) {
+    showMessage('播放失败', 'error')
   }
 }
 
@@ -524,5 +629,65 @@ onMounted(async () => {
 })
 </script>
 
-<style>
+<style scoped>
+.setting-sound-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.setting-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  background: var(--bg-color, #ffffff);
+  color: var(--text-color, #1a202c);
+  font-size: 14px;
+  min-width: 140px;
+  transition: border-color 0.2s ease;
+}
+
+.setting-select:focus {
+  outline: none;
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px var(--primary-color-alpha, rgba(59, 130, 246, 0.1));
+}
+
+.setting-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-color, #1a202c);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setting-btn-small:hover {
+  background: var(--bg-hover, #e2e8f0);
+  border-color: var(--border-hover, #cbd5e1);
+}
+
+.setting-btn-small:active {
+  transform: translateY(1px);
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .setting-select {
+  background: var(--bg-dark, #2d3748);
+  border-color: var(--border-dark, #4a5568);
+  color: var(--text-dark, #e2e8f0);
+}
+
+[data-theme="dark"] .setting-btn-small {
+  background: var(--bg-secondary-dark, #4a5568);
+  border-color: var(--border-dark, #4a5568);
+  color: var(--text-dark, #e2e8f0);
+}
+
+[data-theme="dark"] .setting-btn-small:hover {
+  background: var(--bg-hover-dark, #718096);
+  border-color: var(--border-hover-dark, #718096);
+}
 </style>

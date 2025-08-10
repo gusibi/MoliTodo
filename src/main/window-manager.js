@@ -24,6 +24,11 @@ class WindowManager {
         },
         autoStart: false,
         showNotifications: true,
+        notificationSound: {
+          enabled: true,
+          soundFile: 'ding-126626.mp3',
+          volume: 50
+        },
         theme: 'system'
       }
     });

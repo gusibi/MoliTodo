@@ -386,6 +386,11 @@ class IpcHandlers {
         },
         autoStart: false,
         showNotifications: true,
+        notificationSound: {
+          enabled: true,
+          soundFile: 'ding-126626.mp3',
+          volume: 50
+        },
         theme: 'system'
       };
       
@@ -687,6 +692,20 @@ class IpcHandlers {
   // 处理任务提醒
   handleTaskReminder(task) {
     console.log('IPC处理任务提醒:', task);
+    
+    // 发送通知音效播放请求到所有窗口
+    const windows = [
+      this.windowManager.floatingWindow,
+      this.windowManager.taskManagerWindow,
+      this.windowManager.settingsWindow
+    ];
+    
+    windows.forEach(window => {
+      if (window && !window.isDestroyed()) {
+        window.webContents.send('play-notification-sound');
+      }
+    });
+    
     if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
       console.log('发送任务提醒事件到悬浮窗口');
       this.windowManager.floatingWindow.webContents.send('task-reminder', task);

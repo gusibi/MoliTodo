@@ -7,6 +7,9 @@ import router from './router'
 import './assets/styles/index.css'
 import './assets/global.css'
 
+// Import global notification listener
+import { setupGlobalNotificationListener } from './utils/globalNotificationListener.js'
+
 // 创建应用
 const app = createApp(App)
 const pinia = createPinia()
@@ -33,5 +36,8 @@ window.addEventListener('unhandledrejection', (event) => {
     window.electronAPI.utils.log(`[Unhandled Promise] ${event.reason}`)
   }
 })
+
+// 设置全局通知音效监听器
+setupGlobalNotificationListener()
 
 app.mount('#app')

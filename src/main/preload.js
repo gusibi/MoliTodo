@@ -66,7 +66,8 @@ const electronAPI = {
         'config-updated',
         'task-reminder',
         'panel-mouse-enter',
-        'panel-mouse-leave'
+        'panel-mouse-leave',
+        'play-notification-sound'
       ];
       
       if (validChannels.includes(channel)) {
@@ -81,6 +82,11 @@ const electronAPI = {
     removeAllListeners: (channel) => {
       ipcRenderer.removeAllListeners(channel);
     }
+  },
+
+  // 通知音效 API
+  onPlayNotificationSound: (callback) => {
+    ipcRenderer.on('play-notification-sound', callback);
   },
 
   // 拖拽相关 API
