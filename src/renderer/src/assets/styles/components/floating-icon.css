@@ -1,190 +1,112 @@
-/* Floating Icon Component Styles */
+/* Floating Icon Component - Tailwind CSS Custom Animations */
 
-.floating-icon-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+@tailwind components;
+@tailwind utilities;
 
-}
-
-.floating-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(var(--shadow-md));
-  -webkit-app-region: no-drag;
-  pointer-events: auto;
-
-  /* 将阴影移动到这里！*/
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); 
-}
-
-.floating-icon:hover {
-  transform: scale(1.1);
-  /* 悬停时增强阴影效果 */
-  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
-}
-
-.floating-icon:focus {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
-}
-
-/* Icon Content */
-.icon-content {
-  color: hsl(var(--primary-foreground));
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.default-icon {
-  opacity: 1;
-}
-
-.alert-icon {
-  opacity: 0;
-  position: absolute;
-}
-
-/* Alert State */
-.floating-icon.alert {
-  background: linear-gradient(135deg, hsl(var(--destructive)) 0%, #ee5a24 100%);
-  animation: alertPulse 2s infinite;
-}
-
-.floating-icon.alert .default-icon {
-  opacity: 0;
-}
-
-.floating-icon.alert .alert-icon {
-  opacity: 1;
-}
-
-@keyframes alertPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* Badge */
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 20px;
-  height: 20px;
-  background: hsl(var(--destructive));
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: hsl(var(--destructive-foreground));
-  border: 2px solid transparent;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  font-family: var(--font-sans);
-}
-
-.badge.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.badge span {
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.floating-icon:hover .badge {
-  transform: scale(1.1);
-}
-
-/* Dragging State */
-.floating-icon.dragging {
-  transform: scale(1.1);
-  filter: drop-shadow(var(--shadow-xl));
-  z-index: 1000;
-}
-
-/* Progress Indicator */
-.progress-indicator {
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  background: hsl(var(--success));
-  border-radius: 50%;
-  animation: blink 2s infinite;
-  z-index: 10;
-  pointer-events: none;
-}
-
-@keyframes blink {
+/* Custom animations that can't be replaced with Tailwind utilities */
+@keyframes progress-blink {
   0%, 50% {
-    opacity: 1;
+    @apply text-green-400 opacity-100;
   }
   51%, 100% {
-    opacity: 0.3;
+    @apply text-green-400 opacity-40;
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+@keyframes alert-pulse {
+  0%, 100% {
+    @apply scale-100;
+  }
+  50% {
+    @apply scale-105;
+  }
+}
+
+/* Component classes using Tailwind utilities */
+@layer components {
   .floating-icon {
-    width: 45px;
-    height: 45px;
+    @apply pointer-events-auto;
+    -webkit-app-region: no-drag;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
 
-  .badge {
-    min-width: 18px;
-    height: 18px;
-    font-size: 10px;
-  }
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  .floating-icon {
-    border: 2px solid #000;
+  .floating-icon:hover {
+    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
   }
 
-  .badge {
-    border: 2px solid transparent;
+  .default-icon.in-progress {
+    @apply text-green-400;
+    animation: progress-blink 1.5s infinite;
   }
-}
 
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  .floating-icon,
-  .badge,
-  .icon-content {
+  .floating-icon--alert {
+    animation: alert-pulse 2s infinite;
+  }
+
+  .floating-icon--alert .default-icon {
+    @apply opacity-0;
+  }
+
+  .floating-icon--alert .alert-icon {
+    @apply opacity-100;
+  }
+
+  .badge--show {
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .floating-icon:hover .badge {
+    @apply scale-110;
+  }
+
+  .floating-icon--pending {
+    @apply cursor-grabbing opacity-80;
+  }
+
+  .floating-icon--dragging {
+    @apply z-50 cursor-grabbing origin-center;
+    filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.4));
     transition: none;
   }
+}
 
-  .floating-icon.alert {
-    animation: none;
+/* Responsive utilities */
+@layer utilities {
+  @media (max-width: 768px) {
+    .floating-icon {
+      @apply w-11 h-11;
+    }
+
+    .badge {
+      @apply min-w-4 h-4 text-xs;
+    }
   }
 
-  .progress-indicator {
-    animation: none;
+  /* High contrast mode */
+  @media (prefers-contrast: high) {
+    .floating-icon {
+      @apply border-2 border-black;
+    }
+
+    .badge {
+      @apply border-2 border-transparent;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .floating-icon,
+    .badge,
+    .icon-content {
+      @apply transition-none;
+    }
+
+    .floating-icon--alert {
+      animation: none;
+    }
+
+    .default-icon.in-progress {
+      animation: none;
+    }
   }
 }

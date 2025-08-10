@@ -54,4 +54,5 @@ molist/
 # ====================== #
 .cache/
 .temp/
+src-tauri/
 *.pem

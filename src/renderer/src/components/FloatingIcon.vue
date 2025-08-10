@@ -1,16 +1,27 @@
 <template>
-  <div class="floating-icon-container">
-    <div class="floating-icon" :class="{ alert: isAlert }" @click="handleClick" @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave" @mousedown="handleMouseDown">
+  <div class="w-full h-full flex justify-center items-center">
+    <div
+      class="floating-icon relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out w-12 h-12 md:w-11 md:h-11 rounded-full shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      :class="[
+        isAlert ? 'bg-gradient-to-br from-red-500 to-orange-600 floating-icon--alert' : 'bg-gradient-to-br from-indigo-500 to-purple-600',
+        {
+          'floating-icon--dragging': isDragging
+        }
+      ]" @click="handleClick" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave"
+      @mousedown="handleMouseDown">
       <!-- 默认图标 -->
-      <div class="icon-content default-icon" :class="{ 'in-progress': hasInProgressTasks }">
+      <div class="icon-content absolute flex items-center justify-center text-white transition-all duration-300" :class="[
+        'default-icon',
+        { 'in-progress': hasInProgressTasks }
+      ]">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
       </div>
 
       <!-- 提醒状态图标 -->
-      <div class="icon-content alert-icon">
+      <div
+        class="icon-content alert-icon absolute flex items-center justify-center text-white transition-all duration-300 opacity-0">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
@@ -19,21 +30,22 @@
       </div>
 
       <!-- 任务数量角标 -->
-      <div class="badge" :class="{ show: taskCount > 0 }">
-        <span>{{ taskCount > 99 ? '99+' : taskCount }}</span>
+      <div
+        class="badge absolute -top-1 -right-1 min-w-5 h-5 md:min-w-4 md:h-4 bg-red-500 rounded-full flex items-center justify-center text-xs md:text-xs font-bold text-white border-2 border-transparent transition-all duration-300"
+        :class="taskCount > 0 ? 'badge--show opacity-100 scale-100' : 'opacity-0 scale-0'">
+        <span class="leading-none px-1">{{ taskCount > 99 ? '99+' : taskCount }}</span>
       </div>
-
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
+import '@/assets/styles/components/floating-icon.css'
 
 const taskStore = useTaskStore()
-const taskCount = ref(0)
+const taskCount = computed(() => taskStore.categoryCounts.today)
 const hasInProgressTasks = ref(false)
 const isAlert = ref(false)
 const isDragging = ref(false)
@@ -90,7 +102,7 @@ const handleMouseEnter = () => {
       console.log('条件满足，开始显示任务面板')
       showTaskPanel()
     }
-  }, 300)
+  }, 100)
 }
 
 const handleMouseLeave = () => {
@@ -170,16 +182,16 @@ const handleMouseDown = (event) => {
   }
 
   // 添加pending状态，改善初始延迟体验
-  floatingIcon.classList.add('pending-drag')
+  floatingIcon.classList.add('floating-icon--pending')
 
   // 获取当前窗口位置
   window.electronAPI.drag.getWindowPosition().then(pos => {
     initialWindowPos = pos
-    floatingIcon.classList.remove('pending-drag')
+    floatingIcon.classList.remove('floating-icon--pending')
     console.log('Initial window position received:', pos)
   }).catch(error => {
     console.error('获取窗口位置失败:', error)
-    floatingIcon.classList.remove('pending-drag')
+    floatingIcon.classList.remove('floating-icon--pending')
   })
 
   const handleMouseMove = (moveEvent) => {
@@ -198,7 +210,7 @@ const handleMouseDown = (event) => {
         console.log('开始拖拽模式')
         hasMoved = true
         // 添加拖拽样式
-        floatingIcon.classList.add('dragging')
+        floatingIcon.classList.add('floating-icon--dragging')
         // 确保开始时没有残留的transform
         floatingIcon.style.transform = ''
       }
@@ -267,7 +279,7 @@ const handleMouseDown = (event) => {
           floatingIcon.style.transform = ''
 
           // 移除拖拽样式
-          floatingIcon.classList.remove('dragging')
+          floatingIcon.classList.remove('floating-icon--dragging')
 
           // 短暂延迟后移除transition，恢复默认
           setTimeout(() => {
@@ -280,12 +292,12 @@ const handleMouseDown = (event) => {
           console.error('最终位置同步失败:', error)
           // 如果失败，也要清理样式
           floatingIcon.style.transform = ''
-          floatingIcon.classList.remove('dragging')
+          floatingIcon.classList.remove('floating-icon--dragging')
         }
       } else {
         // 如果没有初始位置，直接清理样式
         floatingIcon.style.transform = ''
-        floatingIcon.classList.remove('dragging')
+        floatingIcon.classList.remove('floating-icon--dragging')
       }
 
       try {
@@ -305,7 +317,7 @@ const handleMouseDown = (event) => {
     pendingUpdate = false
 
     // 清理所有可能的样式类
-    floatingIcon.classList.remove('pending-drag', 'dragging')
+    floatingIcon.classList.remove('floating-icon--pending', 'floating-icon--dragging')
 
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
@@ -320,21 +332,11 @@ const handleMouseDown = (event) => {
 
 const updateTaskCount = async () => {
   try {
-    const count = await window.electronAPI.tasks.getCount()
-    taskCount.value = count
+    // 刷新任务数据以确保计数准确
+    await taskStore.getAllTasks()
 
-    // 暂时简化，直接通过 API 检查是否有进行中的任务
-    try {
-      const allTasks = await window.electronAPI.tasks.getAll()
-      if (Array.isArray(allTasks)) {
-        hasInProgressTasks.value = allTasks.some(task => task.status === 'doing')
-      } else {
-        hasInProgressTasks.value = false
-      }
-    } catch (taskError) {
-      console.warn('获取任务列表失败，设置进行中任务为 false:', taskError)
-      hasInProgressTasks.value = false
-    }
+    // 检查是否有进行中的任务
+    hasInProgressTasks.value = taskStore.categoryCounts.doing > 0
   } catch (error) {
     console.error('更新任务数量失败:', error)
     hasInProgressTasks.value = false
@@ -380,6 +382,8 @@ const handlePanelMouseLeave = () => {
 }
 
 onMounted(async () => {
+  // 初始化任务数据
+  await taskStore.getAllTasks()
   await updateTaskCount()
 
   // 监听事件
@@ -411,213 +415,3 @@ onUnmounted(() => {
   window.electronAPI.events.removeAllListeners('panel-mouse-leave')
 })
 </script>
-
-
-
-<style scoped>
-/* 悬浮图标样式 */
-
-/* 悬浮图标特定样式 */
-
-.floating-icon-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* 移除容器的阴影，让图标本身处理阴影 */
-}
-
-.floating-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-  position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* 图标本身的阴影效果 */
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-  /* 恢复app-region设置，但通过JS控制拖拽 */
-  -webkit-app-region: no-drag;
-  /* 只有图标本身接收鼠标事件 */
-  pointer-events: auto;
-}
-
-.floating-icon:hover {
-  transform: scale(1.1);
-  /* 悬停时增强阴影效果 */
-  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
-}
-
-/* 图标内容 */
-.icon-content {
-  color: white;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.default-icon {
-  opacity: 1;
-}
-
-/* 进行中任务时的绿色闪烁效果 */
-.default-icon.in-progress {
-  color: #2ed573;
-  animation: progressBlink 1.5s infinite;
-}
-
-@keyframes progressBlink {
-
-  0%,
-  50% {
-    color: #2ed573;
-    opacity: 1;
-  }
-
-  51%,
-  100% {
-    color: #2ed573;
-    opacity: 0.4;
-  }
-}
-
-.alert-icon {
-  opacity: 0;
-  position: absolute;
-}
-
-/* 提醒状态样式 */
-.floating-icon.alert {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-  animation: alertPulse 2s infinite;
-}
-
-.floating-icon.alert .default-icon {
-  opacity: 0;
-}
-
-.floating-icon.alert .alert-icon {
-  opacity: 1;
-}
-
-/* 提醒动画 */
-@keyframes alertPulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* 角标样式 */
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 20px;
-  height: 20px;
-  background: #ff4757;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
-  color: white;
-  border: 2px solid transparent;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.badge.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.badge span {
-  line-height: 1;
-  padding: 0 4px;
-}
-
-/* 悬停效果 */
-.floating-icon:hover .badge {
-  transform: scale(1.1);
-}
-
-/* 等待拖拽状态 */
-.floating-icon.pending-drag {
-  cursor: grabbing;
-  opacity: 0.8;
-}
-
-/* 拖拽状态 */
-.floating-icon.dragging {
-  /* 拖拽时使用更强烈的阴影效果 */
-  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.4));
-  z-index: 1000;
-  /* 拖拽时禁用过渡动画，让移动更跟手 */
-  transition: none;
-  cursor: grabbing;
-  /* 确保transform变换的原点在中心 */
-  transform-origin: center;
-}
-
-
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .floating-icon {
-    width: 45px;
-    height: 45px;
-  }
-
-  .badge {
-    min-width: 18px;
-    height: 18px;
-    font-size: 10px;
-  }
-}
-
-/* 无障碍支持 */
-.floating-icon:focus {
-  outline: 2px solid #4285f4;
-  outline-offset: 2px;
-}
-
-/* 高对比度模式支持 */
-@media (prefers-contrast: high) {
-  .floating-icon {
-    border: 2px solid #000;
-  }
-
-  .badge {
-    border: 2px solid transparent;
-  }
-}
-
-/* 减少动画模式支持 */
-@media (prefers-reduced-motion: reduce) {
-
-  .floating-icon,
-  .badge,
-  .icon-content {
-    transition: none;
-  }
-
-  .floating-icon.alert {
-    animation: none;
-  }
-}
-</style>
