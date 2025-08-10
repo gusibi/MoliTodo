@@ -228,6 +228,11 @@ const supportsWeeklyView = computed(() => {
   return ['all', 'planned'].includes(currentCategory.value)
 })
 
+// 计算属性：判断当前分类是否支持月视图
+const supportsMonthlyView = computed(() => {
+  return ['all', 'planned'].includes(currentCategory.value)
+})
+
 const searchQuery = computed({
   get: () => taskStore.searchQuery,
   set: (value) => taskStore.setSearchQuery(value)

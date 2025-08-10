@@ -17,6 +17,8 @@ export const useTaskStore = defineStore('task', () => {
   })
   const showCompletedInAll = ref(false) // 控制在"所有任务"分类中是否显示已完成任务
   const showCompletedInToday = ref(false) // 控制在"今天"分类中是否显示已完成任务
+  const showCompletedInWeekly = ref(false) // 控制在"周视图"中是否显示已完成任务
+  const showCompletedInMonthly = ref(false) // 控制在"月视图"中是否显示已完成任务
 
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
@@ -766,6 +768,16 @@ export const useTaskStore = defineStore('task', () => {
     showCompletedInToday.value = show
   }
 
+  // 设置是否在"周视图"中显示已完成任务
+  const setShowCompletedInWeekly = (show) => {
+    showCompletedInWeekly.value = show
+  }
+
+  // 设置是否在"月视图"中显示已完成任务
+  const setShowCompletedInMonthly = (show) => {
+    showCompletedInMonthly.value = show
+  }
+
   // 设置当前清单
   const setCurrentListId = (listId) => {
     currentListId.value = listId
@@ -906,6 +918,8 @@ export const useTaskStore = defineStore('task', () => {
     searchOptions,
     showCompletedInAll,
     showCompletedInToday,
+    showCompletedInWeekly,
+    showCompletedInMonthly,
 
     // 计算属性
     filteredTasks,
@@ -954,6 +968,8 @@ export const useTaskStore = defineStore('task', () => {
     clearSearch,
     setShowCompletedInAll,
     setShowCompletedInToday,
+    setShowCompletedInWeekly,
+    setShowCompletedInMonthly,
 
     // 辅助函数
     getStatusText,

@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "dev:clean": "npm run rebuild && npm run dev",
     "rebuild": "electron-rebuild",
     "build:renderer": "vite build --config src/renderer/vite.config.js",
-    "build": "npm run build:renderer && electron-builder", 
+    "build": "npm run build:renderer && electron-builder",
     "build:mac": "npm run build",
     "build:win": "npm run build",
     "postinstall": "electron-builder install-app-deps",
@@ -41,10 +41,13 @@
     "wait-on": "^7.0.1"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/vue3": "^6.1.19",
     "electron-store": "^8.1.0",
     "node-schedule": "^2.1.1",
     "pinia": "^2.1.7",
-
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "vue": "^3.3.8",

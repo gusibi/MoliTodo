@@ -1,7 +1,7 @@
 /* TaskItem 组件样式 - 使用 Tailwind CSS */
 
 .task-item-row {
-  @apply flex items-center gap-4 p-4 border border-border rounded-lg bg-card transition-all duration-200 cursor-pointer mb-2 relative hover:border-primary hover:shadow-lg hover:-translate-y-0.5;
+  @apply flex items-center gap-4 p-4 border border-border rounded-lg bg-card transition-all duration-200 cursor-pointer mb-2 relative hover:border-primary hover:shadow-lg;
 }
 
 .task-item-row.task-item-editing {
