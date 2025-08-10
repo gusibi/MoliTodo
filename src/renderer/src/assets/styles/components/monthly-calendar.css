@@ -1,0 +1,285 @@
+/* Monthly Calendar Theme Styles */
+
+/* Monthly View Container Styles */
+.monthly-view {
+  @apply h-full flex flex-col bg-background overflow-hidden;
+}
+
+.monthly-view-loading {
+  @apply flex flex-col items-center justify-center py-16 text-muted-foreground;
+}
+
+.monthly-view-loading i {
+  @apply text-2xl mb-2;
+}
+
+.monthly-view-error {
+  @apply flex flex-col items-center justify-center py-16 text-muted-foreground;
+}
+
+.monthly-view-error-icon {
+  @apply text-4xl mb-2;
+}
+
+.monthly-view-error-text {
+  @apply text-center mb-4;
+}
+
+.monthly-view-retry-btn {
+  @apply px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors;
+}
+
+.monthly-view-content {
+  @apply flex flex-col h-full;
+}
+
+.monthly-view-navigation {
+  @apply flex-shrink-0;
+}
+
+.monthly-view-calendar-container {
+  @apply flex-1 overflow-y-auto;
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.monthly-view-calendar-container::-webkit-scrollbar {
+  display: none; /* Webkit browsers */
+}
+
+/* Monthly Navigation Styles */
+.monthly-navigation {
+  @apply flex flex-col gap-3 p-4 border-b border-border bg-background;
+}
+
+.monthly-navigation-header {
+  @apply flex items-center justify-between;
+}
+
+.monthly-nav-btn {
+  @apply flex items-center justify-center w-8 h-8 border border-border rounded-md bg-card text-foreground hover:bg-accent hover:text-accent-foreground hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200;
+}
+
+.monthly-title {
+  @apply flex-1 text-center;
+}
+
+.monthly-title-text {
+  @apply text-lg font-semibold text-foreground;
+}
+
+.monthly-navigation-actions {
+  @apply flex justify-center;
+}
+
+.monthly-today-btn {
+  @apply px-3 py-1 text-sm rounded-md transition-all duration-200;
+}
+
+.monthly-today-btn-current {
+  @apply bg-primary/10 text-primary border border-primary/20;
+}
+
+.monthly-today-btn-normal {
+  @apply bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-border;
+}
+
+/* FullCalendar custom styles with template color support */
+.fc {
+  font-family: inherit;
+}
+
+/* Template theme colors */
+.fc-theme-standard .fc-scrollgrid {
+  @apply border border-border rounded-lg bg-background;
+}
+
+.fc-theme-standard td, 
+.fc-theme-standard th {
+  @apply border-border;
+}
+
+.fc-col-header-cell {
+  @apply bg-muted font-semibold text-muted-foreground p-2;
+}
+
+.fc-daygrid-day {
+  @apply min-h-24 bg-background;
+}
+
+.fc-daygrid-day-number {
+  @apply text-foreground font-medium p-1;
+}
+
+.fc-day-today {
+  @apply bg-primary/5 !important;
+}
+
+/* 今天日期的数字部分 - 圆形背景 */
+.fc-today-number {
+  @apply bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-medium inline-flex;
+}
+
+/* 今天日期的"日"字部分 - 无背景 */
+.fc-today-suffix {
+  @apply text-foreground ml-0.5;
+}
+
+/* Custom event styles */
+.monthly-task-event {
+  @apply rounded px-1.5 py-0.5 my-0.5 text-xs cursor-pointer transition-all duration-200 border-l-2 bg-card text-card-foreground;
+}
+
+.monthly-task-event:hover {
+  @apply bg-accent text-accent-foreground opacity-90;
+}
+
+.task-completed {
+  @apply opacity-60 line-through bg-muted text-muted-foreground;
+}
+
+.task-completed:hover {
+  @apply bg-muted/80 text-muted-foreground;
+}
+
+.task-high-priority {
+  @apply font-semibold border-l-4;
+}
+
+/* Task status specific styles */
+.task-status-doing {
+  @apply border-l-green-500;
+}
+
+.task-status-paused {
+  @apply border-l-amber-500;
+}
+
+.task-status-done {
+  @apply border-l-gray-400;
+}
+
+.task-status-todo {
+  @apply border-l-blue-500;
+}
+
+/* Task hover effects */
+.monthly-task-event:not(.task-completed):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Event content styles */
+.monthly-event-content {
+  @apply flex items-center gap-1 text-xs;
+}
+
+.monthly-event-content-completed {
+  @apply opacity-60;
+}
+
+.monthly-event-indicator {
+  @apply w-2 h-2 rounded-full flex-shrink-0;
+}
+
+.monthly-event-title {
+  @apply truncate flex-1;
+}
+
+.monthly-event-title-completed {
+  @apply line-through;
+}
+
+.monthly-event-time {
+  @apply text-xs opacity-75;
+}
+
+.monthly-event-time-completed {
+  @apply line-through;
+}
+
+.monthly-event-check-icon {
+  @apply text-xs opacity-50 ml-1;
+}
+
+/* Error state styles */
+.monthly-calendar-error {
+  @apply flex items-center justify-center py-16 text-destructive;
+}
+
+.monthly-calendar-error-content {
+  @apply text-center;
+}
+
+.monthly-calendar-error-icon {
+  @apply text-4xl mb-4;
+}
+
+.monthly-calendar-error-message {
+  @apply text-lg;
+}
+
+.monthly-calendar-retry-btn {
+  @apply mt-4 px-4 py-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors;
+}
+
+/* More link styling */
+.fc-more-link {
+  @apply text-muted-foreground text-xs no-underline;
+}
+
+.fc-more-link:hover {
+  @apply text-foreground underline;
+}
+
+/* Popover styling */
+.fc-popover {
+  @apply border border-border rounded-lg shadow-lg bg-popover text-popover-foreground;
+}
+
+.fc-popover-header {
+  @apply bg-muted border-b border-border px-3 py-2 font-semibold text-foreground;
+}
+
+.fc-popover-body {
+  @apply p-2 bg-popover;
+}
+
+/* Scrollbar utilities */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Webkit browsers */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fc-daygrid-day {
+    @apply min-h-20;
+  }
+  
+  .monthly-task-event {
+    @apply text-xs px-1 py-0.5;
+  }
+  
+  .fc-daygrid-day-number {
+    @apply text-sm;
+  }
+}
+
+/* Scrollbar styling for calendar container - hidden like weekly view */
+.monthly-calendar-container {
+  /* 隐藏滚动条但保持滚动功能 */
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* 隐藏Webkit浏览器的滚动条 */
+.monthly-calendar-container::-webkit-scrollbar {
+  display: none;
+}

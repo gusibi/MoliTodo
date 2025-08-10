@@ -10,7 +10,11 @@
     <div v-else-if="hasError" class="monthly-view-error">
       <div class="monthly-view-error-icon">⚠️</div>
       <div class="monthly-view-error-text">{{ error }}</div>
-      <button v-if="canRetry" @click="retryOperation" class="monthly-view-retry-btn">
+      <button 
+        v-if="canRetry" 
+        @click="retryOperation" 
+        class="monthly-view-retry-btn"
+      >
         重试 ({{ retryCount }}/{{ maxRetries }})
       </button>
     </div>
@@ -18,19 +22,23 @@
     <!-- Monthly view content -->
     <div v-else class="monthly-view-content">
       <!-- Month navigation -->
-      <MonthlyNavigation
-        :current-month="currentMonth"
-        @navigate-month="navigateMonth"
-        @go-to-today="goToCurrentMonth"
-      />
+      <div class="monthly-view-navigation">
+        <MonthlyNavigation
+          :current-month="currentMonth"
+          @navigate-month="navigateMonth"
+          @go-to-today="goToCurrentMonth"
+        />
+      </div>
       
-      <!-- Monthly calendar -->
-      <MonthlyCalendar
-        :events="calendarEvents"
-        :current-date="currentMonth"
-        @date-click="handleDateClick"
-        @event-click="handleEventClick"
-      />
+      <!-- Monthly calendar - scrollable -->
+      <div class="monthly-view-calendar-container">
+        <MonthlyCalendar
+          :events="calendarEvents"
+          :current-date="currentMonth"
+          @date-click="handleDateClick"
+          @event-click="handleEventClick"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -224,5 +232,6 @@ watch(() => props.tasks, () => {
 </script>
 
 <style>
-@import '../assets/styles/components/monthly-view.css';
+@import '../assets/styles/components/monthly-calendar.css';
 </style>
+

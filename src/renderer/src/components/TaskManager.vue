@@ -83,9 +83,19 @@
             <i class="fas fa-calendar-week"></i>
           </button>
           
-          <!-- 显示/隐藏已完成任务按钮 (仅在 all 分类下显示) -->
+          <!-- 月视图按钮 -->
           <button 
-            v-if="currentCategory === 'all' || currentCategory === 'today'"
+          v-if="supportsMonthlyView"
+            @click="setViewMode('monthly')" 
+            :class="['task-manager-action-btn', { 'active': viewMode === 'monthly' }]"
+            title="月视图"
+          >
+            <i class="fas fa-calendar-alt"></i>
+          </button>
+          
+          <!-- 显示/隐藏已完成任务按钮 -->
+          <button 
+            v-if="showCompletedTasksButton"
             @click="toggleCompletedTasks" 
             :class="['task-manager-action-btn', { 'active': showCompletedTasks }]"
             :title="showCompletedTasks ? '隐藏已完成任务' : '显示已完成任务'"
@@ -116,6 +126,18 @@
         :loading="loading"
         :search-query="searchQuery"
         @edit-task="handleEditTask"
+        @show-tooltip="showTooltip"
+        @hide-tooltip="hideTooltip"
+      />
+      
+      <!-- 月视图 -->
+      <MonthlyView
+        v-else-if="viewMode === 'monthly'"
+        :tasks="displayTasks"
+        :loading="loading"
+        :search-query="searchQuery"
+        @edit-task="handleEditTask"
+        @create-task="handleAddTask"
         @show-tooltip="showTooltip"
         @hide-tooltip="hideTooltip"
       />
@@ -164,6 +186,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import TaskList from './TaskList.vue'
 import WeeklyView from './WeeklyView.vue'
+import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 
 
@@ -177,13 +200,17 @@ const showSearchOptions = ref(false)
 // 新增状态
 const showSearchBox = ref(false)
 const viewMode = ref('list') // 'list', 'kanban', 或 'weekly'
-// 计算属性：根据当前分类获取对应的显示已完成任务状态
+// 计算属性：根据当前分类和视图模式获取对应的显示已完成任务状态
 const showCompletedTasks = computed({
   get: () => {
     if (currentCategory.value === 'all') {
       return taskStore.showCompletedInAll
     } else if (currentCategory.value === 'today') {
       return taskStore.showCompletedInToday
+    } else if (viewMode.value === 'weekly') {
+      return taskStore.showCompletedInWeekly
+    } else if (viewMode.value === 'monthly') {
+      return taskStore.showCompletedInMonthly
     }
     return false
   },
@@ -192,6 +219,10 @@ const showCompletedTasks = computed({
       taskStore.setShowCompletedInAll(value)
     } else if (currentCategory.value === 'today') {
       taskStore.setShowCompletedInToday(value)
+    } else if (viewMode.value === 'weekly') {
+      taskStore.setShowCompletedInWeekly(value)
+    } else if (viewMode.value === 'monthly') {
+      taskStore.setShowCompletedInMonthly(value)
     }
   }
 })
@@ -233,6 +264,14 @@ const supportsMonthlyView = computed(() => {
   return ['all', 'planned'].includes(currentCategory.value)
 })
 
+// 计算属性：判断是否显示已完成任务按钮
+const showCompletedTasksButton = computed(() => {
+  return currentCategory.value === 'all' || 
+         currentCategory.value === 'today' ||
+         (viewMode.value === 'weekly' && supportsWeeklyView.value) ||
+         (viewMode.value === 'monthly' && supportsMonthlyView.value)
+})
+
 const searchQuery = computed({
   get: () => taskStore.searchQuery,
   set: (value) => taskStore.setSearchQuery(value)
@@ -252,8 +291,8 @@ const switchCategory = (category) => {
   taskStore.setCurrentListId(null) // 切换智能分类时清除清单选择
   taskStore.clearSearch()
   
-  // 如果切换到不支持周视图的分类，且当前是周视图，则自动切换到列表视图
-  if (viewMode.value === 'weekly' && !['all', 'planned'].includes(category)) {
+  // 如果切换到不支持特殊视图的分类，则自动切换到列表视图
+  if ((viewMode.value === 'weekly' || viewMode.value === 'monthly') && !['all', 'planned'].includes(category)) {
     viewMode.value = 'list'
   }
 }
