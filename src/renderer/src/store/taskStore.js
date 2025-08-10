@@ -30,13 +30,13 @@ export const useTaskStore = defineStore('task', () => {
   const isTodayTask = (task) => {
     // 1. 提醒日期是今天的任务
     if (isToday(task.reminderTime)) return true
-    
+
     // 2. 今天创建的任务
     if (isToday(task.createdAt)) return true
-    
+
     // 3. 正在进行的任务
     if (task.status === 'doing') return true
-    
+
     // 4. 有提醒时间，且已经过期还未完成的任务
     if (task.reminderTime && task.status !== 'done') {
       const reminderDate = new Date(task.reminderTime)
@@ -46,7 +46,7 @@ export const useTaskStore = defineStore('task', () => {
         return true
       }
     }
-    
+
     return false
   }
 
@@ -137,7 +137,11 @@ export const useTaskStore = defineStore('task', () => {
     if (category === 'today') {
       // 今天视图的特殊排序
       filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 正在进行的任务优先级最高
+        // 已完成的任务排在最后
+        if (a.status === 'done' && b.status !== 'done') return 1
+        if (a.status !== 'done' && b.status === 'done') return -1
+
+        // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
@@ -154,7 +158,11 @@ export const useTaskStore = defineStore('task', () => {
     } else {
       // 其他视图的默认排序
       filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 正在进行的任务优先级最高
+        // 已完成的任务排在最后
+        if (a.status === 'done' && b.status !== 'done') return 1
+        if (a.status !== 'done' && b.status === 'done') return -1
+
+        // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
@@ -218,7 +226,7 @@ export const useTaskStore = defineStore('task', () => {
       // 在"所有任务"分类中，根据设置决定是否显示已完成任务
       return showCompletedInAll.value ? taskList : taskList.filter(task => task.status !== 'done')
     }
-    
+
     let filteredTasks = taskList.filter(task => {
       switch (category) {
         case 'inbox':
@@ -238,12 +246,12 @@ export const useTaskStore = defineStore('task', () => {
           return true
       }
     })
-    
+
     // 对于今天视图，根据设置决定是否显示已完成任务
     if (category === 'today' && !showCompletedInToday.value) {
       filteredTasks = filteredTasks.filter(task => task.status !== 'done')
     }
-    
+
     return filteredTasks
   }
 
@@ -318,7 +326,11 @@ export const useTaskStore = defineStore('task', () => {
     if (currentCategory.value === 'today') {
       // 今天视图的特殊排序：有提醒时间的在前，没有提醒时间的按创建时间排序（最新的在上方）
       result = [...result].sort((a, b) => {
-        // 正在进行的任务优先级最高
+        // 已完成的任务排在最后
+        if (a.status === 'done' && b.status !== 'done') return 1
+        if (a.status !== 'done' && b.status === 'done') return -1
+
+        // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
@@ -332,23 +344,27 @@ export const useTaskStore = defineStore('task', () => {
         // 都没有提醒时间，按创建时间排序（最新的在上方）
         return new Date(b.createdAt) - new Date(a.createdAt)
       })
-    // } else {
-    //   // 其他视图的默认排序
-    //   result = [...result].sort((a, b) => {
-    //     // 正在进行的任务优先级最高
-    //     if (a.status === 'doing' && b.status !== 'doing') return -1
-    //     if (a.status !== 'doing' && b.status === 'doing') return 1
+    } else {
+      // 其他视图的默认排序
+      result = [...result].sort((a, b) => {
+        // 已完成的任务排在最后
+        if (a.status === 'done' && b.status !== 'done') return 1
+        if (a.status !== 'done' && b.status === 'done') return -1
 
-    //     // 有提醒时间的任务优先
-    //     if (a.reminderTime && b.reminderTime) {
-    //       return new Date(a.reminderTime) - new Date(b.reminderTime)
-    //     }
-    //     if (a.reminderTime && !b.reminderTime) return -1
-    //     if (!a.reminderTime && b.reminderTime) return 1
+        // 正在进行的任务优先级最高（在未完成任务中）
+        if (a.status === 'doing' && b.status !== 'doing') return -1
+        if (a.status !== 'doing' && b.status === 'doing') return 1
 
-    //     // 按创建时间排序（最新的在上方）
-    //     return new Date(b.createdAt) - new Date(a.createdAt)
-    //   })
+        // 有提醒时间的任务优先
+        if (a.reminderTime && b.reminderTime) {
+          return new Date(a.reminderTime) - new Date(b.reminderTime)
+        }
+        if (a.reminderTime && !b.reminderTime) return -1
+        if (!a.reminderTime && b.reminderTime) return 1
+
+        // 按创建时间排序（最新的在上方）
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      })
     }
 
     return result
@@ -360,7 +376,7 @@ export const useTaskStore = defineStore('task', () => {
     const currentTasks = filterTasksByList(tasks.value, currentListId.value)
     const todayTasks = currentTasks.filter(t => isTodayTask(t))
     const todayCount = showCompletedInToday.value ? todayTasks.length : todayTasks.filter(t => t.status !== 'done').length
-    
+
     return {
       inbox: currentTasks.filter(t => t.status === 'todo' && !t.reminderTime).length,
       today: todayCount,
@@ -807,7 +823,7 @@ export const useTaskStore = defineStore('task', () => {
       if (result.success) {
         await getAllLists()
         await getAllTasks() // 任务可能被移动或删除
-        
+
         // 如果删除的是当前选中的清单，清除选择
         if (currentListId.value === listId) {
           currentListId.value = null

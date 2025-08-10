@@ -168,6 +168,32 @@
   /* 重要：允许flex子元素收缩 */
 }
 
+/* 任务列表控制区域 */
+.task-list-controls {
+  @apply mb-4 pb-3 border-b border-border/30;
+}
+
+.task-list-controls-buttons {
+  @apply flex items-center gap-2;
+}
+
+.task-list-control-btn {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 text-xs;
+  @apply bg-muted/50 text-muted-foreground border border-border/50 rounded-md;
+  @apply hover:bg-muted hover:text-foreground hover:border-border;
+  @apply transition-all duration-200 cursor-pointer;
+  @apply active:scale-95;
+}
+
+.task-list-control-btn i {
+  @apply text-xs;
+}
+
+.task-list-collapse-indicator {
+  @apply text-xs text-muted-foreground ml-auto;
+  @apply bg-primary/10 text-primary px-2 py-1 rounded-md;
+}
+
 /* 按钮样式 */
 .task-list-btn {
   @apply px-6 py-3 border-0 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 inline-flex items-center gap-2;
@@ -271,7 +297,7 @@
 
 /* 任务分组样式 */
 .task-group {
-  @apply mb-6;
+  @apply mb-8;
 }
 
 .task-group:last-child {
@@ -279,19 +305,35 @@
 }
 
 /* 在清单视图中，如果没有分组标题，减少间距 */
-.task-group:not(:has(.task-group-header)) {
+.task-group:not(:has(.task-group-header)):not(:has(.task-group-header-static)) {
   @apply mb-0;
 }
 
 .task-group-header {
-  @apply mb-3 pb-2 border-b border-border/50;
+  @apply mb-4 pb-2 border-b border-border/50 cursor-pointer select-none;
+  @apply hover:bg-accent/30 rounded-md px-4 py-2;
+  @apply active:bg-accent/60 active:border-accent/40;
+  /* 使用更平滑的过渡效果，移除可能导致跳动的缩放 */
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background-color;
+}
+
+.task-group-header-static {
+  @apply mb-4 pb-2 border-b border-border/50;
+  @apply px-4 py-2;
 }
 
 .task-group-title {
-  @apply flex items-center gap-2 text-sm font-medium text-muted-foreground;
+  @apply flex items-center justify-between w-full text-sm font-medium text-muted-foreground;
+  transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.task-group-title i {
+.task-group-info {
+  @apply flex items-center gap-2;
+}
+
+.task-group-info i {
   @apply text-xs;
 }
 
@@ -299,10 +341,47 @@
   @apply text-xs bg-muted px-2 py-0.5 rounded-full;
 }
 
-.task-group-items {
-  @apply space-y-1;
+.task-group-collapse-icon {
+  @apply text-xs text-muted-foreground/60 flex-shrink-0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: transform, color;
+  /* 添加一个微妙的圆形背景区域 */
+  @apply rounded-sm p-1.5 -m-1.5;
 }
 
+.task-group-collapse-icon:hover {
+  @apply text-muted-foreground bg-accent/20;
+}
+
+/* 整个标题悬停时的图标状态 */
+.task-group-header:hover .task-group-collapse-icon {
+  @apply text-muted-foreground;
+}
+
+.task-group-items {
+  @apply overflow-hidden;
+  max-height: 2000px; /* 足够大的值来容纳所有任务 */
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: max-height, opacity;
+  /* TaskItem 已经有 mb-2，所以这里不需要额外的 space-y */
+}
+
+.task-group-collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s cubic-bezier(0.4, 0, 0.2), 
+         margin 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 /* 滚动条样式 */
 .task-list-content::-webkit-scrollbar {
   @apply w-1;
