@@ -36,7 +36,8 @@
             <i class="fas fa-play"></i>
             {{ formatDuration(currentDuration) }}
           </span>
-          <span v-else-if="currentStatus === 'doing' && isTaskOvertime" class="task-tag task-tag-status task-tag-overtime">
+          <span v-else-if="currentStatus === 'doing' && isTaskOvertime"
+            class="task-tag task-tag-status task-tag-overtime">
             <i class="fas fa-clock"></i>
             {{ formatDuration(currentDuration) }}
           </span>
@@ -78,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, h } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 
 const props = defineProps({
@@ -123,6 +124,10 @@ const loadTask = async () => {
       task.value = foundTask
       console.log('FloatingTask: 任务加载成功', foundTask)
       updateDuration()
+      // 任务数据更新后触发窗口大小调整
+      setTimeout(() => {
+        triggerWindowResize()
+      }, 50)
     } else {
       console.warn('FloatingTask: 未找到任务，ID:', props.taskId)
       // 任务可能已被删除，关闭悬浮窗口
@@ -284,6 +289,28 @@ const handleTaskUpdated = (taskData) => {
   if (taskData && taskData.id === props.taskId) {
     task.value = taskData
     updateDuration()
+    // 任务状态变化可能影响显示内容，触发窗口大小调整
+    setTimeout(() => {
+      triggerWindowResize()
+    }, 50)
+  }
+}
+
+// 触发窗口自动调整大小
+const triggerWindowResize = () => {
+  if (window.electronAPI && window.electronAPI.windows) {
+    // 等待DOM更新完成后再计算高度
+    setTimeout(() => {
+      const taskItem = document.querySelector('.floating-task-item')
+      if (taskItem) {
+        // 计算实际任务卡片的高度，加上容器的padding
+        const taskHeight = taskItem.offsetHeight
+        const containerPadding = 16 // .floating-task-container 的 padding: 0.5rem = 8px * 2
+        const totalHeight = taskHeight + containerPadding
+        console.log('FloatingTask: 任务卡片高度:', taskHeight, '总高度:', totalHeight)
+        window.electronAPI.windows.resizeFloatingTaskWindow(props.taskId, Math.min(Math.max(totalHeight, 80), 140))
+      }
+    }, 100)
   }
 }
 
@@ -302,6 +329,11 @@ onMounted(async () => {
     console.error('FloatingTask: electronAPI.events 不可用')
   }
 
+  // 触发初始窗口大小调整
+  setTimeout(() => {
+    triggerWindowResize()
+  }, 200)
+
   // 设置定期刷新作为备用方案
   const refreshInterval = setInterval(() => {
     loadTask()
@@ -310,6 +342,14 @@ onMounted(async () => {
   // 保存interval引用以便清理
   window.floatingTaskRefreshInterval = refreshInterval
 })
+
+// 监听影响内容高度的变化
+watch([currentStatus, isReminderOverdue, isTaskOvertime], () => {
+  // 状态变化可能影响显示的标签数量，需要重新调整窗口大小
+  setTimeout(() => {
+    triggerWindowResize()
+  }, 50)
+}, { deep: true })
 
 onUnmounted(() => {
   console.log('FloatingTask: 组件卸载')

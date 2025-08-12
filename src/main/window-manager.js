@@ -91,7 +91,7 @@ class WindowManager {
     this.floatingWindow.once('ready-to-show', () => {
       this.floatingWindow.show();
       this.applyFloatingIconConfig();
-      
+
       // 开发环境下开启开发者工具用于调试
       if (process.env.NODE_ENV === 'development') {
         this.floatingWindow.webContents.openDevTools({ mode: 'detach' });
@@ -426,21 +426,23 @@ class WindowManager {
     }
 
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    
+
     // 随机位置，避免重叠
     const x = Math.floor(Math.random() * (width - 280)) + 20;
     const y = Math.floor(Math.random() * (height - 200)) + 20;
 
     const floatingTaskWindow = new BrowserWindow({
       width: 420, // 扩大窗口宽度以适配内容
-      height: 140, // 扩大窗口高度以适配内容
+      height: 80, // 初始高度
+      maxHeight: 140, // 最大高度限制
+      minHeight: 80, // 最小高度限制
       x: x,
       y: y,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
       skipTaskbar: true,
-      resizable: false,
+      resizable: true, // 允许调整大小以适应内容
       movable: true, // 允许移动
       show: false,
       vibrancy: 'sidebar', // 毛玻璃效果
@@ -479,6 +481,16 @@ class WindowManager {
       window.close();
     }
     this.floatingTaskWindows.delete(taskId);
+  }
+
+  resizeFloatingTaskWindow(taskId, height) {
+    const window = this.floatingTaskWindows.get(taskId);
+    if (window && !window.isDestroyed()) {
+      const [width] = window.getSize();
+      const constrainedHeight = Math.min(Math.max(height, 80), 140);
+      // console.log(`调整悬浮任务窗口 ${taskId} 高度: ${height} -> ${constrainedHeight}`);
+      window.setSize(width, constrainedHeight);
+    }
   }
 
   quit() {

@@ -450,6 +450,10 @@ class IpcHandlers {
       this.windowManager.closeFloatingTask(taskId);
     });
 
+    ipcMain.handle('resize-floating-task-window', (event, taskId, height) => {
+      this.windowManager.resizeFloatingTaskWindow(taskId, height);
+    });
+
     // 窗口控制相关
     ipcMain.handle('window-minimize', (event, windowType) => {
       this.windowManager.minimizeWindow(windowType);

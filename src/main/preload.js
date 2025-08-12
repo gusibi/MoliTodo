@@ -41,6 +41,7 @@ const electronAPI = {
     panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave'),
     createFloatingTask: (taskId) => ipcRenderer.invoke('create-floating-task', taskId),
     closeFloatingTask: (taskId) => ipcRenderer.invoke('close-floating-task', taskId),
+    resizeFloatingTaskWindow: (taskId, height) => ipcRenderer.invoke('resize-floating-task-window', taskId, height),
     // 窗口控制 API
     minimize: (windowType) => ipcRenderer.invoke('window-minimize', windowType),
     maximize: (windowType) => ipcRenderer.invoke('window-maximize', windowType),

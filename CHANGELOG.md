@@ -5,7 +5,43 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.8] - 2025-01-27
+## [0.8.2] - 2025-01-27
+
+### ✨ UI/UX 改进
+
+#### 悬浮任务窗口动态高度 (Floating Task Window Dynamic Height)
+- **智能高度调整**: 悬浮任务窗口不再使用固定高度，改为根据任务内容动态调整
+- **高度约束优化**: 设置最大高度140px，最小高度80px，确保窗口大小合理
+- **内容自适应**: 窗口高度完美匹配任务标题、标签和按钮的实际内容高度
+- **状态响应**: 任务状态变化（如开始、暂停、完成）时窗口自动调整大小
+- **视觉优化**: 消除不必要的空白区域，提供更紧凑的视觉体验
+
+#### 悬浮任务交互增强
+- **实时调整**: 任务内容变化时（如标签数量变化）窗口立即响应调整
+- **精确计算**: 基于实际任务卡片元素计算高度，避免CSS样式干扰
+- **流畅体验**: 窗口大小调整过程平滑自然，无突兀感
+
+### 🔧 技术改进
+
+#### 窗口管理系统优化
+- **动态尺寸API**: 新增 `resizeFloatingTaskWindow` IPC方法支持窗口动态调整
+- **高度计算算法**: 改进高度计算逻辑，从测量整个容器改为测量实际任务卡片
+- **响应式监听**: 添加Vue watch监听器，监控影响内容高度的状态变化
+- **容器边距处理**: 精确计算容器padding，确保高度计算准确性
+
+#### 进程间通信增强
+- **IPC处理器扩展**: 在主进程中添加窗口尺寸调整处理逻辑
+- **预加载脚本更新**: 扩展preload.js API，支持窗口尺寸控制
+- **错误处理完善**: 添加窗口调整过程中的异常处理和日志记录
+
+#### Vue组件架构优化
+- **计算属性监听**: 监听 `currentStatus`、`isReminderOverdue`、`isTaskOvertime` 等影响显示的状态
+- **生命周期管理**: 优化组件挂载和更新时的窗口调整时机
+- **性能优化**: 使用防抖机制避免频繁的窗口调整操作
+
+---
+
+## [0.8.1] - 2025-08-10
 
 ### 🎉 Major Features Added
 
@@ -59,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.7.7] - 2025-01-26
+## [0.7.7] - 2025-08-06
 
 ### ✨ UI/UX 改进
 
@@ -89,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.7.6] - 2025-01-26
+## [0.7.6] - 2025-08-05
 
 ### ✨ UI/UX 改进
 
@@ -111,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.7.5] - 2025-01-25
+## [0.7.5] - 2025-08-04
 
 ### ✨ UI/UX 改进
 
