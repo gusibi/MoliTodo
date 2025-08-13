@@ -1,0 +1,272 @@
+/* UnifiedCalendar 组件样式 - 使用 Tailwind CSS */
+
+.unified-calendar {
+  @apply w-full h-full flex flex-col;
+}
+
+/* Calendar content container */
+.unified-calendar-content {
+  @apply flex flex-col flex-1 min-h-0;
+}
+
+/* Calendar header - fixed at top */
+.calendar-header {
+  @apply bg-background flex-shrink-0 z-10;
+}
+
+/* Calendar grid - scrollable container */
+.calendar-grid {
+  @apply w-full flex-1 overflow-auto min-h-0;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for webkit browsers */
+.calendar-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* Calendar content wrapper */
+.calendar-content {
+  @apply w-full;
+}
+
+/* Week view styles */
+.week-view {
+  @apply min-w-full;
+}
+
+/* Month view styles */
+.month-view {
+  @apply w-full;
+}
+
+/* Week grid container */
+.week-grid-container {
+  @apply min-w-full;
+}
+
+/* Time slot row layout */
+.week-time-slot-row {
+  @apply grid grid-cols-8 w-full;
+}
+
+/* Time label column */
+.week-time-label {
+  @apply min-h-12 border-r border-b border-border flex items-start justify-end pr-2 pt-2;
+}
+
+.week-time-label span {
+  @apply text-xs text-muted-foreground;
+}
+
+/* Day slot column */
+.week-day-slot {
+  @apply min-h-12 border-r border-b border-border last:border-r-0 p-1 cursor-pointer hover:bg-accent/50 transition-colors;
+}
+
+/* Loading state */
+.calendar-loading {
+  @apply flex items-center justify-center h-64 space-x-3;
+}
+
+.calendar-loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary;
+}
+
+.calendar-loading-text {
+  @apply text-muted-foreground;
+}
+
+/* Error state */
+.calendar-error {
+  @apply flex flex-col items-center justify-center h-64 space-y-4;
+}
+
+.calendar-error-icon {
+  @apply text-4xl;
+}
+
+.calendar-error-text {
+  @apply text-destructive text-center;
+}
+
+.calendar-retry-btn {
+  @apply px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors;
+}
+
+/* Navigation controls */
+.calendar-nav-controls {
+  @apply flex items-center space-x-2;
+}
+
+.calendar-nav-btn {
+  @apply p-2 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors;
+}
+
+.calendar-nav-btn svg {
+  @apply w-4 h-4;
+}
+
+.calendar-today-btn {
+  @apply px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors;
+}
+
+/* Current period title */
+.calendar-title {
+  @apply text-lg font-semibold;
+}
+
+/* View controls */
+.calendar-view-controls {
+  @apply flex items-center space-x-1 bg-muted rounded-md p-1;
+}
+
+.calendar-view-btn {
+  @apply px-3 py-1 text-sm rounded transition-colors text-muted-foreground hover:text-foreground;
+}
+
+.calendar-view-btn.active {
+  @apply bg-background text-foreground shadow-sm;
+}
+
+/* Week header */
+.week-header {
+  @apply grid grid-cols-8 border-b border-border;
+}
+
+.week-header-empty {
+  @apply p-3 text-sm font-medium text-muted-foreground;
+}
+
+.week-header-day {
+  @apply p-3 text-center border-l border-border first:border-l-0;
+}
+
+.week-header-day-name {
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+.week-header-day-number {
+  @apply text-lg font-semibold mt-1 text-foreground;
+}
+
+.week-header-day-number.today {
+  @apply text-primary;
+}
+
+/* Month header */
+.month-header {
+  @apply grid grid-cols-7 border-b border-border;
+}
+
+.month-header-day {
+  @apply p-3 text-center text-sm font-medium text-muted-foreground border-r border-border last:border-r-0;
+}
+
+/* Month grid */
+.month-grid {
+  @apply grid grid-cols-7;
+}
+
+.month-day {
+  @apply min-h-32 border-r border-b border-border last:border-r-0 p-2 cursor-pointer hover:bg-accent/50 transition-colors;
+}
+
+.month-day.current-month {
+  @apply bg-background;
+}
+
+.month-day.other-month {
+  @apply bg-muted/30;
+}
+
+.month-day.today {
+  @apply ring-2 ring-primary ring-inset;
+}
+
+.month-day-number {
+  @apply text-sm font-medium mb-1;
+}
+
+.month-day-number.current-month {
+  @apply text-foreground;
+}
+
+.month-day-number.other-month {
+  @apply text-muted-foreground;
+}
+
+.month-day-number.today {
+  @apply text-primary font-bold;
+}
+
+.month-day-tasks {
+  @apply space-y-1;
+}
+
+.month-day-task {
+  @apply text-xs p-1 rounded cursor-pointer truncate;
+}
+
+.month-day-more {
+  @apply text-xs text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors;
+}
+
+/* Task styles */
+.task-item {
+  @apply text-xs p-1 rounded cursor-pointer truncate transition-colors;
+}
+
+.task-content {
+  @apply font-medium truncate;
+}
+
+.task-time {
+  @apply text-xs opacity-75;
+}
+
+/* Time slot styles */
+.time-slot-tasks {
+  @apply space-y-1;
+}
+
+/* Task status styles - 使用主题中定义的状态颜色 */
+.task-status-todo {
+  @apply bg-status-todo/40 text-status-todo border border-status-todo/30 transition-colors;
+}
+
+.task-status-doing {
+  @apply bg-status-doing/40 text-status-doing border border-status-doing/30 transition-colors;
+}
+
+.task-status-paused {
+  @apply bg-status-paused/40 text-status-paused border border-status-paused/30 transition-colors;
+}
+
+.task-status-done {
+  @apply bg-status-done/40 text-status-done border border-status-done/30 line-through opacity-75 transition-colors;
+}
+
+/* Task Tooltip */
+.task-tooltip {
+  @apply fixed z-50 pointer-events-none;
+  transform: translate(-50%, -100%);
+}
+
+.task-tooltip-content {
+  @apply bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border border-border text-xs whitespace-pre-line max-w-xs;
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -342,7 +342,6 @@ onMounted(async () => {
   // 保存interval引用以便清理
   window.floatingTaskRefreshInterval = refreshInterval
 })
-
 // 监听影响内容高度的变化
 watch([currentStatus, isReminderOverdue, isTaskOvertime], () => {
   // 状态变化可能影响显示的标签数量，需要重新调整窗口大小
@@ -350,7 +349,6 @@ watch([currentStatus, isReminderOverdue, isTaskOvertime], () => {
     triggerWindowResize()
   }, 50)
 }, { deep: true })
-
 onUnmounted(() => {
   console.log('FloatingTask: 组件卸载')
   stopUpdateTimer()

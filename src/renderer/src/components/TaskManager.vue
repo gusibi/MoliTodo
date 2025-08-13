@@ -48,11 +48,7 @@
             <i class="fas fa-columns"></i>
           </button>
 
-          <!-- 周视图按钮 -->
-          <button v-if="supportsWeeklyView" @click="setViewMode('weekly')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'weekly' }]" title="周视图">
-            <i class="fas fa-calendar-week"></i>
-          </button>
+
 
           <!-- 月视图按钮 -->
           <button v-if="supportsMonthlyView" @click="setViewMode('monthly')"
@@ -71,18 +67,15 @@
 
       <!-- 任务视图组件容器 - 可滚动区域 -->
       <div class="task-manager-views-container flex-1 min-h-0" :class="{
-        'overflow-auto': viewMode !== 'weekly' && viewMode !== 'monthly',
-        'overflow-hidden': viewMode === 'weekly' || viewMode === 'monthly'
+        'overflow-auto': viewMode !== 'monthly',
+        'overflow-hidden': viewMode === 'monthly'
       }">
         <!-- 列表视图 -->
         <TaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
           @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
           @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
 
-        <!-- 周视图 -->
-        <WeeklyView v-else-if="viewMode === 'weekly'" :tasks="displayTasks" :loading="loading"
-          :search-query="searchQuery" @edit-task="handleEditTask" @show-tooltip="showTooltip"
-          @hide-tooltip="hideTooltip" />
+
 
         <!-- 月视图 -->
         <MonthlyView v-else-if="viewMode === 'monthly'" :tasks="displayTasks" :loading="loading"
@@ -134,7 +127,6 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import TaskList from './TaskList.vue'
-import WeeklyView from './WeeklyView.vue'
 import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 
@@ -156,8 +148,6 @@ const showCompletedTasks = computed({
       return taskStore.showCompletedInAll
     } else if (currentCategory.value === 'today') {
       return taskStore.showCompletedInToday
-    } else if (viewMode.value === 'weekly') {
-      return taskStore.showCompletedInWeekly
     } else if (viewMode.value === 'monthly') {
       return taskStore.showCompletedInMonthly
     }
@@ -168,8 +158,6 @@ const showCompletedTasks = computed({
       taskStore.setShowCompletedInAll(value)
     } else if (currentCategory.value === 'today') {
       taskStore.setShowCompletedInToday(value)
-    } else if (viewMode.value === 'weekly') {
-      taskStore.setShowCompletedInWeekly(value)
     } else if (viewMode.value === 'monthly') {
       taskStore.setShowCompletedInMonthly(value)
     }
@@ -203,11 +191,6 @@ const supportsMultipleViews = computed(() => {
   return ['all', 'planned'].includes(currentCategory.value)
 })
 
-// 计算属性：判断当前分类是否支持周视图
-const supportsWeeklyView = computed(() => {
-  return ['all', 'planned'].includes(currentCategory.value)
-})
-
 // 计算属性：判断当前分类是否支持月视图
 const supportsMonthlyView = computed(() => {
   return ['all', 'planned'].includes(currentCategory.value)
@@ -217,7 +200,6 @@ const supportsMonthlyView = computed(() => {
 const showCompletedTasksButton = computed(() => {
   return currentCategory.value === 'all' ||
     currentCategory.value === 'today' ||
-    (viewMode.value === 'weekly' && supportsWeeklyView.value) ||
     (viewMode.value === 'monthly' && supportsMonthlyView.value)
 })
 
@@ -241,7 +223,7 @@ const switchCategory = (category) => {
   taskStore.clearSearch()
 
   // 如果切换到不支持特殊视图的分类，则自动切换到列表视图
-  if ((viewMode.value === 'weekly' || viewMode.value === 'monthly') && !['all', 'planned'].includes(category)) {
+  if (viewMode.value === 'monthly' && !['all', 'planned'].includes(category)) {
     viewMode.value = 'list'
   }
 }
@@ -505,5 +487,4 @@ watch(() => taskStore.searchQuery, (newQuery) => {
 
 <style>
 @import '../assets/styles/components/task-manager.css';
-@import '../assets/styles/components/weekly-view.css';
 </style>
