@@ -25,6 +25,12 @@ const availableColorThemes = [
     name: 'Morandi Mist',
     description: '莫兰迪雾霾蓝主题，柔和优雅',
     primaryColor: '#7a9cc6'
+  },
+  {
+    id: 'mint-green',
+    name: '薄荷绿',
+    description: '清新薄荷绿主题，自然舒缓',
+    primaryColor: '#8bc5a0'
   }
 ]
 
@@ -43,7 +49,8 @@ const themeModules = {
   default: () => import('../assets/styles/themes/default.css?raw'),
   twitter: () => import('../assets/styles/themes/twitter.css?raw'),
   vercel: () => import('../assets/styles/themes/vercel.css?raw'),
-  morandi: () => import('../assets/styles/themes/morandi.css?raw')
+  morandi: () => import('../assets/styles/themes/morandi.css?raw'),
+  'mint-green': () => import('../assets/styles/themes/mint-green.css?raw')
 }
 
 // Initialize broadcast channel for color theme cross-window communication

@@ -111,6 +111,23 @@
   @apply text-muted-foreground;
 }
 
+/* 视图容器 - 可滚动区域 */
+.task-manager-views-container {
+  /* Default styles for list view */
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.task-manager-views-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+/* Ensure calendar views get full height */
+.task-manager-views-container.overflow-hidden {
+  overflow: hidden;
+}
+
 /* 统计信息条 */
 .task-manager-stats-bar {
   @apply flex items-center gap-6 px-4 py-3  border-t border-border/50 text-xs flex-shrink-0;
