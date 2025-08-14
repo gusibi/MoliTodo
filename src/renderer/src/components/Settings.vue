@@ -4,13 +4,8 @@
     <div class="setting-sidebar">
       <h2 class="setting-sidebar-title">设置</h2>
       <nav class="setting-nav-list">
-        <div 
-          v-for="category in settingsCategories" 
-          :key="category.id"
-          class="setting-nav-item"
-          :class="{ 'setting-nav-item-active': activeCategory === category.id }"
-          @click="activeCategory = category.id"
-        >
+        <div v-for="category in settingsCategories" :key="category.id" class="setting-nav-item"
+          :class="{ 'setting-nav-item-active': activeCategory === category.id }" @click="activeCategory = category.id">
           <component :is="category.icon" class="setting-nav-icon" />
           {{ category.name }}
         </div>
@@ -25,7 +20,7 @@
           <div v-if="activeCategory === 'general'">
             <h1 class="setting-page-title">通用</h1>
             <p class="setting-page-description">应用的基本设置和行为配置</p>
-            
+
             <div class="setting-group">
               <h3 class="setting-group-title">启动设置</h3>
               <div class="setting-item">
@@ -34,11 +29,8 @@
                   <div class="setting-item-description">系统启动时自动运行应用</div>
                 </div>
                 <div class="setting-item-control">
-                  <button 
-                    class="setting-toggle"
-                    :class="{ 'setting-toggle-active': config.autoStart }"
-                    @click="toggleAutoStart"
-                  >
+                  <button class="setting-toggle" :class="{ 'setting-toggle-active': config.autoStart }"
+                    @click="toggleAutoStart">
                     <span class="setting-toggle-button"></span>
                   </button>
                 </div>
@@ -53,32 +45,26 @@
                   <div class="setting-item-description">接收任务提醒和系统通知</div>
                 </div>
                 <div class="setting-item-control">
-                  <button 
-                    class="setting-toggle"
-                    :class="{ 'setting-toggle-active': config.showNotifications }"
-                    @click="toggleNotifications"
-                  >
+                  <button class="setting-toggle" :class="{ 'setting-toggle-active': config.showNotifications }"
+                    @click="toggleNotifications">
                     <span class="setting-toggle-button"></span>
                   </button>
                 </div>
               </div>
-              
+
               <div class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">通知音效</div>
                   <div class="setting-item-description">通知时播放提示音</div>
                 </div>
                 <div class="setting-item-control">
-                  <button 
-                    class="setting-toggle"
-                    :class="{ 'setting-toggle-active': config.notificationSound.enabled }"
-                    @click="toggleNotificationSound"
-                  >
+                  <button class="setting-toggle" :class="{ 'setting-toggle-active': config.notificationSound.enabled }"
+                    @click="toggleNotificationSound">
                     <span class="setting-toggle-button"></span>
                   </button>
                 </div>
               </div>
-              
+
               <div v-if="config.notificationSound.enabled" class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">音效选择</div>
@@ -86,29 +72,19 @@
                 </div>
                 <div class="setting-item-control">
                   <div class="setting-sound-selector">
-                    <select 
-                      v-model="config.notificationSound.soundFile"
-                      @change="updateNotificationSound"
-                      class="setting-select"
-                    >
-                      <option 
-                        v-for="sound in availableSounds" 
-                        :key="sound.value" 
-                        :value="sound.value"
-                      >
+                    <select v-model="config.notificationSound.soundFile" @change="updateNotificationSound"
+                      class="setting-select">
+                      <option v-for="sound in availableSounds" :key="sound.value" :value="sound.value">
                         {{ sound.label }}
                       </option>
                     </select>
-                    <button 
-                      class="setting-btn setting-btn-small"
-                      @click="testNotificationSound"
-                    >
+                    <button class="setting-btn setting-btn-small" @click="testNotificationSound">
                       试听
                     </button>
                   </div>
                 </div>
               </div>
-              
+
               <div v-if="config.notificationSound.enabled" class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">音量</div>
@@ -116,14 +92,9 @@
                 </div>
                 <div class="setting-item-control">
                   <div class="setting-slider-group">
-                    <input 
-                      type="range"
-                      class="setting-slider"
-                      min="0" 
-                      max="100" 
+                    <input type="range" class="setting-slider" min="0" max="100"
                       v-model="config.notificationSound.volume"
-                      @input="updateConfig('notificationSound.volume', parseInt(config.notificationSound.volume))"
-                    />
+                      @input="updateConfig('notificationSound.volume', parseInt(config.notificationSound.volume))" />
                     <span class="setting-slider-value">{{ config.notificationSound.volume }}%</span>
                   </div>
                 </div>
@@ -135,7 +106,7 @@
           <div v-if="activeCategory === 'appearance'">
             <h1 class="setting-page-title">外观</h1>
             <p class="setting-page-description">自定义应用的外观和主题</p>
-            
+
             <div class="setting-group">
               <h3 class="setting-group-title">主题设置</h3>
               <div class="setting-item">
@@ -161,16 +132,13 @@
                   <div class="setting-item-description">在桌面显示任务管理悬浮图标</div>
                 </div>
                 <div class="setting-item-control">
-                  <button 
-                    class="setting-toggle"
-                    :class="{ 'setting-toggle-active': config.floatingIcon.visible }"
-                    @click="toggleFloatingIcon"
-                  >
+                  <button class="setting-toggle" :class="{ 'setting-toggle-active': config.floatingIcon.visible }"
+                    @click="toggleFloatingIcon">
                     <span class="setting-toggle-button"></span>
                   </button>
                 </div>
               </div>
-              
+
               <div class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">图标大小</div>
@@ -178,19 +146,13 @@
                 </div>
                 <div class="setting-item-control">
                   <div class="setting-slider-group">
-                    <input 
-                      type="range"
-                      class="setting-slider"
-                      min="40" 
-                      max="120" 
-                      v-model="config.floatingIcon.size"
-                      @input="updateConfig('floatingIcon.size', parseInt(config.floatingIcon.size))"
-                    />
+                    <input type="range" class="setting-slider" min="40" max="120" v-model="config.floatingIcon.size"
+                      @input="updateConfig('floatingIcon.size', parseInt(config.floatingIcon.size))" />
                     <span class="setting-slider-value">{{ config.floatingIcon.size }}px</span>
                   </div>
                 </div>
               </div>
-              
+
               <div class="setting-item">
                 <div class="setting-item-info">
                   <div class="setting-item-label">透明度</div>
@@ -198,14 +160,8 @@
                 </div>
                 <div class="setting-item-control">
                   <div class="setting-slider-group">
-                    <input 
-                      type="range"
-                      class="setting-slider"
-                      min="20" 
-                      max="100" 
-                      v-model="config.floatingIcon.opacity"
-                      @input="updateConfig('floatingIcon.opacity', parseInt(config.floatingIcon.opacity))"
-                    />
+                    <input type="range" class="setting-slider" min="20" max="100" v-model="config.floatingIcon.opacity"
+                      @input="updateConfig('floatingIcon.opacity', parseInt(config.floatingIcon.opacity))" />
                     <span class="setting-slider-value">{{ config.floatingIcon.opacity }}%</span>
                   </div>
                 </div>
@@ -217,7 +173,7 @@
           <div v-if="activeCategory === 'data'">
             <h1 class="setting-page-title">数据管理</h1>
             <p class="setting-page-description">管理应用数据，包括备份、恢复和清除</p>
-            
+
             <div class="setting-group">
               <h3 class="setting-group-title">数据操作</h3>
               <div class="setting-item">
@@ -252,11 +208,70 @@
             </div>
           </div>
 
+          <!-- 提醒设置 -->
+          <div v-if="activeCategory === 'reminders'">
+            <h1 class="setting-page-title">提醒设置</h1>
+            <p class="setting-page-description">自定义任务提醒的快捷选项</p>
+
+            <div class="setting-group">
+              <h3 class="setting-group-title">自定义提醒选项</h3>
+              <p class="setting-group-description">配置在添加任务时可以快速选择的提醒时间</p>
+
+              <div class="custom-reminders-list">
+                <div v-for="(reminder, index) in config.customReminders" :key="reminder.id"
+                  class="custom-reminder-item">
+                  <div class="custom-reminder-info">
+                    <input v-model="reminder.label" class="custom-reminder-label-input" placeholder="提醒标签"
+                      @input="updateCustomReminder(index)" />
+                    <div class="custom-reminder-config">
+                      <select v-model="reminder.type" class="custom-reminder-type-select"
+                        @change="updateCustomReminder(index)">
+                        <option value="relative">相对时间</option>
+                        <option value="absolute">绝对时间</option>
+                      </select>
+
+                      <!-- 相对时间配置 -->
+                      <template v-if="reminder.type === 'relative'">
+                        <input v-model="reminder.value" type="number" min="1" class="custom-reminder-value-input"
+                          @input="updateCustomReminder(index)" />
+                        <select v-model="reminder.unit" class="custom-reminder-unit-select"
+                          @change="updateCustomReminder(index)">
+                          <option value="minutes">分钟后</option>
+                          <option value="hours">小时后</option>
+                          <option value="days">天后</option>
+                        </select>
+                      </template>
+
+                      <!-- 绝对时间配置 -->
+                      <template v-if="reminder.type === 'absolute'">
+                        <input v-model="reminder.time" type="time" class="custom-reminder-time-input"
+                          @input="updateCustomReminder(index)" />
+                        <input v-model="reminder.dayOffset" type="number" min="0" max="365"
+                          class="custom-reminder-value-input" placeholder="天数" @input="updateCustomReminder(index)" />
+                        <span class="custom-reminder-unit-label">天后</span>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="custom-reminder-actions">
+                    <button class="custom-reminder-delete-btn" @click="deleteCustomReminder(index)" title="删除">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button class="setting-btn setting-btn-primary add-reminder-btn" @click="addCustomReminder">
+                <i class="fas fa-plus"></i>
+                添加新的提醒选项
+              </button>
+            </div>
+          </div>
+
           <!-- 统计信息 -->
           <div v-if="activeCategory === 'statistics'">
             <h1 class="setting-page-title">统计信息</h1>
             <p class="setting-page-description">查看任务完成情况和使用统计</p>
-            
+
             <div v-if="taskStats" class="setting-stats-container">
               <h3 class="setting-stats-title">任务统计</h3>
               <div class="setting-stats-item">
@@ -288,15 +303,11 @@
     </div>
 
     <!-- 消息提示 -->
-    <div 
-      v-if="message.visible" 
-      class="setting-message"
-      :class="{
-        'setting-message-success': message.type === 'success',
-        'setting-message-error': message.type === 'error',
-        'setting-message-info': message.type === 'info'
-      }"
-    >
+    <div v-if="message.visible" class="setting-message" :class="{
+      'setting-message-success': message.type === 'success',
+      'setting-message-error': message.type === 'error',
+      'setting-message-info': message.type === 'info'
+    }">
       {{ message.text }}
     </div>
   </div>
@@ -322,7 +333,17 @@ const config = reactive({
     visible: true,
     size: 60,
     opacity: 80
-  }
+  },
+  customReminders: [
+    { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
+    { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
+    { id: 3, label: '2小时后', type: 'relative', value: 2, unit: 'hours' },
+    { id: 4, label: '1天后', type: 'relative', value: 1, unit: 'days' },
+    { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
+    { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
+    { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
+    { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
+  ]
 })
 
 const databaseStats = ref(null)
@@ -390,6 +411,23 @@ const settingsCategories = [
         'stroke-linejoin': 'round',
         'stroke-width': '2',
         d: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4'
+      })
+    ])
+  },
+  {
+    id: 'reminders',
+    name: '提醒设置',
+    icon: h('svg', {
+      class: 'w-5 h-5',
+      fill: 'none',
+      stroke: 'currentColor',
+      viewBox: '0 0 24 24'
+    }, [
+      h('path', {
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        'stroke-width': '2',
+        d: 'M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'
       })
     ])
   },
@@ -467,10 +505,10 @@ const updateNotificationSound = async () => {
 
 const testNotificationSound = async () => {
   const success = await playNotificationSound(
-    config.notificationSound.soundFile, 
+    config.notificationSound.soundFile,
     config.notificationSound.volume
   )
-  
+
   if (!success) {
     showMessage('播放失败', 'error')
   }
@@ -611,7 +649,7 @@ const formatDuration = (milliseconds) => {
   const hours = Math.floor(milliseconds / (1000 * 60 * 60))
   const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60))
   const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000)
-  
+
   if (hours > 0) {
     return `${hours}小时${minutes}分钟`
   } else if (minutes > 0) {
@@ -619,6 +657,36 @@ const formatDuration = (milliseconds) => {
   } else {
     return `${seconds}秒`
   }
+}
+
+// 自定义提醒管理方法
+const addCustomReminder = () => {
+  const newId = Math.max(...config.customReminders.map(r => r.id), 0) + 1
+  config.customReminders.push({
+    id: newId,
+    label: '新提醒',
+    type: 'relative',
+    value: 30,
+    unit: 'minutes'
+  })
+  updateConfig('customReminders', config.customReminders)
+}
+
+const deleteCustomReminder = (index) => {
+  if (config.customReminders.length > 1) {
+    config.customReminders.splice(index, 1)
+    updateConfig('customReminders', config.customReminders)
+    showMessage('提醒选项已删除', 'success')
+  } else {
+    showMessage('至少需要保留一个提醒选项', 'error')
+  }
+}
+
+const updateCustomReminder = (index) => {
+  // 延迟更新，避免频繁保存
+  setTimeout(() => {
+    updateConfig('customReminders', config.customReminders)
+  }, 500)
 }
 
 // 生命周期
@@ -689,5 +757,68 @@ onMounted(async () => {
 [data-theme="dark"] .setting-btn-small:hover {
   background: var(--bg-hover-dark, #718096);
   border-color: var(--border-hover-dark, #718096);
+}
+
+/* 自定义提醒设置样式 - 使用新的设计系统 */
+.setting-group-description {
+  @apply text-sm text-muted-foreground mb-4 leading-relaxed;
+}
+
+.custom-reminders-list {
+  @apply flex flex-col gap-3 mb-5;
+}
+
+.custom-reminder-item {
+  @apply flex items-center gap-3 p-4 border border-border rounded-lg bg-card;
+  @apply transition-all duration-200 hover:shadow-md;
+}
+
+.custom-reminder-info {
+  @apply flex-1 flex flex-col gap-3;
+}
+
+.custom-reminder-label-input {
+  @apply px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm font-medium;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+  @apply placeholder:text-muted-foreground;
+}
+
+.custom-reminder-config {
+  @apply flex items-center gap-2 flex-wrap;
+}
+
+.custom-reminder-type-select,
+.custom-reminder-unit-select,
+.custom-reminder-day-select {
+  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs min-w-[80px];
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.custom-reminder-value-input,
+.custom-reminder-time-input {
+  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs w-20;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.custom-reminder-unit-label {
+  @apply text-xs text-muted-foreground whitespace-nowrap;
+}
+
+.custom-reminder-actions {
+  @apply flex gap-2;
+}
+
+.custom-reminder-delete-btn {
+  @apply p-2 border-0 rounded bg-destructive text-destructive-foreground cursor-pointer;
+  @apply transition-all duration-200 hover:bg-destructive/90 active:scale-95;
+}
+
+.add-reminder-btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md;
+  @apply transition-all duration-200 hover:bg-primary/90 active:scale-95 mt-3;
+}
+
+.add-reminder-btn i {
+  @apply text-sm;
 }
 </style>

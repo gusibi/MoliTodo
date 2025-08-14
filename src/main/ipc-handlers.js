@@ -391,7 +391,17 @@ class IpcHandlers {
           soundFile: 'ding-126626.mp3',
           volume: 50
         },
-        theme: 'system'
+        theme: 'system',
+        customReminders: [
+          { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
+          { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
+          { id: 3, label: '2小时后', type: 'relative', value: 2, unit: 'hours' },
+          { id: 4, label: '1天后', type: 'relative', value: 1, unit: 'days' },
+          { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
+          { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
+          { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
+          { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
+        ]
       };
       
       Object.entries(defaultConfig).forEach(([key, value]) => {
