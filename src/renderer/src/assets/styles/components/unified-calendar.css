@@ -153,7 +153,7 @@
 }
 
 .week-header-day-number.today {
-  @apply text-primary;
+  @apply text-primary-foreground bg-primary rounded-full w-8 h-8 flex items-center justify-center mx-auto;
 }
 
 /* Month header */
@@ -268,5 +268,190 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Day Tasks Modal */
+.day-tasks-modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.day-tasks-modal {
+  @apply max-w-full p-8 bg-background rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto border border-border;
+  animation: modal-slide-in 0.3s ease-out;
+}
+
+.day-tasks-modal-header {
+  @apply flex items-start justify-between mb-4;
+}
+
+.day-tasks-modal-title {
+  @apply flex items-center mb-6;
+}
+
+.day-tasks-modal-icon {
+  @apply  text-primary;
+}
+
+.day-tasks-modal-title-text {
+  @apply font-semibold ml-3 text-lg text-foreground;
+}
+
+.day-tasks-modal-close {
+  @apply p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors text-muted-foreground;
+}
+
+.day-tasks-modal-content {
+  @apply space-y-2;
+}
+
+.day-task-item {
+  @apply border-b border-border last:border-b-0 pb-2 last:pb-0;
+}
+
+.day-task-label {
+  @apply flex items-center h-10 px-2 rounded cursor-pointer hover:bg-accent/50 transition-colors;
+}
+
+.day-task-checkbox {
+  @apply flex items-center justify-center w-5 h-5 text-transparent border-2 border-muted-foreground rounded-full transition-colors;
+}
+
+.day-task-content {
+  @apply ml-4 text-sm flex-grow text-foreground;
+}
+
+.day-task-content-completed {
+  @apply line-through opacity-75;
+}
+
+.day-task-time {
+  @apply text-xs text-muted-foreground ml-2;
+}
+
+.day-task-time-completed {
+  @apply line-through opacity-75;
+}
+
+.day-tasks-modal-empty {
+  @apply text-center text-muted-foreground py-8;
+}
+
+/* Task status classes for modal */
+.day-task-checkbox.task-status-done {
+  @apply bg-status-done text-white border-status-done;
+}
+
+.day-task-checkbox.task-status-doing {
+  @apply bg-status-doing text-white border-status-doing;
+}
+
+.day-task-checkbox.task-status-paused {
+  @apply bg-status-paused text-white border-status-paused;
+}
+
+.day-task-checkbox.task-status-todo {
+  @apply border-muted-foreground;
+}
+
+/* Custom scrollbar for day tasks modal */
+.day-tasks-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.day-tasks-modal::-webkit-scrollbar-track {
+  @apply bg-muted/30 rounded-full;
+}
+
+.day-tasks-modal::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full;
+}
+
+.day-tasks-modal::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/80;
+}
+
+/* Firefox scrollbar styling */
+.day-tasks-modal {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.6) hsl(var(--muted) / 0.3);
+}
+
+/* Day View Styles - Similar to Week View */
+.day-view {
+  @apply min-w-full;
+}
+
+/* Day header - similar to week header */
+.day-header {
+  @apply grid border-b border-border;
+  grid-template-columns: 1fr 7fr;
+}
+
+.day-header-empty {
+  @apply p-3 text-sm font-medium text-muted-foreground;
+}
+
+.day-header-day {
+  @apply p-3 text-center border-l border-border;
+}
+
+.day-header-day-name {
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+.day-header-day-number {
+  @apply text-lg font-semibold mt-1 text-foreground;
+}
+
+.day-header-day-number.today {
+  @apply text-primary-foreground bg-primary rounded-full w-8 h-8 flex items-center justify-center mx-auto;
+}
+
+/* Day grid container */
+.day-grid-container {
+  @apply min-w-full;
+}
+
+/* Day time slot row layout */
+.day-time-slot-row {
+  @apply grid w-full;
+  grid-template-columns: 1fr 7fr;
+}
+
+/* Day time label column */
+.day-time-label {
+  @apply min-h-12 border-r border-b border-border flex items-start justify-end pr-2 pt-2;
+}
+
+.day-time-label span {
+  @apply text-xs text-muted-foreground;
+}
+
+/* Day slot column */
+.day-slot {
+  @apply min-h-12 border-b border-border p-1 cursor-pointer hover:bg-accent/50 transition-colors;
+}
+
+
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

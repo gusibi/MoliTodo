@@ -41,6 +41,12 @@
 
         <!-- View controls -->
         <div class="calendar-view-controls">
+          <button @click="changeView('day')" :class="[
+            'calendar-view-btn',
+            { 'active': currentView === 'day' }
+          ]">
+            日视图
+          </button>
           <button @click="changeView('week')" :class="[
             'calendar-view-btn',
             { 'active': currentView === 'week' }
@@ -105,6 +111,50 @@
             </div>
           </div>
 
+          <!-- Day view -->
+          <div v-if="currentView === 'day'" class="day-view">
+            <!-- Day header -->
+            <div class="day-header">
+              <div class="day-header-empty"></div>
+              <div class="day-header-day">
+                <div class="day-header-day-name">{{ currentDayInfo.weekdayStr }}</div>
+                <div :class="[
+                  'day-header-day-number',
+                  { 'today': isSameDay(currentDate, new Date()) }
+                ]">
+                  {{ currentDate.getDate() }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Day grid -->
+            <div class="day-grid-container">
+              <!-- Time slot rows -->
+              <div v-for="timeSlot in timeSlots" :key="timeSlot.id" class="day-time-slot-row"
+                :style="{ minHeight: getDayTimeSlotMinHeight(timeSlot) + 'px' }">
+                <!-- Time label column -->
+                <div class="day-time-label">
+                  <span>{{ timeSlot.label }}</span>
+                </div>
+
+                <!-- Day column for this time slot -->
+                <div class="day-slot" @click="handleTimeSlotClick(currentDate, timeSlot)">
+                  <!-- Tasks for this time slot -->
+                  <div class="time-slot-tasks">
+                    <div v-for="task in getTasksForTimeSlot(currentDayTasks, timeSlot)" :key="task.id" class="task-item"
+                      :class="getTaskClasses(task)" @click.stop="handleTaskClick(task)"
+                      @mouseenter="handleShowTooltip({ task, event: $event })" @mouseleave="handleHideTooltip">
+                      <div class="task-content">{{ task.content }}</div>
+                      <div v-if="hasSpecificTime(task.reminderTime)" class="task-time">
+                        {{ formatTaskTime(task.reminderTime) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Month view -->
           <div v-if="currentView === 'month'" class="month-view">
             <!-- Month header -->
@@ -138,7 +188,8 @@
                   </div>
 
                   <!-- More tasks indicator -->
-                  <div v-if="day.tasks.length > 3" class="month-day-more" @click.stop="handleDateClick(day.date)">
+                  <div v-if="day.tasks.length > 3" class="month-day-more"
+                    @click.stop="showDayTasksModal(day.date, day.tasks)">
                     +{{ day.tasks.length - 3 }} 更多
                   </div>
                 </div>
@@ -158,11 +209,46 @@
         {{ formatTaskDetails(tooltip.task) }}
       </div>
     </div>
+
+    <!-- Day Tasks Modal -->
+    <div v-if="dayTasksModal.show" class="day-tasks-modal-overlay" @click="closeDayTasksModal">
+      <div class="day-tasks-modal" @click.stop>
+        <div class="day-tasks-modal-header">
+          <div class="day-tasks-modal-title">
+            <i class="fas fa-tasks day-tasks-modal-icon"></i>
+            <h4 class="day-tasks-modal-title-text">{{ dayTasksModal.title }}</h4>
+          </div>
+          <button @click="closeDayTasksModal" class="day-tasks-modal-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="day-tasks-modal-content">
+          <div v-for="task in dayTasksModal.tasks" :key="task.id" class="day-task-item">
+            <label class="day-task-label" @click="handleTaskClick(task)">
+              <span class="day-task-checkbox" :class="getTaskStatusClasses(task)">
+                <i v-if="task.status === 'done'" class="fas fa-check"></i>
+              </span>
+              <span class="day-task-content" :class="{ 'day-task-content-completed': task.status === 'done' }">{{
+                task.content }}</span>
+              <span v-if="hasSpecificTime(task.reminderTime)" class="day-task-time"
+                :class="{ 'day-task-time-completed': task.status === 'done' }">
+                {{ formatTaskTime(task.reminderTime) }}
+              </span>
+            </label>
+          </div>
+
+          <div v-if="dayTasksModal.tasks.length === 0" class="day-tasks-modal-empty">
+            暂无任务
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   tasks: {
@@ -180,7 +266,7 @@ const props = defineProps({
   initialView: {
     type: String,
     default: 'month',
-    validator: (value) => ['week', 'month'].includes(value)
+    validator: (value) => ['day', 'week', 'month'].includes(value)
   }
 })
 
@@ -204,6 +290,14 @@ const tooltip = ref({
   task: null,
   x: 0,
   y: 0
+})
+
+// Day tasks modal state
+const dayTasksModal = ref({
+  show: false,
+  date: null,
+  tasks: [],
+  title: ''
 })
 
 // Utility functions
@@ -325,7 +419,10 @@ const currentTitle = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth() + 1
 
-  if (currentView.value === 'month') {
+  if (currentView.value === 'day') {
+    const day = currentDate.value.getDate()
+    return `${year}年${month}月${day}日`
+  } else if (currentView.value === 'month') {
     return `${year}年${month}月`
   } else {
     const weekStart = getWeekStart(currentDate.value)
@@ -501,7 +598,9 @@ const navigatePrevious = () => {
   try {
     const newDate = new Date(currentDate.value)
 
-    if (currentView.value === 'month') {
+    if (currentView.value === 'day') {
+      newDate.setDate(newDate.getDate() - 1)
+    } else if (currentView.value === 'month') {
       newDate.setMonth(newDate.getMonth() - 1)
     } else {
       newDate.setDate(newDate.getDate() - 7)
@@ -518,7 +617,9 @@ const navigateNext = () => {
   try {
     const newDate = new Date(currentDate.value)
 
-    if (currentView.value === 'month') {
+    if (currentView.value === 'day') {
+      newDate.setDate(newDate.getDate() + 1)
+    } else if (currentView.value === 'month') {
       newDate.setMonth(newDate.getMonth() + 1)
     } else {
       newDate.setDate(newDate.getDate() + 7)
@@ -598,6 +699,88 @@ const handleHideTooltip = () => {
   emit('hide-tooltip')
 }
 
+// Day tasks modal methods
+const showDayTasksModal = (date, tasks) => {
+  const dateStr = date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  dayTasksModal.value = {
+    show: true,
+    date: new Date(date),
+    tasks: [...tasks],
+    title: `${dateStr} 的任务`
+  }
+}
+
+const closeDayTasksModal = () => {
+  dayTasksModal.value.show = false
+}
+
+// Handle keyboard events for modal
+const handleKeydown = (event) => {
+  if (event.key === 'Escape' && dayTasksModal.value.show) {
+    closeDayTasksModal()
+  }
+}
+
+// Get task status classes for modal
+const getTaskStatusClasses = (task) => {
+  switch (task.status) {
+    case 'done':
+      return 'task-status-done'
+    case 'doing':
+      return 'task-status-doing'
+    case 'paused':
+      return 'task-status-paused'
+    default:
+      return 'task-status-todo'
+  }
+}
+
+// Day view data
+const currentDayInfo = computed(() => {
+  const date = currentDate.value
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+  return {
+    dateStr: `${date.getMonth() + 1}月${date.getDate()}日`,
+    weekdayStr: weekdays[date.getDay()]
+  }
+})
+
+const currentDayTasks = computed(() => {
+  return getTasksForDate(currentDate.value)
+})
+
+const completedTasksCount = computed(() => {
+  return currentDayTasks.value.filter(task => task.status === 'done').length
+})
+
+// Get priority text
+const getPriorityText = (priority) => {
+  const priorityMap = {
+    'low': '低优先级',
+    'high': '高优先级'
+  }
+  return priorityMap[priority] || priority
+}
+
+// Calculate minimum height for a time slot in day view
+const getDayTimeSlotMinHeight = (timeSlot) => {
+  const tasksInSlot = getTasksForTimeSlot(currentDayTasks.value, timeSlot)
+  const maxTasks = tasksInSlot.length
+
+  // Base height + (task height * number of tasks) + padding
+  const baseHeight = 96 // Minimum height for empty slots
+  const taskHeight = 32 // Height per task
+  const padding = 16 // Extra padding
+
+  return Math.max(baseHeight, (maxTasks * taskHeight) + padding)
+}
+
 // Retry functionality
 const retryOperation = () => {
   if (retryCount.value < maxRetries) {
@@ -615,6 +798,14 @@ const canRetry = computed(() => hasError.value && retryCount.value < maxRetries)
 // Initialize on mount
 onMounted(() => {
   initializeCurrentPeriod()
+
+  // Add keyboard event listener
+  document.addEventListener('keydown', handleKeydown)
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
 })
 
 // Watch for view changes
