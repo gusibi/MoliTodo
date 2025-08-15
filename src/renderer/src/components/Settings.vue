@@ -318,6 +318,10 @@ import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import { playNotificationSound, getAvailableSounds } from '../utils/notificationSound.js'
+import { useTaskStore } from '../store/taskStore'
+
+// 使用 taskStore
+const taskStore = useTaskStore()
 
 // 响应式数据
 const activeCategory = ref('general')
@@ -660,7 +664,7 @@ const formatDuration = (milliseconds) => {
 }
 
 // 自定义提醒管理方法
-const addCustomReminder = () => {
+const addCustomReminder = async () => {
   const newId = Math.max(...config.customReminders.map(r => r.id), 0) + 1
   config.customReminders.push({
     id: newId,
@@ -669,13 +673,37 @@ const addCustomReminder = () => {
     value: 30,
     unit: 'minutes'
   })
-  updateConfig('customReminders', config.customReminders)
+  // 创建一个干净的副本，移除Vue的响应式属性
+  const cleanReminders = config.customReminders.map(reminder => ({
+    id: reminder.id,
+    label: reminder.label,
+    type: reminder.type,
+    value: reminder.value,
+    unit: reminder.unit,
+    time: reminder.time,
+    dayOffset: reminder.dayOffset
+  }))
+  await updateConfig('customReminders', cleanReminders)
+  // 通知 taskStore 更新自定义提醒选项
+  await taskStore.refreshCustomReminderOptions()
 }
 
-const deleteCustomReminder = (index) => {
+const deleteCustomReminder = async (index) => {
   if (config.customReminders.length > 1) {
     config.customReminders.splice(index, 1)
-    updateConfig('customReminders', config.customReminders)
+    // 创建一个干净的副本，移除Vue的响应式属性
+    const cleanReminders = config.customReminders.map(reminder => ({
+      id: reminder.id,
+      label: reminder.label,
+      type: reminder.type,
+      value: reminder.value,
+      unit: reminder.unit,
+      time: reminder.time,
+      dayOffset: reminder.dayOffset
+    }))
+    await updateConfig('customReminders', cleanReminders)
+    // 通知 taskStore 更新自定义提醒选项
+    await taskStore.refreshCustomReminderOptions()
     showMessage('提醒选项已删除', 'success')
   } else {
     showMessage('至少需要保留一个提醒选项', 'error')
@@ -684,8 +712,20 @@ const deleteCustomReminder = (index) => {
 
 const updateCustomReminder = (index) => {
   // 延迟更新，避免频繁保存
-  setTimeout(() => {
-    updateConfig('customReminders', config.customReminders)
+  setTimeout(async () => {
+    // 创建一个干净的副本，移除Vue的响应式属性
+    const cleanReminders = config.customReminders.map(reminder => ({
+      id: reminder.id,
+      label: reminder.label,
+      type: reminder.type,
+      value: reminder.value,
+      unit: reminder.unit,
+      time: reminder.time,
+      dayOffset: reminder.dayOffset
+    }))
+    await updateConfig('customReminders', cleanReminders)
+    // 通知 taskStore 更新自定义提醒选项
+    await taskStore.refreshCustomReminderOptions()
   }, 500)
 }
 

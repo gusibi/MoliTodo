@@ -447,9 +447,10 @@ const openSettings = () => {
 
 // 生命周期
 onMounted(async () => {
-  // 加载清单和任务数据
+  // 加载清单和任务数据，以及自定义提醒选项
   await Promise.all([
     taskStore.getAllLists(),
+    taskStore.loadCustomReminderOptions(),
     loadTasks()
   ])
 

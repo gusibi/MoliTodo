@@ -1,6 +1,6 @@
 <template>
   <!-- 添加任务区域 -->
-  <div class="task-edit-container">
+  <div class="task-edit-container" ref="taskEditContainer">
     <div :class="['task-add-item-row', { 'task-add-item-active': isAddingTask }]" @click="handleStartAdding">
       <!-- 展开占位符 -->
       <div class="task-edit-expand-placeholder"></div>
@@ -24,28 +24,28 @@
           <div class="task-add-options-row">
             <!-- 列表选择器 -->
             <div class="task-add-option-group">
-              <button class="task-add-option-btn" @click="toggleListPicker" :class="{ 'active': showListPicker }">
+              <button class="task-add-option-btn" @click.stop="toggleListPicker" :class="{ 'active': showListPicker }">
                 <i class="fas fa-list"></i>
                 <span>{{ getSelectedListName() }}</span>
               </button>
             </div>
 
             <!-- 日期时间选择器 -->
-            <button class="task-add-option-btn" @click="toggleDatePicker" :class="{ 'active': showDatePicker }">
+            <button class="task-add-option-btn" @click.stop="toggleDatePicker" :class="{ 'active': showDatePicker }">
               <i class="fas fa-calendar"></i>
-              <span>{{ selectedDate ? formatSelectedDate(selectedDate) : '今天' }}</span>
+              <span>{{ selectedDate ? formatSelectedDate(selectedDate) : '设置时间' }}</span>
             </button>
 
             <!-- 提醒选择器 -->
             <div class="task-add-option-group">
-              <button class="task-add-option-btn" @click="toggleReminderPicker"
+              <button class="task-add-option-btn" @click.stop="toggleReminderPicker"
                 :class="{ 'active': showReminderPicker }">
                 <i class="fas fa-bell"></i>
                 <span>{{ getReminderDisplayText() }}</span>
               </button>
 
               <!-- 清除提醒按钮 -->
-              <button v-if="selectedReminder" class="task-add-clear-btn" @click="clearReminder" title="清除提醒">
+              <button v-if="selectedReminder" class="task-add-clear-btn" @click.stop="clearReminder" title="清除提醒">
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -74,7 +74,7 @@
                   <div class="task-add-current-list-label">当前列表</div>
                   <button class="task-add-list-option task-add-current-list-option"
                     :class="{ 'active': selectedListId === props.task.listId }"
-                    @click="selectList(getCurrentTaskList())">
+                    @click.stop="selectList(getCurrentTaskList())">
                     <div class="task-add-list-icon" :style="{ color: getCurrentTaskList()?.color }">
                       <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
                     </div>
@@ -90,7 +90,7 @@
                 <div v-if="props.task && props.task.listId && getOtherLists().length > 0"
                   class="task-add-other-lists-label">移动到其他列表</div>
                 <button v-for="list in getOtherLists()" :key="list.id" class="task-add-list-option"
-                  :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
+                  :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list)">
                   <div class="task-add-list-icon" :style="{ color: list.color }">
                     <i :class="`fas fa-${list.icon}`"></i>
                   </div>
@@ -101,7 +101,7 @@
               <!-- 添加模式：显示所有列表 -->
               <template v-else>
                 <button v-for="list in availableLists" :key="list.id" class="task-add-list-option"
-                  :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
+                  :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list)">
                   <div class="task-add-list-icon" :style="{ color: list.color }">
                     <i :class="`fas fa-${list.icon}`"></i>
                   </div>
@@ -114,8 +114,12 @@
           <!-- 日期选择器下拉 -->
           <div v-if="showDatePicker" class="task-add-dropdown">
             <div class="task-add-date-picker">
-              <input type="date" v-model="selectedDate" :min="getMinDate()" class="task-add-date-input" />
-              <input type="time" v-model="selectedTime" :min="getMinTime()" class="task-add-time-input" />
+              <input type="date" v-model="selectedDate" :min="getMinDate()" class="task-add-date-input" @click.stop />
+              <input type="time" v-model="selectedTime" :min="getMinTime()" class="task-add-time-input" @click.stop />
+              <button v-if="selectedDate || selectedTime" class="task-add-clear-btn" @click.stop="clearDateTime"
+                title="清除日期时间">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
           </div>
 
@@ -123,7 +127,7 @@
           <div v-if="showReminderPicker" class="task-add-dropdown">
             <div class="task-add-reminder-options">
               <button v-for="reminder in customReminderOptions" :key="reminder.id" class="task-add-reminder-option"
-                @click="selectCustomReminder(reminder)">
+                @click.stop="selectCustomReminder(reminder)">
                 <i class="fas fa-clock"></i>
                 <span>{{ reminder.label }}</span>
               </button>
@@ -137,7 +141,8 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onMounted, defineExpose } from 'vue'
+import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useTaskStore } from '../store/taskStore'
 
 
@@ -158,6 +163,10 @@ const emit = defineEmits(['add-task', 'update-task', 'cancel-edit'])
 
 // 使用 taskStore
 const taskStore = useTaskStore()
+const { customReminderOptions: storeCustomReminderOptions, lists } = storeToRefs(taskStore)
+
+// 组件根元素引用
+const taskEditContainer = ref(null)
 
 // 添加任务相关状态
 const newTaskContent = ref('')
@@ -166,7 +175,7 @@ const isAddingTask = ref(false)
 
 // 日期时间相关状态
 const selectedDate = ref('')
-const selectedTime = ref('09:00')
+const selectedTime = ref('')
 const showDatePicker = ref(false)
 
 // 提醒相关状态
@@ -176,54 +185,70 @@ const showReminderPicker = ref(false)
 // 列表选择相关状态
 const selectedListId = ref(null)
 const showListPicker = ref(false)
-const availableLists = ref([])
+// 使用 taskStore 中的 lists 作为 availableLists
+const availableLists = lists
 
-// 自定义提醒选项（从设置中读取）
-const customReminderOptions = ref([])
+// 使用 storeToRefs 确保响应式
+const customReminderOptions = storeCustomReminderOptions
 
-// 加载自定义提醒选项
-const loadCustomReminderOptions = async () => {
-  try {
-    if (window.electronAPI && window.electronAPI.config) {
-      const config = await window.electronAPI.config.getAll()
+// 调试：监听 customReminderOptions 的变化
+watch(customReminderOptions, (newOptions) => {
+  console.log('TaskEdit: customReminderOptions 变化了', newOptions)
+}, { immediate: true })
 
-      if (config.customReminders && Array.isArray(config.customReminders)) {
-        customReminderOptions.value = config.customReminders
-      } else {
-        customReminderOptions.value = getDefaultReminderOptions()
-      }
-    } else {
-      customReminderOptions.value = getDefaultReminderOptions()
-    }
-  } catch (error) {
-    console.error('加载自定义提醒选项失败:', error)
-    customReminderOptions.value = getDefaultReminderOptions()
+// 调试：监听 availableLists 的变化
+watch(availableLists, (newLists) => {
+  console.log('TaskEdit: availableLists 变化了', newLists)
+}, { immediate: true })
+
+// 获取本地日期字符串（避免时区问题）
+const getLocalDateString = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 初始化默认日期和时间（仅在打开日期选择器时调用）
+const initializeDefaultDateTime = () => {
+  // 只有在没有设置日期时才设置默认值
+  if (!selectedDate.value) {
+    const now = new Date()
+    selectedDate.value = getLocalDateString(now)
+  }
+
+  // 只有在没有设置时间时才设置默认值
+  if (!selectedTime.value) {
+    // 设置默认时间为当前时间的下一个整点
+    const now = new Date()
+    const nextHour = new Date(now)
+    nextHour.setHours(now.getHours() + 1, 0, 0, 0)
+    const hours = String(nextHour.getHours()).padStart(2, '0')
+    selectedTime.value = `${hours}:00`
   }
 }
 
-// 获取默认提醒选项
-const getDefaultReminderOptions = () => {
-  return [
-    { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
-    { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
-    { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
-    { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
-    { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
-  ]
-}
+
 
 // 组件挂载时初始化
 onMounted(async () => {
   console.log('TaskEdit 组件已挂载，开始初始化...')
+  console.log('当前 customReminderOptions:', customReminderOptions.value)
+  console.log('当前 availableLists:', availableLists.value)
 
-  // 获取所有列表
-  await loadAvailableLists()
+  // 如果列表为空，则加载它们
+  if (!availableLists.value || availableLists.value.length === 0) {
+    console.log('availableLists 为空，正在加载...')
+    await taskStore.getAllLists()
+  }
 
-  // 加载自定义提醒选项
-  await loadCustomReminderOptions()
+  // 如果自定义提醒选项为空，则加载它们
+  if (!customReminderOptions.value || customReminderOptions.value.length === 0) {
+    console.log('customReminderOptions 为空，正在加载...')
+    await taskStore.loadCustomReminderOptions()
+  }
 
-  // 初始化默认日期和时间
-  initializeDefaultDateTime()
+
 
   // 设置默认选中的列表
   if (props.isEditing && props.task && props.task.listId) {
@@ -236,6 +261,14 @@ onMounted(async () => {
     // 如果没有当前列表，选择第一个列表
     selectedListId.value = availableLists.value[0].id
   }
+
+  // 添加点击外部区域的监听器
+  document.addEventListener('click', handleClickOutside)
+})
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // 重置所有状态的函数
@@ -243,7 +276,7 @@ const resetAllStates = () => {
   isAddingTask.value = false
   newTaskContent.value = ''
   selectedDate.value = ''
-  selectedTime.value = '09:00'
+  selectedTime.value = ''
   selectedReminder.value = null
   showDatePicker.value = false
   showReminderPicker.value = false
@@ -255,21 +288,9 @@ const resetAllStates = () => {
   } else if (availableLists.value.length > 0) {
     selectedListId.value = availableLists.value[0].id
   }
-
-  // 重新初始化默认日期和时间
-  initializeDefaultDateTime()
 }
 
-// 加载可用列表
-const loadAvailableLists = async () => {
-  try {
-    await taskStore.getAllLists()
-    availableLists.value = taskStore.lists
-  } catch (error) {
-    console.error('加载列表失败:', error)
-    availableLists.value = []
-  }
-}
+
 
 // 开始添加任务
 const handleStartAdding = () => {
@@ -329,7 +350,7 @@ watch(() => props.isEditing, (newIsEditing) => {
 
     // 重置其他状态
     selectedDate.value = ''
-    selectedTime.value = '09:00'
+    selectedTime.value = ''
     selectedReminder.value = null
 
     // 处理日期时间
@@ -437,7 +458,7 @@ watch(() => [props.task, props.isEditing], ([newTask, newIsEditing]) => {
 
     // 重置其他状态
     selectedDate.value = ''
-    selectedTime.value = '09:00'
+    selectedTime.value = ''
     selectedReminder.value = null
 
     // 处理日期时间
@@ -612,10 +633,16 @@ const handleAddTask = () => {
 }
 
 // 切换列表选择器
-const toggleListPicker = () => {
+const toggleListPicker = async () => {
   showListPicker.value = !showListPicker.value
   showDatePicker.value = false
   showReminderPicker.value = false
+
+  // 当打开列表选择器时，重新加载最新的列表数据
+  if (showListPicker.value) {
+    console.log('重新加载列表数据...')
+    await taskStore.getAllLists()
+  }
 }
 
 // 切换日期选择器
@@ -623,23 +650,49 @@ const toggleDatePicker = () => {
   showDatePicker.value = !showDatePicker.value
   showReminderPicker.value = false
   showListPicker.value = false
+
+  // 当打开日期选择器时，如果没有设置日期和时间，则设置默认值
+  if (showDatePicker.value) {
+    initializeDefaultDateTime()
+  }
 }
 
 // 切换提醒选择器
-const toggleReminderPicker = () => {
+const toggleReminderPicker = async () => {
   showReminderPicker.value = !showReminderPicker.value
   showDatePicker.value = false
   showListPicker.value = false
+
+  // 当打开提醒选择器时，重新加载最新的自定义提醒选项
+  if (showReminderPicker.value) {
+    console.log('重新加载自定义提醒选项...')
+    await taskStore.refreshCustomReminderOptions()
+  }
 }
 
 // 清除提醒
 const clearReminder = () => {
   selectedReminder.value = null
-  // 如果是自定义提醒，也清除日期时间选择
-  if (showDatePicker.value) {
-    selectedDate.value = ''
-    selectedTime.value = '09:00'
+  selectedDate.value = ''
+  selectedTime.value = ''
+  showDatePicker.value = false
+  showReminderPicker.value = false
+}
+
+// 清除日期时间
+const clearDateTime = () => {
+  selectedDate.value = ''
+  selectedTime.value = ''
+  selectedReminder.value = null
+}
+
+// 处理点击外部区域
+const handleClickOutside = (event) => {
+  if (taskEditContainer.value && !taskEditContainer.value.contains(event.target)) {
+    // 点击了组件外部，关闭所有下拉框
     showDatePicker.value = false
+    showReminderPicker.value = false
+    showListPicker.value = false
   }
 }
 
@@ -890,14 +943,6 @@ const selectCustomReminder = (reminderOption) => {
   showReminderPicker.value = false
 }
 
-// 获取本地日期字符串（避免时区问题）
-const getLocalDateString = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
 // 获取最小日期（今天）
 const getMinDate = () => {
   const today = new Date()
@@ -918,20 +963,6 @@ const getMinTime = () => {
 
   // 如果选择的是未来日期，则没有时间限制
   return '00:00'
-}
-
-// 初始化默认日期和时间
-const initializeDefaultDateTime = () => {
-  if (!selectedDate.value && !props.isEditing) {
-    const now = new Date()
-    selectedDate.value = getLocalDateString(now)
-
-    // 设置默认时间为当前时间的下一个整点
-    const nextHour = new Date(now)
-    nextHour.setHours(now.getHours() + 1, 0, 0, 0)
-    const hours = String(nextHour.getHours()).padStart(2, '0')
-    selectedTime.value = `${hours}:00`
-  }
 }
 
 // 格式化选中的日期
@@ -1069,4 +1100,11 @@ defineExpose({
 
 <style>
 @import '../assets/styles/components/task-list.css';
+
+.task-add-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
 </style>

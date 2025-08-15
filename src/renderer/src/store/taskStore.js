@@ -19,6 +19,7 @@ export const useTaskStore = defineStore('task', () => {
   const showCompletedInToday = ref(false) // 控制在"今天"分类中是否显示已完成任务
   const showCompletedInWeekly = ref(false) // 控制在"周视图"中是否显示已完成任务
   const showCompletedInMonthly = ref(false) // 控制在"月视图"中是否显示已完成任务
+  const customReminderOptions = ref([]) // 自定义提醒选项
 
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
@@ -906,6 +907,48 @@ export const useTaskStore = defineStore('task', () => {
     return list ? list.name : '未知清单'
   }
 
+  // 获取默认提醒选项
+  const getDefaultReminderOptions = () => {
+    return [
+      { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
+      { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
+      { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
+      { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
+      { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
+    ]
+  }
+
+  // 加载自定义提醒选项
+  const loadCustomReminderOptions = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.config) {
+        const config = await window.electronAPI.config.getAll()
+        console.log("config reload: ", config)
+
+        if (config.customReminders && Array.isArray(config.customReminders)) {
+          // 创建新数组以确保 Vue 响应式系统检测到变化
+          customReminderOptions.value = [...config.customReminders]
+          console.log("config setting: ", customReminderOptions.value)
+        } else {
+          customReminderOptions.value = getDefaultReminderOptions()
+        }
+      } else {
+        customReminderOptions.value = getDefaultReminderOptions()
+      }
+    } catch (error) {
+      console.error('加载自定义提醒选项失败:', error)
+      customReminderOptions.value = getDefaultReminderOptions()
+    }
+  }
+
+  // 更新自定义提醒选项（当设置页面更新时调用）
+  const refreshCustomReminderOptions = async () => {
+    console.log('refreshCustomReminderOptions 被调用')
+    console.log('更新前的 customReminderOptions:', customReminderOptions.value)
+    await loadCustomReminderOptions()
+    console.log('更新后的 customReminderOptions:', customReminderOptions.value)
+  }
+
   return {
     // 状态
     tasks,
@@ -920,6 +963,7 @@ export const useTaskStore = defineStore('task', () => {
     showCompletedInToday,
     showCompletedInWeekly,
     showCompletedInMonthly,
+    customReminderOptions,
 
     // 计算属性
     filteredTasks,
@@ -982,6 +1026,11 @@ export const useTaskStore = defineStore('task', () => {
     getTasksByFilter,
     getCategoryCount,
     getCategoryStats,
-    getSortedTasks
+    getSortedTasks,
+
+    // 自定义提醒选项方法
+    getDefaultReminderOptions,
+    loadCustomReminderOptions,
+    refreshCustomReminderOptions
   }
 })
