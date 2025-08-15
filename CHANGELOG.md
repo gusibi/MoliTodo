@@ -5,6 +5,53 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.8] - 2025-08-15
+
+### 🐛 问题修复
+
+### ✨ 用户体验改进
+
+#### 时间组件交互优化 (Time Component Interaction Enhancement)
+- **智能默认值**: 移除时间组件的固定默认值，只在用户主动点击时才设置默认时间
+- **清除功能增强**: 添加日期时间清除按钮，支持快速清除已设置的时间
+- **空状态支持**: 支持创建没有提醒时间的任务，提供更灵活的任务管理方式
+- **按钮样式统一**: 清除按钮使用与提醒清除按钮一致的样式设计
+
+#### 键盘快捷键优化 (Keyboard Shortcuts Optimization)
+- **任务创建快捷键**: 将任务创建快捷键从 `Enter` 改为 `Ctrl + Enter`，避免误操作
+- **用户指导更新**: 在空状态提示中添加 `Ctrl + Enter` 创建任务的说明
+- **防误触设计**: 用户可以在输入框中自由输入，不会意外创建任务
+
+#### 点击外部区域自动收起 (Click Outside Auto-collapse)
+- **智能收起机制**: 点击组件外部区域时自动关闭所有下拉选择器
+- **事件冒泡控制**: 使用 `.stop` 修饰符防止清除按钮等操作触发外部点击事件
+- **用户体验优化**: 避免界面混乱，保持操作的直观性
+
+### 🔧 技术改进
+
+#### 状态管理架构优化 (State Management Architecture Optimization)
+- **Pinia 集成增强**: 在 taskStore 中添加自定义提醒选项管理，实现全局状态同步
+- **响应式连接**: 使用 `storeToRefs` 确保组件与 store 的响应式连接不丢失
+- **数据清理机制**: 创建干净的对象副本进行 IPC 传输，避免序列化错误
+
+#### 组件生命周期优化 (Component Lifecycle Optimization)
+- **初始化策略**: 优化组件挂载时的数据加载策略，支持按需加载和备用加载
+- **事件监听管理**: 完善组件卸载时的事件监听器清理，避免内存泄漏
+- **错误边界处理**: 添加更完善的错误处理和降级机制
+
+#### 代码质量提升 (Code Quality Improvements)
+- **函数定义顺序**: 重新组织代码结构，确保函数在使用前被正确定义
+- **模板语法修复**: 修复 Vue 模板中的语法错误，确保编译正常
+- **调试日志增强**: 添加详细的调试日志，便于问题排查和功能验证
+
+### 📚 用户指导改进
+
+#### 操作提示优化 (Operation Guidance Enhancement)
+- **快捷键说明**: 在任务列表空状态中明确说明 `Ctrl + Enter` 创建任务的操作方式
+- **功能引导**: 提供更清晰的功能使用指导，帮助用户快速上手新的交互方式
+
+---
+
 ## [0.8.7] - 2025-08-15
 
 ### 🎉 新增功能
