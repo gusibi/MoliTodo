@@ -16,7 +16,7 @@
         <div class="task-add-input-wrapper">
           <input ref="addTaskInput" v-model="newTaskContent" type="text" placeholder="添加新任务..." class="task-add-input"
             :class="{ 'task-add-input-active': isAddingTask }" @focus="handleStartAdding" @blur="handleInputBlur"
-            @keyup.enter="handleAddTask" @keyup.escape="handleCancelAdding" />
+            @keyup.ctrl.enter="handleAddTask" @keyup.escape="handleCancelAdding" />
         </div>
 
         <!-- 扩展选项 -->

@@ -20,6 +20,7 @@
           <p>开始创建您的第一个任务吧！</p>
           <ul>
             <li>• 点击上方输入框添加任务</li>
+            <li>• 使用 <kbd>Ctrl + Enter</kbd> 创建任务</li>
             <li>• 设置截止日期和提醒</li>
             <li>• 开始高效管理您的时间</li>
           </ul>
@@ -339,7 +340,7 @@ const toggleGroupCollapse = (groupId) => {
   } else {
     collapsedGroups.value.add(groupId)
   }
-  
+
   // 触发响应式更新
   collapsedGroups.value = new Set(collapsedGroups.value)
   // 保存状态
@@ -410,7 +411,7 @@ onMounted(async () => {
 // 组件卸载时清理定时器
 onUnmounted(() => {
   stopTimeUpdateTimer()
-  
+
   // 重置切换状态
   isToggling.value = false
 
