@@ -22,6 +22,14 @@
       <div class="task-item-title" v-html="highlightedContent"></div>
       <div class="task-item-description" v-if="task.description">{{ task.description }}</div>
       <div class="task-item-tags">
+        <!-- 重复任务徽标 -->
+        <span v-if="task.recurrence" :class="['task-item-tag', 'task-item-tag-recurring', 'tooltip-container']"
+          @mouseenter="showTooltip($event, getRecurrenceTooltip(task.recurrence))"
+          @mouseleave="hideTooltip">
+          <i class="fas fa-repeat"></i>
+          {{ getRecurrenceBadge(task.recurrence) }}
+        </span>
+        
         <!-- 时间标签 -->
         <span v-if="task.reminderTime" :class="['task-item-tag', 'task-item-tag-reminder', 'tooltip-container', {
           'task-item-tag-overdue': isReminderOverdue
@@ -234,6 +242,50 @@ const formatCompletedTime = (timestamp) => {
   return taskStore.formatTimeDisplay(timestamp, 'created')
 }
 
+// 获取重复任务徽标文本
+const getRecurrenceBadge = (recurrence) => {
+  if (!recurrence || !recurrence.type) return ''
+  
+  switch (recurrence.type) {
+    case 'daily':
+      return 'D'
+    case 'weekly':
+      return 'W'
+    case 'monthly':
+      return 'M'
+    case 'yearly':
+      return 'Y'
+    default:
+      return 'R'
+  }
+}
+
+// 获取重复任务提示文本
+const getRecurrenceTooltip = (recurrence) => {
+  if (!recurrence || !recurrence.type) return '重复任务'
+  
+  const interval = recurrence.interval || 1
+  const intervalText = interval > 1 ? `每${interval}` : '每'
+  
+  switch (recurrence.type) {
+    case 'daily':
+      return `${intervalText}天重复`
+    case 'weekly':
+      if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+        const selectedDays = recurrence.daysOfWeek.map(day => dayNames[day]).join('、')
+        return `${intervalText}周的周${selectedDays}重复`
+      }
+      return `${intervalText}周重复`
+    case 'monthly':
+      return `${intervalText}月重复`
+    case 'yearly':
+      return `${intervalText}年重复`
+    default:
+      return '重复任务'
+  }
+}
+
 // Tooltip 相关
 const showTooltip = (event, text) => {
   // 这里可以触发父组件的 tooltip 显示逻辑
@@ -247,4 +299,9 @@ const hideTooltip = () => {
 
 <style>
 @import '../assets/styles/components/task-item.css';
+
+.task-item-tag-recurring {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
 </style>

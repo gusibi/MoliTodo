@@ -34,19 +34,30 @@ class IpcHandlers {
 
     // 创建任务
     ipcMain.handle('create-task', async (event, taskData) => {
-      const { content, reminderTime, listId, metadata } = taskData;
+      const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
       
       // 如果有提醒时间，转换为Date对象
       const calculatedReminderTime = reminderTime ? new Date(reminderTime) : null;
       
+      // 构建完整的任务数据
+      const fullTaskData = {
+        content,
+        reminderTime: calculatedReminderTime,
+        listId: listId || 0,
+        metadata: metadata || {},
+        recurrence: recurrence || null,
+        dueDate: dueDate || null,
+        dueTime: dueTime || null
+      };
+      
       let task;
-      if (listId !== undefined || metadata !== undefined) {
+      if (recurrence || listId !== undefined || metadata !== undefined || dueDate || dueTime) {
         // 使用扩展的创建方法
         task = await this.taskService.createTaskInList(
           content, 
           listId || 0,
           calculatedReminderTime,
-          metadata || {}
+          fullTaskData
         );
       } else {
         // 使用原有的创建方法（向后兼容）
@@ -251,6 +262,148 @@ class IpcHandlers {
       this.notificationService.cancelTaskReminder(taskId);
       this.broadcastTaskUpdates();
       return { success: true, task };
+    });
+
+    // 创建重复任务
+    ipcMain.handle('task:createRecurring', async (event, taskData) => {
+      const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
+      
+      // 计算提醒时间
+      let calculatedReminderTime = null;
+      if (reminderTime) {
+        calculatedReminderTime = new Date(reminderTime);
+      } else if (dueDate && dueTime) {
+        // 如果没有设置提醒时间，但有截止日期和时间，则设置为截止时间前30分钟
+        const dueDateTime = new Date(`${dueDate}T${dueTime}`);
+        if (!isNaN(dueDateTime.getTime())) {
+          calculatedReminderTime = new Date(dueDateTime.getTime() - 30 * 60 * 1000); // 提前30分钟
+        }
+      }
+      
+      // 构建完整的任务数据
+      const fullTaskData = {
+        content,
+        reminderTime: calculatedReminderTime,
+        listId: listId || 0,
+        metadata: metadata || {},
+        recurrence: recurrence || null,
+        dueDate: dueDate || null,
+        dueTime: dueTime || null
+      };
+      
+      try {
+        const task = await this.taskService.createTaskInList(
+          content, 
+          listId || 0,
+          calculatedReminderTime,
+          fullTaskData
+        );
+
+        if (task.reminderTime) {
+          this.notificationService.scheduleTaskReminder(task, (task) => {
+            this.handleTaskReminder(task);
+          });
+        }
+
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('创建重复任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取所有重复任务
+    ipcMain.handle('task:getRecurring', async (event) => {
+      try {
+        const tasks = await this.taskService.getRecurringTasks();
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('获取重复任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 展开重复任务为实例
+    ipcMain.handle('task:expandRecurring', async (event, { startDate, endDate }) => {
+      try {
+        const tasks = await this.taskService.expandRecurringTasks(new Date(startDate), new Date(endDate));
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('展开重复任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 更新重复任务
+    ipcMain.handle('task:updateRecurring', async (event, { taskId, updates, recurrence }) => {
+      try {
+        const task = await this.taskService.updateRecurringTask(taskId, updates, recurrence);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('更新重复任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 完成重复任务实例
+    ipcMain.handle('task:completeRecurringInstance', async (event, { seriesId, occurrenceDate }) => {
+      try {
+        const task = await this.taskService.completeRecurringInstance(seriesId, occurrenceDate);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('完成重复任务实例失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 删除重复任务实例
+    ipcMain.handle('task:deleteRecurringInstance', async (event, { seriesId, occurrenceDate }) => {
+      try {
+        const success = await this.taskService.deleteRecurringInstance(seriesId, occurrenceDate);
+        this.broadcastTaskUpdates();
+        return { success };
+      } catch (error) {
+        console.error('删除重复任务实例失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 更新重复任务实例
+    ipcMain.handle('task:updateRecurringInstance', async (event, { seriesId, occurrenceDate, updates }) => {
+      try {
+        const task = await this.taskService.updateRecurringInstance(seriesId, occurrenceDate, updates);
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('更新重复任务实例失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 删除整个重复任务系列
+    ipcMain.handle('task:deleteRecurringSeries', async (event, { seriesId }) => {
+      try {
+        const success = await this.taskService.deleteRecurringSeries(seriesId);
+        this.broadcastTaskUpdates();
+        return { success };
+      } catch (error) {
+        console.error('删除重复任务系列失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取重复任务的下次实例预览
+    ipcMain.handle('task:getNextOccurrences', async (event, { taskId, count }) => {
+      try {
+        const occurrences = await this.taskService.getNextOccurrences(taskId, count);
+        return { success: true, occurrences };
+      } catch (error) {
+        console.error('获取下次实例失败:', error);
+        return { success: false, error: error.message };
+      }
     });
   }
 

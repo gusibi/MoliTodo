@@ -8,6 +8,7 @@ const electronAPI = {
     getIncomplete: () => ipcRenderer.invoke('get-tasks'),
     getCompleted: () => ipcRenderer.invoke('get-completed-tasks'),
     create: (taskData) => ipcRenderer.invoke('create-task', taskData),
+    createRecurring: (taskData) => ipcRenderer.invoke('task:createRecurring', taskData),
     update: (taskId, updates) => ipcRenderer.invoke('update-task', taskId, updates),
     complete: (taskId) => ipcRenderer.invoke('complete-task', taskId),
     delete: (taskId) => ipcRenderer.invoke('delete-task', taskId),
@@ -18,7 +19,16 @@ const electronAPI = {
     getCount: () => ipcRenderer.invoke('get-task-count'),
     setReminder: (taskId, reminderTime) => ipcRenderer.invoke('set-task-reminder', taskId, reminderTime),
     clearReminder: (taskId) => ipcRenderer.invoke('clear-task-reminder', taskId),
-    getLastUpdatedTime: () => ipcRenderer.invoke('task:getLastUpdatedTime')
+    getLastUpdatedTime: () => ipcRenderer.invoke('task:getLastUpdatedTime'),
+    // 重复任务相关 API
+    getRecurring: () => ipcRenderer.invoke('task:getRecurring'),
+    expandRecurring: (params) => ipcRenderer.invoke('task:expandRecurring', params),
+    updateRecurring: (params) => ipcRenderer.invoke('task:updateRecurring', params),
+    completeRecurringInstance: (params) => ipcRenderer.invoke('task:completeRecurringInstance', params),
+    deleteRecurringInstance: (params) => ipcRenderer.invoke('task:deleteRecurringInstance', params),
+    updateRecurringInstance: (params) => ipcRenderer.invoke('task:updateRecurringInstance', params),
+    deleteRecurringSeries: (params) => ipcRenderer.invoke('task:deleteRecurringSeries', params),
+    getNextOccurrences: (params) => ipcRenderer.invoke('task:getNextOccurrences', params)
   },
 
   // 配置相关 API

@@ -27,13 +27,20 @@
         {{ formatTime(task.reminderTime) }}
       </div>
       
-      <!-- Task title -->
-      <div 
-        :class="['weekly-task-card-title', {
-          'line-through text-muted-foreground': task.status === 'done'
-        }]"
-      >
-        {{ truncatedContent }}
+      <!-- Task title with recurring badge -->
+      <div class="weekly-task-card-title-row">
+        <div 
+          :class="['weekly-task-card-title', {
+            'line-through text-muted-foreground': task.status === 'done'
+          }]"
+        >
+          {{ truncatedContent }}
+        </div>
+        
+        <!-- Recurring badge -->
+        <span v-if="task.recurrence" class="weekly-task-card-recurring-badge">
+          {{ getRecurrenceBadge(task.recurrence) }}
+        </span>
       </div>
       
       <!-- Status icon -->
@@ -88,6 +95,24 @@ const formatTime = (timestamp) => {
   })
 }
 
+// Get recurrence badge text
+const getRecurrenceBadge = (recurrence) => {
+  if (!recurrence || !recurrence.type) return ''
+  
+  switch (recurrence.type) {
+    case 'daily':
+      return 'D'
+    case 'weekly':
+      return 'W'
+    case 'monthly':
+      return 'M'
+    case 'yearly':
+      return 'Y'
+    default:
+      return 'R'
+  }
+}
+
 // Handle edit click
 const handleEdit = () => {
   emit('edit', props.task)
@@ -107,4 +132,23 @@ const handleHideTooltip = () => {
 
 <style>
 @import '../assets/styles/components/weekly-view.css';
+
+.weekly-task-card-title-row {
+  @apply flex items-center justify-between gap-1;
+}
+
+.weekly-task-card-title {
+  @apply flex-1 min-w-0;
+}
+
+.weekly-task-card-recurring-badge {
+  @apply inline-flex items-center justify-center;
+  @apply w-4 h-4 text-[9px] font-medium;
+  @apply bg-green-100 text-green-700 rounded-sm;
+  @apply flex-shrink-0;
+}
+
+.dark .weekly-task-card-recurring-badge {
+  @apply bg-green-900/30 text-green-400;
+}
 </style>

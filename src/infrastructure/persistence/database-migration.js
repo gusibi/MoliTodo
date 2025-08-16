@@ -9,7 +9,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 2; // 支持清单功能的版本
+    this.targetVersion = 3; // 支持重复任务功能的版本
   }
 
   /**
@@ -104,6 +104,11 @@ class DatabaseMigration {
         version: 2,
         description: '扩展 tasks 表字段',
         migrate: () => this.migration_002_add_task_fields()
+      },
+      {
+        version: 3,
+        description: '添加重复任务支持',
+        migrate: () => this.migration_003_add_recurring_tasks()
       }
     ];
 
@@ -199,6 +204,43 @@ class DatabaseMigration {
     await this.db.exec('CREATE INDEX IF NOT EXISTS idx_lists_sort_order ON lists(sort_order)');
 
     console.log('tasks 表字段扩展完成，索引已创建');
+  }
+
+  /**
+   * 迁移 003: 添加重复任务支持
+   */
+  async migration_003_add_recurring_tasks() {
+    console.log('执行迁移: 添加重复任务支持');
+
+    // 检查现有字段
+    const tableInfo = await this.db.all("PRAGMA table_info(tasks)");
+    const columnNames = tableInfo.map(col => col.name);
+
+    // 添加 recurrence 字段（重复规则 JSON）
+    if (!columnNames.includes('recurrence')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN recurrence TEXT');
+      console.log('已添加 recurrence 字段');
+    }
+
+    // 添加 series_id 字段（系列任务ID，用于覆盖实例）
+    if (!columnNames.includes('series_id')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN series_id TEXT');
+      console.log('已添加 series_id 字段');
+    }
+
+    // 添加 occurrence_date 字段（实例日期，用于覆盖实例）
+    if (!columnNames.includes('occurrence_date')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN occurrence_date TEXT');
+      console.log('已添加 occurrence_date 字段');
+    }
+
+    // 添加索引以提高重复任务查询性能
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_recurrence ON tasks(recurrence)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_series_id ON tasks(series_id)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_series_occurrence ON tasks(series_id, occurrence_date)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_occurrence_date ON tasks(occurrence_date)');
+
+    console.log('重复任务字段添加完成，索引已创建');
   }
 
   /**

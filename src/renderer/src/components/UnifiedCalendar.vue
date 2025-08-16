@@ -59,6 +59,15 @@
           ]">
             月视图
           </button>
+          
+          <!-- 重复任务实例显示控制 -->
+          <button v-if="taskStore.recurringTasks.length > 0" @click="toggleRecurringInstances" :class="[
+            'calendar-view-btn',
+            'calendar-recurring-toggle',
+            { 'active': taskStore.showRecurringInstances }
+          ]" :title="taskStore.showRecurringInstances ? '隐藏重复实例' : '显示重复实例'">
+            <i class="fas fa-repeat"></i>
+          </button>
         </div>
       </div>
 
@@ -249,6 +258,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useTaskStore } from '../store/taskStore'
 
 const props = defineProps({
   tasks: {
@@ -269,6 +279,9 @@ const props = defineProps({
     validator: (value) => ['day', 'week', 'month'].includes(value)
   }
 })
+
+// Task store
+const taskStore = useTaskStore()
 
 const emit = defineEmits([
   'edit-task',
@@ -504,9 +517,25 @@ const monthDays = computed(() => {
 
 // Get tasks for a specific date
 const getTasksForDate = (date) => {
-  if (!props.tasks || props.tasks.length === 0) return []
+  // 根据是否显示重复实例选择任务数据源
+  const allTasks = taskStore.showRecurringInstances ? taskStore.expandedTasks : props.tasks
+  
+  if (!allTasks || allTasks.length === 0) return []
 
-  return props.tasks.filter(task => {
+  return allTasks.filter(task => {
+    // 对于重复任务实例，检查occurrence_date
+    if (task.occurrence_date) {
+      try {
+        const occurrenceDate = new Date(task.occurrence_date)
+        if (isNaN(occurrenceDate.getTime())) return false
+        return isSameDay(occurrenceDate, date)
+      } catch (error) {
+        console.warn('Invalid occurrence date for task:', task.id, error)
+        return false
+      }
+    }
+    
+    // 对于普通任务，检查reminderTime
     if (!task.reminderTime) return false
 
     try {
@@ -519,8 +548,9 @@ const getTasksForDate = (date) => {
       return false
     }
   }).sort((a, b) => {
-    const timeA = new Date(a.reminderTime).getTime()
-    const timeB = new Date(b.reminderTime).getTime()
+    // 对于重复任务实例，使用occurrence_date排序
+    const timeA = a.occurrence_date ? new Date(a.occurrence_date).getTime() : new Date(a.reminderTime).getTime()
+    const timeB = b.occurrence_date ? new Date(b.occurrence_date).getTime() : new Date(b.reminderTime).getTime()
     return timeA - timeB
   })
 }
@@ -581,16 +611,29 @@ const getTimeSlotMinHeight = (timeSlot) => {
 
 // Get task CSS classes based on status
 const getTaskClasses = (task) => {
+  const statusClasses = []
+  
+  // 状态类
   switch (task.status) {
     case 'done':
-      return 'task-status-done'
+      statusClasses.push('task-status-done')
+      break
     case 'doing':
-      return 'task-status-doing'
+      statusClasses.push('task-status-doing')
+      break
     case 'paused':
-      return 'task-status-paused'
+      statusClasses.push('task-status-paused')
+      break
     default:
-      return 'task-status-todo'
+      statusClasses.push('task-status-todo')
   }
+  
+  // 重复任务实例标识
+  if (task.occurrence_date || task.series_id) {
+    statusClasses.push('task-recurring-instance')
+  }
+  
+  return statusClasses.join(' ')
 }
 
 // Navigation methods
@@ -641,6 +684,11 @@ const changeView = (view) => {
   if (view !== currentView.value) {
     currentView.value = view
   }
+}
+
+// Toggle recurring instances display
+const toggleRecurringInstances = () => {
+  taskStore.toggleRecurringInstances()
 }
 
 // Event handlers

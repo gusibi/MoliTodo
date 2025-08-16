@@ -3,7 +3,7 @@
  * 领域层核心实体，包含任务的所有业务逻辑
  */
 class Task {
-  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}) {
+  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}, recurrence = null, seriesId = null, occurrenceDate = null, dueDate = null, dueTime = null) {
     this.id = id;
     this.content = content;
     this.status = status; // 'todo', 'doing', 'done'
@@ -19,6 +19,15 @@ class Task {
     // List management fields
     this.listId = listId || 0; // 0 表示默认清单
     this.metadata = metadata || {}; // JSON 元数据，包含备注等信息
+    
+    // Due date fields
+    this.dueDate = dueDate; // 到期日期
+    this.dueTime = dueTime; // 到期时间
+    
+    // Recurring task fields
+    this.recurrence = recurrence; // 重复规则 JSON 对象
+    this.seriesId = seriesId; // 系列任务ID（用于覆盖实例）
+    this.occurrenceDate = occurrenceDate; // 实例日期（用于覆盖实例）
     
     // Keep backward compatibility
     this.completed = status === 'done';
@@ -504,7 +513,10 @@ class Task {
       completedAt: this.completedAt ? this.completedAt.toISOString() : null,
       totalDuration: this.totalDuration,
       listId: this.listId,
-      metadata: this.metadata
+      metadata: this.metadata,
+      recurrence: this.recurrence,
+      seriesId: this.seriesId,
+      occurrenceDate: this.occurrenceDate
     };
   }
 
@@ -533,7 +545,73 @@ class Task {
       data.reminderTime ? new Date(data.reminderTime) : null,
       timeTracking,
       data.listId || 0,
-      data.metadata || {}
+      data.metadata || {},
+      data.recurrence || null,
+      data.seriesId || null,
+      data.occurrenceDate || null
+    );
+  }
+
+  /**
+   * 检查是否为重复任务
+   * @returns {boolean}
+   */
+  isRecurring() {
+    return this.recurrence !== null && this.recurrence !== undefined;
+  }
+
+  /**
+   * 检查是否为重复任务实例
+   * @returns {boolean}
+   */
+  isRecurringInstance() {
+    return this.seriesId !== null && this.seriesId !== undefined;
+  }
+
+  /**
+   * 获取重复任务的系列ID（如果是实例则返回seriesId，否则返回自身ID）
+   * @returns {string}
+   */
+  getSeriesId() {
+    return this.seriesId || this.id;
+  }
+
+  /**
+   * 设置重复规则
+   * @param {Object} recurrence 重复规则对象
+   */
+  setRecurrence(recurrence) {
+    this.recurrence = recurrence;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 清除重复规则
+   */
+  clearRecurrence() {
+    this.recurrence = null;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 创建重复任务实例
+   * @param {Date} occurrenceDate 实例日期
+   * @param {string} newId 新实例ID
+   * @returns {Task}
+   */
+  createInstance(occurrenceDate, newId) {
+    return new Task(
+      newId,
+      this.content,
+      'todo',
+      new Date(),
+      this.reminderTime,
+      {},
+      this.listId,
+      this.metadata,
+      null, // 实例不包含重复规则
+      this.getSeriesId(), // 设置系列ID
+      occurrenceDate.toISOString()
     );
   }
 

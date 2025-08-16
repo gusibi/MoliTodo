@@ -97,8 +97,54 @@ class SqliteTaskRepository {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN metadata TEXT DEFAULT "{}"');
     }
 
+    // 到期日期字段兼容性检查
+    if (!columnNames.includes('due_date')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN due_date TEXT');
+    }
+
+    if (!columnNames.includes('due_time')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN due_time TEXT');
+    }
+
+    // 重复任务字段兼容性检查
+    if (!columnNames.includes('recurrence')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN recurrence TEXT');
+    }
+
+    if (!columnNames.includes('series_id')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN series_id TEXT');
+    }
+
+    if (!columnNames.includes('occurrence_date')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN occurrence_date TEXT');
+    }
+
+    // 创建重复任务相关索引
+    await this.createRecurringTaskIndexes();
+
     // 迁移现有数据的状态字段
     await this.migrateExistingData();
+  }
+
+  /**
+   * 创建重复任务相关索引
+   */
+  async createRecurringTaskIndexes() {
+    try {
+      // 为 series_id 和 occurrence_date 创建复合索引
+      await this.db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_tasks_series 
+        ON tasks(series_id, occurrence_date)
+      `);
+      
+      // 为 recurrence 字段创建索引（用于查找重复任务）
+      await this.db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_tasks_recurrence 
+        ON tasks(recurrence) WHERE recurrence IS NOT NULL
+      `);
+    } catch (error) {
+      console.warn('创建重复任务索引失败:', error);
+    }
   }
 
   /**
@@ -148,7 +194,12 @@ class SqliteTaskRepository {
       started_at: task.startedAt ? task.startedAt.toISOString() : null,
       total_duration: task.totalDuration || 0,
       list_id: task.listId || 0,
-      metadata: JSON.stringify(task.metadata || {})
+      metadata: JSON.stringify(task.metadata || {}),
+      due_date: task.dueDate || null,
+      due_time: task.dueTime || null,
+      recurrence: task.recurrence ? JSON.stringify(task.recurrence) : null,
+      series_id: task.seriesId || null,
+      occurrence_date: task.occurrenceDate || null
     };
   }
 
@@ -171,6 +222,15 @@ class SqliteTaskRepository {
       metadata = {};
     }
 
+    // 解析重复规则
+    let recurrence = null;
+    try {
+      recurrence = row.recurrence ? JSON.parse(row.recurrence) : null;
+    } catch (error) {
+      console.warn('解析重复规则失败:', error);
+      recurrence = null;
+    }
+
     const task = new Task(
       row.id,
       row.content,
@@ -179,7 +239,12 @@ class SqliteTaskRepository {
       row.reminder_time ? new Date(row.reminder_time) : null,
       timeTracking,
       row.list_id || 0,
-      metadata
+      metadata,
+      recurrence,
+      row.series_id || null,
+      row.occurrence_date || null,
+      row.due_date || null,
+      row.due_time || null
     );
 
     task.updatedAt = new Date(row.updated_at);
@@ -290,7 +355,12 @@ class SqliteTaskRepository {
           started_at = ?,
           total_duration = ?,
           list_id = ?,
-          metadata = ?
+          metadata = ?,
+          due_date = ?,
+          due_time = ?,
+          recurrence = ?,
+          series_id = ?,
+          occurrence_date = ?
         WHERE id = ?
       `, [
         row.content,
@@ -303,14 +373,19 @@ class SqliteTaskRepository {
         row.total_duration,
         row.list_id,
         row.metadata,
+        row.due_date,
+        row.due_time,
+        row.recurrence,
+        row.series_id,
+        row.occurrence_date,
         row.id
       ]);
     } else {
       // 插入新任务
       await this.db.run(`
         INSERT INTO tasks (
-          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, recurrence, series_id, occurrence_date
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         row.id,
         row.content,
@@ -323,7 +398,12 @@ class SqliteTaskRepository {
         row.started_at,
         row.total_duration,
         row.list_id,
-        row.metadata
+        row.metadata,
+        row.due_date,
+        row.due_time,
+        row.recurrence,
+        row.series_id,
+        row.occurrence_date
       ]);
     }
 
@@ -1072,6 +1152,73 @@ class SqliteTaskRepository {
       console.error('获取最新更新时间失败:', error);
       return null;
     }
+  }
+
+  /**
+   * 查找所有重复任务（主任务）
+   * @returns {Promise<Task[]>}
+   */
+  async findRecurringTasks() {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const rows = await this.db.all(
+      'SELECT * FROM tasks WHERE recurrence IS NOT NULL AND series_id IS NULL ORDER BY created_at DESC'
+    );
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
+   * 根据系列ID查找覆盖实例
+   * @param {string} seriesId 系列任务ID
+   * @returns {Promise<Task[]>}
+   */
+  async findOverrideInstances(seriesId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const rows = await this.db.all(
+      'SELECT * FROM tasks WHERE series_id = ? ORDER BY occurrence_date ASC',
+      [seriesId]
+    );
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
+   * 查找特定日期的覆盖实例
+   * @param {string} seriesId 系列任务ID
+   * @param {string} occurrenceDate 实例日期 (YYYY-MM-DD)
+   * @returns {Promise<Task|null>}
+   */
+  async findOverrideInstance(seriesId, occurrenceDate) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const row = await this.db.get(
+      'SELECT * FROM tasks WHERE series_id = ? AND occurrence_date = ?',
+      [seriesId, occurrenceDate]
+    );
+    return row ? this.rowToTask(row) : null;
+  }
+
+  /**
+   * 删除系列任务及其所有覆盖实例
+   * @param {string} seriesId 系列任务ID
+   * @returns {Promise<void>}
+   */
+  async deleteRecurringSeries(seriesId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    // 删除主任务
+    await this.db.run('DELETE FROM tasks WHERE id = ?', [seriesId]);
+    
+    // 删除所有覆盖实例
+    await this.db.run('DELETE FROM tasks WHERE series_id = ?', [seriesId]);
   }
 }
 

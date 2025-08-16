@@ -99,25 +99,25 @@ const handleMouseEnter = () => {
       panelVisible: panelVisible.value
     })
     if (isHovering.value && !panelVisible.value) {
-      console.log('条件满足，开始显示任务面板')
+      // console.log('条件满足，开始显示任务面板')
       showTaskPanel()
     }
   }, 100)
 }
 
 const handleMouseLeave = () => {
-  console.log('鼠标离开悬浮图标')
+  // console.log('鼠标离开悬浮图标')
   isHovering.value = false
 
   // 清除悬停定时器
   if (hoverTimeout) {
-    console.log('清除悬停定时器')
+    // console.log('清除悬停定时器')
     clearTimeout(hoverTimeout)
     hoverTimeout = null
   }
 
   // 延迟隐藏任务面板，但要考虑面板悬停状态
-  console.log('设置任务面板隐藏定时器')
+  // console.log('设置任务面板隐藏定时器')
   hideTimeout = setTimeout(() => {
     if (!isHovering.value && !isPanelHovering.value && panelVisible.value) {
       console.log('定时器触发，隐藏任务面板')
@@ -127,34 +127,34 @@ const handleMouseLeave = () => {
 }
 
 const showTaskPanel = async () => {
-  console.log('开始显示任务面板')
+  // console.log('开始显示任务面板')
   if (panelVisible.value) {
     console.log('任务面板已经可见，跳过显示')
     return
   }
 
   try {
-    console.log('调用API显示任务面板')
+    // console.log('调用API显示任务面板')
     await window.electronAPI.windows.showTaskPanel()
     panelVisible.value = true
-    console.log('任务面板状态设置为可见')
+    // console.log('任务面板状态设置为可见')
   } catch (error) {
     console.error('显示任务面板失败:', error)
   }
 }
 
 const hideTaskPanel = async () => {
-  console.log('开始隐藏任务面板')
+  // console.log('开始隐藏任务面板')
   if (!panelVisible.value) {
-    console.log('任务面板已经隐藏，跳过隐藏')
+    // console.log('任务面板已经隐藏，跳过隐藏')
     return
   }
 
   try {
-    console.log('调用API隐藏任务面板')
+    // console.log('调用API隐藏任务面板')
     await window.electronAPI.windows.hideTaskPanel()
     panelVisible.value = false
-    console.log('任务面板状态设置为隐藏')
+    // console.log('任务面板状态设置为隐藏')
   } catch (error) {
     console.error('隐藏任务面板失败:', error)
   }
@@ -178,7 +178,7 @@ const handleMouseDown = (event) => {
   if (hoverTimeout) {
     clearTimeout(hoverTimeout)
     hoverTimeout = null
-    console.log('清除悬停显示定时器')
+    // console.log('清除悬停显示定时器')
   }
 
   // 添加pending状态，改善初始延迟体验
@@ -188,7 +188,7 @@ const handleMouseDown = (event) => {
   window.electronAPI.drag.getWindowPosition().then(pos => {
     initialWindowPos = pos
     floatingIcon.classList.remove('floating-icon--pending')
-    console.log('Initial window position received:', pos)
+    // console.log('Initial window position received:', pos)
   }).catch(error => {
     console.error('获取窗口位置失败:', error)
     floatingIcon.classList.remove('floating-icon--pending')
@@ -359,18 +359,18 @@ const handleConfigUpdate = (event, config) => {
 
 // 面板鼠标事件处理
 const handlePanelMouseEnter = () => {
-  console.log('收到面板鼠标进入事件')
+  // console.log('收到面板鼠标进入事件')
   isPanelHovering.value = true
   // 清除隐藏定时器
   if (hideTimeout) {
     clearTimeout(hideTimeout)
     hideTimeout = null
-    console.log('清除面板隐藏定时器')
+    // console.log('清除面板隐藏定时器')
   }
 }
 
 const handlePanelMouseLeave = () => {
-  console.log('收到面板鼠标离开事件')
+  // console.log('收到面板鼠标离开事件')
   isPanelHovering.value = false
   // 延迟隐藏面板
   hideTimeout = setTimeout(() => {

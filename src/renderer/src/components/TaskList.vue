@@ -32,19 +32,29 @@
 
       <!-- 任务列表 -->
       <div v-else class="task-list-items">
-        <!-- 全部展开/折叠控制 - 只在非清单视图且有多个分组时显示 -->
-        <div v-if="!isInListView && hasMultipleGroups" class="task-list-controls">
+        <!-- 控制按钮区域 -->
+        <div v-if="!isInListView && (hasMultipleGroups || taskStore.recurringTasks.length > 0)" class="task-list-controls">
           <div class="task-list-controls-buttons">
-            <button @click="expandAllGroups" class="task-list-control-btn"
-              :title="`全部展开 (${getShortcutText('expand')})`">
-              <i class="fas fa-expand-alt"></i>
-              全部展开
+            <!-- 全部展开/折叠控制 - 只在非清单视图且有多个分组时显示 -->
+            <template v-if="hasMultipleGroups">
+              <button @click="expandAllGroups" class="task-list-control-btn"
+                :title="`全部展开 (${getShortcutText('expand')})`">
+                <i class="fas fa-expand-alt"></i>
+                全部展开
+              </button>
+              <button @click="collapseAllGroups" class="task-list-control-btn"
+                :title="`全部折叠 (${getShortcutText('collapse')})`">
+                <i class="fas fa-compress-alt"></i>
+                全部折叠
+              </button>
+            </template>
+            
+            <!-- 重复任务实例显示控制 -->
+            <button v-if="taskStore.recurringTasks.length > 0" @click="toggleRecurringInstances" class="task-list-control-btn task-list-recurring-toggle" :class="{ 'active': taskStore.showRecurringInstances }">
+              <i class="fas fa-repeat"></i>
+              {{ taskStore.showRecurringInstances ? '隐藏重复实例' : '显示重复实例' }}
             </button>
-            <button @click="collapseAllGroups" class="task-list-control-btn"
-              :title="`全部折叠 (${getShortcutText('collapse')})`">
-              <i class="fas fa-compress-alt"></i>
-              全部折叠
-            </button>
+            
             <div v-if="collapsedGroups.size > 0" class="task-list-collapse-indicator">
               {{ collapsedGroups.size }} 个分组已折叠
             </div>
@@ -189,15 +199,23 @@ const getListIconClass = (icon) => {
 
 // 按 list 分组任务
 const groupedTasks = computed(() => {
-  if (!props.tasks || props.tasks.length === 0) {
+  // 获取展开后的任务（包含重复任务实例）
+  console.log("all_tasks: ", props.tasks)
+  console.log("askStore.showRecurringInstances: ", taskStore.showRecurringInstances)
+  console.log("askStore.expandedTasks: ", taskStore.expandedTasks)
+  const allTasks = taskStore.showRecurringInstances ? taskStore.expandedTasks : props.tasks
+  console.log("all_tasks -- 1: ", allTasks)
+
+  
+  if (!allTasks || allTasks.length === 0) {
     return []
   }
 
   // 创建分组对象
   const groups = {}
 
-  props.tasks.forEach(task => {
-    const listId = task.listId || 0
+  allTasks.forEach(task => {
+    const listId = task.listId || task.list_id || 0
     const list = taskStore.getListById(listId)
     const listName = list ? list.name : '未知清单'
     const listIcon = list ? list.icon : 'list'
@@ -363,6 +381,11 @@ const collapseAllGroups = () => {
   const allGroupIds = groupedTasks.value.map(group => group.id)
   collapsedGroups.value = new Set(allGroupIds)
   saveCollapsedState()
+}
+
+// 切换重复任务实例显示
+const toggleRecurringInstances = () => {
+  taskStore.toggleRecurringInstances()
 }
 
 // 计算属性：是否有多个分组

@@ -50,6 +50,20 @@
               </button>
             </div>
 
+            <!-- 重复设置选择器 -->
+            <div class="task-add-option-group">
+              <button class="task-add-option-btn" @click.stop="toggleRepeatPicker"
+                :class="{ 'active': showRepeatPicker }">
+                <i class="fas fa-redo"></i>
+                <span>{{ getRepeatDisplayText() }}</span>
+              </button>
+
+              <!-- 清除重复按钮 -->
+              <button v-if="selectedRecurrence" class="task-add-clear-btn" @click.stop="clearRecurrence" title="清除重复">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
             <!-- 添加/保存按钮 -->
             <button v-if="newTaskContent.trim()" class="task-add-submit-btn" @click="handleAddTask">
               <i class="fas fa-plus" v-if="!props.isEditing"></i>
@@ -133,6 +147,27 @@
               </button>
             </div>
           </div>
+
+          <!-- 重复设置下拉 -->
+          <div v-if="showRepeatPicker" class="task-add-dropdown task-add-repeat-dropdown">
+            <RepeatSelector 
+              v-model="selectedRecurrence" 
+              :base-date="getBaseDate()"
+              @update:modelValue="handleRecurrenceChange"
+            />
+            
+            <!-- 重复实例预览 -->
+            <div v-if="selectedRecurrence" class="task-add-repeat-preview">
+              <NextOccurrencesPreview 
+                :recurrence="selectedRecurrence"
+                :base-date="getBaseDate()"
+                :existing-instances="[]"
+                @complete-occurrence="handleCompleteOccurrence"
+                @edit-occurrence="handleEditOccurrence"
+                @delete-occurrence="handleDeleteOccurrence"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -144,6 +179,8 @@
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '../store/taskStore'
+import RepeatSelector from './RepeatSelector.vue'
+import NextOccurrencesPreview from './NextOccurrencesPreview.vue'
 
 
 // 定义 props
@@ -187,6 +224,10 @@ const selectedListId = ref(null)
 const showListPicker = ref(false)
 // 使用 taskStore 中的 lists 作为 availableLists
 const availableLists = lists
+
+// 重复任务相关状态
+const selectedRecurrence = ref(null)
+const showRepeatPicker = ref(false)
 
 // 使用 storeToRefs 确保响应式
 const customReminderOptions = storeCustomReminderOptions
@@ -276,9 +317,11 @@ const resetAllStates = () => {
   selectedDate.value = ''
   selectedTime.value = ''
   selectedReminder.value = null
+  selectedRecurrence.value = null
   showDatePicker.value = false
   showReminderPicker.value = false
   showListPicker.value = false
+  showRepeatPicker.value = false
 
   // 重新设置默认列表
   if (taskStore.currentListId) {
@@ -288,6 +331,69 @@ const resetAllStates = () => {
   }
 }
 
+
+// 查找匹配的提醒选项
+const findMatchingReminderOption = (reminderDate) => {
+  const now = new Date()
+  const diffMs = reminderDate.getTime() - now.getTime()
+
+  // 尝试匹配相对时间选项
+  for (const option of customReminderOptions.value) {
+    if (option.type === 'relative') {
+      let expectedMs = 0
+      switch (option.unit) {
+        case 'minutes':
+          expectedMs = option.value * 60 * 1000
+          break
+        case 'hours':
+          expectedMs = option.value * 60 * 60 * 1000
+          break
+        case 'days':
+          expectedMs = option.value * 24 * 60 * 60 * 1000
+          break
+      }
+
+      // 允许5分钟的误差
+      if (Math.abs(diffMs - expectedMs) < 5 * 60 * 1000) {
+        return option
+      }
+    }
+  }
+
+  // 尝试匹配绝对时间选项
+  const reminderTime = reminderDate.toTimeString().slice(0, 5)
+  const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate())
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const actualDayOffset = Math.round((reminderDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24))
+
+  for (const option of customReminderOptions.value) {
+    if (option.type === 'absolute' && option.time === reminderTime && option.dayOffset === actualDayOffset) {
+      return option
+    }
+  }
+
+  return null
+}
+
+// 格式化日期和时间（用于编辑模式）
+const formatDateWithTime = (date, time) => {
+  if (!date || !time) return ''
+  const dateObj = new Date(date)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+
+  const todayStr = getLocalDateString(today)
+  const tomorrowStr = getLocalDateString(tomorrow)
+
+  if (date === todayStr) {
+    return `今天 ${time}`
+  } else if (date === tomorrowStr) {
+    return `明天 ${time}`
+  } else {
+    return `${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${time}`
+  }
+}
 
 
 // 开始添加任务
@@ -315,6 +421,11 @@ const handleCancelAdding = () => {
 watch(() => props.task, (newTask) => {
   if (newTask && newTask.listId) {
     selectedListId.value = newTask.listId
+  }
+  
+  // 处理重复设置
+  if (props.isEditing && newTask && newTask.recurrence) {
+    selectedRecurrence.value = newTask.recurrence
   }
 }, { immediate: true })
 
@@ -545,7 +656,7 @@ const handleInputBlur = () => {
 }
 
 // 添加/更新任务
-const handleAddTask = () => {
+const handleAddTask = async () => {
   if (!newTaskContent.value.trim()) return
 
   // 验证提醒时间
@@ -556,37 +667,25 @@ const handleAddTask = () => {
 
   // 计算提醒时间
   console.log('=== handleAddTask 计算提醒时间 ===')
-  console.log('selectedReminder.value:', selectedReminder.value)
-  console.log('selectedDate.value:', selectedDate.value)
-  console.log('selectedTime.value:', selectedTime.value)
 
   let reminderTime = null
   let reminderConfig = null
 
   if (selectedReminder.value) {
-    console.log('有选择的提醒')
     if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
       console.log('使用自定义提醒配置中的时间')
       // 使用自定义提醒配置中的时间
       reminderTime = selectedReminder.value.reminderTime
       reminderConfig = selectedReminder.value.config
-      console.log('提醒时间:', reminderTime)
-      console.log('提醒配置:', reminderConfig)
     } else if (selectedDate.value && selectedTime.value) {
-      console.log('使用日期时间选择器中的时间')
       // 使用日期时间选择器中的时间
       const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-      console.log('构造的时间字符串:', customReminderStr)
       reminderTime = new Date(customReminderStr).toISOString()
-      console.log('转换后的 ISO 时间:', reminderTime)
     }
   } else if (selectedDate.value && selectedTime.value) {
-    console.log('没有选择提醒类型，但有日期时间')
     // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
     const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-    console.log('构造的时间字符串:', customReminderStr)
     reminderTime = new Date(customReminderStr).toISOString()
-    console.log('转换后的 ISO 时间:', reminderTime)
   }
 
   console.log('最终的提醒时间:', reminderTime)
@@ -613,16 +712,68 @@ const handleAddTask = () => {
     dueTime: selectedTime.value,
     reminderTime: reminderTime,
     reminderConfig: cleanReminderConfig,
-    listId: selectedListId.value
+    listId: selectedListId.value,
+    recurrence: selectedRecurrence.value || null
   }
 
-  console.log('准备发送的 taskData:', taskData)
-  console.log('taskData 序列化测试:', JSON.stringify(taskData))
+  console.log('准备发送的 taskData 序列化测试:', JSON.stringify(taskData))
+
 
   if (props.isEditing && props.task) {
-    // 编辑模式，发送更新事件
-    taskData.id = props.task.id
-    emit('update-task', taskData)
+    // 编辑模式，处理重复任务的更新逻辑
+    try {
+      // 清理重复规则对象，确保可序列化
+      const cleanRecurrence = selectedRecurrence.value ? {
+        type: selectedRecurrence.value.type,
+        interval: selectedRecurrence.value.interval,
+        daysOfWeek: selectedRecurrence.value.daysOfWeek || [],
+        byMonthDay: selectedRecurrence.value.byMonthDay || null,
+        byWeekDay: selectedRecurrence.value.byWeekDay || null,
+        byMonth: selectedRecurrence.value.byMonth || null,
+        endCondition: selectedRecurrence.value.endCondition || null
+      } : null
+      
+      const updates = {
+        content: newTaskContent.value.trim(),
+        dueDate: selectedDate.value || null,
+        dueTime: selectedTime.value || null,
+        reminderTime: reminderTime,
+        reminderConfig: cleanReminderConfig,
+        listId: selectedListId.value,
+        recurrence: cleanRecurrence
+      }
+      
+      if (props.task.seriesId && selectedRecurrence.value) {
+        // 更新重复任务系列
+        console.log("更新重复任务系列, 当前是子任务: ", props.task.seriesId)
+        await taskStore.updateRecurringTask(props.task.seriesId, updates)
+        handleCancelAdding()
+      } else if (selectedRecurrence.value && !props.task.seriesId) {
+        // 将普通任务转换为重复任务
+        console.log("将普通任务转换为重复任务: ", props.task.id)
+        console.log("cleanRecurrence: ", cleanRecurrence)
+        console.log("updates: ", updates)
+        await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
+        handleCancelAdding()
+      } else if (!selectedRecurrence.value && props.task.seriesId) {
+        console.log("将重复任务转换为普通任务, : ", props.task.seriesId)
+        // 将重复任务转换为普通任务
+        await taskStore.updateTask(props.task.id, {
+          ...updates,
+          seriesId: null,
+          recurrence: null
+        })
+        handleCancelAdding()
+      } else {
+        // 更新普通任务
+        taskData.id = props.task.id
+        console.log("updated task data: ", taskData)
+        emit('update-task', taskData)
+        handleCancelAdding()
+      }
+    } catch (error) {
+      console.error('更新任务失败:', error)
+    }
   } else {
     // 添加模式，发送添加事件
     emit('add-task', taskData)
@@ -710,62 +861,30 @@ const isReminderTimeValid = () => {
   console.log('当前时间:', now.toLocaleString())
 
   if (selectedReminder.value && selectedReminder.value.value === 'custom') {
-    console.log('验证自定义提醒时间')
 
     // 优先使用 selectedReminder 中存储的 reminderTime
     if (selectedReminder.value.reminderTime) {
-      console.log('使用 selectedReminder.reminderTime 进行验证')
       const customReminderTime = new Date(selectedReminder.value.reminderTime)
-      console.log('解析的提醒时间:', customReminderTime.toLocaleString())
-      console.log('时间比较:', {
-        reminderTime: customReminderTime.getTime(),
-        nowTime: now.getTime(),
-        diff: customReminderTime.getTime() - now.getTime(),
-        isValid: customReminderTime > now
-      })
-
       const isValid = customReminderTime > now
-      console.log('验证结果:', isValid ? '✅ 有效' : '❌ 无效')
       return isValid
     } else if (selectedDate.value && selectedTime.value) {
-      console.log('使用 selectedDate 和 selectedTime 进行验证')
       const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-      console.log('构造的提醒时间字符串:', customReminderStr)
 
       const customReminderTime = new Date(customReminderStr)
-      console.log('解析的提醒时间:', customReminderTime.toLocaleString())
-      console.log('时间比较:', {
-        reminderTime: customReminderTime.getTime(),
-        nowTime: now.getTime(),
-        diff: customReminderTime.getTime() - now.getTime(),
-        isValid: customReminderTime > now
-      })
 
       const isValid = customReminderTime > now
-      console.log('验证结果:', isValid ? '✅ 有效' : '❌ 无效')
       return isValid
     }
   } else if (!selectedReminder.value && selectedDate.value && selectedTime.value) {
-    console.log('验证日期时间选择器的时间')
     // 当没有选择提醒类型，但设置了日期和时间时，也需要验证时间
     const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-    console.log('构造的提醒时间字符串:', customReminderStr)
 
     const customReminderTime = new Date(customReminderStr)
-    console.log('解析的提醒时间:', customReminderTime.toLocaleString())
-    console.log('时间比较:', {
-      reminderTime: customReminderTime.getTime(),
-      nowTime: now.getTime(),
-      diff: customReminderTime.getTime() - now.getTime(),
-      isValid: customReminderTime > now
-    })
 
     const isValid = customReminderTime > now
-    console.log('验证结果:', isValid ? '✅ 有效' : '❌ 无效')
     return isValid
   }
 
-  console.log('默认返回 true')
   return true
 }
 
@@ -804,6 +923,103 @@ const selectList = (list) => {
 const getSelectedListName = () => {
   const list = availableLists.value.find(l => l.id === selectedListId.value)
   return list ? list.name : '选择列表'
+}
+
+// 获取重复设置显示文本
+const getRepeatDisplayText = () => {
+  if (!selectedRecurrence.value) {
+    return '设置重复'
+  }
+  
+  const rule = selectedRecurrence.value
+  const freq = rule.frequency
+  const interval = rule.interval || 1
+  
+  let desc = ''
+  
+  if (freq === 'daily') {
+    desc = interval === 1 ? '每天' : `每${interval}天`
+  } else if (freq === 'weekly') {
+    desc = interval === 1 ? '每周' : `每${interval}周`
+    if (rule.weekdays && rule.weekdays.length > 0) {
+      const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      const selectedDays = rule.weekdays.map(day => dayNames[day]).join('、')
+      desc += ` (${selectedDays})`
+    }
+  } else if (freq === 'monthly') {
+    desc = interval === 1 ? '每月' : `每${interval}月`
+    if (rule.monthlyType === 'byDate') {
+      desc += ` ${rule.monthDate || 1}日`
+    } else if (rule.monthlyType === 'byWeekday') {
+      const weekNames = ['第一个', '第二个', '第三个', '第四个', '最后一个']
+      const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      desc += ` ${weekNames[rule.weekNumber]}${dayNames[rule.weekday]}`
+    }
+  } else if (freq === 'yearly') {
+    desc = interval === 1 ? '每年' : `每${interval}年`
+  }
+  
+  // 结束条件
+  if (rule.endType === 'date' && rule.endDate) {
+    desc += ` (至${rule.endDate})`
+  } else if (rule.endType === 'count' && rule.endCount > 0) {
+    desc += ` (${rule.endCount}次)`
+  }
+  
+  return desc
+}
+
+// 处理重复规则变化
+const handleRecurrenceChange = (recurrence) => {
+  selectedRecurrence.value = recurrence
+}
+
+// 监听 props.task 的重复设置变化
+watch(() => props.task?.recurrence, (newRecurrence) => {
+  if (props.isEditing && newRecurrence) {
+    selectedRecurrence.value = newRecurrence
+  }
+}, { immediate: true, deep: true })
+
+// 清除重复设置
+const clearRecurrence = () => {
+  selectedRecurrence.value = null
+  showRepeatPicker.value = false
+}
+
+// 切换重复选择器显示
+const toggleRepeatPicker = () => {
+  showRepeatPicker.value = !showRepeatPicker.value
+  showDatePicker.value = false
+  showReminderPicker.value = false
+  showListPicker.value = false
+}
+
+// 获取基准日期（用于重复任务计算）
+const getBaseDate = () => {
+  if (selectedDate.value) {
+    return new Date(selectedDate.value)
+  }
+  // 如果没有选择日期，使用今天
+  return new Date()
+}
+
+// 处理完成重复任务实例
+const handleCompleteOccurrence = (occurrence) => {
+  console.log('完成重复任务实例:', occurrence)
+  // 这里可以添加完成重复任务实例的逻辑
+}
+
+// 处理编辑重复任务实例
+const handleEditOccurrence = (occurrence) => {
+  console.log('编辑重复任务实例:', occurrence)
+  // 这里可以添加编辑重复任务实例的逻辑
+}
+
+// 处理删除重复任务实例
+const handleDeleteOccurrence = (occurrence) => {
+  console.log('删除重复任务实例:', occurrence)
+  // 这里可以添加删除重复任务实例的逻辑
 }
 
 
@@ -983,26 +1199,6 @@ const formatSelectedDate = (date) => {
   }
 }
 
-// 格式化日期和时间（用于编辑模式）
-const formatDateWithTime = (date, time) => {
-  if (!date || !time) return ''
-  const dateObj = new Date(date)
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
-
-  const todayStr = getLocalDateString(today)
-  const tomorrowStr = getLocalDateString(tomorrow)
-
-  if (date === todayStr) {
-    return `今天 ${time}`
-  } else if (date === tomorrowStr) {
-    return `明天 ${time}`
-  } else {
-    return `${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${time}`
-  }
-}
-
 // 格式化提醒标签
 const formatReminderLabel = (config, reminderDate) => {
   if (!config || !reminderDate) return '自定义提醒'
@@ -1040,48 +1236,7 @@ const formatReminderLabel = (config, reminderDate) => {
   }
 }
 
-// 查找匹配的提醒选项
-const findMatchingReminderOption = (reminderDate) => {
-  const now = new Date()
-  const diffMs = reminderDate.getTime() - now.getTime()
 
-  // 尝试匹配相对时间选项
-  for (const option of customReminderOptions.value) {
-    if (option.type === 'relative') {
-      let expectedMs = 0
-      switch (option.unit) {
-        case 'minutes':
-          expectedMs = option.value * 60 * 1000
-          break
-        case 'hours':
-          expectedMs = option.value * 60 * 60 * 1000
-          break
-        case 'days':
-          expectedMs = option.value * 24 * 60 * 60 * 1000
-          break
-      }
-
-      // 允许5分钟的误差
-      if (Math.abs(diffMs - expectedMs) < 5 * 60 * 1000) {
-        return option
-      }
-    }
-  }
-
-  // 尝试匹配绝对时间选项
-  const reminderTime = reminderDate.toTimeString().slice(0, 5)
-  const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate())
-  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const actualDayOffset = Math.round((reminderDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24))
-
-  for (const option of customReminderOptions.value) {
-    if (option.type === 'absolute' && option.time === reminderTime && option.dayOffset === actualDayOffset) {
-      return option
-    }
-  }
-
-  return null
-}
 
 // 聚焦到输入框（供父组件调用）
 const focusInput = () => {

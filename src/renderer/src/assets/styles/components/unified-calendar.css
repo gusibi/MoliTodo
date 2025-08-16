@@ -249,6 +249,33 @@
   @apply bg-status-done/40 text-status-done border border-status-done/30 line-through opacity-75 transition-colors;
 }
 
+/* Recurring task instance styles */
+.task-recurring-instance {
+  @apply relative;
+}
+
+.task-recurring-instance::before {
+  content: '🔄';
+  @apply absolute -top-1 -right-1 text-xs opacity-70;
+}
+
+/* Recurring toggle button */
+.calendar-recurring-toggle {
+  @apply relative;
+}
+
+.calendar-recurring-toggle.active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.calendar-recurring-toggle:hover {
+  @apply bg-accent text-accent-foreground;
+}
+
+.calendar-recurring-toggle.active:hover {
+  @apply bg-primary/90;
+}
+
 /* Task Tooltip */
 .task-tooltip {
   @apply fixed z-50 pointer-events-none;

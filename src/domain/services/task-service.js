@@ -36,10 +36,10 @@ class TaskService {
    * @param {string} content 任务内容
    * @param {number} listId 清单ID
    * @param {Date|null} reminderTime 提醒时间
-   * @param {Object} metadata 元数据
+   * @param {Object} taskData 完整任务数据（包含 metadata、recurrence 等）
    * @returns {Promise<Task>}
    */
-  async createTaskInList(content, listId = 0, reminderTime = null, metadata = {}) {
+  async createTaskInList(content, listId = 0, reminderTime = null, taskData = {}) {
     if (!content || content.trim().length === 0) {
       throw new Error('任务内容不能为空');
     }
@@ -47,6 +47,14 @@ class TaskService {
     if (typeof listId !== 'number' || listId < 0) {
       throw new Error('清单ID必须是非负整数');
     }
+
+    // 从 taskData 中提取各个字段
+    const {
+      metadata = {},
+      recurrence = null,
+      dueDate = null,
+      dueTime = null
+    } = taskData;
 
     const task = new Task(
       Task.generateId(),
@@ -56,8 +64,17 @@ class TaskService {
       reminderTime,
       {}, // timeTracking
       listId,
-      metadata
+      metadata,
+      recurrence
     );
+
+    // 设置到期日期和时间
+    if (dueDate) {
+      task.dueDate = dueDate;
+    }
+    if (dueTime) {
+      task.dueTime = dueTime;
+    }
 
     return await this.taskRepository.save(task);
   }
@@ -563,6 +580,201 @@ class TaskService {
    */
   async getLastUpdatedTime() {
     return await this.taskRepository.getLastUpdatedTime();
+  }
+
+  // ==================== 重复任务相关方法 ====================
+
+  /**
+   * 获取所有重复任务
+   * @returns {Promise<Task[]>}
+   */
+  async getRecurringTasks() {
+    const allTasks = await this.getAllTasks();
+    return allTasks.filter(task => task.isRecurring());
+  }
+
+  /**
+   * 展开重复任务为指定时间范围内的实例
+   * @param {Date} startDate 开始日期
+   * @param {Date} endDate 结束日期
+   * @returns {Promise<Task[]>}
+   */
+  async expandRecurringTasks(startDate, endDate) {
+    const recurringTasks = await this.getRecurringTasks();
+    const RecurringTaskService = require('./recurring-task-service');
+    return RecurringTaskService.expandRecurringTasks(recurringTasks, startDate, endDate);
+  }
+
+  /**
+   * 更新重复任务
+   * @param {string} taskId 任务ID
+   * @param {Object} updates 更新数据
+   * @param {Object} recurrence 重复规则
+   * @returns {Promise<Task>}
+   */
+  async updateRecurringTask(taskId, updates, recurrence = null) {
+    const task = await this.updateTask(taskId, updates);
+    if (recurrence) {
+      task.setRecurrence(recurrence);
+      await this.taskRepository.save(task);
+    }
+    return task;
+  }
+
+  /**
+   * 完成重复任务实例
+   * @param {string} seriesId 系列ID
+   * @param {string} occurrenceDate 实例日期
+   * @returns {Promise<Object>}
+   */
+  async completeRecurringInstance(seriesId, occurrenceDate) {
+    // 查找是否已存在该实例的覆盖记录
+    const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
+    
+    if (existingInstance) {
+      // 如果存在，直接完成该实例
+      await this.completeTask(existingInstance.id);
+    } else {
+      // 如果不存在，创建一个已完成的覆盖实例
+      const recurringTask = await this.taskRepository.findById(seriesId);
+      if (!recurringTask) {
+        throw new Error('重复任务不存在');
+      }
+      
+      const overrideInstance = new Task(
+        Task.generateId(),
+        recurringTask.content,
+        'done',
+        new Date(),
+        null,
+        {}, // timeTracking
+        recurringTask.listId,
+        recurringTask.metadata,
+        null, // recurrence
+        seriesId,
+        occurrenceDate
+      );
+      
+      overrideInstance.markAsCompleted();
+      await this.taskRepository.save(overrideInstance);
+    }
+    
+    return { success: true };
+  }
+
+  /**
+   * 删除重复任务实例
+   * @param {string} seriesId 系列ID
+   * @param {string} occurrenceDate 实例日期
+   * @returns {Promise<Object>}
+   */
+  async deleteRecurringInstance(seriesId, occurrenceDate) {
+    // 查找是否已存在该实例的覆盖记录
+    const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
+    
+    if (existingInstance) {
+      // 如果存在覆盖实例，删除它
+      await this.deleteTask(existingInstance.id);
+    } else {
+      // 如果不存在覆盖实例，创建一个已删除的标记
+      const recurringTask = await this.taskRepository.findById(seriesId);
+      if (!recurringTask) {
+        throw new Error('重复任务不存在');
+      }
+      
+      const deletedInstance = new Task(
+        Task.generateId(),
+        recurringTask.content,
+        'deleted',
+        new Date(),
+        null,
+        {}, // timeTracking
+        recurringTask.listId,
+        { ...recurringTask.metadata, deleted: true },
+        null, // recurrence
+        seriesId,
+        occurrenceDate
+      );
+      
+      await this.taskRepository.save(deletedInstance);
+    }
+    
+    return { success: true };
+  }
+
+  /**
+   * 更新重复任务实例
+   * @param {string} seriesId 系列ID
+   * @param {string} occurrenceDate 实例日期
+   * @param {Object} updates 更新数据
+   * @returns {Promise<Object>}
+   */
+  async updateRecurringInstance(seriesId, occurrenceDate, updates) {
+    // 查找是否已存在该实例的覆盖记录
+    let existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
+    
+    if (existingInstance) {
+      // 如果存在，更新该实例
+      await this.updateTask(existingInstance.id, updates);
+    } else {
+      // 如果不存在，创建一个覆盖实例
+      const recurringTask = await this.taskRepository.findById(seriesId);
+      if (!recurringTask) {
+        throw new Error('重复任务不存在');
+      }
+      
+      const overrideInstance = new Task(
+        Task.generateId(),
+        updates.content || recurringTask.content,
+        updates.status || 'todo',
+        new Date(),
+        updates.reminderTime || null,
+        {}, // timeTracking
+        updates.listId !== undefined ? updates.listId : recurringTask.listId,
+        { ...recurringTask.metadata, ...updates.metadata },
+        null, // recurrence
+        seriesId,
+        occurrenceDate
+      );
+      
+      await this.taskRepository.save(overrideInstance);
+    }
+    
+    return { success: true };
+  }
+
+  /**
+   * 删除重复任务系列
+   * @param {string} seriesId 系列ID
+   * @returns {Promise<Object>}
+   */
+  async deleteRecurringSeries(seriesId) {
+    // 删除主重复任务
+    await this.deleteTask(seriesId);
+    
+    // 删除所有相关的覆盖实例
+    const overrideInstances = await this.taskRepository.findOverrideInstances(seriesId);
+    for (const instance of overrideInstances) {
+      await this.deleteTask(instance.id);
+    }
+    
+    return { success: true };
+  }
+
+  /**
+   * 获取重复任务的下几个实例预览
+   * @param {string} taskId 任务ID
+   * @param {number} count 预览数量
+   * @returns {Promise<Date[]>}
+   */
+  async getNextOccurrences(taskId, count = 5) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task || !task.isRecurring()) {
+      return [];
+    }
+    
+    const RecurringTaskService = require('./recurring-task-service');
+    return RecurringTaskService.getNextOccurrences(task, count);
   }
 }
 

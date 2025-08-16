@@ -189,6 +189,19 @@
   @apply text-xs;
 }
 
+/* 重复任务控制按钮 */
+.task-list-recurring-toggle {
+  @apply relative;
+}
+
+.task-list-recurring-toggle.active {
+  @apply bg-primary text-primary-foreground border-primary;
+}
+
+.task-list-recurring-toggle.active:hover {
+  @apply bg-primary/90;
+}
+
 .task-list-collapse-indicator {
   @apply text-xs text-muted-foreground ml-auto;
   @apply bg-primary/10 text-primary px-2 py-1 rounded-md;

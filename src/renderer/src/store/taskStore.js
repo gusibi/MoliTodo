@@ -20,6 +20,9 @@ export const useTaskStore = defineStore('task', () => {
   const showCompletedInWeekly = ref(false) // 控制在"周视图"中是否显示已完成任务
   const showCompletedInMonthly = ref(false) // 控制在"月视图"中是否显示已完成任务
   const customReminderOptions = ref([]) // 自定义提醒选项
+  const expandedTasks = ref([]) // 展开后的任务（包含重复任务实例）
+  const recurringTasks = ref([]) // 重复任务列表
+  const showRecurringInstances = ref(false) // 是否显示重复任务实例
 
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
@@ -578,7 +581,11 @@ export const useTaskStore = defineStore('task', () => {
   // 创建任务
   const createTask = async (taskData) => {
     try {
-      const result = await window.electronAPI.tasks.create(taskData)
+      // 序列化数据以确保可以通过 IPC 传递
+      const serializedData = JSON.parse(JSON.stringify(taskData))
+      console.log('taskData 序列化测试:', serializedData)
+      
+      const result = await window.electronAPI.tasks.create(serializedData)
       if (result.success) {
         await getAllTasks() // 重新获取任务列表
       }
@@ -954,6 +961,217 @@ export const useTaskStore = defineStore('task', () => {
     console.log('更新后的 customReminderOptions:', customReminderOptions.value)
   }
 
+  // 重复任务相关方法
+  
+  // 获取所有重复任务
+  const getRecurringTasks = async () => {
+    try {
+      const result = await window.electronAPI.tasks.getRecurring()
+      if (result.success) {
+        recurringTasks.value = result.tasks
+        return result.tasks
+      }
+      return []
+    } catch (error) {
+      console.error('获取重复任务失败:', error)
+      return []
+    }
+  }
+
+  // 展开重复任务为实例
+  const expandRecurringTasks = async (startDate, endDate) => {
+    try {
+      const result = await window.electronAPI.tasks.expandRecurring({
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      })
+      if (result.success) {
+        expandedTasks.value = result.tasks
+        return result.tasks
+      }
+      return []
+    } catch (error) {
+      console.error('展开重复任务失败:', error)
+      return []
+    }
+  }
+
+  // 创建重复任务
+  const createRecurringTask = async (taskData) => {
+    try {
+      // 序列化数据以确保可以通过 IPC 传递
+      const serializedData = JSON.parse(JSON.stringify(taskData))
+      console.log('createRecurringTask taskData 序列化测试:', serializedData)
+      
+      const result = await window.electronAPI.tasks.createRecurring(serializedData)
+      if (result.success) {
+        await getAllTasks()
+        await getRecurringTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('创建重复任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 更新重复任务
+  const updateRecurringTask = async (taskId, updates, recurrence = null) => {
+    try {
+      // 序列化检查和清理数据
+      const cleanUpdates = JSON.parse(JSON.stringify(updates))
+      const cleanRecurrence = recurrence ? JSON.parse(JSON.stringify(recurrence)) : null
+      
+      console.log('updateRecurringTask 参数:', {
+        taskId,
+        updates: cleanUpdates,
+        recurrence: cleanRecurrence
+      })
+      
+      const result = await window.electronAPI.tasks.updateRecurring({
+        taskId,
+        updates: cleanUpdates,
+        recurrence: cleanRecurrence
+      })
+      if (result.success) {
+        await getAllTasks()
+        await getRecurringTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('更新重复任务失败:', error)
+      console.error('错误详情:', {
+        taskId,
+        updates,
+        recurrence,
+        errorMessage: error.message,
+        errorStack: error.stack
+      })
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 完成重复任务实例
+  const completeRecurringInstance = async (seriesId, occurrenceDate) => {
+    try {
+      const result = await window.electronAPI.tasks.completeRecurringInstance({
+        seriesId,
+        occurrenceDate
+      })
+      if (result.success) {
+        await getAllTasks()
+        // 重新展开任务以更新显示
+        if (expandedTasks.value.length > 0) {
+          const now = new Date()
+          const futureDate = new Date(now)
+          futureDate.setMonth(futureDate.getMonth() + 3)
+          await expandRecurringTasks(now, futureDate)
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('完成重复任务实例失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 删除重复任务实例
+  const deleteRecurringInstance = async (seriesId, occurrenceDate) => {
+    try {
+      const result = await window.electronAPI.tasks.deleteRecurringInstance({
+        seriesId,
+        occurrenceDate
+      })
+      if (result.success) {
+        await getAllTasks()
+        // 重新展开任务以更新显示
+        if (expandedTasks.value.length > 0) {
+          const now = new Date()
+          const futureDate = new Date(now)
+          futureDate.setMonth(futureDate.getMonth() + 3)
+          await expandRecurringTasks(now, futureDate)
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('删除重复任务实例失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 更新重复任务实例
+  const updateRecurringInstance = async (seriesId, occurrenceDate, updates) => {
+    try {
+      const result = await window.electronAPI.tasks.updateRecurringInstance({
+        seriesId,
+        occurrenceDate,
+        updates
+      })
+      if (result.success) {
+        await getAllTasks()
+        // 重新展开任务以更新显示
+        if (expandedTasks.value.length > 0) {
+          const now = new Date()
+          const futureDate = new Date(now)
+          futureDate.setMonth(futureDate.getMonth() + 3)
+          await expandRecurringTasks(now, futureDate)
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('更新重复任务实例失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 删除整个重复任务系列
+  const deleteRecurringSeries = async (seriesId) => {
+    try {
+      const result = await window.electronAPI.tasks.deleteRecurringSeries({
+        seriesId
+      })
+      if (result.success) {
+        await getAllTasks()
+        await getRecurringTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('删除重复任务系列失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 获取重复任务的下次实例预览
+  const getNextOccurrences = async (taskId, count = 5) => {
+    try {
+      const result = await window.electronAPI.tasks.getNextOccurrences({
+        taskId,
+        count
+      })
+      return result.success ? result.occurrences : []
+    } catch (error) {
+      console.error('获取下次实例失败:', error)
+      return []
+    }
+  }
+
+  // 设置是否显示重复任务实例
+  const setShowRecurringInstances = (show) => {
+    showRecurringInstances.value = show
+    if (show) {
+      // 当显示重复实例时，自动展开重复任务
+      const now = new Date()
+      const futureDate = new Date(now)
+      futureDate.setMonth(futureDate.getMonth() + 3) // 展开未来3个月的重复任务
+      expandRecurringTasks(now, futureDate)
+    }
+  }
+  
+  // 切换重复任务实例显示
+  const toggleRecurringInstances = () => {
+    setShowRecurringInstances(!showRecurringInstances.value)
+  }
+
   return {
     // 状态
     tasks,
@@ -969,6 +1187,9 @@ export const useTaskStore = defineStore('task', () => {
     showCompletedInWeekly,
     showCompletedInMonthly,
     customReminderOptions,
+    expandedTasks,
+    recurringTasks,
+    showRecurringInstances,
 
     // 计算属性
     filteredTasks,
@@ -1037,6 +1258,19 @@ export const useTaskStore = defineStore('task', () => {
     // 自定义提醒选项方法
     getDefaultReminderOptions,
     loadCustomReminderOptions,
-    refreshCustomReminderOptions
+    refreshCustomReminderOptions,
+
+    // 重复任务方法
+    getRecurringTasks,
+    expandRecurringTasks,
+    createRecurringTask,
+    updateRecurringTask,
+    completeRecurringInstance,
+    deleteRecurringInstance,
+    updateRecurringInstance,
+    deleteRecurringSeries,
+    getNextOccurrences,
+    setShowRecurringInstances,
+    toggleRecurringInstances
   }
 })
