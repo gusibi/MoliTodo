@@ -556,6 +556,14 @@ class TaskService {
       completionRate: allTasks.length > 0 ? (completedTasks.length / allTasks.length) * 100 : 0
     };
   }
+
+  /**
+   * 获取任务表的最新更新时间
+   * @returns {Promise<Date|null>}
+   */
+  async getLastUpdatedTime() {
+    return await this.taskRepository.getLastUpdatedTime();
+  }
 }
 
 module.exports = TaskService;

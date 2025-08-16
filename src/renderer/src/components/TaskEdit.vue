@@ -193,12 +193,10 @@ const customReminderOptions = storeCustomReminderOptions
 
 // 调试：监听 customReminderOptions 的变化
 watch(customReminderOptions, (newOptions) => {
-  console.log('TaskEdit: customReminderOptions 变化了', newOptions)
 }, { immediate: true })
 
 // 调试：监听 availableLists 的变化
 watch(availableLists, (newLists) => {
-  console.log('TaskEdit: availableLists 变化了', newLists)
 }, { immediate: true })
 
 // 获取本地日期字符串（避免时区问题）

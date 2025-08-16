@@ -2,38 +2,38 @@
 :root {
   /* Core Background and Foreground */
   --background: 0 0% 100%;
-  --foreground: 0 0% 20%;
+  --foreground: 0 0% 15%;
   
   /* Card Components */
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 20%;
+  --card-foreground: 0 0% 15%;
   
   /* Popover Components */
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 20%;
+  --popover-foreground: 0 0% 15%;
   
   /* Primary Colors - 薄荷绿主题色 */
-  --primary: 140 35% 75%;
+  --primary: 140 45% 55%;
   --primary-foreground: 0 0% 100%;
   
   /* Secondary Colors */
-  --secondary: 140 20% 95%;
-  --secondary-foreground: 140 15% 35%;
+  --secondary: 140 25% 90%;
+  --secondary-foreground: 140 20% 25%;
   
   /* Muted Colors */
-  --muted: 140 15% 97%;
-  --muted-foreground: 140 8% 46%;
+  --muted: 140 20% 94%;
+  --muted-foreground: 140 12% 35%;
   
   /* Accent Colors */
-  --accent: 140 30% 92%;
-  --accent-foreground: 140 25% 40%;
+  --accent: 140 35% 85%;
+  --accent-foreground: 140 30% 30%;
   
   /* Destructive Colors */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   
   /* Success Colors - 使用更深的绿色 */
-  --success: 140 50% 50%;
+  --success: 140 55% 45%;
   --success-foreground: 0 0% 100%;
   
   /* Warning Colors */
@@ -41,37 +41,37 @@
   --warning-foreground: 0 0% 100%;
   
   /* Info Colors - 使用主题色 */
-  --info: 140 35% 75%;
+  --info: 140 45% 55%;
   --info-foreground: 0 0% 100%;
   
   /* Border and Input */
-  --border: 140 15% 88%;
-  --input: 140 15% 92%;
-  --ring: 140 35% 75%;
+  --border: 140 20% 80%;
+  --input: 140 20% 88%;
+  --ring: 140 45% 55%;
   
   /* Chart Colors - 薄荷绿色系 */
-  --chart-1: 140 35% 75%;
-  --chart-2: 140 45% 65%;
-  --chart-3: 140 55% 55%;
-  --chart-4: 140 40% 45%;
-  --chart-5: 140 30% 35%;
+  --chart-1: 140 45% 55%;
+  --chart-2: 140 50% 50%;
+  --chart-3: 140 55% 45%;
+  --chart-4: 140 40% 40%;
+  --chart-5: 140 35% 35%;
   
   /* Status Colors for Tasks */
-  --status-todo: 140 8% 46%;
-  --status-doing: 180 45% 65%; /* 使用薄荷蓝色系 */
-  --status-done: 140 50% 50%;
-  --status-paused: 140 8% 46%;
+  --status-todo: 140 15% 40%;
+  --status-doing: 180 50% 50%; /* 使用薄荷蓝色系 */
+  --status-done: 140 55% 45%;
+  --status-paused: 140 15% 40%;
   --status-overtime: 32 95% 44%;
   
   /* Sidebar Colors */
-  --sidebar: 140 20% 98%;
-  --sidebar-foreground: 0 0% 20%;
-  --sidebar-primary: 140 35% 75%;
+  --sidebar: 140 25% 95%;
+  --sidebar-foreground: 0 0% 15%;
+  --sidebar-primary: 140 45% 55%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 140 30% 92%;
-  --sidebar-accent-foreground: 140 25% 40%;
-  --sidebar-border: 140 15% 88%;
-  --sidebar-ring: 140 35% 75%;
+  --sidebar-accent: 140 35% 85%;
+  --sidebar-accent-foreground: 140 30% 30%;
+  --sidebar-border: 140 20% 80%;
+  --sidebar-ring: 140 45% 55%;
   
   /* Border Radius */
   --radius: 0.375rem;

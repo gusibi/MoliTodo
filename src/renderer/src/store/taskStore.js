@@ -524,6 +524,11 @@ export const useTaskStore = defineStore('task', () => {
     }
   })
 
+  // 直接设置任务数据（用于智能刷新，避免重复网络请求）
+  const setTasks = (newTasks) => {
+    tasks.value = newTasks
+  }
+
   // 获取所有任务
   const getAllTasks = async () => {
     try {
@@ -976,6 +981,7 @@ export const useTaskStore = defineStore('task', () => {
     fullStatistics,
 
     // 任务操作方法
+    setTasks,
     getAllTasks,
     getIncompleteTasks,
     getCompletedTasks,

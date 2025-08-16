@@ -224,6 +224,17 @@ class IpcHandlers {
       }
     });
 
+    // 获取任务表最新更新时间
+    ipcMain.handle('task:getLastUpdatedTime', async (event) => {
+      try {
+        const lastUpdatedTime = await this.taskService.getLastUpdatedTime();
+        return { success: true, lastUpdatedTime };
+      } catch (error) {
+        console.error('获取任务最新更新时间失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // 设置任务提醒
     ipcMain.handle('set-task-reminder', async (event, taskId, reminderTime) => {
       const task = await this.taskService.setTaskReminder(taskId, new Date(reminderTime));

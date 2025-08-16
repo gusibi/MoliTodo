@@ -1054,6 +1054,25 @@ class SqliteTaskRepository {
       timeStats
     };
   }
+
+  /**
+   * 获取任务表的最新更新时间
+   * @returns {Promise<Date|null>}
+   */
+  async getLastUpdatedTime() {
+    try {
+      const result = await this.db.get(`
+        SELECT MAX(updated_at) as last_updated 
+        FROM tasks 
+        WHERE updated_at IS NOT NULL
+      `);
+      
+      return result && result.last_updated ? new Date(result.last_updated) : null;
+    } catch (error) {
+      console.error('获取最新更新时间失败:', error);
+      return null;
+    }
+  }
 }
 
 module.exports = SqliteTaskRepository;

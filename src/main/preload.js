@@ -17,7 +17,8 @@ const electronAPI = {
     getStats: () => ipcRenderer.invoke('get-task-stats'),
     getCount: () => ipcRenderer.invoke('get-task-count'),
     setReminder: (taskId, reminderTime) => ipcRenderer.invoke('set-task-reminder', taskId, reminderTime),
-    clearReminder: (taskId) => ipcRenderer.invoke('clear-task-reminder', taskId)
+    clearReminder: (taskId) => ipcRenderer.invoke('clear-task-reminder', taskId),
+    getLastUpdatedTime: () => ipcRenderer.invoke('task:getLastUpdatedTime')
   },
 
   // 配置相关 API

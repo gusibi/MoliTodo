@@ -445,6 +445,47 @@ const openSettings = () => {
   window.electronAPI.windows.showSettings()
 }
 
+// 最后更新时间缓存，用于检测数据变化
+const lastUpdatedTime = ref(null)
+
+// 智能加载任务（只有数据变化时才更新）
+const smartLoadTasks = async () => {
+  try {
+    // 获取任务表的最新更新时间
+    const timeResult = await window.electronAPI.tasks.getLastUpdatedTime()
+    
+    if (!timeResult.success) {
+      console.error('获取最新更新时间失败:', timeResult.error)
+      return
+    }
+    
+    const newLastUpdatedTime = timeResult.lastUpdatedTime ? new Date(timeResult.lastUpdatedTime) : null
+    
+    // 比较更新时间，只有数据真正变化时才更新
+    const hasChanged = !lastUpdatedTime.value || 
+                      !newLastUpdatedTime || 
+                      newLastUpdatedTime.getTime() !== lastUpdatedTime.value.getTime()
+    
+    if (hasChanged) {
+      console.log('🔄 检测到任务数据变化，更新界面', {
+        oldTime: lastUpdatedTime.value?.toISOString(),
+        newTime: newLastUpdatedTime?.toISOString()
+      })
+      
+      // 获取最新任务数据并更新
+      const result = await window.electronAPI.tasks.getAll()
+      taskStore.setTasks(result)
+      lastUpdatedTime.value = newLastUpdatedTime
+    } else {
+      console.log('✅ 任务数据无变化，跳过更新', {
+        lastUpdated: newLastUpdatedTime?.toISOString()
+      })
+    }
+  } catch (error) {
+    console.error('❌ 智能加载任务失败:', error)
+  }
+}
+
 // 生命周期
 onMounted(async () => {
   // 加载清单和任务数据，以及自定义提醒选项
@@ -454,16 +495,22 @@ onMounted(async () => {
     loadTasks()
   ])
 
+  // 初始化最后更新时间
+  const timeResult = await window.electronAPI.tasks.getLastUpdatedTime()
+  if (timeResult.success && timeResult.lastUpdatedTime) {
+    lastUpdatedTime.value = new Date(timeResult.lastUpdatedTime)
+  }
+
   // 监听任务和清单更新事件
   window.electronAPI.events.on('tasks-updated', loadTasks)
   window.electronAPI.events.on('lists-updated', () => {
     taskStore.getAllLists()
   })
 
-  // 定时更新任务状态
+  // 定时智能更新任务状态
   updateTimer.value = setInterval(() => {
-    loadTasks()
-  }, 60000) // 每分钟更新一次
+    smartLoadTasks()
+  }, 6000) // 每分钟检查一次
 })
 
 onUnmounted(() => {
