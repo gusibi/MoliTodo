@@ -660,18 +660,9 @@ const handleInputBlur = () => {
   }, 200)
 }
 
-// 添加/更新任务
-const handleAddTask = async () => {
-  if (!newTaskContent.value.trim()) return
-
-  // 验证提醒时间
-  if (!isReminderTimeValid()) {
-    alert('提醒时间不能设置为过去的时间，请重新选择 add')
-    return
-  }
-
-  // 计算提醒时间
-  console.log('=== handleAddTask 计算提醒时间 ===')
+// 计算提醒时间的独立方法
+const calculateReminderTime = () => {
+  console.log('=== 计算提醒时间 ===')
 
   let reminderTime = null
   let reminderConfig = null
@@ -728,6 +719,22 @@ const handleAddTask = async () => {
     }
     console.log('清理后的提醒配置:', cleanReminderConfig)
   }
+
+  return { reminderTime, cleanReminderConfig }
+}
+
+// 添加/更新任务
+const handleAddTask = async () => {
+  if (!newTaskContent.value.trim()) return
+
+  // 验证提醒时间
+  if (!isReminderTimeValid()) {
+    alert('提醒时间不能设置为过去的时间，请重新选择 add')
+    return
+  }
+
+  // 计算提醒时间
+  const { reminderTime, cleanReminderConfig } = calculateReminderTime()
 
   const taskData = {
     content: newTaskContent.value.trim(),
@@ -956,7 +963,7 @@ const getRepeatDisplayText = () => {
   }
   
   const rule = selectedRecurrence.value
-  const freq = rule.frequency
+  const freq = rule.type  // 修复：使用 type 而不是 frequency
   const interval = rule.interval || 1
   
   let desc = ''
@@ -965,29 +972,41 @@ const getRepeatDisplayText = () => {
     desc = interval === 1 ? '每天' : `每${interval}天`
   } else if (freq === 'weekly') {
     desc = interval === 1 ? '每周' : `每${interval}周`
-    if (rule.weekdays && rule.weekdays.length > 0) {
+    if (rule.daysOfWeek && rule.daysOfWeek.length > 0) {  // 修复：使用 daysOfWeek 而不是 weekdays
       const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-      const selectedDays = rule.weekdays.map(day => dayNames[day]).join('、')
+      const selectedDays = rule.daysOfWeek.map(day => dayNames[day]).join('、')
       desc += ` (${selectedDays})`
     }
   } else if (freq === 'monthly') {
     desc = interval === 1 ? '每月' : `每${interval}月`
-    if (rule.monthlyType === 'byDate') {
-      desc += ` ${rule.monthDate || 1}日`
-    } else if (rule.monthlyType === 'byWeekday') {
+    if (rule.byMonthDay && rule.byMonthDay.length > 0) {  // 修复：使用 byMonthDay 数组
+      const days = rule.byMonthDay.sort((a, b) => a - b).join('、')
+      desc += ` ${days}日`
+    } else if (rule.byWeekDay) {  // 修复：使用 byWeekDay 对象
       const weekNames = ['第一个', '第二个', '第三个', '第四个', '最后一个']
       const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-      desc += ` ${weekNames[rule.weekNumber]}${dayNames[rule.weekday]}`
+      const week = rule.byWeekDay.week === -1 ? '最后' : weekNames[rule.byWeekDay.week - 1]
+      desc += ` ${week}个${dayNames[rule.byWeekDay.weekday]}`
     }
   } else if (freq === 'yearly') {
     desc = interval === 1 ? '每年' : `每${interval}年`
+    if (rule.byMonth && rule.byMonth.length > 0) {  // 修复：添加月份显示
+      const months = rule.byMonth.sort((a, b) => a - b).map(m => `${m}月`).join('、')
+      desc += ` ${months}`
+      if (rule.byMonthDay && rule.byMonthDay.length > 0) {
+        const days = rule.byMonthDay.sort((a, b) => a - b).join('、')
+        desc += `${days}日`
+      }
+    }
   }
   
   // 结束条件
-  if (rule.endType === 'date' && rule.endDate) {
-    desc += ` (至${rule.endDate})`
-  } else if (rule.endType === 'count' && rule.endCount > 0) {
-    desc += ` (${rule.endCount}次)`
+  if (rule.endCondition) {  // 修复：使用 endCondition 对象
+    if (rule.endCondition.type === 'date' && rule.endCondition.value) {
+      desc += ` (至${rule.endCondition.value})`
+    } else if (rule.endCondition.type === 'count' && rule.endCondition.value > 0) {
+      desc += ` (${rule.endCondition.value}次)`
+    }
   }
   
   return desc
