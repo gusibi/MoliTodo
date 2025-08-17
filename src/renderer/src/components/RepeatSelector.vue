@@ -224,6 +224,20 @@
         </div>
       </div>
 
+      <!-- 提醒时间设置 -->
+      <div class="repeat-reminder-section">
+        <label class="section-label">提醒时间</label>
+        <div class="reminder-time-input">
+          <input
+            type="time"
+            v-model="reminderTime"
+            class="time-input"
+            @change="updateReminderTime"
+          />
+          <span class="reminder-hint">为每个重复实例设置提醒时间</span>
+        </div>
+      </div>
+
       <!-- 结束条件 -->
       <div class="repeat-end-section">
         <label class="section-label">结束条件</label>
@@ -329,6 +343,7 @@ const endDate = ref('')
 const endCount = ref(1)
 const monthlyType = ref('byMonthDay')
 const yearlyType = ref('byMonthDay')
+const reminderTime = ref('')
 
 // 常量数据
 const repeatTypes = [
@@ -428,6 +443,15 @@ const updateMonthlyType = () => {
       weekday: normalizedBaseDate.value.getDay(),
       week: getWeekOfMonth()
     }
+  }
+  emitUpdate()
+}
+
+const updateReminderTime = () => {
+  if (reminderTime.value) {
+    recurrence.value.reminderTime = reminderTime.value
+  } else {
+    delete recurrence.value.reminderTime
   }
   emitUpdate()
 }
@@ -705,6 +729,11 @@ onMounted(() => {
   if (props.modelValue) {
     isEnabled.value = true
     recurrence.value = { ...recurrence.value, ...props.modelValue }
+    
+    // 初始化提醒时间
+    if (recurrence.value.reminderTime) {
+      reminderTime.value = recurrence.value.reminderTime
+    }
     
     // 初始化结束条件
     if (recurrence.value.endCondition) {
@@ -1029,6 +1058,40 @@ watch(() => props.modelValue, (newValue) => {
   font-size: 13px;
   color: #374151;
   cursor: pointer;
+}
+
+/* 提醒时间样式 */
+.repeat-reminder-section {
+  margin-bottom: 16px;
+}
+
+.reminder-time-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.time-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  color: #374151;
+  width: 120px;
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.reminder-hint {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
 }
 
 .end-date-input,

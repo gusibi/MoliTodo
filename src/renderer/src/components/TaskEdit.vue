@@ -272,18 +272,18 @@ const initializeDefaultDateTime = () => {
 // 组件挂载时初始化
 onMounted(async () => {
   console.log('TaskEdit 组件已挂载，开始初始化...')
-  console.log('当前 customReminderOptions:', customReminderOptions.value)
-  console.log('当前 availableLists:', availableLists.value)
+  // console.log('当前 customReminderOptions:', customReminderOptions.value)
+  // console.log('当前 availableLists:', availableLists.value)
 
   // 如果列表为空，则加载它们
   if (!availableLists.value || availableLists.value.length === 0) {
-    console.log('availableLists 为空，正在加载...')
+    // console.log('availableLists 为空，正在加载...')
     await taskStore.getAllLists()
   }
 
   // 如果自定义提醒选项为空，则加载它们
   if (!customReminderOptions.value || customReminderOptions.value.length === 0) {
-    console.log('customReminderOptions 为空，正在加载...')
+    // console.log('customReminderOptions 为空，正在加载...')
     await taskStore.loadCustomReminderOptions()
   }
 
@@ -426,6 +426,11 @@ watch(() => props.task, (newTask) => {
   // 处理重复设置
   if (props.isEditing && newTask && newTask.recurrence) {
     selectedRecurrence.value = newTask.recurrence
+    
+    // 如果重复任务有提醒时间，需要确保RepeatSelector能正确显示
+    if (newTask.recurrence.reminderTime) {
+      console.log('编辑模式：发现重复任务的提醒时间', newTask.recurrence.reminderTime)
+    }
   }
 }, { immediate: true })
 
@@ -671,7 +676,25 @@ const handleAddTask = async () => {
   let reminderTime = null
   let reminderConfig = null
 
-  if (selectedReminder.value) {
+  // 处理重复任务的提醒时间
+  if (selectedRecurrence.value && selectedRecurrence.value.reminderTime) {
+    console.log('处理重复任务的提醒时间')
+    try {
+      // 使用当前任务实例的日期，而不是下一个重复周期的日期
+      const currentDate = selectedDate.value ? new Date(selectedDate.value) : new Date()
+      
+      // 将重复任务的提醒时间（只有时间部分）与当前任务日期组合
+      const [hours, minutes] = selectedRecurrence.value.reminderTime.split(':')
+      currentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+      reminderTime = currentDate.toISOString()
+      console.log('重复任务计算的提醒时间:', reminderTime)
+    } catch (error) {
+      console.error('计算重复任务提醒时间失败:', error)
+    }
+  }
+  
+  // 处理普通任务的提醒时间（如果没有设置重复任务提醒时间）
+  if (!reminderTime && selectedReminder.value) {
     if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
       console.log('使用自定义提醒配置中的时间')
       // 使用自定义提醒配置中的时间
@@ -682,7 +705,7 @@ const handleAddTask = async () => {
       const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
       reminderTime = new Date(customReminderStr).toISOString()
     }
-  } else if (selectedDate.value && selectedTime.value) {
+  } else if (!reminderTime && selectedDate.value && selectedTime.value) {
     // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
     const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
     reminderTime = new Date(customReminderStr).toISOString()
@@ -730,7 +753,8 @@ const handleAddTask = async () => {
         byMonthDay: selectedRecurrence.value.byMonthDay || null,
         byWeekDay: selectedRecurrence.value.byWeekDay || null,
         byMonth: selectedRecurrence.value.byMonth || null,
-        endCondition: selectedRecurrence.value.endCondition || null
+        endCondition: selectedRecurrence.value.endCondition || null,
+        reminderTime: selectedRecurrence.value.reminderTime || null
       } : null
       
       const updates = {
