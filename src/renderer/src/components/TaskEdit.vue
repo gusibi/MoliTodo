@@ -156,17 +156,7 @@
               @update:modelValue="handleRecurrenceChange"
             />
             
-            <!-- 重复实例预览 -->
-            <div v-if="selectedRecurrence" class="task-add-repeat-preview">
-              <NextOccurrencesPreview 
-                :recurrence="selectedRecurrence"
-                :base-date="getBaseDate()"
-                :existing-instances="[]"
-                @complete-occurrence="handleCompleteOccurrence"
-                @edit-occurrence="handleEditOccurrence"
-                @delete-occurrence="handleDeleteOccurrence"
-              />
-            </div>
+          
           </div>
         </div>
       </div>

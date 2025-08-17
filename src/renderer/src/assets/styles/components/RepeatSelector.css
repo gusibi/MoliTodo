@@ -1,0 +1,450 @@
+/* RepeatSelector 组件样式 */
+
+/* 主容器 */
+.repeat-selector {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* 头部区域 */
+.repeat-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.repeat-selector-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--card-foreground));
+}
+
+.repeat-selector-toggle {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.repeat-selector-toggle:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.repeat-selector-toggle.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* 内容区域 */
+.repeat-selector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 节标签 */
+.section-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.5rem;
+}
+
+/* 重复类型选择 */
+.repeat-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.repeat-type-button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.repeat-type-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.repeat-type-button.active {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* 间隔输入 */
+.interval-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(var(--card-foreground));
+}
+
+.interval-input {
+  width: 4rem;
+  padding: 0.25rem 0.5rem;
+  text-align: center;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  font-size: 0.75rem;
+}
+
+.interval-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+  border-color: hsl(var(--primary));
+}
+
+/* 星期选择器 */
+.weekdays-grid {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.weekday-button {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.weekday-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.weekday-button.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* 月重复选项 */
+.monthly-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.monthly-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+}
+
+.monthly-option input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: hsl(var(--primary));
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+}
+
+.monthly-option input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+}
+
+/* 日期选择器 */
+.monthly-day-selector,
+.yearly-day-selector {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--muted));
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.day-button {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.day-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.day-button.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* 周选择器 */
+.monthly-week-selector,
+.yearly-week-selector {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--muted));
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+}
+
+.week-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.week-button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.week-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.week-button.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* 年重复设置 */
+.yearly-month-selector {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--muted));
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.month-button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.month-button:hover {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.month-button.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+.yearly-day-options {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+}
+
+.yearly-day-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+}
+
+.yearly-day-option input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: hsl(var(--primary));
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+}
+
+.yearly-day-option input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+}
+
+/* 提醒时间设置 */
+.reminder-time-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.time-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.875rem;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  width: 8rem;
+}
+
+.time-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+  border-color: hsl(var(--primary));
+}
+
+.reminder-hint {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+/* 结束条件 */
+.end-condition-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.end-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(var(--card-foreground));
+  cursor: pointer;
+}
+
+.end-option input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: hsl(var(--primary));
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+}
+
+.end-option input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+}
+
+.end-date-input,
+.end-count-input {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.75rem;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+
+.end-count-input {
+  width: 4rem;
+  text-align: center;
+}
+
+.end-date-input:focus,
+.end-count-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+  border-color: hsl(var(--primary));
+}
+
+/* 重复规则描述 */
+.repeat-description {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--muted));
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+}
+
+.description-label {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+}
+
+.description-text {
+  font-size: 0.75rem;
+  color: hsl(var(--card-foreground));
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+  .repeat-type-options {
+    flex-direction: column;
+  }
+  
+  .repeat-type-button {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .weekdays-grid {
+    justify-content: space-between;
+  }
+  
+  .month-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

@@ -1,10 +1,10 @@
 <template>
   <div class="repeat-selector">
     <div class="repeat-selector-header">
-      <label class="repeat-selector-label">重复设置</label>
+      <label class="repeat-selector-title">重复设置</label>
       <button 
         class="repeat-selector-toggle"
-        :class="{ active: isEnabled }"
+        :class="{ 'active': isEnabled }"
         @click="toggleRepeat"
       >
         {{ isEnabled ? '开启' : '关闭' }}
@@ -13,14 +13,14 @@
 
     <div v-if="isEnabled" class="repeat-selector-content">
       <!-- 重复类型选择 -->
-      <div class="repeat-type-section">
+      <div class="section">
         <label class="section-label">重复频率</label>
         <div class="repeat-type-options">
           <button
             v-for="type in repeatTypes"
             :key="type.value"
-            class="repeat-type-btn"
-            :class="{ active: recurrence.type === type.value }"
+            class="repeat-type-button"
+            :class="{ 'active': recurrence.type === type.value }"
             @click="setRepeatType(type.value)"
           >
             {{ type.label }}
@@ -29,9 +29,9 @@
       </div>
 
       <!-- 间隔设置 -->
-      <div class="repeat-interval-section">
+      <div class="section">
         <label class="section-label">间隔</label>
-        <div class="repeat-interval-input">
+        <div class="interval-input-group">
           <span>每</span>
           <input
             v-model.number="recurrence.interval"
@@ -45,14 +45,14 @@
       </div>
 
       <!-- 周重复的星期几选择 -->
-      <div v-if="recurrence.type === 'weekly'" class="repeat-weekdays-section">
+      <div v-if="recurrence.type === 'weekly'" class="section">
         <label class="section-label">重复日期</label>
-        <div class="weekdays-selector">
+        <div class="weekdays-grid">
           <button
             v-for="(day, index) in weekdays"
             :key="index"
-            class="weekday-btn"
-            :class="{ active: recurrence.daysOfWeek?.includes(index) }"
+            class="weekday-button"
+            :class="{ 'active': recurrence.daysOfWeek?.includes(index) }"
             @click="toggleWeekday(index)"
           >
             {{ day }}
@@ -61,7 +61,7 @@
       </div>
 
       <!-- 月重复的方式选择 -->
-      <div v-if="recurrence.type === 'monthly'" class="repeat-monthly-section">
+      <div v-if="recurrence.type === 'monthly'" class="section">
         <label class="section-label">重复方式</label>
         <div class="monthly-options">
           <label class="monthly-option">
@@ -70,8 +70,9 @@
               :value="'byMonthDay'"
               v-model="monthlyType"
               @change="updateMonthlyType"
+              class="monthly-radio"
             />
-            <span>按日期</span>
+            <span class="monthly-option-text">按日期</span>
           </label>
           <label class="monthly-option">
             <input
@@ -79,20 +80,21 @@
               :value="'byWeekDay'"
               v-model="monthlyType"
               @change="updateMonthlyType"
+              class="monthly-radio"
             />
-            <span>按星期</span>
+            <span class="monthly-option-text">按星期</span>
           </label>
         </div>
         
         <!-- 按日期选择 -->
         <div v-if="monthlyType === 'byMonthDay'" class="monthly-day-selector">
           <label class="section-label">选择日期（可多选）</label>
-          <div class="day-selector">
+          <div class="day-grid">
             <button
               v-for="day in 31"
               :key="day"
-              class="day-btn"
-              :class="{ active: recurrence.byMonthDay.includes(day) }"
+              class="day-button"
+              :class="{ 'active': recurrence.byMonthDay.includes(day) }"
               @click="toggleMonthDay(day)"
             >
               {{ day }}
@@ -102,28 +104,28 @@
         
         <!-- 按星期选择 -->
         <div v-if="monthlyType === 'byWeekDay'" class="monthly-week-selector">
-          <div class="week-selector">
+          <div class="mb-3">
             <label class="section-label">选择第几周</label>
             <div class="week-options">
               <button
                 v-for="week in weekOptions"
                 :key="week.value"
-                class="week-btn"
-                :class="{ active: recurrence.byWeekDay?.week === week.value }"
+                class="week-button"
+                :class="{ 'active': recurrence.byWeekDay?.week === week.value }"
                 @click="setWeekOfMonth(week.value)"
               >
                 {{ week.label }}
               </button>
             </div>
           </div>
-          <div class="weekday-selector">
+          <div>
             <label class="section-label">选择星期几</label>
-            <div class="weekdays-selector">
+            <div class="weekdays-grid">
               <button
                 v-for="(day, index) in weekdays"
                 :key="index"
-                class="weekday-btn"
-                :class="{ active: recurrence.byWeekDay?.weekday === index }"
+                class="weekday-button"
+                :class="{ 'active': recurrence.byWeekDay?.weekday === index }"
                 @click="setWeekday(index)"
               >
                 {{ day }}
@@ -134,55 +136,59 @@
       </div>
       
       <!-- 年重复的方式选择 -->
-      <div v-if="recurrence.type === 'yearly'" class="repeat-yearly-section">
+      <div v-if="recurrence.type === 'yearly'" class="section">
         <label class="section-label">重复方式</label>
-        <div class="yearly-month-selector">
-          <label class="section-label">选择月份（可多选）</label>
-          <div class="month-selector">
-            <button
-              v-for="month in 12"
-              :key="month"
-              class="month-btn"
-              :class="{ active: recurrence.byMonth.includes(month) }"
-              @click="toggleMonth(month)"
-            >
-              {{ month }}月
-            </button>
+        <div class="yearly-options">
+          <div class="yearly-month-selector">
+            <label class="section-label">选择月份（可多选）</label>
+            <div class="month-grid">
+              <button
+                v-for="month in 12"
+                :key="month"
+                class="month-button"
+                :class="{ 'active': recurrence.byMonth.includes(month) }"
+                @click="toggleMonth(month)"
+              >
+                {{ month }}月
+              </button>
+            </div>
           </div>
         </div>
         
-        <div class="yearly-day-selector">
+        <div class="yearly-date-options">
           <label class="section-label">选择日期</label>
-          <div class="yearly-day-options">
-            <label class="yearly-day-option">
+          <div class="yearly-type-options">
+            <label class="yearly-type-option">
               <input
                 type="radio"
                 :value="'byMonthDay'"
                 v-model="yearlyType"
                 @change="updateYearlyType"
+                class="yearly-type-radio"
               />
-              <span>按日期</span>
+              <span class="yearly-type-text">按日期</span>
             </label>
-            <label class="yearly-day-option">
+            <label class="yearly-type-option">
               <input
                 type="radio"
                 :value="'byWeekDay'"
                 v-model="yearlyType"
                 @change="updateYearlyType"
+                class="yearly-type-radio"
               />
-              <span>按星期</span>
+              <span class="yearly-type-text">按星期</span>
             </label>
           </div>
           
           <!-- 年重复按日期选择 -->
-          <div v-if="yearlyType === 'byMonthDay'" class="yearly-monthday-selector">
+          <div v-if="yearlyType === 'byMonthDay'" class="yearly-day-selector">
             <label class="section-label">选择日期（可多选）</label>
-            <div class="day-selector">
+            <div class="day-grid">
               <button
                 v-for="day in getDaysInSelectedMonth()"
                 :key="day"
-                class="day-btn"
-                :class="{ active: recurrence.byMonthDay.includes(day) }"
+                class="day-button"
+                :class="{ 'active': recurrence.byMonthDay.includes(day) }"
                 @click="toggleYearlyMonthDay(day)"
               >
                 {{ day }}
@@ -191,29 +197,29 @@
           </div>
           
           <!-- 年重复按星期选择 -->
-          <div v-if="yearlyType === 'byWeekDay'" class="yearly-weekday-selector">
-            <div class="week-selector">
+          <div v-if="yearlyType === 'byWeekDay'" class="yearly-week-selector">
+            <div class="mb-3">
               <label class="section-label">选择第几周</label>
               <div class="week-options">
                 <button
                   v-for="week in weekOptions"
                   :key="week.value"
-                  class="week-btn"
-                  :class="{ active: recurrence.byWeekDay?.week === week.value }"
+                  class="week-button"
+                  :class="{ 'active': recurrence.byWeekDay?.week === week.value }"
                   @click="setYearlyWeekOfMonth(week.value)"
                 >
                   {{ week.label }}
                 </button>
               </div>
             </div>
-            <div class="weekday-selector">
+            <div>
               <label class="section-label">选择星期几</label>
-              <div class="weekdays-selector">
+              <div class="weekdays-grid">
                 <button
                   v-for="(day, index) in weekdays"
                   :key="index"
-                  class="weekday-btn"
-                  :class="{ active: recurrence.byWeekDay?.weekday === index }"
+                  class="weekday-button"
+                  :class="{ 'active': recurrence.byWeekDay?.weekday === index }"
                   @click="setYearlyWeekday(index)"
                 >
                   {{ day }}
@@ -225,7 +231,7 @@
       </div>
 
       <!-- 提醒时间设置 -->
-      <div class="repeat-reminder-section">
+      <div class="section">
         <label class="section-label">提醒时间</label>
         <div class="reminder-time-input">
           <input
@@ -239,7 +245,7 @@
       </div>
 
       <!-- 结束条件 -->
-      <div class="repeat-end-section">
+      <div class="section">
         <label class="section-label">结束条件</label>
         <div class="end-condition-options">
           <label class="end-option">
@@ -248,8 +254,9 @@
               :value="'never'"
               v-model="endConditionType"
               @change="updateEndCondition"
+              class="end-radio"
             />
-            <span>永不结束</span>
+            <span class="end-option-text">永不结束</span>
           </label>
           <label class="end-option">
             <input
@@ -257,15 +264,18 @@
               :value="'date'"
               v-model="endConditionType"
               @change="updateEndCondition"
+              class="end-radio"
             />
-            <span>结束日期</span>
-            <input
-              v-if="endConditionType === 'date'"
-              type="date"
-              v-model="endDate"
-              class="end-date-input"
-              @change="updateEndCondition"
-            />
+            <div class="end-option-content">
+              <span class="end-option-text">结束日期</span>
+              <input
+                v-if="endConditionType === 'date'"
+                type="date"
+                v-model="endDate"
+                class="end-date-input"
+                @change="updateEndCondition"
+              />
+            </div>
           </label>
           <label class="end-option">
             <input
@@ -273,18 +283,22 @@
               :value="'count'"
               v-model="endConditionType"
               @change="updateEndCondition"
+              class="end-radio"
             />
-            <span>重复次数</span>
-            <input
-              v-if="endConditionType === 'count'"
-              type="number"
-              v-model.number="endCount"
-              min="1"
-              max="999"
-              class="end-count-input"
-              @change="updateEndCondition"
-            />
-            <span v-if="endConditionType === 'count'">次</span>
+            <div class="end-option-content">
+              <span class="end-option-text">重复次数</span>
+              <div v-if="endConditionType === 'count'" class="end-count-group">
+                <input
+                  type="number"
+                  v-model.number="endCount"
+                  min="1"
+                  max="999"
+                  class="end-count-input"
+                  @change="updateEndCondition"
+                />
+                <span class="end-count-unit">次</span>
+              </div>
+            </div>
           </label>
         </div>
       </div>
@@ -781,366 +795,5 @@ watch(() => props.modelValue, (newValue) => {
 </script>
 
 <style scoped>
-.repeat-selector {
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fff;
-}
-
-.repeat-selector-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.repeat-selector-label {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 14px;
-}
-
-.repeat-selector-toggle {
-  padding: 4px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.repeat-selector-toggle.active {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-
-.repeat-selector-content {
-  space-y: 16px;
-}
-
-.section-label {
-  display: block;
-  font-weight: 500;
-  color: #374151;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-/* 日期选择器样式 */
-.day-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.day-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.day-btn:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.day-btn.active {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-
-/* 月份选择器样式 */
-.month-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.month-btn {
-  padding: 6px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.month-btn:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.month-btn.active {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-
-/* 周选择器样式 */
-.week-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.week-btn {
-  padding: 4px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.week-btn:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.week-btn.active {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-
-/* 年重复选项样式 */
-.yearly-day-options {
-  display: flex;
-  gap: 16px;
-  margin: 8px 0;
-}
-
-.yearly-day-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
-}
-
-.yearly-day-option input[type="radio"] {
-  margin: 0;
-}
-
-/* 月重复和年重复区域样式 */
-.monthly-day-selector,
-.monthly-week-selector,
-.yearly-month-selector,
-.yearly-day-selector {
-  margin-top: 12px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-}
-
-.week-selector,
-.weekday-selector {
-  margin-bottom: 12px;
-}
-
-.week-selector:last-child,
-.weekday-selector:last-child {
-  margin-bottom: 0;
-  color: #374151;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.repeat-type-section,
-.repeat-interval-section,
-.repeat-weekdays-section,
-.repeat-monthly-section,
-.repeat-end-section {
-  margin-bottom: 16px;
-}
-
-.repeat-type-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.repeat-type-btn {
-  padding: 6px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.repeat-type-btn.active {
-  background: #eff6ff;
-  color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.repeat-interval-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #374151;
-}
-
-.interval-input {
-  width: 60px;
-  padding: 4px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 13px;
-}
-
-.weekdays-selector {
-  display: flex;
-  gap: 4px;
-}
-
-.weekday-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.weekday-btn.active {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-
-.monthly-options,
-.end-condition-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.monthly-option,
-.end-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
-}
-
-/* 提醒时间样式 */
-.repeat-reminder-section {
-  margin-bottom: 16px;
-}
-
-.reminder-time-input {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.time-input {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  color: #374151;
-  width: 120px;
-}
-
-.time-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.reminder-hint {
-  font-size: 12px;
-  color: #6b7280;
-  font-style: italic;
-}
-
-.end-date-input,
-.end-count-input {
-  padding: 4px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 12px;
-  margin-left: 8px;
-}
-
-.end-count-input {
-  width: 60px;
-  text-align: center;
-}
-
-.repeat-description {
-  margin-top: 16px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-}
-
-.description-label {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-
-.description-text {
-  font-size: 13px;
-  color: #1f2937;
-  font-weight: 500;
-}
-
-/* 响应式设计 */
-@media (max-width: 640px) {
-  .repeat-type-options {
-    flex-direction: column;
-  }
-  
-  .repeat-type-btn {
-    width: 100%;
-    text-align: center;
-  }
-  
-  .weekdays-selector {
-    justify-content: space-between;
-  }
-}
+@import '../assets/styles/components/RepeatSelector.css';
 </style>
