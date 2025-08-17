@@ -200,11 +200,7 @@ const getListIconClass = (icon) => {
 // 按 list 分组任务
 const groupedTasks = computed(() => {
   // 获取展开后的任务（包含重复任务实例）
-  console.log("all_tasks: ", props.tasks)
-  console.log("askStore.showRecurringInstances: ", taskStore.showRecurringInstances)
-  console.log("askStore.expandedTasks: ", taskStore.expandedTasks)
   const allTasks = taskStore.showRecurringInstances ? taskStore.expandedTasks : props.tasks
-  console.log("all_tasks -- 1: ", allTasks)
 
   
   if (!allTasks || allTasks.length === 0) {

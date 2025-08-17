@@ -199,19 +199,56 @@
   @apply opacity-50 cursor-not-allowed hover:bg-destructive;
 }
 
-/* 滚动条样式 */
+/* 滚动条样式 - 使用系统颜色，更窄 */
 .nav-lists-container::-webkit-scrollbar {
-  @apply w-1;
+  width: 6px;
 }
 
 .nav-lists-container::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 .nav-lists-container::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-sm;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
 .nav-lists-container::-webkit-scrollbar-thumb:hover {
-  @apply bg-border/80;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 深色模式下的滚动条 */
+.dark .nav-lists-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .nav-lists-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 主要内容区域滚动条样式 - 使用系统颜色，更窄 */
+.nav-main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-main-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.nav-main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 深色模式下的主要内容区域滚动条 */
+.dark .nav-main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .nav-main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

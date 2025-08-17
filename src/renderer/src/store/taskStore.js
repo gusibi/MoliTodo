@@ -140,12 +140,29 @@ export const useTaskStore = defineStore('task', () => {
     let filteredTasks = getTasksByFilter(category, listId, includeCompleted)
 
     // 排序逻辑
-    if (category === 'today') {
+    if (category === 'completed') {
+      // 已完成任务视图：按完成时间倒序排列（最新完成的在前面）
+      filteredTasks = [...filteredTasks].sort((a, b) => {
+        // 都是已完成任务，按完成时间排序
+        if (a.completedAt && b.completedAt) {
+          return new Date(b.completedAt) - new Date(a.completedAt)
+        }
+        // 如果没有完成时间，按更新时间排序
+        return new Date(b.updatedAt) - new Date(a.updatedAt)
+      })
+    } else if (category === 'today') {
       // 今天视图的特殊排序
       filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 已完成的任务排在最后
+        // 已完成的任务排在最后，并按完成时间排序
         if (a.status === 'done' && b.status !== 'done') return 1
         if (a.status !== 'done' && b.status === 'done') return -1
+        if (a.status === 'done' && b.status === 'done') {
+          // 都是已完成任务，按完成时间排序
+          if (a.completedAt && b.completedAt) {
+            return new Date(b.completedAt) - new Date(a.completedAt)
+          }
+          return new Date(b.updatedAt) - new Date(a.updatedAt)
+        }
 
         // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
@@ -164,9 +181,16 @@ export const useTaskStore = defineStore('task', () => {
     } else {
       // 其他视图的默认排序
       filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 已完成的任务排在最后
+        // 已完成的任务排在最后，并按完成时间排序
         if (a.status === 'done' && b.status !== 'done') return 1
         if (a.status !== 'done' && b.status === 'done') return -1
+        if (a.status === 'done' && b.status === 'done') {
+          // 都是已完成任务，按完成时间排序
+          if (a.completedAt && b.completedAt) {
+            return new Date(b.completedAt) - new Date(a.completedAt)
+          }
+          return new Date(b.updatedAt) - new Date(a.updatedAt)
+        }
 
         // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
@@ -329,12 +353,29 @@ export const useTaskStore = defineStore('task', () => {
     result = searchTasks(result, searchQuery.value, searchOptions.value)
 
     // 排序逻辑
-    if (currentCategory.value === 'today') {
+    if (currentCategory.value === 'completed') {
+      // 已完成任务视图：按完成时间倒序排列（最新完成的在前面）
+      result = [...result].sort((a, b) => {
+        // 都是已完成任务，按完成时间排序
+        if (a.completedAt && b.completedAt) {
+          return new Date(b.completedAt) - new Date(a.completedAt)
+        }
+        // 如果没有完成时间，按更新时间排序
+        return new Date(b.updatedAt) - new Date(a.updatedAt)
+      })
+    } else if (currentCategory.value === 'today') {
       // 今天视图的特殊排序：有提醒时间的在前，没有提醒时间的按创建时间排序（最新的在上方）
       result = [...result].sort((a, b) => {
-        // 已完成的任务排在最后
+        // 已完成的任务排在最后，并按完成时间排序
         if (a.status === 'done' && b.status !== 'done') return 1
         if (a.status !== 'done' && b.status === 'done') return -1
+        if (a.status === 'done' && b.status === 'done') {
+          // 都是已完成任务，按完成时间排序
+          if (a.completedAt && b.completedAt) {
+            return new Date(b.completedAt) - new Date(a.completedAt)
+          }
+          return new Date(b.updatedAt) - new Date(a.updatedAt)
+        }
 
         // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
@@ -353,9 +394,16 @@ export const useTaskStore = defineStore('task', () => {
     } else {
       // 其他视图的默认排序
       result = [...result].sort((a, b) => {
-        // 已完成的任务排在最后
+        // 已完成的任务排在最后，并按完成时间排序
         if (a.status === 'done' && b.status !== 'done') return 1
         if (a.status !== 'done' && b.status === 'done') return -1
+        if (a.status === 'done' && b.status === 'done') {
+          // 都是已完成任务，按完成时间排序
+          if (a.completedAt && b.completedAt) {
+            return new Date(b.completedAt) - new Date(a.completedAt)
+          }
+          return new Date(b.updatedAt) - new Date(a.updatedAt)
+        }
 
         // 正在进行的任务优先级最高（在未完成任务中）
         if (a.status === 'doing' && b.status !== 'doing') return -1
@@ -583,7 +631,7 @@ export const useTaskStore = defineStore('task', () => {
     try {
       // 序列化数据以确保可以通过 IPC 传递
       const serializedData = JSON.parse(JSON.stringify(taskData))
-      console.log('taskData 序列化测试:', serializedData)
+      console.log('[createTask] taskData 序列化测试:', serializedData)
       
       const result = await window.electronAPI.tasks.create(serializedData)
       if (result.success) {
@@ -935,12 +983,12 @@ export const useTaskStore = defineStore('task', () => {
     try {
       if (window.electronAPI && window.electronAPI.config) {
         const config = await window.electronAPI.config.getAll()
-        console.log("config reload: ", config)
+        // console.log("config reload: ", config)
 
         if (config.customReminders && Array.isArray(config.customReminders)) {
           // 创建新数组以确保 Vue 响应式系统检测到变化
           customReminderOptions.value = [...config.customReminders]
-          console.log("config setting: ", customReminderOptions.value)
+          // console.log("config setting: ", customReminderOptions.value)
         } else {
           customReminderOptions.value = getDefaultReminderOptions()
         }

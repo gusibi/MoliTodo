@@ -182,6 +182,7 @@ class SqliteTaskRepository {
    * 将任务对象转换为数据库行
    */
   taskToRow(task) {
+    console.log("task: ------", task)
     return {
       id: task.id,
       content: task.content,
@@ -199,7 +200,7 @@ class SqliteTaskRepository {
       due_time: task.dueTime || null,
       recurrence: task.recurrence ? JSON.stringify(task.recurrence) : null,
       series_id: task.seriesId || null,
-      occurrence_date: task.occurrenceDate || null
+      occurrence_date: task.occurrenceDate ? (task.occurrenceDate instanceof Date ? task.occurrenceDate.toISOString() : task.occurrenceDate) : null
     };
   }
 
@@ -242,7 +243,7 @@ class SqliteTaskRepository {
       metadata,
       recurrence,
       row.series_id || null,
-      row.occurrence_date || null,
+      row.occurrence_date ? new Date(row.occurrence_date) : null,
       row.due_date || null,
       row.due_time || null
     );
@@ -1164,7 +1165,7 @@ class SqliteTaskRepository {
     }
 
     const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE recurrence IS NOT NULL AND series_id IS NULL ORDER BY created_at DESC'
+      'SELECT * FROM tasks WHERE recurrence IS NOT NULL ORDER BY created_at DESC'
     );
     return rows.map(row => this.rowToTask(row));
   }

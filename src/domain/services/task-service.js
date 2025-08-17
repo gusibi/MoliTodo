@@ -20,6 +20,7 @@ class TaskService {
       throw new Error('任务内容不能为空');
     }
 
+    console.log("createTask: content: ", content)
     const task = new Task(
       Task.generateId(),
       content.trim(),
@@ -48,6 +49,10 @@ class TaskService {
       throw new Error('清单ID必须是非负整数');
     }
 
+    console.log("createTaskInList: content: ", content)
+    console.log("createTaskInList: listId: ", listId)
+    console.log("createTaskInList: reminderTime: ", reminderTime)
+    console.log("createTaskInList: taskData: ", taskData)
     // 从 taskData 中提取各个字段
     const {
       metadata = {},
@@ -56,12 +61,28 @@ class TaskService {
       dueTime = null
     } = taskData;
 
+    // 处理提醒时间：重复任务从 recurrence 中提取，普通任务使用传入的 reminderTime
+    let finalReminderTime = reminderTime;
+    if (recurrence && recurrence.reminderTime) {
+      // recurrence.reminderTime 是字符串格式（如 "18:43"），需要转换为完整的 Date 对象
+      const [hours, minutes] = recurrence.reminderTime.split(':').map(Number);
+      const reminderDate = new Date();
+      reminderDate.setHours(hours, minutes, 0, 0);
+      
+      // 如果设置的时间已经过了今天，则设置为明天
+      if (reminderDate <= new Date()) {
+        reminderDate.setDate(reminderDate.getDate() + 1);
+      }
+      
+      finalReminderTime = reminderDate;
+    }
+
     const task = new Task(
       Task.generateId(),
       content.trim(),
       'todo',
       new Date(),
-      reminderTime,
+      finalReminderTime,
       {}, // timeTracking
       listId,
       metadata,
@@ -95,8 +116,94 @@ class TaskService {
       return task;
     }
 
+    // 如果是重复任务，创建下一个实例
+    if (task.isRecurring()) {
+      await this.createNextRecurringInstance(task);
+    }
+
     task.markAsCompleted();
     return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 创建重复任务的下一个实例
+   * @param {Task} recurringTask 重复任务
+   * @param {Date} fromDate 从哪个日期开始计算下一个实例，如果不提供则使用任务的生效日期
+   * @returns {Promise<Task|null>}
+   */
+  async createNextRecurringInstance(recurringTask, fromDate = null) {
+    try {
+      console.log('createNextRecurringInstance recurringTask: ', recurringTask, fromDate)
+      
+      // 确定起始日期：如果提供了 fromDate 则使用它，否则使用任务的生效日期
+      let startDate = fromDate;
+      if (!startDate) {
+        // 如果是实例任务，使用 occurrenceDate；否则使用 createdAt
+        startDate = recurringTask.occurrenceDate 
+          ? new Date(recurringTask.occurrenceDate)
+          : new Date(recurringTask.createdAt);
+      }
+      
+      console.log('计算下一个实例的起始日期:', startDate)
+      
+      const RecurringTaskService = require('./recurring-task-service');
+      const nextOccurrences = RecurringTaskService.getNextOccurrences(recurringTask, 1, startDate);
+      console.log('nextOccurrences: ', nextOccurrences)
+      
+      if (nextOccurrences.length === 0) {
+        console.log('没有找到下一个重复实例');
+        return null;
+      }
+
+      const nextDate = nextOccurrences[0];
+      const instanceId = Task.generateId();
+      
+      // 计算下一个实例的提醒时间
+      let nextReminderTime = null;
+      if (recurringTask.reminderTime) {
+        const originalReminder = new Date(recurringTask.reminderTime);
+        // 将 occurrenceDate 与 reminderTime 的时间部分组合
+        const occurrenceDate = new Date(nextDate);
+        occurrenceDate.setHours(
+          originalReminder.getHours(),
+          originalReminder.getMinutes(),
+          originalReminder.getSeconds(),
+          originalReminder.getMilliseconds()
+        );
+        nextReminderTime = occurrenceDate;
+      }
+      console.log('nextReminderTime: ', nextReminderTime)
+
+      // 设置 seriesId：优先使用 recurringTask.seriesId，否则使用 recurringTask.id
+      const seriesId = recurringTask.seriesId || recurringTask.id;
+      
+      // 设置 occurrenceDate：当天 0 点时间戳
+      const occurrenceDate = new Date(nextDate);
+      occurrenceDate.setHours(0, 0, 0, 0);
+      console.log("occurrenceDate: ------", occurrenceDate)
+      
+      // 创建新的任务实例
+      const nextInstance = new Task(
+        instanceId,
+        recurringTask.content,
+        'todo',
+        nextDate,
+        nextReminderTime,
+        {}, // timeTracking
+        recurringTask.listId,
+        { ...recurringTask.metadata },
+        recurringTask.recurrence, // 保持重复规则
+        seriesId, // 使用正确的 seriesId
+        occurrenceDate // 使用当天 0 点时间戳
+      );
+
+      console.log("nextInstance: ------", nextInstance)
+      await this.taskRepository.save(nextInstance);
+      return nextInstance;
+    } catch (error) {
+      console.error('创建下一个重复任务实例失败:', error);
+      return null;
+    }
   }
 
   /**
@@ -161,6 +268,7 @@ class TaskService {
       if (updates.reminderTime === null) {
         task.clearReminder();
       } else {
+        // 统一处理：所有提醒时间都应该是 Date 对象或 ISO 字符串
         task.setReminder(new Date(updates.reminderTime));
       }
     }
@@ -175,6 +283,16 @@ class TaskService {
       task.updateMetadata(updates.metadata);
     }
 
+    // 更新重复规则
+    if (updates.recurrence !== undefined) {
+      if (updates.recurrence === null) {
+        task.clearRecurrence();
+      } else {
+        task.setRecurrence(updates.recurrence);
+      }
+    }
+
+    console.log("task: ------ final", task)
     return await this.taskRepository.save(task);
   }
 
@@ -589,8 +707,7 @@ class TaskService {
    * @returns {Promise<Task[]>}
    */
   async getRecurringTasks() {
-    const allTasks = await this.getAllTasks();
-    return allTasks.filter(task => task.isRecurring());
+    return await this.taskRepository.findRecurringTasks();
   }
 
   /**
@@ -613,6 +730,11 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async updateRecurringTask(taskId, updates, recurrence = null) {
+    // 如果提醒时间早于当前时间，将其置空避免报错
+    if (updates.reminderTime && new Date(updates.reminderTime) < new Date()) {
+      updates.reminderTime = null;
+    }
+    
     const task = await this.updateTask(taskId, updates);
     if (recurrence) {
       task.setRecurrence(recurrence);
@@ -775,6 +897,26 @@ class TaskService {
     
     const RecurringTaskService = require('./recurring-task-service');
     return RecurringTaskService.getNextOccurrences(task, count);
+  }
+
+  /**
+   * 获取指定时间范围内的覆盖实例
+   * @param {Date} startDate 开始日期
+   * @param {Date} endDate 结束日期
+   * @returns {Promise<Task[]>}
+   */
+  async getOverrideInstances(startDate, endDate) {
+    const allTasks = await this.getAllTasks();
+    return allTasks.filter(task => {
+      // 筛选覆盖实例：有 seriesId 和 occurrenceDate
+      if (!task.seriesId || !task.occurrenceDate) {
+        return false;
+      }
+      
+      // 检查实例日期是否在指定范围内
+      const occurrenceDate = new Date(task.occurrenceDate);
+      return occurrenceDate >= startDate && occurrenceDate <= endDate;
+    });
   }
 }
 

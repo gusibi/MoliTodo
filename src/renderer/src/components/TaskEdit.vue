@@ -271,7 +271,7 @@ const initializeDefaultDateTime = () => {
 
 // 组件挂载时初始化
 onMounted(async () => {
-  console.log('TaskEdit 组件已挂载，开始初始化...')
+  // console.log('TaskEdit 组件已挂载，开始初始化...')
   // console.log('当前 customReminderOptions:', customReminderOptions.value)
   // console.log('当前 availableLists:', availableLists.value)
 
@@ -735,6 +735,8 @@ const handleAddTask = async () => {
 
   // 计算提醒时间
   const { reminderTime, cleanReminderConfig } = calculateReminderTime()
+  console.log("reminderTime: ", reminderTime)
+  console.log("cleanReminderConfig: ", cleanReminderConfig)
 
   const taskData = {
     content: newTaskContent.value.trim(),
@@ -773,17 +775,17 @@ const handleAddTask = async () => {
         listId: selectedListId.value,
         recurrence: cleanRecurrence
       }
+
+      console.log("updates: ----", updates)
       
       if (props.task.seriesId && selectedRecurrence.value) {
         // 更新重复任务系列
         console.log("更新重复任务系列, 当前是子任务: ", props.task.seriesId)
-        await taskStore.updateRecurringTask(props.task.seriesId, updates)
+        await taskStore.updateRecurringTask(props.task.id, updates)
         handleCancelAdding()
       } else if (selectedRecurrence.value && !props.task.seriesId) {
         // 将普通任务转换为重复任务
         console.log("将普通任务转换为重复任务: ", props.task.id)
-        console.log("cleanRecurrence: ", cleanRecurrence)
-        console.log("updates: ", updates)
         await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
         handleCancelAdding()
       } else if (!selectedRecurrence.value && props.task.seriesId) {
@@ -807,6 +809,7 @@ const handleAddTask = async () => {
     }
   } else {
     // 添加模式，发送添加事件
+    console.log("add task: taskData: ", taskData)
     emit('add-task', taskData)
     handleCancelAdding()
   }

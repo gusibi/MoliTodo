@@ -104,23 +104,30 @@ class RecurringTaskService {
   static generateMonthlyInstances(recurringTask, baseDate, startDate, endDate, recurrence) {
     const instances = [];
     const interval = recurrence.interval || 1;
-    const dayOfMonth = recurrence.dayOfMonth || baseDate.getDate();
+    
+    // 支持 byMonthDay 数组或单个 dayOfMonth
+    const daysOfMonth = recurrence.byMonthDay && recurrence.byMonthDay.length > 0 
+      ? recurrence.byMonthDay 
+      : [recurrence.dayOfMonth || baseDate.getDate()];
     
     const current = new Date(Math.max(baseDate.getTime(), startDate.getTime()));
     current.setDate(1); // 调整到月初
     
     while (current <= endDate) {
-      const instanceDate = new Date(current.getFullYear(), current.getMonth(), dayOfMonth);
-      
-      // 处理月末日期（如31号在2月不存在）
-      if (instanceDate.getMonth() !== current.getMonth()) {
-        instanceDate.setDate(0); // 设置为上个月的最后一天
-      }
-      
-      if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
-        const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
-        const instance = recurringTask.createInstance(instanceDate, instanceId);
-        instances.push(instance);
+      // 为当前月份的每个指定日期生成实例
+      for (const dayOfMonth of daysOfMonth) {
+        const instanceDate = new Date(current.getFullYear(), current.getMonth(), dayOfMonth);
+        
+        // 处理月末日期（如31号在2月不存在）
+        if (instanceDate.getMonth() !== current.getMonth()) {
+          instanceDate.setDate(0); // 设置为上个月的最后一天
+        }
+        
+        if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
+          const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+          const instance = recurringTask.createInstance(instanceDate, instanceId);
+          instances.push(instance);
+        }
       }
       
       current.setMonth(current.getMonth() + interval);
@@ -135,18 +142,39 @@ class RecurringTaskService {
   static generateYearlyInstances(recurringTask, baseDate, startDate, endDate, recurrence) {
     const instances = [];
     const interval = recurrence.interval || 1;
-    const month = recurrence.month !== undefined ? recurrence.month : baseDate.getMonth();
-    const dayOfMonth = recurrence.dayOfMonth || baseDate.getDate();
     
-    const current = new Date(Math.max(baseDate.getFullYear(), startDate.getFullYear()), month, dayOfMonth);
+    // 支持 byMonth 数组或单个 month
+    // 注意：byMonth 存储 1-12 的月份，baseDate.getMonth() 返回 0-11
+    const months = recurrence.byMonth && recurrence.byMonth.length > 0 
+      ? recurrence.byMonth 
+      : [recurrence.month !== undefined ? recurrence.month : baseDate.getMonth() + 1];
     
-    while (current <= endDate) {
-      if (current >= startDate && current >= baseDate) {
-        const instanceId = `${recurringTask.id}_${current.toISOString().split('T')[0]}`;
-        const instance = recurringTask.createInstance(new Date(current), instanceId);
-        instances.push(instance);
+    // 支持 byMonthDay 数组或单个 dayOfMonth
+    const daysOfMonth = recurrence.byMonthDay && recurrence.byMonthDay.length > 0 
+      ? recurrence.byMonthDay 
+      : [recurrence.dayOfMonth || baseDate.getDate()];
+    
+    const startYear = Math.max(baseDate.getFullYear(), startDate.getFullYear());
+    
+    for (let year = startYear; year <= endDate.getFullYear(); year += interval) {
+      // 为每个指定月份和日期生成实例
+      for (const month of months) {
+        for (const dayOfMonth of daysOfMonth) {
+          // byMonth 存储的是 1-12 的月份，但 Date 构造函数需要 0-11 的索引
+          const instanceDate = new Date(year, month - 1, dayOfMonth);
+          
+          // 处理月末日期（如31号在2月不存在）
+          if (instanceDate.getMonth() !== month - 1) {
+            instanceDate.setDate(0); // 设置为上个月的最后一天
+          }
+          
+          if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
+            const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+            const instance = recurringTask.createInstance(new Date(instanceDate), instanceId);
+            instances.push(instance);
+          }
+        }
       }
-      current.setFullYear(current.getFullYear() + interval);
     }
 
     return instances;
@@ -176,18 +204,30 @@ class RecurringTaskService {
    * 获取重复任务的下几个实例（用于预览）
    * @param {Task} recurringTask 重复任务
    * @param {number} count 实例数量
+   * @param {Date} fromDate 起始日期，如果不提供则使用当前时间
    * @returns {Date[]} 下几个实例的日期
    */
-  static getNextOccurrences(recurringTask, count = 5) {
+  static getNextOccurrences(recurringTask, count = 5, fromDate = null) {
     if (!recurringTask.isRecurring()) {
       return [];
     }
 
-    const now = new Date();
-    const endDate = new Date();
+    let startDate = fromDate || new Date();
+    
+    // 如果提供了 fromDate，说明我们要从特定日期之后开始查找下一个实例
+    // 将起始日期向前推进一天，确保获取的是真正的"下一个"实例
+    if (fromDate) {
+      startDate = new Date(fromDate);
+      startDate.setDate(startDate.getDate() + 1);
+    }
+    
+    const endDate = new Date(startDate);
     endDate.setFullYear(endDate.getFullYear() + 2); // 向前看2年
     
-    const instances = this.expandRecurringTask(recurringTask, now, endDate);
+    console.log("getNextOccurrences: recurringTask: ", recurringTask)
+    console.log("getNextOccurrences: fromDate: ", fromDate)
+    console.log("getNextOccurrences: startDate: ", startDate)
+    const instances = this.expandRecurringTask(recurringTask, startDate, endDate);
     return instances.slice(0, count).map(instance => new Date(instance.occurrenceDate));
   }
 

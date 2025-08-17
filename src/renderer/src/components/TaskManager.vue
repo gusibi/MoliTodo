@@ -510,7 +510,7 @@ onMounted(async () => {
   // 定时智能更新任务状态
   updateTimer.value = setInterval(() => {
     smartLoadTasks()
-  }, 6000) // 每分钟检查一次
+  }, 60000) // 每分钟检查一次
 })
 
 onUnmounted(() => {
