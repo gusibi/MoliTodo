@@ -50,6 +50,7 @@ class RecurringTaskService {
     const interval = recurrence.interval || 1;
     const current = new Date(Math.max(baseDate.getTime(), startDate.getTime()));
     
+    console.log("generateDailyInstances recurringTask: ", recurringTask)
     // 调整到第一个有效日期
     const daysDiff = Math.floor((current.getTime() - baseDate.getTime()) / (24 * 60 * 60 * 1000));
     const remainder = daysDiff % interval;

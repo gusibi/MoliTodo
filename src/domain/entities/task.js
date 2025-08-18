@@ -631,12 +631,25 @@ class Task {
    * @returns {Task}
    */
   createInstance(occurrenceDate, newId) {
+    // 计算实例的提醒时间
+    let instanceReminderTime = null;
+    if (this.recurrence && this.recurrence.reminderTime) {
+      // 使用 occurrenceDate + recurrence.reminderTime
+      const [hours, minutes] = this.recurrence.reminderTime.split(':').map(Number);
+      const reminderDate = new Date(occurrenceDate);
+      reminderDate.setHours(hours, minutes, 0, 0);
+      instanceReminderTime = reminderDate;
+    } else if (this.reminderTime) {
+      // 如果没有重复规则的提醒时间，但原任务有提醒时间，则使用原任务的提醒时间逻辑
+      instanceReminderTime = this.reminderTime;
+    }
+
     return new Task(
       newId,
       this.content,
       'todo',
       new Date(),
-      this.reminderTime,
+      instanceReminderTime,
       {},
       this.listId,
       this.metadata,

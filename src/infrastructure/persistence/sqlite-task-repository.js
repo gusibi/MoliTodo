@@ -182,7 +182,6 @@ class SqliteTaskRepository {
    * 将任务对象转换为数据库行
    */
   taskToRow(task) {
-    console.log("sqlite task: ------", task)
     return {
       id: task.id,
       content: task.content,

@@ -492,6 +492,7 @@ onMounted(async () => {
   await Promise.all([
     taskStore.getAllLists(),
     taskStore.loadCustomReminderOptions(),
+    taskStore.getRecurringTasks(), // 加载重复任务数据
     loadTasks()
   ])
 

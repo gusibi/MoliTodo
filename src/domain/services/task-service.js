@@ -49,10 +49,10 @@ class TaskService {
       throw new Error('清单ID必须是非负整数');
     }
 
-    console.log("createTaskInList: content: ", content)
-    console.log("createTaskInList: listId: ", listId)
-    console.log("createTaskInList: reminderTime: ", reminderTime)
-    console.log("createTaskInList: taskData: ", taskData)
+    // console.log("createTaskInList: content: ", content)
+    // console.log("createTaskInList: listId: ", listId)
+    // console.log("createTaskInList: reminderTime: ", reminderTime)
+    // console.log("createTaskInList: taskData: ", taskData)
     // 从 taskData 中提取各个字段
     const {
       metadata = {},
@@ -711,6 +711,7 @@ class TaskService {
    */
   async expandRecurringTasks(startDate, endDate) {
     const recurringTasks = await this.getRecurringTasks();
+    console.log("expandRecurringTasks recurringTasks: ", recurringTasks)
     const RecurringTaskService = require('./recurring-task-service');
     return RecurringTaskService.expandRecurringTasks(recurringTasks, startDate, endDate);
   }

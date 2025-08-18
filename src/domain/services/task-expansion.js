@@ -92,7 +92,14 @@ class TaskExpansion {
     
     // 计算提醒时间（如果原任务有提醒）
     let reminderTime = null;
-    if (recurringTask.reminderTime) {
+    if (recurringTask.recurrence && recurringTask.recurrence.reminderTime) {
+      // 使用 occurrenceDate + recurrence.reminderTime
+      const [hours, minutes] = recurringTask.recurrence.reminderTime.split(':').map(Number);
+      const reminderDate = new Date(occurrenceDate);
+      reminderDate.setHours(hours, minutes, 0, 0);
+      reminderTime = reminderDate;
+    } else if (recurringTask.reminderTime) {
+      // 如果没有重复规则的提醒时间，但原任务有提醒时间，则使用时间差计算
       const originalReminder = new Date(recurringTask.reminderTime);
       const originalCreated = new Date(recurringTask.createdAt);
       const timeDiff = originalReminder.getTime() - originalCreated.getTime();
