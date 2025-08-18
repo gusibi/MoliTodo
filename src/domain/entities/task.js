@@ -3,34 +3,65 @@
  * 领域层核心实体，包含任务的所有业务逻辑
  */
 class Task {
-  constructor(id, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}, recurrence = null, seriesId = null, occurrenceDate = null, dueDate = null, dueTime = null) {
-    this.id = id;
-    this.content = content;
-    this.status = status; // 'todo', 'doing', 'done'
-    this.createdAt = createdAt;
-    this.reminderTime = reminderTime;
-    this.updatedAt = new Date();
-    
-    // Time tracking fields
-    this.startedAt = timeTracking.startedAt || null;
-    this.completedAt = timeTracking.completedAt || null;
-    this.totalDuration = timeTracking.totalDuration || 0; // milliseconds
-    
-    // List management fields
-    this.listId = listId || 0; // 0 表示默认清单
-    this.metadata = metadata || {}; // JSON 元数据，包含备注等信息
-    
-    // Due date fields
-    this.dueDate = dueDate; // 到期日期
-    this.dueTime = dueTime; // 到期时间
-    
-    // Recurring task fields
-    this.recurrence = recurrence; // 重复规则 JSON 对象
-    this.seriesId = seriesId; // 系列任务ID（用于覆盖实例）
-    this.occurrenceDate = occurrenceDate; // 实例日期（用于覆盖实例）
+  constructor(idOrOptions, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}, recurrence = null, seriesId = null, occurrenceDate = null, dueDate = null, dueTime = null) {
+    // 支持对象参数调用方式
+    if (typeof idOrOptions === 'object' && idOrOptions !== null) {
+      const options = idOrOptions;
+      this.id = options.id;
+      this.content = options.content;
+      this.status = options.status || 'todo';
+      this.createdAt = options.createdAt || new Date();
+      this.reminderTime = options.reminderTime || null;
+      this.updatedAt = new Date();
+      
+      // Time tracking fields
+      const timeTrackingData = options.timeTracking || {};
+      this.startedAt = timeTrackingData.startedAt || null;
+      this.completedAt = timeTrackingData.completedAt || null;
+      this.totalDuration = timeTrackingData.totalDuration || 0;
+      
+      // List management fields
+      this.listId = options.listId || 0;
+      this.metadata = options.metadata || {};
+      
+      // Due date fields
+      this.dueDate = options.dueDate || null;
+      this.dueTime = options.dueTime || null;
+      
+      // Recurring task fields
+      this.recurrence = options.recurrence || null;
+      this.seriesId = options.seriesId || null;
+      this.occurrenceDate = options.occurrenceDate || null;
+    } else {
+      // 保持向后兼容：位置参数调用方式
+      this.id = idOrOptions;
+      this.content = content;
+      this.status = status;
+      this.createdAt = createdAt;
+      this.reminderTime = reminderTime;
+      this.updatedAt = new Date();
+      
+      // Time tracking fields
+      this.startedAt = timeTracking.startedAt || null;
+      this.completedAt = timeTracking.completedAt || null;
+      this.totalDuration = timeTracking.totalDuration || 0;
+      
+      // List management fields
+      this.listId = listId || 0;
+      this.metadata = metadata || {};
+      
+      // Due date fields
+      this.dueDate = dueDate;
+      this.dueTime = dueTime;
+      
+      // Recurring task fields
+      this.recurrence = recurrence;
+      this.seriesId = seriesId;
+      this.occurrenceDate = occurrenceDate;
+    }
     
     // Keep backward compatibility
-    this.completed = status === 'done';
+    this.completed = this.status === 'done';
   }
 
   /**
@@ -344,7 +375,7 @@ class Task {
    * 设置提醒时间
    * @param {Date} reminderTime 提醒时间
    */
-  setReminder(reminderTime) {
+  setReminder(reminderTime, allowBeforeTime=false) {
     if (reminderTime) {
       const isUnixEpoch = reminderTime.getTime() === 0;
       
@@ -352,7 +383,7 @@ class Task {
         const now = new Date();
         const minAllowedTime = new Date(now.getTime() - 30 * 1000);
         
-        if (reminderTime <= minAllowedTime) {
+        if (reminderTime <= minAllowedTime && !allowBeforeTime) {
           throw new Error('提醒时间不能是过去的时间');
         }
       }

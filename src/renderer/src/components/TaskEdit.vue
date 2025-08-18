@@ -650,52 +650,42 @@ const handleInputBlur = () => {
   }, 200)
 }
 
-// 计算提醒时间的独立方法
-const calculateReminderTime = () => {
-  console.log('=== 计算提醒时间 ===')
+// 计算并验证提醒时间的合并方法
+const calculateAndValidateReminderTime = () => {
+  console.log('=== 计算并验证提醒时间 ===')
 
   let reminderTime = null
   let reminderConfig = null
+  let isValid = true
 
-  // 处理重复任务的提醒时间
-  if (selectedRecurrence.value && selectedRecurrence.value.reminderTime) {
-    console.log('处理重复任务的提醒时间')
-    try {
-      // 使用当前任务实例的日期，而不是下一个重复周期的日期
-      const currentDate = selectedDate.value ? new Date(selectedDate.value) : new Date()
-      
-      // 将重复任务的提醒时间（只有时间部分）与当前任务日期组合
-      const [hours, minutes] = selectedRecurrence.value.reminderTime.split(':')
-      currentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-      reminderTime = currentDate.toISOString()
-      console.log('重复任务计算的提醒时间:', reminderTime)
-    } catch (error) {
-      console.error('计算重复任务提醒时间失败:', error)
-    }
-  }
-  
-  // 处理普通任务的提醒时间（如果没有设置重复任务提醒时间）
-  if (!reminderTime && selectedReminder.value) {
-    if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
-      console.log('使用自定义提醒配置中的时间')
-      // 使用自定义提醒配置中的时间
-      reminderTime = selectedReminder.value.reminderTime
-      reminderConfig = selectedReminder.value.config
-    } else if (selectedDate.value && selectedTime.value) {
+  // 处理普通任务的提醒时间
+  if (selectedReminder.value) {
+    if (selectedDate.value && selectedTime.value) {
       // 使用日期时间选择器中的时间
       const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
       reminderTime = new Date(customReminderStr).toISOString()
+    }else if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
+      reminderTime = selectedReminder.value.reminderTime
+      reminderConfig = selectedReminder.value.config
     }
-  } else if (!reminderTime && selectedDate.value && selectedTime.value) {
+  } else if (selectedDate.value && selectedTime.value) {
     // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
     const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
     reminderTime = new Date(customReminderStr).toISOString()
   }
 
-  console.log('最终的提醒时间:', reminderTime)
-  console.log('最终的提醒配置:', reminderConfig)
+  // 验证提醒时间是否有效
+  if (reminderTime) {
+    const now = new Date()
+    const reminderDateTime = new Date(reminderTime)
+    isValid = reminderDateTime > now
+    console.log('提醒时间验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+  } else if (!selectedReminder.value && !selectedDate.value) {
+    console.log('没有提醒设置，验证通过')
+    isValid = true
+  }
 
-  // 确保 reminderConfig 是可序列化的，移除任何不可序列化的属性
+  // 确保 reminderConfig 是可序列化的
   let cleanReminderConfig = null
   if (reminderConfig) {
     cleanReminderConfig = {
@@ -710,21 +700,19 @@ const calculateReminderTime = () => {
     console.log('清理后的提醒配置:', cleanReminderConfig)
   }
 
-  return { reminderTime, cleanReminderConfig }
+  return { reminderTime, cleanReminderConfig, isValid }
 }
 
 // 添加/更新任务
 const handleAddTask = async () => {
   if (!newTaskContent.value.trim()) return
 
-  // 验证提醒时间
-  if (!isReminderTimeValid()) {
-    alert('提醒时间不能设置为过去的时间，请重新选择 add')
+  // 计算并验证提醒时间, 如果是循环任务，这里不校验,且提醒时间需要置空,在存储时动态生成
+  const { reminderTime, cleanReminderConfig, isValid } = calculateAndValidateReminderTime()
+  if (!isValid && !selectedRecurrence.value) {
+    alert('提醒时间不能设置为过去的时间，请重新选择')
     return
   }
-
-  // 计算提醒时间
-  const { reminderTime, cleanReminderConfig } = calculateReminderTime()
   console.log("reminderTime: ", reminderTime)
   console.log("cleanReminderConfig: ", cleanReminderConfig)
 
@@ -869,48 +857,7 @@ const handleClickOutside = (event) => {
   }
 }
 
-// 验证提醒时间是否有效
-const isReminderTimeValid = () => {
-  console.log('=== isReminderTimeValid 验证开始 ===')
-  console.log('selectedReminder.value:', selectedReminder.value)
-  console.log('selectedDate.value:', selectedDate.value)
-  console.log('selectedTime.value:', selectedTime.value)
 
-  if (!selectedReminder.value && !selectedDate.value) {
-    console.log('没有提醒设置，返回 true')
-    return true
-  }
-
-  const now = new Date()
-  console.log('当前时间:', now.toLocaleString())
-
-  if (selectedReminder.value && selectedReminder.value.value === 'custom') {
-
-    // 优先使用 selectedReminder 中存储的 reminderTime
-    if (selectedReminder.value.reminderTime) {
-      const customReminderTime = new Date(selectedReminder.value.reminderTime)
-      const isValid = customReminderTime > now
-      return isValid
-    } else if (selectedDate.value && selectedTime.value) {
-      const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-
-      const customReminderTime = new Date(customReminderStr)
-
-      const isValid = customReminderTime > now
-      return isValid
-    }
-  } else if (!selectedReminder.value && selectedDate.value && selectedTime.value) {
-    // 当没有选择提醒类型，但设置了日期和时间时，也需要验证时间
-    const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-
-    const customReminderTime = new Date(customReminderStr)
-
-    const isValid = customReminderTime > now
-    return isValid
-  }
-
-  return true
-}
 
 // 获取提醒显示文本
 const getReminderDisplayText = () => {
@@ -1038,24 +985,6 @@ const getBaseDate = () => {
   }
   // 如果没有选择日期，使用今天
   return new Date()
-}
-
-// 处理完成重复任务实例
-const handleCompleteOccurrence = (occurrence) => {
-  console.log('完成重复任务实例:', occurrence)
-  // 这里可以添加完成重复任务实例的逻辑
-}
-
-// 处理编辑重复任务实例
-const handleEditOccurrence = (occurrence) => {
-  console.log('编辑重复任务实例:', occurrence)
-  // 这里可以添加编辑重复任务实例的逻辑
-}
-
-// 处理删除重复任务实例
-const handleDeleteOccurrence = (occurrence) => {
-  console.log('删除重复任务实例:', occurrence)
-  // 这里可以添加删除重复任务实例的逻辑
 }
 
 

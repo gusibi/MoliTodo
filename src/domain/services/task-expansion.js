@@ -220,7 +220,7 @@ class TaskExpansion {
         if (key === 'content') {
           realInstance.updateContent(updates[key]);
         } else if (key === 'reminderTime') {
-          realInstance.setReminder(updates[key]);
+          realInstance.setReminder(updates[key], true);
         } else if (key === 'listId') {
           realInstance.moveToList(updates[key]);
         }
@@ -234,7 +234,7 @@ class TaskExpansion {
         if (key === 'content') {
           instance.updateContent(updates[key]);
         } else if (key === 'reminderTime') {
-          instance.setReminder(updates[key]);
+          instance.setReminder(updates[key], true);
         } else if (key === 'listId') {
           instance.moveToList(updates[key]);
         }

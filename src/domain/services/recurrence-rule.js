@@ -21,7 +21,12 @@ class RecurrenceRule {
     
     // 确保开始日期不早于基准日期
     if (currentDate < startDate) {
-      currentDate = this.getNextOccurrence(recurrence, startDate, baseDate);
+      currentDate = new Date(startDate);
+    }
+    
+    // 检查当前日期是否符合重复规则，如果不符合则找到第一个符合的日期
+    if (!this.isDateMatchingRecurrence(currentDate, recurrence)) {
+      currentDate = this.getNextOccurrence(recurrence, currentDate, baseDate);
     }
 
     let iterationCount = 0;
@@ -42,6 +47,30 @@ class RecurrenceRule {
     }
 
     return occurrences;
+  }
+
+  /**
+   * 检查日期是否符合重复规则
+   * @param {Date} date 要检查的日期
+   * @param {Object} recurrence 重复规则
+   * @returns {boolean} 是否符合规则
+   */
+  static isDateMatchingRecurrence(date, recurrence) {
+    switch (recurrence.type) {
+      case 'daily':
+        return true; // 每日重复，任何日期都符合
+      case 'weekly':
+        const daysOfWeek = recurrence.daysOfWeek || [date.getDay()];
+        return daysOfWeek.includes(date.getDay());
+      case 'monthly':
+        // 简化处理，这里可以根据需要扩展
+        return true;
+      case 'yearly':
+        // 简化处理，这里可以根据需要扩展
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
