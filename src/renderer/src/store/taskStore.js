@@ -842,6 +842,13 @@ export const useTaskStore = defineStore('task', () => {
   // 设置当前清单
   const setCurrentListId = (listId) => {
     currentListId.value = listId
+    // 如果当前显示重复任务实例，需要重新展开对应列表的重复任务
+    if (showRecurringInstances.value) {
+      const now = new Date()
+      const futureDate = new Date(now)
+      futureDate.setMonth(futureDate.getMonth() + 3) // 展开未来3个月的重复任务
+      expandRecurringTasks(now, futureDate, listId)
+    }
   }
 
   // 获取所有清单

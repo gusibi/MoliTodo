@@ -19,7 +19,7 @@ class RecurringTaskService {
 
     const instances = [];
     const recurrence = recurringTask.recurrence;
-    const baseDate = new Date(recurringTask.createdAt);
+    const baseDate = new Date(recurringTask.occurrenceDate || recurringTask.createdAt);
     
     // 计算真实的截止时间：取 endDate 和 recurrence 结束条件中的较小值
     const actualEndDate = this.calculateActualEndDate(endDate, recurrence, baseDate);
@@ -338,7 +338,9 @@ class RecurringTaskService {
     
     for (const task of recurringTasks) {
       if (task.isRecurring()) {
+        // console.log("expandRecurringTasks recurringTasks: ", task, startDate, endDate)
         const instances = this.expandRecurringTask(task, startDate, endDate);
+        // console.log("instances", instances)
         allInstances.push(...instances);
       }
     }

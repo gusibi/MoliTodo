@@ -50,10 +50,10 @@
             </template>
             
             <!-- 重复任务实例显示控制 -->
-            <button v-if="taskStore.recurringTasks.length > 0" @click="toggleRecurringInstances" class="task-list-control-btn task-list-recurring-toggle" :class="{ 'active': taskStore.showRecurringInstances }">
+            <!-- <button v-if="taskStore.recurringTasks.length > 0" @click="toggleRecurringInstances" class="task-list-control-btn task-list-recurring-toggle" :class="{ 'active': taskStore.showRecurringInstances }">
               <i class="fas fa-repeat"></i>
               {{ taskStore.showRecurringInstances ? '隐藏重复实例' : '显示重复实例' }}
-            </button>
+            </button> -->
             
             <div v-if="collapsedGroups.size > 0" class="task-list-collapse-indicator">
               {{ collapsedGroups.size }} 个分组已折叠

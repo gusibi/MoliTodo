@@ -517,16 +517,27 @@ const monthDays = computed(() => {
 
 // Get tasks for a specific date
 const getTasksForDate = (date) => {
-  // 根据是否显示重复实例选择任务数据源
-  const allTasks = taskStore.showRecurringInstances ? taskStore.expandedTasks : props.tasks
+  let allTasks = []
+  
+  // 始终包含普通任务
+  if (props.tasks && props.tasks.length > 0) {
+    allTasks = [...props.tasks]
+  }
+  
+  // 如果显示重复实例，则添加重复任务实例
+  if (taskStore.showRecurringInstances && taskStore.expandedTasks && taskStore.expandedTasks.length > 0) {
+    // 合并重复任务实例，避免与普通任务重复
+    const recurringInstances = taskStore.expandedTasks.filter(task => task.occurrence_date || task.occurrenceDate)
+    allTasks = [...allTasks, ...recurringInstances]
+  }
   
   if (!allTasks || allTasks.length === 0) return []
 
   return allTasks.filter(task => {
-    // 对于重复任务实例，检查occurrence_date
-    if (task.occurrence_date) {
+    // 对于重复任务实例，检查occurrence_date或occurrenceDate
+    if (task.occurrence_date || task.occurrenceDate) {
       try {
-        const occurrenceDate = new Date(task.occurrence_date)
+        const occurrenceDate = new Date(task.occurrence_date || task.occurrenceDate)
         if (isNaN(occurrenceDate.getTime())) return false
         return isSameDay(occurrenceDate, date)
       } catch (error) {
@@ -548,9 +559,9 @@ const getTasksForDate = (date) => {
       return false
     }
   }).sort((a, b) => {
-    // 对于重复任务实例，使用occurrence_date排序
-    const timeA = a.occurrence_date ? new Date(a.occurrence_date).getTime() : new Date(a.reminderTime).getTime()
-    const timeB = b.occurrence_date ? new Date(b.occurrence_date).getTime() : new Date(b.reminderTime).getTime()
+    // 对于重复任务实例，使用occurrence_date或occurrenceDate排序
+    const timeA = (a.occurrence_date || a.occurrenceDate) ? new Date(a.occurrence_date || a.occurrenceDate).getTime() : new Date(a.reminderTime).getTime()
+    const timeB = (b.occurrence_date || b.occurrenceDate) ? new Date(b.occurrence_date || b.occurrenceDate).getTime() : new Date(b.reminderTime).getTime()
     return timeA - timeB
   })
 }
