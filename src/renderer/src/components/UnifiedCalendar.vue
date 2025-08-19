@@ -480,7 +480,7 @@ const weekDays = computed(() => {
 })
 
 // Month data
-const monthDayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const monthDayNames = ['周一', '周二', '周三', '周四', '周五', '周六','周日']
 
 const monthDays = computed(() => {
   const monthStart = getMonthStart(currentDate.value)

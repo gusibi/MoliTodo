@@ -1164,7 +1164,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let query = 'SELECT * FROM tasks WHERE recurrence IS NOT NULL';
+    let query = 'SELECT * FROM tasks WHERE recurrence IS NOT NULL AND status != "done"';
     let params = [];
     
     if (listId !== null) {
