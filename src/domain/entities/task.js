@@ -655,7 +655,9 @@ class Task {
       this.metadata,
       null, // 实例不包含重复规则
       this.getSeriesId(), // 设置系列ID
-      occurrenceDate.toISOString()
+      occurrenceDate.toISOString(),
+      occurrenceDate, // 设置dueDate为occurrenceDate
+      this.dueTime // 保持原任务的dueTime
     );
   }
 

@@ -325,9 +325,9 @@ class IpcHandlers {
     });
 
     // 展开重复任务为实例
-    ipcMain.handle('task:expandRecurring', async (event, { startDate, endDate }) => {
+    ipcMain.handle('task:expandRecurring', async (event, { startDate, endDate, listId = null }) => {
       try {
-        const tasks = await this.taskService.expandRecurringTasks(new Date(startDate), new Date(endDate));
+        const tasks = await this.taskService.expandRecurringTasks(new Date(startDate), new Date(endDate), listId);
         return { success: true, tasks };
       } catch (error) {
         console.error('展开重复任务失败:', error);

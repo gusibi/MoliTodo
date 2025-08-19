@@ -1156,16 +1156,25 @@ class SqliteTaskRepository {
 
   /**
    * 查找所有重复任务（主任务）
+   * @param {number|null} listId 可选的列表ID，null表示所有列表
    * @returns {Promise<Task[]>}
    */
-  async findRecurringTasks() {
+  async findRecurringTasks(listId = null) {
     if (!this.db) {
       throw new Error('数据库未初始化');
     }
 
-    const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE recurrence IS NOT NULL ORDER BY created_at DESC'
-    );
+    let query = 'SELECT * FROM tasks WHERE recurrence IS NOT NULL';
+    let params = [];
+    
+    if (listId !== null) {
+      query += ' AND list_id = ?';
+      params.push(listId);
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const rows = await this.db.all(query, params);
     return rows.map(row => this.rowToTask(row));
   }
 

@@ -237,7 +237,7 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
-    console.log("task service updateTask updates: ------", updates)
+    // console.log("task service updateTask updates: ------", updates)
     // 更新内容
     if (updates.content !== undefined) {
       task.updateContent(updates.content);
@@ -285,7 +285,7 @@ class TaskService {
       }
     }
 
-    console.log("task service task: ------ final", task)
+    // console.log("task service task: ------ final", task)
     return await this.taskRepository.save(task);
   }
 
@@ -697,20 +697,22 @@ class TaskService {
 
   /**
    * 获取所有重复任务
+   * @param {number|null} listId 可选的列表ID，null表示所有列表
    * @returns {Promise<Task[]>}
    */
-  async getRecurringTasks() {
-    return await this.taskRepository.findRecurringTasks();
+  async getRecurringTasks(listId = null) {
+    return await this.taskRepository.findRecurringTasks(listId);
   }
 
   /**
    * 展开重复任务为指定时间范围内的实例
    * @param {Date} startDate 开始日期
    * @param {Date} endDate 结束日期
+   * @param {number|null} listId 可选的列表ID，null表示所有列表
    * @returns {Promise<Task[]>}
    */
-  async expandRecurringTasks(startDate, endDate) {
-    const recurringTasks = await this.getRecurringTasks();
+  async expandRecurringTasks(startDate, endDate, listId = null) {
+    const recurringTasks = await this.getRecurringTasks(listId);
     console.log("expandRecurringTasks recurringTasks: ", recurringTasks)
     const RecurringTaskService = require('./recurring-task-service');
     return RecurringTaskService.expandRecurringTasks(recurringTasks, startDate, endDate);
@@ -767,10 +769,10 @@ class TaskService {
     // 如果有重复规则且包含提醒时间，重新计算提醒时间
     if (recurrence && recurrence.reminderTime) {
       updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);
-      console.log("updateRecurringTask: calculated reminderTime:", updates.reminderTime);
+      // console.log("updateRecurringTask: calculated reminderTime:", updates.reminderTime);
     }
     
-    console.log("updateRecurringTask: updates:", updates)
+    // console.log("updateRecurringTask: updates:", updates)
     const task = await this.updateTask(taskId, updates);
     if (recurrence) {
       task.setRecurrence(recurrence);

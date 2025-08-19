@@ -1028,11 +1028,12 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   // 展开重复任务为实例
-  const expandRecurringTasks = async (startDate, endDate) => {
+  const expandRecurringTasks = async (startDate, endDate, listId = null) => {
     try {
       const result = await window.electronAPI.tasks.expandRecurring({
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
+        listId: listId
       })
       console.log("expandRecurringTasks result: ", result)
       if (result.success) {
@@ -1115,7 +1116,7 @@ export const useTaskStore = defineStore('task', () => {
           const now = new Date()
           const futureDate = new Date(now)
           futureDate.setMonth(futureDate.getMonth() + 3)
-          await expandRecurringTasks(now, futureDate)
+          await expandRecurringTasks(now, futureDate, currentListId.value)
         }
       }
       return result
@@ -1139,7 +1140,7 @@ export const useTaskStore = defineStore('task', () => {
           const now = new Date()
           const futureDate = new Date(now)
           futureDate.setMonth(futureDate.getMonth() + 3)
-          await expandRecurringTasks(now, futureDate)
+          await expandRecurringTasks(now, futureDate, currentListId.value)
         }
       }
       return result
@@ -1164,7 +1165,7 @@ export const useTaskStore = defineStore('task', () => {
           const now = new Date()
           const futureDate = new Date(now)
           futureDate.setMonth(futureDate.getMonth() + 3)
-          await expandRecurringTasks(now, futureDate)
+          await expandRecurringTasks(now, futureDate, currentListId.value)
         }
       }
       return result
@@ -1213,7 +1214,8 @@ export const useTaskStore = defineStore('task', () => {
       const now = new Date()
       const futureDate = new Date(now)
       futureDate.setMonth(futureDate.getMonth() + 3) // 展开未来3个月的重复任务
-      expandRecurringTasks(now, futureDate)
+      // 如果当前选中了特定列表，只展开该列表的重复任务
+      expandRecurringTasks(now, futureDate, currentListId.value)
     }
   }
   

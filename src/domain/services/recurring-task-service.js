@@ -21,19 +21,22 @@ class RecurringTaskService {
     const recurrence = recurringTask.recurrence;
     const baseDate = new Date(recurringTask.createdAt);
     
+    // 计算真实的截止时间：取 endDate 和 recurrence 结束条件中的较小值
+    const actualEndDate = this.calculateActualEndDate(endDate, recurrence, baseDate);
+    
     // 根据重复类型生成实例
     switch (recurrence.type) {
       case 'daily':
-        instances.push(...this.generateDailyInstances(recurringTask, baseDate, startDate, endDate, recurrence));
+        instances.push(...this.generateDailyInstances(recurringTask, baseDate, startDate, actualEndDate, recurrence));
         break;
       case 'weekly':
-        instances.push(...this.generateWeeklyInstances(recurringTask, baseDate, startDate, endDate, recurrence));
+        instances.push(...this.generateWeeklyInstances(recurringTask, baseDate, startDate, actualEndDate, recurrence));
         break;
       case 'monthly':
-        instances.push(...this.generateMonthlyInstances(recurringTask, baseDate, startDate, endDate, recurrence));
+        instances.push(...this.generateMonthlyInstances(recurringTask, baseDate, startDate, actualEndDate, recurrence));
         break;
       case 'yearly':
-        instances.push(...this.generateYearlyInstances(recurringTask, baseDate, startDate, endDate, recurrence));
+        instances.push(...this.generateYearlyInstances(recurringTask, baseDate, startDate, actualEndDate, recurrence));
         break;
       default:
         console.warn('未知的重复类型:', recurrence.type);
@@ -43,14 +46,101 @@ class RecurringTaskService {
   }
 
   /**
+   * 计算真实的截止时间
+   * 取 endDate 和 recurrence 结束条件中的较小值
+   * @param {Date} endDate 传入的结束日期
+   * @param {Object} recurrence 重复规则对象
+   * @param {Date} baseDate 基准日期
+   * @returns {Date} 真实的截止时间
+   */
+  static calculateActualEndDate(endDate, recurrence, baseDate) {
+    let actualEndDate = new Date(endDate);
+    
+    // 检查 recurrence 中的结束条件
+    if (recurrence.endCondition) {
+      if (recurrence.endCondition.type === 'date' && recurrence.endCondition.endDate) {
+        const recurrenceEndDate = new Date(recurrence.endCondition.endDate);
+        if (recurrenceEndDate < actualEndDate) {
+          actualEndDate = recurrenceEndDate;
+        }
+      } else if (recurrence.endCondition.type === 'count' && recurrence.endCondition.count > 0) {
+        const estimatedEndDate = this.estimateEndDateByCount(baseDate, recurrence);
+        if (estimatedEndDate && estimatedEndDate < actualEndDate) {
+          actualEndDate = estimatedEndDate;
+        }
+      }
+    }
+    
+    // 兼容旧格式：直接在 recurrence 对象上的 until 和 count 字段
+    if (recurrence.until) {
+      const recurrenceEndDate = new Date(recurrence.until);
+      if (recurrenceEndDate < actualEndDate) {
+        actualEndDate = recurrenceEndDate;
+      }
+    }
+    
+    if (recurrence.count && recurrence.count > 0) {
+      const estimatedEndDate = this.estimateEndDateByCount(baseDate, recurrence);
+      if (estimatedEndDate && estimatedEndDate < actualEndDate) {
+        actualEndDate = estimatedEndDate;
+      }
+    }
+    
+    return actualEndDate;
+  }
+  
+  /**
+   * 根据重复次数估算结束日期
+   * @param {Date} baseDate 基准日期
+   * @param {Object} recurrence 重复规则对象
+   * @returns {Date|null} 估算的结束日期
+   */
+  static estimateEndDateByCount(baseDate, recurrence) {
+    // 优先使用 endCondition.count，然后是 recurrence.count（兼容旧格式）
+    let count = 0;
+    if (recurrence.endCondition && recurrence.endCondition.count > 0) {
+      count = recurrence.endCondition.count;
+    } else if (recurrence.count && recurrence.count > 0) {
+      count = recurrence.count;
+    } else {
+      return null;
+    }
+    
+    const interval = recurrence.interval || 1;
+    const estimatedDate = new Date(baseDate);
+    
+    switch (recurrence.type) {
+      case 'daily':
+        estimatedDate.setDate(estimatedDate.getDate() + (count - 1) * interval);
+        break;
+      case 'weekly':
+        estimatedDate.setDate(estimatedDate.getDate() + (count - 1) * interval * 7);
+        break;
+      case 'monthly':
+        estimatedDate.setMonth(estimatedDate.getMonth() + (count - 1) * interval);
+        break;
+      case 'yearly':
+        estimatedDate.setFullYear(estimatedDate.getFullYear() + (count - 1) * interval);
+        break;
+      default:
+        return null;
+    }
+    
+    // 将结束日期设置为最后一个实例日期的下一天，确保最后一个实例也被包含
+    estimatedDate.setDate(estimatedDate.getDate() + 1);
+    
+    return estimatedDate;
+  }
+
+  /**
    * 生成每日重复实例
    */
   static generateDailyInstances(recurringTask, baseDate, startDate, endDate, recurrence) {
     const instances = [];
     const interval = recurrence.interval || 1;
     const current = new Date(Math.max(baseDate.getTime(), startDate.getTime()));
+    let instanceCount = 0;
     
-    console.log("generateDailyInstances recurringTask: ", recurringTask)
     // 调整到第一个有效日期
     const daysDiff = Math.floor((current.getTime() - baseDate.getTime()) / (24 * 60 * 60 * 1000));
     const remainder = daysDiff % interval;
@@ -59,10 +149,23 @@ class RecurringTaskService {
     }
 
     while (current <= endDate) {
+      // 检查是否超过重复次数限制
+      const maxCount = recurrence.endCondition?.count || recurrence.count;
+      if (maxCount && instanceCount >= maxCount) {
+        break;
+      }
+      
       if (current >= startDate) {
         const instanceId = `${recurringTask.id}_${current.toISOString().split('T')[0]}`;
         const instance = recurringTask.createInstance(new Date(current), instanceId);
         instances.push(instance);
+        instanceCount++;
+        
+        // 再次检查次数限制（优化：避免不必要的循环）
+        const maxCount = recurrence.endCondition?.count || recurrence.count;
+        if (maxCount && instanceCount >= maxCount) {
+          break;
+        }
       }
       current.setDate(current.getDate() + interval);
     }
@@ -77,20 +180,34 @@ class RecurringTaskService {
     const instances = [];
     const interval = recurrence.interval || 1;
     const daysOfWeek = recurrence.daysOfWeek || [baseDate.getDay()];
+    let instanceCount = 0;
     
     // 从开始日期的周开始
     const current = new Date(startDate);
     current.setDate(current.getDate() - current.getDay()); // 调整到周日
     
     while (current <= endDate) {
+      // 检查是否超过重复次数限制
+      const maxCount = recurrence.endCondition?.count || recurrence.count;
+      if (maxCount && instanceCount >= maxCount) {
+        break;
+      }
+      
       for (const dayOfWeek of daysOfWeek) {
         const instanceDate = new Date(current);
         instanceDate.setDate(current.getDate() + dayOfWeek);
         
         if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
+          // 再次检查次数限制（因为一周可能有多个实例）
+          const maxCount = recurrence.endCondition?.count || recurrence.count;
+          if (maxCount && instanceCount >= maxCount) {
+            break;
+          }
+          
           const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
+          instanceCount++;
         }
       }
       current.setDate(current.getDate() + (7 * interval));
@@ -105,6 +222,7 @@ class RecurringTaskService {
   static generateMonthlyInstances(recurringTask, baseDate, startDate, endDate, recurrence) {
     const instances = [];
     const interval = recurrence.interval || 1;
+    let instanceCount = 0;
     
     // 支持 byMonthDay 数组或单个 dayOfMonth
     const daysOfMonth = recurrence.byMonthDay && recurrence.byMonthDay.length > 0 
@@ -115,6 +233,12 @@ class RecurringTaskService {
     current.setDate(1); // 调整到月初
     
     while (current <= endDate) {
+      // 检查是否超过重复次数限制
+      const maxCount = recurrence.endCondition?.count || recurrence.count;
+      if (maxCount && instanceCount >= maxCount) {
+        break;
+      }
+      
       // 为当前月份的每个指定日期生成实例
       for (const dayOfMonth of daysOfMonth) {
         const instanceDate = new Date(current.getFullYear(), current.getMonth(), dayOfMonth);
@@ -125,9 +249,16 @@ class RecurringTaskService {
         }
         
         if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
+          // 再次检查次数限制（因为一个月可能有多个实例）
+          const maxCount = recurrence.endCondition?.count || recurrence.count;
+          if (maxCount && instanceCount >= maxCount) {
+            break;
+          }
+          
           const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
+          instanceCount++;
         }
       }
       
@@ -143,6 +274,7 @@ class RecurringTaskService {
   static generateYearlyInstances(recurringTask, baseDate, startDate, endDate, recurrence) {
     const instances = [];
     const interval = recurrence.interval || 1;
+    let instanceCount = 0;
     
     // 支持 byMonth 数组或单个 month
     // 注意：byMonth 存储 1-12 的月份，baseDate.getMonth() 返回 0-11
@@ -158,6 +290,12 @@ class RecurringTaskService {
     const startYear = Math.max(baseDate.getFullYear(), startDate.getFullYear());
     
     for (let year = startYear; year <= endDate.getFullYear(); year += interval) {
+      // 检查是否超过重复次数限制
+      const maxCount = recurrence.endCondition?.count || recurrence.count;
+      if (maxCount && instanceCount >= maxCount) {
+        break;
+      }
+      
       // 为每个指定月份和日期生成实例
       for (const month of months) {
         for (const dayOfMonth of daysOfMonth) {
@@ -170,9 +308,16 @@ class RecurringTaskService {
           }
           
           if (instanceDate >= startDate && instanceDate <= endDate && instanceDate >= baseDate) {
+            // 再次检查次数限制（因为一年可能有多个实例）
+            const maxCount = recurrence.endCondition?.count || recurrence.count;
+            if (maxCount && instanceCount >= maxCount) {
+              return instances;
+            }
+            
             const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
             const instance = recurringTask.createInstance(new Date(instanceDate), instanceId);
             instances.push(instance);
+            instanceCount++;
           }
         }
       }
@@ -225,9 +370,6 @@ class RecurringTaskService {
     const endDate = new Date(startDate);
     endDate.setFullYear(endDate.getFullYear() + 2); // 向前看2年
     
-    console.log("getNextOccurrences: recurringTask: ", recurringTask)
-    console.log("getNextOccurrences: fromDate: ", fromDate)
-    console.log("getNextOccurrences: startDate: ", startDate)
     const instances = this.expandRecurringTask(recurringTask, startDate, endDate);
     return instances.slice(0, count).map(instance => new Date(instance.occurrenceDate));
   }
