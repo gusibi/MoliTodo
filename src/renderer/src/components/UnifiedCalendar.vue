@@ -523,6 +523,7 @@ const getTasksForDate = (date) => {
   if (props.tasks && props.tasks.length > 0) {
     allTasks = [...props.tasks]
   }
+  // console.log('普通任务:', allTasks)
   
   // 如果显示重复实例，则添加重复任务实例
   if (taskStore.showRecurringInstances && taskStore.expandedTasks && taskStore.expandedTasks.length > 0) {
@@ -530,6 +531,7 @@ const getTasksForDate = (date) => {
     const recurringInstances = taskStore.expandedTasks.filter(task => task.occurrence_date || task.occurrenceDate)
     allTasks = [...allTasks, ...recurringInstances]
   }
+  // console.log('全部任务:', allTasks)
   
   if (!allTasks || allTasks.length === 0) return []
 
