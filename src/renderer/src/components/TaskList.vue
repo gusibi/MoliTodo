@@ -55,9 +55,9 @@
               {{ taskStore.showRecurringInstances ? '隐藏重复实例' : '显示重复实例' }}
             </button> -->
             
-            <div v-if="collapsedGroups.size > 0" class="task-list-collapse-indicator">
+            <!-- <div v-if="collapsedGroups.size > 0" class="task-list-collapse-indicator">
               {{ collapsedGroups.size }} 个分组已折叠
-            </div>
+            </div> -->
           </div>
         </div>
 

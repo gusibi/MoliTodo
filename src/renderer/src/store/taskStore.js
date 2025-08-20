@@ -138,6 +138,9 @@ export const useTaskStore = defineStore('task', () => {
   // 获取排序后的任务列表
   const getSortedTasks = (category, listId = null, includeCompleted = null) => {
     let filteredTasks = getTasksByFilter(category, listId, includeCompleted)
+    
+    // 应用搜索过滤
+    filteredTasks = searchTasks(filteredTasks, searchQuery.value, searchOptions.value)
 
     // 排序逻辑
     if (category === 'completed') {
