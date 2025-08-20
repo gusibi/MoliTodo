@@ -7,6 +7,7 @@
 @import './components/task-list.css';
 @import './components/task-item.css';
 @import './components/task-form.css';
+@import './components/flat-task-list.css';
 @import './components/custom-titlebar.css';
 
 /* Main CSS Entry Point */

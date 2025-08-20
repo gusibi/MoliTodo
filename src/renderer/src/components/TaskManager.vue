@@ -71,11 +71,9 @@
         'overflow-hidden': viewMode === 'monthly'
       }">
         <!-- 列表视图 -->
-        <TaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
+        <FlatTaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
           @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
           @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
-
-
 
         <!-- 月视图 -->
         <MonthlyView v-else-if="viewMode === 'monthly'" :tasks="displayTasks" :loading="loading"
@@ -126,7 +124,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
-import TaskList from './TaskList.vue'
+import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 

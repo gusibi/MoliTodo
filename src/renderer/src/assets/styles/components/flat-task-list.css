@@ -1,0 +1,310 @@
+/* Flat Task List Component Styles */
+
+/* Container */
+.flat-task-list-container {
+  @apply flex flex-col h-full bg-background;
+}
+
+.flat-task-list-content {
+  @apply flex-1 overflow-y-auto px-1;
+}
+
+/* Loading and Empty States */
+.flat-task-list-loading-state,
+.flat-task-list-empty-state {
+  @apply flex flex-col items-center justify-center px-5 py-16 text-center text-muted-foreground;
+}
+
+.flat-task-list-empty-icon {
+  @apply text-5xl mb-4;
+}
+
+.flat-task-list-empty-text {
+  @apply text-lg font-medium mb-3 text-foreground;
+}
+
+.flat-task-list-empty-suggestion {
+  @apply mb-5;
+}
+
+.flat-task-list-empty-suggestion ul {
+  @apply list-none p-0 my-3;
+}
+
+.flat-task-list-empty-suggestion li {
+  @apply my-2 text-muted-foreground;
+}
+
+.flat-task-list-empty-hint {
+  @apply text-sm px-4 py-3 rounded-lg text-muted-foreground bg-muted border-l-4 border-primary;
+}
+
+/* Control Buttons */
+.flat-task-list-controls {
+  @apply py-3 mb-2 border-b border-border;
+}
+
+.flat-task-list-controls-buttons {
+  @apply flex gap-2;
+}
+
+.flat-task-list-control-btn {
+  @apply flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md cursor-pointer transition-all duration-200 bg-muted border border-border/10 text-muted-foreground;
+}
+
+.flat-task-list-control-btn:hover {
+  @apply bg-accent border-border/10;
+}
+
+/* Group Styles */
+.flat-task-group {
+  @apply mb-4;
+}
+
+.flat-task-group-header {
+  @apply flex items-center justify-between py-2 cursor-pointer select-none mb-2  border-border/10;
+}
+
+.flat-task-group-header-static {
+  @apply py-2 mb-2 border-b border-border;
+}
+
+.flat-task-group-title {
+  @apply flex items-center w-full;
+}
+
+.flat-task-group-info {
+  @apply flex items-center gap-2 font-medium text-sm;
+}
+
+.flat-task-group-count {
+  @apply font-normal text-xs text-muted-foreground;
+}
+
+.flat-task-group-collapse-icon {
+  @apply text-xs transition-transform duration-200 text-muted-foreground;
+}
+
+/* Task List */
+.flat-task-group-items {
+  @apply list-none p-0 m-0 transition-all duration-300;
+}
+
+.flat-task-group-collapsed {
+  @apply max-h-0 overflow-hidden opacity-0;
+}
+
+/* Task Item */
+.flat-task-item {
+  @apply flex justify-between items-start py-3.5 cursor-pointer transition-all duration-200 border-b border-status-doing/10;
+}
+
+.flat-task-item:last-child {
+  @apply border-b-0;
+}
+
+.flat-task-item:hover {
+  @apply bg-muted;
+}
+
+/* Task Status Styles */
+.flat-task-item-completed {
+  @apply opacity-60;
+}
+
+.flat-task-item-completed .flat-task-title {
+  @apply line-through text-muted-foreground;
+}
+
+.flat-task-item-in-progress {
+  @apply bg-status-doing/10 border-l-4 border-status-doing/20;
+}
+
+.flat-task-item-overtime {
+  @apply bg-destructive/10 border-l-4 border-warning;
+}
+
+.flat-task-item-paused {
+  @apply bg-warning/10 border-l-4 border-status-paused/20;
+}
+
+.flat-task-item-editing {
+  @apply -mx-3 px-3 py-3 rounded-md bg-accent/50 border border-primary;
+}
+
+/* Task Left Side */
+.flat-task-left {
+  @apply flex items-start gap-3 flex-1 min-w-0;
+}
+
+/* Checkbox */
+.flat-task-checkbox {
+  @apply relative flex-shrink-0 mt-0.5 pl-3;
+}
+
+.flat-task-checkbox input[type="checkbox"] {
+  @apply absolute opacity-0 w-0 h-0;
+}
+
+.flat-checkbox-label {
+  @apply block w-5 h-5 rounded-full cursor-pointer transition-all duration-200 relative border-2 border-border/40;
+}
+
+.flat-checkbox-label:hover {
+  @apply border-primary;
+}
+
+.flat-task-checkbox input[type="checkbox"]:checked + .flat-checkbox-label {
+  @apply bg-primary border-primary;
+}
+
+.flat-task-checkbox input[type="checkbox"]:checked + .flat-checkbox-label::after {
+  content: '✓';
+  @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-primary-foreground;
+}
+
+/* Task Details */
+.flat-task-details {
+  @apply flex-1 min-w-0;
+}
+
+.flat-task-title {
+  @apply text-sm m-0 mb-1 leading-relaxed break-words text-foreground;
+}
+
+.flat-task-description {
+  @apply text-xs my-1 leading-snug text-muted-foreground;
+}
+
+.flat-task-reminder-time {
+  @apply text-xs flex items-center gap-1 flex-shrink-0 ml-auto text-status-doing;
+}
+
+.flat-task-reminder-time-overdue {
+  @apply bg-destructive/10 text-status-overtime px-2 py-1 rounded-md;
+}
+
+.flat-task-duration-time {
+  @apply text-xs flex items-center gap-1 flex-shrink-0 ml-auto text-status-doing;
+}
+
+.flat-task-duration-time-overdue {
+  @apply bg-destructive/10 text-status-overtime px-2 py-1 rounded-md;
+}
+
+.flat-task-time {
+  @apply mr-2 text-xs flex items-center gap-1 flex-shrink-0 ml-auto text-muted-foreground;
+}
+
+.flat-task-time-overdue {
+  @apply bg-destructive/10 text-destructive px-2 py-1 rounded-md;
+}
+
+.flat-task-time-doing {
+  @apply bg-warning/10 text-status-doing px-2 py-1 rounded-md;
+}
+
+.flat-task-time-overtime {
+  @apply bg-status-overtime/10 text-status-overtime px-2 py-1 rounded-md;
+}
+
+.flat-task-time-paused {
+  @apply bg-muted-foreground/10 text-status-paused px-2 py-1 rounded-md;
+}
+
+.flat-task-time-completed {
+  @apply bg-success/10 text-status-done px-2 py-1 rounded-md;
+}
+
+
+/* Task Right Side */
+.flat-task-right {
+  @apply flex items-center gap-1.5 flex-shrink-0 mt-0.5;
+}
+
+/* Task Tags */
+.flat-task-tag {
+  @apply inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0;
+}
+
+.flat-task-tag-recurring {
+  @apply bg-primary/10 text-primary;
+}
+
+.flat-task-tag-doing {
+  @apply bg-status-doing/10 text-status-doing;
+}
+
+.flat-task-tag-overtime {
+  @apply bg-destructive/10 text-destructive;
+}
+
+.flat-task-tag-paused {
+  @apply bg-warning/10 text-warning;
+}
+
+/* Task Action Buttons */
+.flat-task-btn {
+  @apply inline-flex items-center justify-center w-7 h-7 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-0 bg-muted text-muted-foreground;
+}
+
+.flat-task-item:hover .flat-task-btn,
+.flat-task-item-editing .flat-task-btn {
+  @apply opacity-100;
+}
+
+.flat-task-btn:hover {
+  @apply bg-accent;
+}
+
+.flat-task-btn-start:hover {
+  @apply bg-success/10 text-success;
+}
+
+.flat-task-btn-pause:hover {
+  @apply bg-warning/10 text-warning;
+}
+
+.flat-task-btn-resume:hover {
+  @apply bg-success/10 text-success;
+}
+
+.flat-task-btn-complete:hover {
+  @apply bg-success/10 text-success;
+}
+
+.flat-task-btn-restart:hover {
+  @apply bg-destructive/10 text-destructive;
+}
+
+.flat-task-btn-edit:hover {
+  @apply bg-secondary text-secondary-foreground;
+}
+
+.flat-task-btn-delete:hover {
+  @apply bg-destructive/10 text-destructive;
+}
+
+/* Search Highlight */
+.flat-task-list-container :deep(mark) {
+  @apply px-0.5 py-0 rounded-sm bg-warning/20 text-warning-foreground;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flat-task-item {
+    @apply py-3;
+  }
+  
+  .flat-task-left {
+    @apply gap-2.5;
+  }
+  
+  .flat-task-title {
+    @apply text-sm;
+  }
+  
+  .flat-task-btn {
+    @apply w-8 h-8 text-sm opacity-100;
+  }
+}
