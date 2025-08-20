@@ -1,19 +1,19 @@
-/* Floating Icon Component - Tailwind CSS Custom Animations */
+/* Floating Icon Component - Tailwind CSS Implementation */
 
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations that can't be replaced with Tailwind utilities */
-@keyframes progress-blink {
+/* Custom animations */
+@keyframes floating-icon-progress-blink {
   0%, 50% {
-    @apply text-green-400 opacity-100;
+    @apply text-success opacity-100;
   }
   51%, 100% {
-    @apply text-green-400 opacity-40;
+    @apply text-success opacity-40;
   }
 }
 
-@keyframes alert-pulse {
+@keyframes floating-icon-alert-pulse {
   0%, 100% {
     @apply scale-100;
   }
@@ -22,45 +22,37 @@
   }
 }
 
-/* Component classes using Tailwind utilities */
 @layer components {
+  /* Container */
+  .floating-icon-container {
+    @apply w-full h-full flex justify-center items-center;
+  }
+
+  /* Main floating icon */
   .floating-icon {
-    @apply pointer-events-auto;
+    @apply relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out;
+    @apply w-12 h-12 rounded-full shadow-lg pointer-events-auto;
     -webkit-app-region: no-drag;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
 
   .floating-icon:hover {
+    @apply shadow-2xl scale-110;
     filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
   }
 
-  .default-icon.in-progress {
-    @apply text-green-400;
-    animation: progress-blink 1.5s infinite;
+  .floating-icon:focus {
+    @apply outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  /* Icon states */
+  .floating-icon--normal {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
   }
 
   .floating-icon--alert {
-    animation: alert-pulse 2s infinite;
-  }
-
-  .floating-icon--alert .default-icon {
-    @apply opacity-0;
-  }
-
-  .floating-icon--alert .alert-icon {
-    @apply opacity-100;
-  }
-
-  .badge--show {
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  }
-
-  .floating-icon:hover .badge {
-    @apply scale-110;
-  }
-
-  .floating-icon--pending {
-    @apply cursor-grabbing opacity-80;
+    background: linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--warning)));
+    animation: floating-icon-alert-pulse 2s infinite;
   }
 
   .floating-icon--dragging {
@@ -68,16 +60,69 @@
     filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.4));
     transition: none;
   }
+
+  .floating-icon--pending {
+    @apply cursor-grabbing opacity-80;
+  }
+
+  /* Icon content */
+  .floating-icon-content {
+    @apply absolute flex items-center justify-center text-white transition-all duration-300;
+  }
+
+  .floating-icon-content--default {
+    @apply opacity-100;
+  }
+
+  .floating-icon-content--default.floating-icon-content--in-progress {
+    color: hsl(var(--success));
+    animation: floating-icon-progress-blink 1.5s infinite;
+  }
+
+  .floating-icon-content--alert {
+    @apply opacity-0;
+  }
+
+  /* Alert state overrides */
+  .floating-icon--alert .floating-icon-content--default {
+    @apply opacity-0;
+  }
+
+  .floating-icon--alert .floating-icon-content--alert {
+    @apply opacity-100;
+  }
+
+  /* Badge */
+  .floating-icon-badge {
+    @apply absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center;
+    @apply text-xs font-bold border-2 border-transparent transition-all duration-300;
+    @apply opacity-0 scale-0;
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+  }
+
+  .floating-icon-badge--show {
+    @apply opacity-100 scale-100;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .floating-icon:hover .floating-icon-badge {
+    @apply scale-110;
+  }
+
+  .floating-icon-badge-text {
+    @apply leading-none px-1;
+  }
 }
 
-/* Responsive utilities */
+/* Responsive design */
 @layer utilities {
   @media (max-width: 768px) {
     .floating-icon {
       @apply w-11 h-11;
     }
 
-    .badge {
+    .floating-icon-badge {
       @apply min-w-4 h-4 text-xs;
     }
   }
@@ -85,19 +130,21 @@
   /* High contrast mode */
   @media (prefers-contrast: high) {
     .floating-icon {
-      @apply border-2 border-black;
+      @apply border-2;
+      border-color: hsl(var(--foreground));
     }
 
-    .badge {
-      @apply border-2 border-transparent;
+    .floating-icon-badge {
+      @apply border-2;
+      border-color: hsl(var(--background));
     }
   }
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .floating-icon,
-    .badge,
-    .icon-content {
+    .floating-icon-badge,
+    .floating-icon-content {
       @apply transition-none;
     }
 
@@ -105,7 +152,7 @@
       animation: none;
     }
 
-    .default-icon.in-progress {
+    .floating-icon-content--default.floating-icon-content--in-progress {
       animation: none;
     }
   }

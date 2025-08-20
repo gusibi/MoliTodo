@@ -1,27 +1,33 @@
 <template>
-  <div class="w-full h-full flex justify-center items-center">
-    <div
-      class="floating-icon relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out w-12 h-12 md:w-11 md:h-11 rounded-full shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  <div class="floating-icon-container">
+    <button
+      ref="floatingIconRef"
       :class="[
-        isAlert ? 'bg-gradient-to-br from-red-500 to-orange-600 floating-icon--alert' : 'bg-gradient-to-br from-indigo-500 to-purple-600',
-        {
-          'floating-icon--dragging': isDragging
-        }
-      ]" @click="handleClick" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave"
-      @mousedown="handleMouseDown">
+        'floating-icon',
+        isAlert ? 'floating-icon--alert' : 'floating-icon--normal',
+        isDragging ? 'floating-icon--dragging' : '',
+        isPending ? 'floating-icon--pending' : ''
+      ]"
+      @mousedown="handleMouseDown"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
+      @click="handleClick"
+      :disabled="isPending"
+    >
       <!-- 默认图标 -->
-      <div class="icon-content absolute flex items-center justify-center text-white transition-all duration-300" :class="[
-        'default-icon',
-        { 'in-progress': hasInProgressTasks }
-      ]">
+      <div
+        :class="[
+          'floating-icon-content floating-icon-content--default',
+          hasInProgressTasks ? 'floating-icon-content--in-progress' : ''
+        ]"
+      >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
       </div>
 
       <!-- 提醒状态图标 -->
-      <div
-        class="icon-content alert-icon absolute flex items-center justify-center text-white transition-all duration-300 opacity-0">
+      <div class="floating-icon-content floating-icon-content--alert">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
@@ -31,16 +37,20 @@
 
       <!-- 任务数量角标 -->
       <div
-        class="badge absolute -top-1 -right-1 min-w-5 h-5 md:min-w-4 md:h-4 bg-red-500 rounded-full flex items-center justify-center text-xs md:text-xs font-bold text-white border-2 border-transparent transition-all duration-300"
-        :class="taskCount > 0 ? 'badge--show opacity-100 scale-100' : 'opacity-0 scale-0'">
-        <span class="leading-none px-1">{{ taskCount > 99 ? '99+' : taskCount }}</span>
+        v-if="taskCount > 0"
+        :class="[
+          'floating-icon-badge',
+          taskCount > 0 ? 'floating-icon-badge--show' : ''
+        ]"
+      >
+        <span class="floating-icon-badge-text">{{ taskCount > 99 ? '99+' : taskCount }}</span>
       </div>
-    </div>
+    </button>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import '@/assets/styles/components/floating-icon.css'
 
@@ -49,7 +59,9 @@ const taskCount = computed(() => taskStore.categoryCounts.today)
 const hasInProgressTasks = ref(false)
 const isAlert = ref(false)
 const isDragging = ref(false)
+const isPending = ref(false)
 const dragStartPos = ref({ x: 0, y: 0 })
+const floatingIconRef = ref(null)
 
 // 悬停和面板状态
 const isHovering = ref(false)
@@ -57,6 +69,7 @@ const isPanelHovering = ref(false)
 const panelVisible = ref(false)
 let hoverTimeout = null
 let hideTimeout = null
+
 
 const handleClick = () => {
   // 如果面板可见，则隐藏面板
@@ -75,7 +88,6 @@ const handleClick = () => {
 }
 
 const handleMouseEnter = () => {
-  console.log('鼠标进入悬浮图标')
   isHovering.value = true
 
   // 清除隐藏定时器
@@ -87,7 +99,6 @@ const handleMouseEnter = () => {
 
   // 清除提醒状态
   if (isAlert.value) {
-    console.log('清除提醒状态')
     isAlert.value = false
   }
 
@@ -344,9 +355,7 @@ const updateTaskCount = async () => {
 }
 
 const handleTaskReminder = (event, task) => {
-  console.log('收到任务提醒事件:', event, task)
   isAlert.value = true
-  console.log('设置提醒状态为 true，isAlert.value =', isAlert.value)
 
   // 不自动清除提醒状态，只有用户悬浮到图标上时才清除
   // 提醒状态将持续显示直到用户交互
