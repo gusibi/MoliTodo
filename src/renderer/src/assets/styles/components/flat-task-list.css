@@ -41,7 +41,7 @@
 
 /* Control Buttons */
 .flat-task-list-controls {
-  @apply py-3 mb-2 border-b border-border;
+  @apply px-6 py-3 mb-2 border-b border-border;
 }
 
 .flat-task-list-controls-buttons {
@@ -62,7 +62,7 @@
 }
 
 .flat-task-group-header {
-  @apply flex items-center justify-between py-2 cursor-pointer select-none mb-2  border-border/10;
+  @apply flex items-center justify-between px-6 py-2 cursor-pointer select-none mb-2  border-border/10;
 }
 
 .flat-task-group-header-static {
@@ -94,13 +94,18 @@
   @apply max-h-0 overflow-hidden opacity-0;
 }
 
-/* Task Item */
-.flat-task-item {
-  @apply flex justify-between items-start py-3.5 cursor-pointer transition-all duration-200 border-b border-status-doing/10;
+/* Task Item Wrapper */
+.flat-task-item-wrapper {
+  @apply flex items-center mx-1 border-b border-status-doing/10;
 }
 
-.flat-task-item:last-child {
+.flat-task-item-wrapper:last-child {
   @apply border-b-0;
+}
+
+/* Task Item */
+.flat-task-item {
+  @apply flex justify-between items-start flex-1 py-2.5 cursor-pointer transition-all duration-200;
 }
 
 .flat-task-item:hover {
@@ -117,29 +122,54 @@
 }
 
 .flat-task-item-in-progress {
-  @apply bg-status-doing/10 border-l-4 border-status-doing/20;
+  
 }
 
 .flat-task-item-overtime {
-  @apply bg-destructive/10 border-l-4 border-warning;
+  
 }
 
 .flat-task-item-paused {
-  @apply bg-warning/10 border-l-4 border-status-paused/20;
+  
 }
 
 .flat-task-item-editing {
-  @apply -mx-3 px-3 py-3 rounded-md bg-accent/50 border border-primary;
+  @apply -mx-1 px-3 py-3 rounded-md bg-accent/50 border border-primary;
 }
 
 /* Task Left Side */
 .flat-task-left {
-  @apply flex items-start gap-3 flex-1 min-w-0;
+  @apply flex items-center gap-3 flex-1 min-w-0 -mx-1;
+}
+
+/* Status Indicator */
+.flat-task-status-indicator {
+  @apply w-2 h-2 rounded-full flex-shrink-0 mr-2;
+}
+
+.flat-task-status-todo {
+
+}
+
+.flat-task-status-doing {
+  @apply bg-status-doing;
+}
+
+.flat-task-status-overtime {
+  @apply bg-status-overtime;
+}
+
+.flat-task-status-paused {
+  @apply bg-status-paused;
+}
+
+.flat-task-status-done {
+  @apply bg-status-done;
 }
 
 /* Checkbox */
 .flat-task-checkbox {
-  @apply relative flex-shrink-0 mt-0.5 pl-3;
+  @apply relative flex-shrink-0 pl-2;
 }
 
 .flat-task-checkbox input[type="checkbox"] {
@@ -147,7 +177,7 @@
 }
 
 .flat-checkbox-label {
-  @apply block w-5 h-5 rounded-full cursor-pointer transition-all duration-200 relative border-2 border-border/40;
+  @apply block w-4 h-4 rounded-full cursor-pointer transition-all duration-200 relative border-2 border-border/40 border-primary/30;
 }
 
 .flat-checkbox-label:hover {
@@ -169,7 +199,7 @@
 }
 
 .flat-task-title {
-  @apply text-sm m-0 mb-1 leading-relaxed break-words text-foreground;
+  @apply text-xs font-medium leading-relaxed break-words text-foreground;
 }
 
 .flat-task-description {
@@ -177,11 +207,11 @@
 }
 
 .flat-task-reminder-time {
-  @apply text-xs flex items-center gap-1 flex-shrink-0 ml-auto text-status-doing;
+  @apply text-2xs flex items-center gap-1 flex-shrink-0 ml-auto text-status-todo px-2 py-1 bg-status-todo/10;
 }
 
 .flat-task-reminder-time-overdue {
-  @apply bg-destructive/10 text-status-overtime px-2 py-1 rounded-md;
+  @apply bg-status-overtime/10 text-status-overtime ;
 }
 
 .flat-task-duration-time {
@@ -193,11 +223,11 @@
 }
 
 .flat-task-time {
-  @apply mr-2 text-xs flex items-center gap-1 flex-shrink-0 ml-auto text-muted-foreground;
+  @apply mr-2 text-2xs flex items-center gap-1 flex-shrink-0 ml-auto text-muted-foreground  bg-muted-foreground/10 px-2 py-1;
 }
 
 .flat-task-time-overdue {
-  @apply bg-destructive/10 text-destructive px-2 py-1 rounded-md;
+  @apply  bg-warning/10 text-status-overtime px-2 py-1 rounded-md;
 }
 
 .flat-task-time-doing {
@@ -245,7 +275,7 @@
 
 /* Task Action Buttons */
 .flat-task-btn {
-  @apply inline-flex items-center justify-center w-7 h-7 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-0 bg-muted text-muted-foreground;
+  @apply inline-flex items-center justify-center w-7 h-4 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-0 bg-muted text-muted-foreground;
 }
 
 .flat-task-item:hover .flat-task-btn,
@@ -288,6 +318,29 @@
 /* Search Highlight */
 .flat-task-list-container :deep(mark) {
   @apply px-0.5 py-0 rounded-sm bg-warning/20 text-warning-foreground;
+}
+
+/* Scrollbar Styles */
+.flat-task-list-content::-webkit-scrollbar {
+  @apply w-1.5;
+}
+
+.flat-task-list-content::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.flat-task-list-content::-webkit-scrollbar-thumb {
+  @apply bg-border/30 rounded-full;
+}
+
+.flat-task-list-content::-webkit-scrollbar-thumb:hover {
+  @apply bg-border/50;
+}
+
+/* Firefox scrollbar styling */
+.flat-task-list-content {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.3) transparent;
 }
 
 /* Responsive Design */

@@ -14,12 +14,12 @@ const availableColorThemes = [
     description: 'Twitter 风格主题',
     primaryColor: '#1e9df1'
   },
-  {
-    id: 'vercel',
-    name: 'Vercel',
-    description: 'Vercel 极简黑白主题',
-    primaryColor: '#000000'
-  },
+  // {
+  //   id: 'vercel',
+  //   name: 'Vercel',
+  //   description: 'Vercel 极简黑白主题',
+  //   primaryColor: '#000000'
+  // },
   {
     id: 'morandi',
     name: 'Morandi Mist',

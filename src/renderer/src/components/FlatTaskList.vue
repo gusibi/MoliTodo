@@ -32,25 +32,6 @@
 
       <!-- 扁平化任务列表 -->
       <div v-else class="flat-task-list-items">
-        <!-- 控制按钮区域 -->
-        <div v-if="!isInListView && (hasMultipleGroups || taskStore.recurringTasks.length > 0)" class="flat-task-list-controls">
-          <div class="flat-task-list-controls-buttons">
-            <!-- 全部展开/折叠控制 - 只在非清单视图且有多个分组时显示 -->
-            <template v-if="hasMultipleGroups">
-              <button @click="expandAllGroups" class="flat-task-list-control-btn"
-                :title="`全部展开 (${getShortcutText('expand')})`">
-                <i class="fas fa-expand-alt"></i>
-                全部展开
-              </button>
-              <button @click="collapseAllGroups" class="flat-task-list-control-btn"
-                :title="`全部折叠 (${getShortcutText('collapse')})`">
-                <i class="fas fa-compress-alt"></i>
-                全部折叠
-              </button>
-            </template>
-          </div>
-        </div>
-
         <!-- 按清单分组展示 -->
         <div v-for="group in groupedTasks" :key="group.id" class="flat-task-group">
           <!-- 清单标题 - 只在非清单视图中显示 -->
@@ -81,21 +62,26 @@
           <!-- 该清单下的任务 - 扁平化列表 -->
           <ul class="flat-task-group-items"
             :class="{ 'flat-task-group-collapsed': !isInListView && collapsedGroups.has(group.id) }">
-            <li v-for="task in group.tasks" :key="task.id" class="flat-task-item"
-              :class="{
-                'flat-task-item-completed': task.status === 'done',
-                'flat-task-item-in-progress': task.status === 'doing' && !isTaskOvertime(task),
-                'flat-task-item-overtime': task.status === 'doing' && isTaskOvertime(task),
-                'flat-task-item-paused': task.status === 'paused',
-                'flat-task-item-editing': isEditingTask && editingTask?.id === task.id
-              }"
-              @dblclick="!isEditingTask && handleTaskEdit(task)"
-              @mouseenter="hoveredTaskId = task.id"
-              @mouseleave="hoveredTaskId = null">
+            <div v-for="task in group.tasks" :key="task.id" class="flat-task-item-wrapper">
+              <!-- 状态指示小红点 -->
+              <div class="flat-task-status-indicator"
+                :class="{
+                  'flat-task-status-todo': task.status === 'todo',
+                  'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
+                  'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
+                  'flat-task-status-paused': task.status === 'paused',
+                  'flat-task-status-done': task.status === 'done'
+                }">
+              </div>
               
-              <!-- 任务左侧部分（包含勾选框和文本） -->
-              <div class="flat-task-left">
-                <!-- 圆形勾选框 -->
+              <li class="flat-task-item"
+                @dblclick="!isEditingTask && handleTaskEdit(task)"
+                @mouseenter="hoveredTaskId = task.id"
+                @mouseleave="hoveredTaskId = null">
+                
+                <!-- 任务左侧部分（包含勾选框和文本） -->
+                <div class="flat-task-left">
+                  <!-- 圆形勾选框 -->
                 <div class="flat-task-checkbox">
                   <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
                     @change="handleToggleComplete(task)" @click.stop />
@@ -123,10 +109,6 @@
                 <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'paused'" class="flat-task-btn flat-task-btn-resume"
                   @click.stop="handleResumeTask(task)" title="继续">
                   <i class="fas fa-play"></i>
-                </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'doing' || task.status === 'paused'"
-                  class="flat-task-btn flat-task-btn-complete" @click.stop="handleCompleteTask(task)" title="完成">
-                  <i class="fas fa-check"></i>
                 </button>
                 <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-restart"
                   @click.stop="handleRestartTask(task)" title="重新开始">
@@ -168,7 +150,8 @@
                   <span>{{ formatDuration(task.totalDuration) }}</span>
                 </div>
               </div>
-            </li>
+              </li>
+            </div>
           </ul>
         </div>
       </div>

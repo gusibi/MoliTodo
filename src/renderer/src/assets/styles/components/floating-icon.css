@@ -6,10 +6,10 @@
 /* Custom animations */
 @keyframes floating-icon-progress-blink {
   0%, 50% {
-    @apply text-success opacity-100;
+    @apply text-white opacity-100;
   }
   51%, 100% {
-    @apply text-success opacity-40;
+    @apply text-white opacity-60;
   }
 }
 
