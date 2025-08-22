@@ -105,7 +105,7 @@
 
 /* Task Item */
 .flat-task-item {
-  @apply flex justify-between items-start flex-1 py-2.5 cursor-pointer transition-all duration-200;
+  @apply flex items-start flex-1 py-2.5 cursor-pointer transition-all duration-200 gap-2;
 }
 
 .flat-task-item:hover {
@@ -139,7 +139,7 @@
 
 /* Task Left Side */
 .flat-task-left {
-  @apply flex items-center gap-3 flex-1 min-w-0 -mx-1;
+  @apply flex items-center gap-3 flex-1 min-w-0 -mx-1 overflow-hidden;
 }
 
 /* Status Indicator */
@@ -195,11 +195,11 @@
 
 /* Task Details */
 .flat-task-details {
-  @apply flex-1 min-w-0;
+  @apply flex-1 min-w-0 ;
 }
 
 .flat-task-title {
-  @apply text-xs font-medium leading-relaxed break-words text-foreground;
+  @apply text-xs font-medium leading-relaxed text-foreground whitespace-nowrap overflow-hidden text-ellipsis;
 }
 
 .flat-task-description {
@@ -249,7 +249,7 @@
 
 /* Task Right Side */
 .flat-task-right {
-  @apply flex items-center gap-1.5 flex-shrink-0 mt-0.5;
+  @apply flex items-center gap-1.5 flex-shrink-0 mt-0.5 min-w-fit;
 }
 
 /* Task Tags */
@@ -275,7 +275,7 @@
 
 /* Task Action Buttons */
 .flat-task-btn {
-  @apply inline-flex items-center justify-center w-7 h-4 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-0 bg-muted text-muted-foreground;
+  @apply inline-flex items-center justify-center w-7 h-4 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-100 bg-muted text-muted-foreground;
 }
 
 .flat-task-item:hover .flat-task-btn,
@@ -343,21 +343,3 @@
   scrollbar-color: hsl(var(--primary) / 0.3) transparent;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .flat-task-item {
-    @apply py-3;
-  }
-  
-  .flat-task-left {
-    @apply gap-2.5;
-  }
-  
-  .flat-task-title {
-    @apply text-sm;
-  }
-  
-  .flat-task-btn {
-    @apply w-8 h-8 text-sm opacity-100;
-  }
-}

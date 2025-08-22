@@ -113,10 +113,6 @@
                   @click.stop="handleRestartTask(task)" title="重新开始">
                   <i class="fas fa-redo"></i>
                 </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status !== 'done'" class="flat-task-btn flat-task-btn-edit" @click.stop="handleTaskEdit(task)"
-                  title="编辑">
-                  <i class="fas fa-edit"></i>
-                </button>
                 <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" class="flat-task-btn flat-task-btn-delete" @click.stop="handleDeleteTask(task)" title="删除">
                   <i class="fas fa-trash"></i>
                 </button>
@@ -337,41 +333,6 @@ const formatReminderTime = (reminderTime) => {
   }
 }
 
-// 格式化创建时间
-const formatCreatedTime = (createdAt) => {
-  const date = new Date(createdAt)
-  const now = new Date()
-  const diffMs = now - date
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  
-  if (diffDays === 0) {
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    if (diffHours === 0) {
-      const diffMinutes = Math.floor(diffMs / (1000 * 60))
-      return diffMinutes <= 1 ? '刚刚' : `${diffMinutes}分钟前`
-    }
-    return `${diffHours}小时前`
-  } else if (diffDays === 1) {
-    return '昨天'
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`
-  } else {
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-  }
-}
-
-// formatDuration 已从 task-utils 导入
-
-// 获取重复任务提示
-const getRecurrenceTooltip = (recurrence) => {
-  const typeMap = {
-    'daily': '每日重复',
-    'weekly': '每周重复',
-    'monthly': '每月重复',
-    'yearly': '每年重复'
-  }
-  return typeMap[recurrence.type] || '重复任务'
-}
 
 // 任务操作方法
 const handleToggleComplete = async (task) => {

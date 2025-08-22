@@ -2,40 +2,43 @@
   <!-- 竖向任务编辑区域 -->
   <div class="task-edit-vertical-container" ref="taskEditContainer">
     <div class="task-edit-vertical" :class="{ 'active': isAddingTask }">
-      <!-- 任务标题区域 -->
+      <!-- 可滚动内容区域 -->
+      <div class="task-content-scrollable">
+        <!-- 任务标题区域 -->
       <div class="task-header">
         <div class="task-header-title-wrapper">
           <!-- 复选框 -->
-          <div class="task-checkbox-wrapper">
-            <input 
-              type="checkbox" 
-              :disabled="!props.isEditing" 
-              class="task-checkbox"
-              :class="{ 'disabled': !props.isEditing }"
-            />
+          <div class="flat-task-checkbox">
+            <input type="checkbox" :id="`task-edit-${task?.id || 'new'}`" :checked="task?.status === 'done'"
+              :disabled="!props.isEditing" @change="handleToggleComplete(task)" @click.stop />
+            <label :for="`task-edit-${task?.id || 'new'}`" class="flat-checkbox-label"></label>
           </div>
           
           <!-- 任务标题输入 -->
           <div class="task-title-input-wrapper">
-            <input 
+            <textarea 
               ref="addTaskInput" 
               v-model="newTaskContent" 
-              type="text" 
               :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'"
               class="task-title-input"
+              maxlength="1000"
+              rows="1"
+              :style="{ minHeight: '1.5rem', maxHeight: '15rem' }"
               @focus="handleStartAdding" 
               @blur="handleInputBlur"
               @keyup.ctrl.enter="handleAddTask" 
               @keyup.escape="handleCancelAdding"
-            />
+              @input="autoResize"
+            ></textarea>
+            <div class="task-input-counter" v-if="isAddingTask">
+              {{ newTaskContent.length }}/1000
+            </div>
           </div>
           
           <!-- 重要性标记 -->
           <div class="task-importance-wrapper">
             <button class="task-importance-btn" :class="{ 'active': isImportant }" @click="toggleImportance">
-              <svg class="importance-icon" width="20" height="20" viewBox="0 0 20 20">
-                <path d="M10.79 3.1c.5-1 1.92-1 2.42 0l2.36 4.78 5.27.77c1.1.16 1.55 1.52.75 2.3l-3.82 3.72.9 5.25a1.35 1.35 0 01-1.96 1.42L12 18.86l-4.72 2.48a1.35 1.35 0 01-1.96-1.42l.9-5.25-3.81-3.72c-.8-.78-.36-2.14.75-2.3l5.27-.77 2.36-4.78zm1.2.94L9.75 8.6c-.2.4-.58.68-1.02.74l-5.05.74 3.66 3.56c.32.3.46.76.39 1.2l-.87 5.02 4.52-2.37c.4-.2.86-.2 1.26 0l4.51 2.37-.86-5.03c-.07-.43.07-.88.39-1.2l3.65-3.55-5.05-.74a1.35 1.35 0 01-1.01-.74L12 4.04z" fill="currentColor"/>
-              </svg>
+              <i class="fas fa-star importance-icon"></i>
             </button>
           </div>
         </div>
@@ -45,9 +48,7 @@
       <div v-if="isAddingTask" class="task-steps">
         <div class="step-add">
           <button class="step-add-btn" @click="addStep">
-            <svg class="step-add-icon" width="16" height="16" viewBox="0 0 16 16">
-              <path d="M8 2a.5.5 0 01.5.5V7H13a.5.5 0 010 1H8.5v4.5a.5.5 0 01-1 0V8H3a.5.5 0 010-1h4.5V2.5A.5.5 0 018 2z" fill="currentColor"/>
-            </svg>
+            <i class="fas fa-plus step-add-icon"></i>
           </button>
           <input 
             v-model="newStepContent" 
@@ -64,9 +65,7 @@
             <input type="checkbox" v-model="step.completed" class="step-checkbox" />
             <span class="step-content" :class="{ 'completed': step.completed }">{{ step.content }}</span>
             <button class="step-delete-btn" @click="removeStep(index)">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2.22 2.22a.75.75 0 011.06 0L6 4.94l2.72-2.72a.75.75 0 111.06 1.06L7.06 6l2.72 2.72a.75.75 0 11-1.06 1.06L6 7.06 3.28 9.78a.75.75 0 01-1.06-1.06L4.94 6 2.22 3.28a.75.75 0 010-1.06z" fill="currentColor"/>
-              </svg>
+              <i class="fas fa-times"></i>
             </button>
           </div>
         </div>
@@ -74,44 +73,20 @@
 
       <!-- 任务选项区域 -->
       <div v-if="isAddingTask" class="task-options">
-        <!-- 我的一天 -->
-        <div class="task-option-section">
-          <div class="task-option-item" :class="{ 'active': isMyDay }">
-            <button class="task-option-btn" @click="toggleMyDay">
-              <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M8 1.5c.28 0 .5.22.5.5v1a.5.5 0 01-1 0V2c0-.28.22-.5.5-.5zm0 9a3 3 0 100-6 3 3 0 000 6zm0-1a2 2 0 110-4 2 2 0 010 4zm6-2.5a.5.5 0 000-1h-1a.5.5 0 000 1h1zM8 12.5c.28 0 .5.22.5.5v1a.5.5 0 01-1 0v-1c0-.28.22-.5.5-.5zm-5.5-5.5a.5.5 0 000-1H1.5a.5.5 0 000 1H2.5zm.65-4.65c.2-.2.5-.2.7 0l.71.71a.5.5 0 11-.71.7l-.7-.7a.5.5 0 010-.71zm.7 8.3a.5.5 0 01-.7-.71l.7-.7a.5.5 0 01.71.7l-.71.71zm8.3-.7a.5.5 0 00.7-.71l-.7-.7a.5.5 0 00-.71.7l.71.71zm-.7-8.3a.5.5 0 00-.7 0l-.71.71a.5.5 0 00.7.7l.71-.7a.5.5 0 000-.71z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">{{ isMyDay ? '已添加到"我的一天"' : '添加到"我的一天"' }}</div>
-              </div>
-            </button>
-            <button v-if="isMyDay" class="task-option-delete" @click="toggleMyDay">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2.22 2.22a.75.75 0 011.06 0L6 4.94l2.72-2.72a.75.75 0 111.06 1.06L7.06 6l2.72 2.72a.75.75 0 11-1.06 1.06L6 7.06 3.28 9.78a.75.75 0 01-1.06-1.06L4.94 6 2.22 3.28a.75.75 0 010-1.06z" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
+      
         <!-- 提醒设置 -->
         <div class="task-option-section">
           <div class="task-option-item" :class="{ 'active': selectedReminder }">
             <button class="task-option-btn" @click="toggleReminderPicker">
               <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M8 1.5a4.73 4.73 0 014.78 4.29l.02.17V8.9l.74 1.78a.8.8 0 01.05.13l.01.07.01.1a.8.8 0 01-.6.78l-.09.01L12.8 12h-2.8v.13a2 2 0 01-4 0V12H3.2a.8.8 0 01-.21-.02l-.1-.03a.8.8 0 01-.48-.84l.02-.1.04-.11L3.2 8.9V5.96A4.72 4.72 0 018 1.5zm1.2 10.5h-2.4v.12a1.2 1.2 0 001.09 1.07l.11.01c.62 0 1.14-.48 1.2-1.09V12zM8 2.5a3.92 3.92 0 00-3.98 3.5L4 6.1V9l-.03.16L3.2 11h9.6l-.77-1.84L12 9V6.1A3.92 3.92 0 008 2.5z" fill="currentColor"/>
-                </svg>
+                <i class="fas fa-bell"></i>
               </div>
               <div class="task-option-content">
                 <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
               </div>
             </button>
             <button v-if="selectedReminder" class="task-option-delete" @click="clearReminder">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2.22 2.22a.75.75 0 011.06 0L6 4.94l2.72-2.72a.75.75 0 111.06 1.06L7.06 6l2.72 2.72a.75.75 0 11-1.06 1.06L6 7.06 3.28 9.78a.75.75 0 01-1.06-1.06L4.94 6 2.22 3.28a.75.75 0 010-1.06z" fill="currentColor"/>
-              </svg>
+              <i class="fas fa-times"></i>
             </button>
           </div>
           
@@ -124,9 +99,7 @@
                 class="reminder-option"
                 @click="selectCustomReminder(reminder)"
               >
-                <svg class="reminder-option-icon" width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1a6 6 0 100 12A6 6 0 008 2zm0 2a.5.5 0 01.5.5v3h2a.5.5 0 010 1h-2.5a.5.5 0 01-.5-.5v-3.5A.5.5 0 018 4z" fill="currentColor"/>
-                </svg>
+                <i class="fas fa-clock reminder-option-icon"></i>
                 <span>{{ reminder.label }}</span>
               </button>
             </div>
@@ -138,18 +111,14 @@
           <div class="task-option-item" :class="{ 'active': selectedDate }">
             <button class="task-option-btn" @click="toggleDatePicker">
               <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M5.5 8.5a.5.5 0 100-1 .5.5 0 000 1zm1 1.5a.5.5 0 11-1 0 .5.5 0 011 0zm1-1.5a.5.5 0 100-1 .5.5 0 000 1zm1 1.5a.5.5 0 11-1 0 .5.5 0 011 0zm1-1.5a.5.5 0 100-1 .5.5 0 000 1zm3-4A2 2 0 0114 2H2a2 2 0 00-2 2v8c0 1.1.9 2 2 2h12a2 2 0 002-2V4zM1 5.5h14V12a1 1 0 01-1 1H2a1 1 0 01-1-1V5.5zM2 2h12a1 1 0 011 1v1.5H1V3a1 1 0 011-1z" fill="currentColor"/>
-                </svg>
+                <i class="fas fa-calendar-alt"></i>
               </div>
               <div class="task-option-content">
                 <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加截止日期' }}</div>
               </div>
             </button>
             <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2.22 2.22a.75.75 0 011.06 0L6 4.94l2.72-2.72a.75.75 0 111.06 1.06L7.06 6l2.72 2.72a.75.75 0 11-1.06 1.06L6 7.06 3.28 9.78a.75.75 0 01-1.06-1.06L4.94 6 2.22 3.28a.75.75 0 010-1.06z" fill="currentColor"/>
-              </svg>
+              <i class="fas fa-times"></i>
             </button>
           </div>
           
@@ -177,18 +146,14 @@
           <div class="task-option-item" :class="{ 'active': selectedRecurrence }">
             <button class="task-option-btn" @click="toggleRepeatPicker">
               <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M13.2 5.34a.4.4 0 01.24.08l.06.05.01.02A4 4 0 0110.58 12L10.4 12H5.36l1.32 1.32c.14.14.16.35.05.5l-.05.06a.4.4 0 01-.5.05l-.06-.05-2-2a.4.4 0 01-.05-.5l.05-.06 2-2a.4.4 0 01.61.5l-.05.06L5.78 11.2h.11l.14-.01H10.4a3.2 3.2 0 002.49-5.22.4.4 0 01.31-.65zm-3.88-3.22a.4.4 0 01.5-.05l.06.05 2 2 .05.06a.4.4 0 010 .44l-.05.06-2 2-.06.05a.4.4 0 01-.44 0l-.06-.05-.05-.06a.4.4 0 010-.44l.05-.06L10.22 4.8h-.11L10 4.8H5.6a3.2 3.2 0 00-2.48 5.22c.05.07.08.16.08.25a.4.4 0 01-.72.24A3.99 3.99 0 015.52 4h5.22L9.42 2.68l-.05-.06a.4.4 0 01.05-.5z" fill="currentColor"/>
-                </svg>
+                <i class="fas fa-redo"></i>
               </div>
               <div class="task-option-content">
                 <div class="task-option-title">{{ selectedRecurrence ? getRepeatDisplayText() : '重复' }}</div>
               </div>
             </button>
             <button v-if="selectedRecurrence" class="task-option-delete" @click="clearRecurrence">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2.22 2.22a.75.75 0 011.06 0L6 4.94l2.72-2.72a.75.75 0 111.06 1.06L7.06 6l2.72 2.72a.75.75 0 11-1.06 1.06L6 7.06 3.28 9.78a.75.75 0 01-1.06-1.06L4.94 6 2.22 3.28a.75.75 0 010-1.06z" fill="currentColor"/>
-              </svg>
+              <i class="fas fa-times"></i>
             </button>
           </div>
           
@@ -207,9 +172,7 @@
           <div class="task-option-item">
             <button class="task-option-btn" @click="toggleListPicker">
               <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M11.2 5.6a.8.8 0 100-1.6.8.8 0 000 1.6zm-2.3-4a1.6 1.6 0 00-1.14.46L2.42 7.4a1.6 1.6 0 000 2.27l3.96 3.96a1.6 1.6 0 002.27 0l5.3-5.3A1.6 1.6 0 0014.4 7.18V3.22a1.6 1.6 0 00-1.59-1.6L8.9 1.6zm-.58 1.04a.8.8 0 01.57-.24l3.92.02a.8.8 0 01.79.8v3.96a.8.8 0 01-.23.56l-5.3 5.31a.8.8 0 01-1.13 0L3.56 9.09a.8.8 0 010-1.13l5.35-5.34z" fill="currentColor"/>
-                </svg>
+                <i class="fas fa-tag"></i>
               </div>
               <div class="task-option-content">
                 <div class="task-option-title">{{ getSelectedListName() }}</div>
@@ -274,47 +237,33 @@
             </div>
           </div>
         </div>
-
-        <!-- 文件附件 -->
-        <div class="task-option-section">
-          <div class="task-option-item">
-            <button class="task-option-btn" @click="handleFileAttach">
-              <div class="task-option-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <path d="M3.86 8.38l4.52-4.52a2.4 2.4 0 013.4 3.39L6.4 12.64a1.2 1.2 0 01-1.7-1.7l4.8-4.8a.4.4 0 10-.56-.57l-4.8 4.8a2 2 0 002.83 2.83l5.37-5.38a3.2 3.2 0 10-4.52-4.52L3.3 7.82a.4.4 0 00.56.56z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">添加文件</div>
-              </div>
-            </button>
-            <input ref="fileInput" type="file" class="file-input" @change="handleFileChange" />
-          </div>
-        </div>
+       
       </div>
 
       <!-- 备注区域 -->
       <div v-if="isAddingTask" class="task-note">
         <div class="task-note-editor">
-          <textarea 
-            v-model="taskNote" 
-            placeholder="添加备注" 
-            class="task-note-textarea"
-            rows="3"
-          ></textarea>
-          <div v-if="taskNote" class="task-note-footer">
-            <span class="task-note-updated">更新于 刚刚</span>
+          <div class="task-note-input-wrapper">
+            <textarea 
+              v-model="taskNote" 
+              placeholder="添加备注" 
+              class="task-note-textarea"
+              maxlength="1000"
+              rows="2"
+              :style="{ minHeight: '3rem', maxHeight: '15rem' }"
+              @input="autoResizeNote"
+            ></textarea>
+            <div class="task-note-counter">{{ taskNote.length }}/1000</div>
           </div>
         </div>
+      </div>
       </div>
 
       <!-- 操作按钮区域 -->
       <div v-if="isAddingTask" class="task-actions">
         <div class="task-actions-left">
           <button class="task-action-close" @click="handleCancelAdding">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <path d="M7.34 8.4l-.8.7a.4.4 0 10.53.61l1.6-1.4a.4.4 0 000-.61l-1.6-1.4a.4.4 0 10-.53.61l.8.7H4.4a.4.4 0 000 .8h2.94zM12.8 12.8a1.6 1.6 0 001.6-1.6V4.8a1.6 1.6 0 00-1.6-1.6H3.2a1.6 1.6 0 00-1.6 1.6v6.4c0 .88.72 1.6 1.6 1.6h9.6zm.8-1.6a.8.8 0 01-.8.8h-2.4V4h2.4a.8.8 0 01.8.8v6.4zm-4-7.2v8H3.2a.8.8 0 01-.8-.8V4.8a.8.8 0 01.8-.8h6.4z" fill="currentColor"/>
-            </svg>
+            <i class="fas fa-right-to-bracket"></i>
           </button>
         </div>
         
@@ -334,9 +283,7 @@
           
           <!-- 删除按钮（仅编辑模式显示） -->
           <button v-if="props.isEditing" class="task-action-delete" @click="handleDeleteTask">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <path d="M6.8 3.2h2.4a1.2 1.2 0 00-2.4 0zm-.8 0a2 2 0 014 0h4a.4.4 0 010 .8h-.84l-.96 8.27A2.4 2.4 0 019.82 14.4H6.18a2.4 2.4 0 01-2.38-2.13L2.84 4H2a.4.4 0 010-.8h4zm-.41 9.38A1.6 1.6 0 006.18 13.6h3.64a1.6 1.6 0 001.59-1.42L12.36 4H3.64l.95 8.18zM6.8 6a.4.4 0 01.4.4v4.8a.4.4 0 01-.8 0V6.4c0-.22.18-.4.4-.4zM9.6 6.4a.4.4 0 00-.8 0v4.8a.4.4 0 00.8 0V6.4z" fill="currentColor"/>
-            </svg>
+            <i class="fas fa-trash"></i>
           </button>
         </div>
       </div>
@@ -378,7 +325,6 @@ const fileInput = ref(null)
 const newTaskContent = ref('')
 const isAddingTask = ref(false)
 const isImportant = ref(false)
-const isMyDay = ref(false)
 const taskNote = ref('')
 
 // 步骤相关状态
@@ -438,7 +384,6 @@ const resetAllStates = () => {
   isAddingTask.value = false
   newTaskContent.value = ''
   isImportant.value = false
-  isMyDay.value = false
   taskNote.value = ''
   steps.value = []
   newStepContent.value = ''
@@ -501,10 +446,6 @@ const toggleImportance = () => {
   isImportant.value = !isImportant.value
 }
 
-// 切换我的一天
-const toggleMyDay = () => {
-  isMyDay.value = !isMyDay.value
-}
 
 // 切换提醒选择器
 const toggleReminderPicker = () => {
@@ -763,21 +704,7 @@ const handleRecurrenceChange = (newRecurrence) => {
   selectedRecurrence.value = newRecurrence
 }
 
-// 处理文件附件
-const handleFileAttach = () => {
-  if (fileInput.value) {
-    fileInput.value.click()
-  }
-}
 
-// 处理文件变化
-const handleFileChange = (event) => {
-  const files = event.target.files
-  if (files && files.length > 0) {
-    // 处理文件上传逻辑
-    console.log('选择的文件:', files[0])
-  }
-}
 
 // 添加任务
 const handleAddTask = () => {
@@ -787,7 +714,6 @@ const handleAddTask = () => {
     content: newTaskContent.value.trim(),
     listId: selectedListId.value,
     isImportant: isImportant.value,
-    isMyDay: isMyDay.value,
     note: taskNote.value,
     steps: steps.value,
     dueDate: selectedDate.value,
@@ -810,6 +736,55 @@ const handleDeleteTask = () => {
   if (props.task) {
     emit('delete-task', props.task)
   }
+}
+
+// 切换任务完成状态
+const handleToggleComplete = async (task) => {
+  if (!task) return
+  
+  try {
+    if (task.status === 'done') {
+      // 如果已完成，重新开始任务
+      await taskStore.updateTask(task.id, { status: 'todo', completedAt: null })
+    } else {
+      // 如果未完成，标记为完成
+      await taskStore.completeTask(task.id)
+    }
+  } catch (error) {
+    console.error('切换任务完成状态失败:', error)
+  }
+}
+
+// 自动调整textarea高度
+const autoResize = () => {
+  const textarea = addTaskInput.value
+  if (!textarea) return
+  
+  // 重置高度以获取正确的scrollHeight
+  textarea.style.height = 'auto'
+  
+  // 计算新高度，限制在最小和最大值之间
+  const minHeight = 24 // 1.5rem = 24px
+  const maxHeight = 240 // 15rem = 240px
+  const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
+  
+  textarea.style.height = newHeight + 'px'
+}
+
+// 自动调整备注区域textarea高度
+const autoResizeNote = (event) => {
+  const textarea = event.target
+  if (!textarea) return
+  
+  // 重置高度以获取正确的scrollHeight
+  textarea.style.height = 'auto'
+  
+  // 计算新高度，限制在最小和最大值之间
+  const minHeight = 48 // 3rem = 48px (2行最小高度)
+  const maxHeight = 240 // 15rem = 240px
+  const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
+  
+  textarea.style.height = newHeight + 'px'
 }
 
 // 组件挂载时初始化
@@ -844,7 +819,6 @@ watch(() => props.isEditing, (newIsEditing) => {
     isAddingTask.value = true
     newTaskContent.value = props.task.content || ''
     isImportant.value = props.task.isImportant || false
-    isMyDay.value = props.task.isMyDay || false
     taskNote.value = props.task.note || ''
     steps.value = props.task.steps || []
     
@@ -875,6 +849,7 @@ watch(() => props.isEditing, (newIsEditing) => {
       if (addTaskInput.value) {
         addTaskInput.value.focus()
         addTaskInput.value.select()
+        autoResize()
       }
     })
   } else if (!newIsEditing) {

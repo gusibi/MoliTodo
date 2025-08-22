@@ -128,7 +128,7 @@ class WindowManager {
     this.taskManagerWindow = new BrowserWindow({
       width: 1200,
       height: 800,
-      minWidth: 800,
+      minWidth: 1000,
       minHeight: 600,
       title: 'MoliTodo - 任务管理',
       frame: false, // 禁用原生标题栏

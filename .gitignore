@@ -47,6 +47,7 @@ debug.log
 /coverage/
 .nyc_output/
 .kiro/
+.trae/
 molist/
 
 # ====================== #
