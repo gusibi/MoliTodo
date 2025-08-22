@@ -66,14 +66,28 @@
       </div>
 
       <!-- 任务视图组件容器 - 可滚动区域 -->
-      <div class="task-manager-views-container flex-1 min-h-0" :class="{
-        'overflow-auto': viewMode !== 'monthly',
-        'overflow-hidden': viewMode === 'monthly'
+      <div class="task-manager-views-container flex-1 min-h-0 flex" :class="{
+        'overflow-auto': viewMode !== 'monthly' && !showEditPanel,
+        'overflow-hidden': viewMode === 'monthly' || showEditPanel
       }">
         <!-- 列表视图 -->
-        <FlatTaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
-          @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
-          @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
+        <div class="task-list-container" :class="{ 'with-edit-panel': showEditPanel }">
+          <FlatTaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
+            @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
+            @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" 
+            @show-edit-panel="handleShowEditPanel" @hide-edit-panel="handleHideEditPanel" />
+        </div>
+        
+        <!-- 右侧编辑面板 -->
+        <div v-if="showEditPanel" class="edit-panel-container">
+          <TaskEditVertical 
+            :task="selectedTask" 
+            :is-editing="true" 
+            @update-task="handleUpdateTask" 
+            @cancel-edit="handleHideEditPanel" 
+            @delete-task="handleDeleteTaskFromPanel"
+          />
+        </div>
 
         <!-- 月视图 -->
         <MonthlyView v-else-if="viewMode === 'monthly'" :tasks="displayTasks" :loading="loading"
@@ -127,6 +141,7 @@ import { useTaskStore } from '@/store/taskStore'
 import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
+import TaskEditVertical from './TaskEditVertical.vue'
 
 
 const taskStore = useTaskStore()
@@ -139,6 +154,10 @@ const showSearchOptions = ref(false)
 // 新增状态
 const showSearchBox = ref(false)
 const viewMode = ref('list') // 'list', 'kanban', 或 'weekly'
+
+// 编辑面板相关状态
+const showEditPanel = ref(false)
+const selectedTask = ref(null)
 // 计算属性：根据当前分类和视图模式获取对应的显示已完成任务状态
 const showCompletedTasks = computed({
   get: () => {
@@ -306,6 +325,17 @@ const setViewMode = (mode) => {
 
 const toggleCompletedTasks = () => {
   showCompletedTasks.value = !showCompletedTasks.value
+}
+
+// 编辑面板相关方法
+const handleShowEditPanel = (task) => {
+  selectedTask.value = task
+  showEditPanel.value = true
+}
+
+const handleHideEditPanel = () => {
+  showEditPanel.value = false
+  selectedTask.value = null
 }
 
 // 分类信息方法
@@ -531,6 +561,46 @@ watch(() => taskStore.searchQuery, (newQuery) => {
 
 // 不需要监听分类变化来重置状态，因为每个分类都有独立的状态
 </script>
+
+<style scoped>
+/* 挤压式布局样式 */
+.task-views-container {
+  transition: all 0.3s ease;
+}
+
+.task-views-container.flex {
+  display: flex;
+  height: 100%;
+}
+
+.task-list-container {
+  flex: 1;
+  min-width: 0;
+  transition: all 0.3s ease;
+}
+
+.task-list-container.with-panel {
+  flex: 0 0 calc(100% - 450px);
+}
+
+.edit-panel-container {
+  flex: 0 0 450px;
+  border-left: 1px solid #e5e5e5;
+  background: white;
+  overflow-y: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .task-list-container.with-panel {
+    flex: 0 0 calc(100% - 100vw);
+  }
+  
+  .edit-panel-container {
+    flex: 0 0 100vw;
+  }
+}
+</style>
 
 <style>
 @import '../assets/styles/components/task-manager.css';

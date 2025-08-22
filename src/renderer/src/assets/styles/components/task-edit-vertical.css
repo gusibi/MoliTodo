@@ -1,0 +1,356 @@
+/* TaskEditVertical 组件样式 - 使用 Tailwind CSS 和主题色 */
+
+.task-edit-vertical-container {
+  @apply w-full h-full m-0 p-0;
+}
+
+.task-edit-vertical {
+  @apply bg-white rounded-none shadow-none p-4 transition-all duration-200 h-full overflow-y-auto;
+}
+
+.task-edit-vertical.active {
+  @apply shadow-lg;
+}
+
+/* 任务标题区域 */
+.task-edit-vertical .task-header {
+  @apply mb-4;
+}
+
+.task-edit-vertical .task-header-title-wrapper {
+  @apply flex items-center gap-3;
+}
+
+.task-edit-vertical .task-checkbox-wrapper {
+  @apply flex-shrink-0;
+}
+
+.task-edit-vertical .task-checkbox {
+  @apply w-5 h-5 rounded-full border-2 border-gray-300 cursor-pointer;
+}
+
+.task-edit-vertical .task-checkbox.disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+
+.task-edit-vertical .task-title-input-wrapper {
+  @apply flex-1;
+}
+
+.task-edit-vertical .task-title-input {
+  @apply w-full border-none outline-none text-base font-medium text-gray-800 bg-transparent py-2;
+}
+
+.task-edit-vertical .task-title-input::placeholder {
+  @apply text-gray-400;
+}
+
+.task-edit-vertical .task-importance-wrapper {
+  @apply flex-shrink-0;
+}
+
+.task-edit-vertical .task-importance-btn {
+  @apply w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-gray-400 transition-all duration-200;
+}
+
+.task-edit-vertical .task-importance-btn:hover {
+  @apply bg-gray-100 text-gray-500;
+}
+
+.task-edit-vertical .task-importance-btn.active {
+  @apply text-amber-500;
+}
+
+.task-edit-vertical .importance-icon {
+  @apply w-4 h-4;
+}
+
+/* 步骤区域 */
+.task-edit-vertical .task-steps {
+  @apply mb-4 pl-8;
+}
+
+.task-edit-vertical .step-add {
+  @apply flex items-center gap-2 mb-2;
+}
+
+.task-edit-vertical .step-add-btn {
+  @apply w-5 h-5 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-gray-400 transition-all duration-200;
+}
+
+.task-edit-vertical .step-add-btn:hover {
+  @apply bg-gray-100 text-gray-500;
+}
+
+.task-edit-vertical .step-add-icon {
+  @apply w-3 h-3;
+}
+
+.task-edit-vertical .step-add-input {
+  @apply flex-1 border-none outline-none text-sm text-gray-800 bg-transparent py-1;
+}
+
+.task-edit-vertical .step-add-input::placeholder {
+  @apply text-gray-400;
+}
+
+.task-edit-vertical .steps-list {
+  @apply flex flex-col gap-1;
+}
+
+.task-edit-vertical .step-item {
+  @apply flex items-center gap-2 py-1;
+}
+
+.task-edit-vertical .step-checkbox {
+  @apply w-4 h-4 rounded border border-gray-300 cursor-pointer;
+}
+
+.task-edit-vertical .step-content {
+  @apply flex-1 text-sm text-gray-800;
+}
+
+.task-edit-vertical .step-content.completed {
+  @apply line-through text-gray-400;
+}
+
+.task-edit-vertical .step-delete-btn {
+  @apply w-4 h-4 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-gray-400 opacity-0 transition-all duration-200;
+}
+
+.task-edit-vertical .step-item:hover .step-delete-btn {
+  @apply opacity-100;
+}
+
+.task-edit-vertical .step-delete-btn:hover {
+  @apply bg-red-100 text-red-600;
+}
+
+/* 任务选项区域 */
+.task-edit-vertical .task-options {
+  @apply mb-4;
+}
+
+.task-edit-vertical .task-option-section {
+  @apply relative mb-2;
+}
+
+.task-edit-vertical .task-option-item {
+  @apply flex items-center justify-between rounded-md transition-all duration-200;
+}
+
+.task-edit-vertical .task-option-item:hover {
+  @apply bg-gray-50;
+}
+
+.task-edit-vertical .task-option-item.active {
+  @apply bg-blue-50 border border-blue-200;
+}
+
+.task-edit-vertical .task-option-btn {
+  @apply flex-1 flex items-center gap-3 p-3 border-none bg-transparent cursor-pointer rounded-md text-left;
+}
+
+.task-edit-vertical .task-option-icon {
+  @apply w-5 h-5 flex items-center justify-center text-gray-500 flex-shrink-0;
+}
+
+.task-edit-vertical .task-option-content {
+  @apply flex-1;
+}
+
+.task-edit-vertical .task-option-title {
+  @apply text-sm text-gray-800 font-medium;
+}
+
+.task-edit-vertical .task-option-delete {
+  @apply w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-gray-400 mr-2 transition-all duration-200;
+}
+
+.task-edit-vertical .task-option-delete:hover {
+  @apply bg-red-100 text-red-600;
+}
+
+/* 下拉菜单 */
+.task-edit-vertical .task-option-dropdown {
+  @apply absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mt-1 overflow-y-auto;
+}
+
+/* 提醒选项 */
+.task-edit-vertical .reminder-options {
+  @apply p-2;
+}
+
+.task-edit-vertical .reminder-option {
+  @apply w-full flex items-center gap-2 py-2 px-3 border-none bg-transparent cursor-pointer rounded-md text-left text-sm text-gray-800 transition-all duration-200;
+}
+
+.task-edit-vertical .reminder-option:hover {
+  @apply bg-gray-100;
+}
+
+.task-edit-vertical .reminder-option-icon {
+  @apply w-4 h-4 text-gray-500 flex-shrink-0;
+}
+
+/* 日期选择器 */
+.task-edit-vertical .date-picker {
+  @apply p-3 flex gap-2;
+}
+
+.task-edit-vertical .date-input,
+.task-edit-vertical .time-input {
+  @apply flex-1 py-2 px-3 border border-gray-300 rounded-md text-sm text-gray-800 outline-none transition-all duration-200;
+}
+
+.task-edit-vertical .date-input:focus,
+.task-edit-vertical .time-input:focus {
+  @apply border-blue-500 ring-2 ring-blue-100;
+}
+
+/* 列表选项 */
+.task-edit-vertical .list-options {
+  @apply p-2;
+}
+
+.task-edit-vertical .current-list {
+  @apply mb-2;
+}
+
+.task-edit-vertical .current-list-label {
+  @apply text-xs text-gray-500 font-medium py-1 px-3 mb-1;
+}
+
+.task-edit-vertical .list-separator {
+  @apply h-px bg-gray-200 my-2;
+}
+
+.task-edit-vertical .other-lists-label {
+  @apply text-xs text-gray-500 font-medium py-1 px-3 mb-1;
+}
+
+.task-edit-vertical .list-option {
+  @apply w-full flex items-center gap-3 py-2 px-3 border-none bg-transparent cursor-pointer rounded-md text-left text-sm text-gray-800 transition-all duration-200;
+}
+
+.task-edit-vertical .list-option:hover {
+  @apply bg-gray-100;
+}
+
+.task-edit-vertical .list-option.active {
+  @apply bg-blue-50 text-blue-600;
+}
+
+.task-edit-vertical .list-option.current-list-option {
+  @apply bg-green-50 border border-green-200;
+}
+
+.task-edit-vertical .list-icon {
+  @apply w-4 h-4 flex items-center justify-center flex-shrink-0;
+}
+
+.task-edit-vertical .list-name {
+  @apply flex-1 font-medium;
+}
+
+/* 文件输入 */
+.task-edit-vertical .file-input {
+  @apply hidden;
+}
+
+/* 备注区域 */
+.task-edit-vertical .task-note {
+  @apply mb-4;
+}
+
+.task-edit-vertical .task-note-editor {
+  @apply border border-gray-200 rounded-md overflow-hidden;
+}
+
+.task-edit-vertical .task-note-textarea {
+  @apply w-full border-none outline-none p-3 text-sm text-gray-800 bg-white resize-y min-h-20 ;
+}
+
+.task-edit-vertical .task-note-textarea::placeholder {
+  @apply text-gray-400;
+}
+
+.task-edit-vertical .task-note-footer {
+  @apply py-2 px-3 bg-gray-50 border-t border-gray-200;
+}
+
+.task-edit-vertical .task-note-updated {
+  @apply text-xs text-gray-500;
+}
+
+/* 操作按钮区域 */
+.task-edit-vertical .task-actions {
+  @apply flex items-center justify-between pt-4 border-t border-gray-200;
+}
+
+.task-edit-vertical .task-actions-left {
+  @apply flex items-center gap-2;
+}
+
+.task-edit-vertical .task-actions-center {
+  @apply flex-1 flex justify-center;
+}
+
+.task-edit-vertical .task-actions-right {
+  @apply flex items-center gap-2;
+}
+
+.task-edit-vertical .task-action-close {
+  @apply w-8 h-8 border-none bg-transparent cursor-pointer rounded-md flex items-center justify-center text-gray-500 transition-all duration-200;
+}
+
+.task-edit-vertical .task-action-close:hover {
+  @apply bg-gray-100 text-gray-700;
+}
+
+.task-edit-vertical .task-created-date {
+  @apply text-xs text-gray-500;
+}
+
+.task-edit-vertical .task-action-save {
+  @apply py-2 px-4 border-none bg-blue-600 text-white rounded-md text-sm font-medium cursor-pointer transition-all duration-200;
+}
+
+.task-edit-vertical .task-action-save:hover {
+  @apply bg-blue-700;
+}
+
+.task-edit-vertical .task-action-delete {
+  @apply w-8 h-8 border-none bg-transparent cursor-pointer rounded-md flex items-center justify-center text-gray-500 transition-all duration-200;
+}
+
+.task-edit-vertical .task-action-delete:hover {
+  @apply bg-red-100 text-red-600;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .task-edit-vertical-container {
+    @apply max-w-full px-4;
+  }
+  
+  .task-edit-vertical {
+    @apply p-3;
+  }
+  
+  .task-edit-vertical .task-header-title-wrapper {
+    @apply gap-2;
+  }
+  
+  .task-edit-vertical .task-title-input {
+    @apply text-sm;
+  }
+  
+  .task-edit-vertical .task-option-btn {
+    @apply p-2.5;
+  }
+  
+  .task-edit-vertical .task-option-title {
+    @apply text-xs;
+  }
+}

@@ -170,3 +170,36 @@
     @apply opacity-100 transform translate-x-[-50%] translate-y-0;
   }
 }
+
+/* 挤压式布局样式 */
+.task-views-container {
+  @apply transition-all duration-300;
+}
+
+.task-views-container.layout-flex {
+  @apply flex h-full;
+}
+
+.task-list-container {
+  @apply flex-1 min-w-0 transition-all duration-300;
+}
+
+.task-list-container.with-edit-panel {
+  flex: 0 0 calc(100% - 280px);
+}
+
+.edit-panel-container {
+  @apply flex-none w-[280px] border-l border-border bg-background overflow-y-auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .task-list-container.with-edit-panel {
+    flex: 0 0 calc(100% - 100vw);
+  }
+  
+  .edit-panel-container {
+    @apply w-full;
+    flex: 0 0 100vw;
+  }
+}

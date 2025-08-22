@@ -1,8 +1,7 @@
 <template>
-  <div class="flat-task-list-container">
+  <div class="flat-task-list-container" @click="handleContainerClick">
     <!-- 添加任务区域 -->
-    <TaskEdit ref="taskEditRef" :task="editingTask" :is-editing="isEditingTask" @add-task="handleAddTask"
-      @update-task="handleUpdateTask" @cancel-edit="handleCancelEdit" />
+    <TaskEdit ref="taskEditRef" :task="null" :is-editing="false" @add-task="handleAddTask" />
 
     <!-- 任务列表内容区域 -->
     <div class="flat-task-list-content">
@@ -75,7 +74,7 @@
               </div>
               
               <li class="flat-task-item"
-                @dblclick="!isEditingTask && handleTaskEdit(task)"
+                @click="handleTaskClick(task)"
                 @mouseenter="hoveredTaskId = task.id"
                 @mouseleave="hoveredTaskId = null">
                 
@@ -185,7 +184,9 @@ const emit = defineEmits([
   'update-task',
   'edit-task',
   'show-tooltip',
-  'hide-tooltip'
+  'hide-tooltip',
+  'show-edit-panel',
+  'hide-edit-panel'
 ])
 
 // 编辑状态管理
@@ -485,6 +486,23 @@ const handleUpdateTask = (taskData) => {
 const handleCancelEdit = () => {
   editingTask.value = null
   isEditingTask.value = false
+}
+
+// 任务点击处理 - 发射事件给父组件
+const handleTaskClick = (task) => {
+  if (task.status === 'done') {
+    return
+  }
+  emit('show-edit-panel', task)
+}
+
+// 容器点击处理 - 隐藏右侧面板
+const handleContainerClick = (event) => {
+  // 如果点击的是任务项或其子元素，不隐藏面板
+  if (event.target.closest('.flat-task-item')) {
+    return
+  }
+  emit('hide-edit-panel')
 }
 
 // 快捷键处理
