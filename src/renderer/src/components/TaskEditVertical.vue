@@ -10,7 +10,7 @@
           <!-- 复选框 -->
           <div class="flat-task-checkbox">
             <input type="checkbox" :id="`task-edit-${task?.id || 'new'}`" :checked="task?.status === 'done'"
-              :disabled="!props.isEditing" @change="handleToggleComplete(task)" @click.stop />
+              @change="handleToggleComplete(task)" @click.stop />
             <label :for="`task-edit-${task?.id || 'new'}`" class="flat-checkbox-label"></label>
           </div>
           
@@ -36,16 +36,16 @@
           </div>
           
           <!-- 重要性标记 -->
-          <div class="task-importance-wrapper">
+          <!-- <div class="task-importance-wrapper">
             <button class="task-importance-btn" :class="{ 'active': isImportant }" @click="toggleImportance">
               <i class="fas fa-star importance-icon"></i>
             </button>
-          </div>
+          </div> -->
         </div>
       </div>
 
       <!-- 步骤区域 -->
-      <div v-if="isAddingTask" class="task-steps">
+      <!-- <div v-if="isAddingTask" class="task-steps">
         <div class="step-add">
           <button class="step-add-btn" @click="addStep">
             <i class="fas fa-plus step-add-icon"></i>
@@ -59,7 +59,6 @@
           />
         </div>
         
-        <!-- 步骤列表 -->
         <div v-if="steps.length > 0" class="steps-list">
           <div v-for="(step, index) in steps" :key="index" class="step-item">
             <input type="checkbox" v-model="step.completed" class="step-checkbox" />
@@ -69,7 +68,7 @@
             </button>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- 任务选项区域 -->
       <div v-if="isAddingTask" class="task-options">
@@ -114,7 +113,7 @@
                 <i class="fas fa-calendar-alt"></i>
               </div>
               <div class="task-option-content">
-                <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加截止日期' }}</div>
+                <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}</div>
               </div>
             </button>
             <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
@@ -706,28 +705,146 @@ const handleRecurrenceChange = (newRecurrence) => {
 
 
 
-// 添加任务
-const handleAddTask = () => {
+// 计算并验证提醒时间的合并方法
+const calculateAndValidateReminderTime = () => {
+  console.log('=== 计算并验证提醒时间 ===')
+
+  let reminderTime = null
+  let reminderConfig = null
+  let isValid = true
+
+  // 处理普通任务的提醒时间
+  if (selectedReminder.value) {
+    if (selectedDate.value && selectedTime.value) {
+      // 使用日期时间选择器中的时间
+      const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
+      reminderTime = new Date(customReminderStr).toISOString()
+    }else if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
+      reminderTime = selectedReminder.value.reminderTime
+      reminderConfig = selectedReminder.value.config
+    }
+  } else if (selectedDate.value && selectedTime.value) {
+    // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
+    const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
+    reminderTime = new Date(customReminderStr).toISOString()
+  }
+
+  console.log("reminderTime------: ", reminderTime)
+
+  // 验证提醒时间是否有效
+  if (reminderTime) {
+    const now = new Date()
+    const reminderDateTime = new Date(reminderTime)
+    isValid = reminderDateTime > now
+    console.log('提醒时间验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+  } else if (!selectedReminder.value && !selectedDate.value) {
+    console.log('没有提醒设置，验证通过')
+    isValid = true
+  }
+
+  // 确保 reminderConfig 是可序列化的
+  let cleanReminderConfig = null
+  if (reminderConfig) {
+    cleanReminderConfig = {
+      type: reminderConfig.type,
+      value: reminderConfig.value,
+      unit: reminderConfig.unit,
+      time: reminderConfig.time,
+      dayOffset: reminderConfig.dayOffset,
+      label: reminderConfig.label,
+      id: reminderConfig.id
+    }
+    console.log('清理后的提醒配置:', cleanReminderConfig)
+  }
+
+  return { reminderTime, cleanReminderConfig, isValid }
+}
+
+// 添加/更新任务
+const handleAddTask = async () => {
   if (!newTaskContent.value.trim()) return
+
+  // 计算并验证提醒时间, 如果是循环任务，这里不校验,且提醒时间需要置空,在存储时动态生成
+  const { reminderTime, cleanReminderConfig, isValid } = calculateAndValidateReminderTime()
+  if (!isValid && !selectedRecurrence.value) {
+    alert('提醒时间不能设置为过去的时间，请重新选择')
+    return
+  }
+  console.log("reminderTime: ", reminderTime)
+  console.log("cleanReminderConfig: ", cleanReminderConfig)
 
   const taskData = {
     content: newTaskContent.value.trim(),
-    listId: selectedListId.value,
-    isImportant: isImportant.value,
-    note: taskNote.value,
-    steps: steps.value,
     dueDate: selectedDate.value,
     dueTime: selectedTime.value,
-    reminderTime: selectedReminder.value?.reminderTime,
-    reminderConfig: selectedReminder.value?.config,
-    recurrence: selectedRecurrence.value
+    reminderTime: reminderTime,
+    reminderConfig: cleanReminderConfig,
+    listId: selectedListId.value,
+    recurrence: selectedRecurrence.value || null
   }
 
-  if (props.isEditing) {
-    emit('update-task', { ...props.task, ...taskData })
+  console.log('准备发送的 taskData 序列化测试:', JSON.stringify(taskData))
+
+  if (props.isEditing && props.task) {
+    // 编辑模式，处理重复任务的更新逻辑
+    try {
+      // 清理重复规则对象，确保可序列化
+      const cleanRecurrence = selectedRecurrence.value ? {
+        type: selectedRecurrence.value.type,
+        interval: selectedRecurrence.value.interval,
+        daysOfWeek: selectedRecurrence.value.daysOfWeek || [],
+        byMonthDay: selectedRecurrence.value.byMonthDay || null,
+        byWeekDay: selectedRecurrence.value.byWeekDay || null,
+        byMonth: selectedRecurrence.value.byMonth || null,
+        endCondition: selectedRecurrence.value.endCondition || null,
+        reminderTime: selectedRecurrence.value.reminderTime || null
+      } : null
+      
+      const updates = {
+        content: newTaskContent.value.trim(),
+        dueDate: selectedDate.value || null,
+        dueTime: selectedTime.value || null,
+        reminderTime: reminderTime,
+        reminderConfig: cleanReminderConfig,
+        listId: selectedListId.value,
+        recurrence: cleanRecurrence
+      }
+
+      console.log("updates: ----", updates)
+      
+      if (props.task.seriesId && selectedRecurrence.value) {
+        // 更新重复任务系列
+        console.log("更新重复任务系列, 当前是子任务: ", props.task.seriesId)
+        await taskStore.updateRecurringTask(props.task.id, updates)
+        handleCancelAdding()
+      } else if (selectedRecurrence.value && !props.task.seriesId) {
+        // 将普通任务转换为重复任务
+        console.log("将普通任务转换为重复任务: ", props.task.id)
+        await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
+        handleCancelAdding()
+      } else if (!selectedRecurrence.value && props.task.seriesId) {
+        console.log("将重复任务转换为普通任务, : ", props.task.seriesId)
+        // 将重复任务转换为普通任务
+        await taskStore.updateTask(props.task.id, {
+          ...updates,
+          seriesId: null,
+          recurrence: null
+        })
+        handleCancelAdding()
+      } else {
+        // 更新普通任务
+        taskData.id = props.task.id
+        emit('update-task', taskData)
+        handleCancelAdding()
+      }
+    } catch (error) {
+      console.error('更新任务失败:', error)
+    }
   } else {
+    // 添加模式，发送添加事件
+    console.log("add task: taskData: ", taskData)
     emit('add-task', taskData)
-    resetAllStates()
+    handleCancelAdding()
   }
 }
 
@@ -746,9 +863,15 @@ const handleToggleComplete = async (task) => {
     if (task.status === 'done') {
       // 如果已完成，重新开始任务
       await taskStore.updateTask(task.id, { status: 'todo', completedAt: null })
+      // 立即更新本地task状态
+      task.status = 'todo'
+      task.completedAt = null
     } else {
       // 如果未完成，标记为完成
       await taskStore.completeTask(task.id)
+      // 立即更新本地task状态
+      task.status = 'done'
+      task.completedAt = new Date().toISOString()
     }
   } catch (error) {
     console.error('切换任务完成状态失败:', error)
@@ -813,49 +936,84 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
+// 加载任务数据的通用函数
+const loadTaskData = () => {
+  if (!props.task) return
+  
+  isAddingTask.value = true
+  newTaskContent.value = props.task.content || ''
+  isImportant.value = props.task.isImportant || false
+  taskNote.value = props.task.note || ''
+  steps.value = props.task.steps || []
+  
+  // 优先使用reminderTime，如果没有则使用dueDate/dueTime
+  if (props.task.reminderTime) {
+    const reminderDate = new Date(props.task.reminderTime)
+    selectedDate.value = getLocalDateString(reminderDate)
+    selectedTime.value = reminderDate.toTimeString().slice(0, 5)
+    
+    if (props.task.reminderConfig) {
+      selectedReminder.value = {
+        value: 'custom',
+        label: props.task.reminderConfig.label,
+        config: props.task.reminderConfig,
+        reminderTime: props.task.reminderTime
+      }
+    }
+  } else {
+    selectedDate.value = props.task.dueDate || ''
+    selectedTime.value = props.task.dueTime || ''
+    selectedReminder.value = null
+  }
+  
+  if (props.task.recurrence) {
+    selectedRecurrence.value = props.task.recurrence
+  } else {
+    selectedRecurrence.value = null
+  }
+  
+  if (props.task.listId) {
+    selectedListId.value = props.task.listId
+  }
+
+  nextTick(() => {
+    if (addTaskInput.value) {
+      addTaskInput.value.focus()
+      // 将光标移动到文本末尾
+      const length = addTaskInput.value.value.length
+      addTaskInput.value.setSelectionRange(length, length)
+      autoResize()
+    }
+  })
+}
+
 // 监听编辑状态变化
 watch(() => props.isEditing, (newIsEditing) => {
   if (newIsEditing && props.task) {
-    isAddingTask.value = true
-    newTaskContent.value = props.task.content || ''
-    isImportant.value = props.task.isImportant || false
-    taskNote.value = props.task.note || ''
-    steps.value = props.task.steps || []
-    
-    selectedDate.value = props.task.dueDate || ''
-    selectedTime.value = props.task.dueTime || ''
-    
-    if (props.task.reminderTime) {
-      const reminderDate = new Date(props.task.reminderTime)
-      if (props.task.reminderConfig) {
-        selectedReminder.value = {
-          value: 'custom',
-          label: props.task.reminderConfig.label,
-          config: props.task.reminderConfig,
-          reminderTime: props.task.reminderTime
-        }
-      }
-    }
-    
-    if (props.task.recurrence) {
-      selectedRecurrence.value = props.task.recurrence
-    }
-    
-    if (props.task.listId) {
-      selectedListId.value = props.task.listId
-    }
-
-    nextTick(() => {
-      if (addTaskInput.value) {
-        addTaskInput.value.focus()
-        addTaskInput.value.select()
-        autoResize()
-      }
-    })
+    loadTaskData()
   } else if (!newIsEditing) {
     handleCancelAdding()
   }
 }, { immediate: true })
+
+// 监听任务变化 - 当点击不同任务时更新编辑区域
+watch(() => props.task, (newTask) => {
+  if (newTask) {
+    loadTaskData()
+  }
+}, { immediate: true })
+
+// 监听编辑状态和任务的组合变化
+watch(() => [props.isEditing, props.task], ([newIsEditing, newTask]) => {
+  if (newIsEditing && newTask) {
+    // 确保在编辑状态下有任务时立即加载数据
+    nextTick(() => {
+      loadTaskData()
+    })
+  }
+}, { immediate: true })
+
+
 
 // 聚焦到输入框（供父组件调用）
 const focusInput = () => {

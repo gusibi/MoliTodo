@@ -73,6 +73,7 @@
         <!-- 列表视图 -->
         <div class="task-list-container" :class="{ 'with-edit-panel': showEditPanel }">
           <FlatTaskList v-if="viewMode === 'list'" :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
+            :editing-task-id="selectedTask?.id"
             @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
             @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" 
             @show-edit-panel="handleShowEditPanel" @hide-edit-panel="handleHideEditPanel" />
@@ -85,7 +86,7 @@
             :is-editing="true" 
             @update-task="handleUpdateTask" 
             @cancel-edit="handleHideEditPanel" 
-            @delete-task="handleDeleteTaskFromPanel"
+            @delete-task="handleDeleteTask"
           />
         </div>
 
@@ -219,6 +220,9 @@ const switchCategory = (category) => {
   taskStore.setCurrentListId(null) // 切换智能分类时清除清单选择
   taskStore.clearSearch()
 
+  // 切换分类时关闭编辑面板
+  handleHideEditPanel()
+
   // 如果切换到不支持特殊视图的分类，则自动切换到列表视图
   if (viewMode.value === 'monthly' && !['all', 'planned'].includes(category)) {
     viewMode.value = 'list'
@@ -243,6 +247,28 @@ const handleAddTask = async (taskData) => {
     console.error('添加任务失败:', error)
   }
 }
+
+
+const handleDeleteTask = async (task) => {
+  if (confirm('确定要删除这个任务吗？')) {
+    try {
+      await taskStore.deleteTask(task.id)
+      
+      // 删除成功后，自动选择列表中的第一个任务
+      const availableTasks = displayTasks.value.filter(t => t.status !== 'done')
+      if (availableTasks.length > 0) {
+        selectedTask.value = availableTasks[0]
+        showEditPanel.value = true
+      } else {
+        // 如果没有可用任务，隐藏编辑面板
+        handleHideEditPanel()
+      }
+    } catch (error) {
+      console.error('删除任务失败:', error)
+    }
+  }
+}
+
 
 const handleUpdateTask = async (taskData) => {
   try {
@@ -537,6 +563,11 @@ watch(() => taskStore.searchQuery, (newQuery) => {
   if (!newQuery) {
     showSearchOptions.value = false
   }
+})
+
+// 监听列表切换，关闭编辑面板
+watch(() => taskStore.currentListId, () => {
+  handleHideEditPanel()
 })
 
 // 不需要监听分类变化来重置状态，因为每个分类都有独立的状态

@@ -6,7 +6,50 @@
 }
 
 .flat-task-list-content {
-  @apply flex-1 overflow-y-auto px-1;
+  @apply flex flex-col flex-1 overflow-hidden px-1;
+}
+
+/* Quick Add Section */
+.flat-task-list-quick-add {
+  @apply sticky bottom-0 px-6 py-4 bg-background/95 backdrop-blur-sm  z-10 mt-auto;
+}
+
+.flat-task-list-input-container {
+  @apply flex items-center gap-3 px-3 py-2.5 border border-input rounded-lg bg-border transition-all duration-200;
+}
+
+.flat-task-list-input-container:focus-within {
+  @apply border-ring ring-2 ring-ring/20;
+}
+
+.flat-task-list-icon {
+  @apply flex items-center justify-center text-muted-foreground transition-colors duration-200;
+}
+
+.flat-task-list-input {
+  @apply flex-1 text-base bg-transparent text-foreground outline-none placeholder-muted-foreground;
+}
+
+/* Task List Items */
+.flat-task-list-items {
+  @apply flex-1 overflow-y-auto;
+}
+
+/* Custom Scrollbar for Task List */
+.flat-task-list-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.flat-task-list-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.flat-task-list-items::-webkit-scrollbar-thumb {
+  @apply bg-border/60 rounded-full;
+}
+
+.flat-task-list-items::-webkit-scrollbar-thumb:hover {
+  @apply bg-border;
 }
 
 /* Loading and Empty States */
@@ -96,7 +139,7 @@
 
 /* Task Item Wrapper */
 .flat-task-item-wrapper {
-  @apply flex items-center mx-1 border-b border-status-doing/10;
+  @apply relative w-full border-b border-border/30 px-2;
 }
 
 .flat-task-item-wrapper:last-child {
@@ -105,10 +148,11 @@
 
 /* Task Item */
 .flat-task-item {
-  @apply flex items-start flex-1 py-2.5 cursor-pointer transition-all duration-200 gap-2;
+  @apply flex items-start w-full py-2.5 cursor-pointer transition-all duration-200 gap-2;
 }
 
-.flat-task-item:hover {
+.flat-task-item:hover,
+.flat-task-item-editing {
   @apply bg-muted;
 }
 
@@ -119,6 +163,10 @@
 
 .flat-task-item-completed .flat-task-title {
   @apply line-through text-muted-foreground;
+}
+
+.flat-task-item-completed .flat-task-description {
+  @apply line-through text-muted-foreground opacity-70;
 }
 
 .flat-task-item-in-progress {
@@ -144,7 +192,7 @@
 
 /* Status Indicator */
 .flat-task-status-indicator {
-  @apply w-2 h-2 rounded-full flex-shrink-0 mr-2;
+  @apply w-2 h-2 rounded-full flex-shrink-0 mr-2 self-center;
 }
 
 .flat-task-status-todo {
@@ -164,7 +212,6 @@
 }
 
 .flat-task-status-done {
-  @apply bg-status-done;
 }
 
 /* Checkbox */
@@ -206,8 +253,13 @@
   @apply text-xs my-1 leading-snug text-muted-foreground;
 }
 
+/* Time Info Container */
+.flat-task-time-info {
+  @apply flex items-center gap-2 mt-1 flex-wrap;
+}
+
 .flat-task-reminder-time {
-  @apply text-2xs flex items-center gap-1 flex-shrink-0 ml-auto text-status-todo px-2 py-1 bg-status-todo/10;
+  @apply text-2xs flex items-center gap-1 flex-shrink-0 text-status-todo px-2 py-1 bg-status-todo/10 rounded-md;
 }
 
 .flat-task-reminder-time-overdue {
@@ -223,7 +275,7 @@
 }
 
 .flat-task-time {
-  @apply mr-2 text-2xs flex items-center gap-1 flex-shrink-0 ml-auto text-muted-foreground  bg-muted-foreground/10 px-2 py-1;
+  @apply text-2xs flex items-center gap-1 flex-shrink-0 text-muted-foreground bg-muted-foreground/10 px-2 py-1 rounded-md;
 }
 
 .flat-task-time-overdue {
@@ -249,7 +301,7 @@
 
 /* Task Right Side */
 .flat-task-right {
-  @apply flex items-center gap-1.5 flex-shrink-0 mt-0.5 min-w-fit;
+  @apply flex items-center gap-1.5 flex-shrink-0 mt-0.5 min-w-fit ml-auto;
 }
 
 /* Task Tags */
@@ -322,7 +374,7 @@
 
 /* Scrollbar Styles */
 .flat-task-list-content::-webkit-scrollbar {
-  @apply w-1.5;
+  @apply w-0.5;
 }
 
 .flat-task-list-content::-webkit-scrollbar-track {

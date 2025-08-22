@@ -62,92 +62,36 @@
           <ul class="flat-task-group-items"
             :class="{ 'flat-task-group-collapsed': !isInListView && collapsedGroups.has(group.id) }">
             <div v-for="task in group.tasks" :key="task.id" class="flat-task-item-wrapper">
-              <!-- 状态指示小红点 -->
-              <div class="flat-task-status-indicator"
-                :class="{
-                  'flat-task-status-todo': task.status === 'todo',
-                  'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
-                  'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
-                  'flat-task-status-paused': task.status === 'paused',
-                  'flat-task-status-done': task.status === 'done'
-                }">
-              </div>
-              
-              <li class="flat-task-item"
-                @click="handleTaskClick(task)"
+              <FlatTaskItem
+                :task="task"
+                :search-query="searchQuery"
+                :time-update-trigger="timeUpdateTrigger"
+                :is-editing="editingTaskId === task.id"
+                :is-hovered="hoveredTaskId === task.id"
+                @task-click="handleTaskClick"
                 @mouseenter="hoveredTaskId = task.id"
-                @mouseleave="hoveredTaskId = null">
-                
-                <!-- 任务左侧部分（包含勾选框和文本） -->
-                <div class="flat-task-left">
-                  <!-- 圆形勾选框 -->
-                <div class="flat-task-checkbox">
-                  <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
-                    @change="handleToggleComplete(task)" @click.stop />
-                  <label :for="`flat-task-${task.id}`" class="flat-checkbox-label"></label>
-                </div>
-                
-                <!-- 任务详情 -->
-                <div class="flat-task-details">
-                  <div class="flat-task-title" v-html="getHighlightedContent(task)"></div>
-                  <div v-if="task.description" class="flat-task-description">{{ task.description }}</div>
-                </div>
-              </div>
-
-              <!-- 任务右侧标签和操作 - 单行水平对齐 -->
-              <div class="flat-task-right">
-                <!-- 任务操作按钮 - 悬浮时显示 -->
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'todo'" class="flat-task-btn flat-task-btn-start"
-                  @click.stop="handleStartTask(task)" title="开始">
-                  <i class="fas fa-play"></i>
-                </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'doing'" class="flat-task-btn flat-task-btn-pause"
-                  @click.stop="handlePauseTask(task)" title="暂停">
-                  <i class="fas fa-pause"></i>
-                </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'paused'" class="flat-task-btn flat-task-btn-resume"
-                  @click.stop="handleResumeTask(task)" title="继续">
-                  <i class="fas fa-play"></i>
-                </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-restart"
-                  @click.stop="handleRestartTask(task)" title="重新开始">
-                  <i class="fas fa-redo"></i>
-                </button>
-                <button v-show="hoveredTaskId === task.id || (isEditingTask && editingTask?.id === task.id)" class="flat-task-btn flat-task-btn-delete" @click.stop="handleDeleteTask(task)" title="删除">
-                  <i class="fas fa-trash"></i>
-                </button>
-
-             
-
-                <!-- 提醒时间 -->
-                <div class="flat-task-reminder-time" v-if="task.reminderTime" :class="{
-                  'flat-task-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'
-                }">
-                  <i class="fas fa-calendar"></i>
-                  <span>{{ formatReminderTime(task.reminderTime) }}</span>
-                </div>
-                
-                <!-- 进行时间 -->
-                <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="flat-task-time flat-task-time-doing">
-                  <i class="fas fa-play"></i>
-                  <span>{{ formatDuration(getCurrentDuration(task)) }}</span>
-                </div>
-                <div v-else-if="task.status === 'doing' && isTaskOvertime(task)" class="flat-task-time flat-task-time-overtime">
-                  <i class="fas fa-clock"></i>
-                  <span>{{ formatDuration(getCurrentDuration(task)) }}</span>
-                </div>
-                <div v-else-if="task.status === 'paused'" class="flat-task-time flat-task-time-paused">
-                  <i class="fas fa-pause"></i>
-                  <span>{{ formatDuration(task.totalDuration || 0) }}</span>
-                </div>
-                <div v-else-if="task.status === 'done' && task.totalDuration" class="flat-task-time flat-task-time-completed">
-                  <i class="fas fa-check"></i>
-                  <span>{{ formatDuration(task.totalDuration) }}</span>
-                </div>
-              </div>
-              </li>
+                @mouseleave="hoveredTaskId = null"
+              />
             </div>
           </ul>
+        </div>
+      </div>
+
+      <!-- 快速添加框 -->
+      <div class="flat-task-list-quick-add">
+        <div class="flat-task-list-input-container">
+          <!-- 左侧图标 -->
+          <div class="flat-task-list-icon">
+            <svg v-if="!newTaskContent.trim()" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+            </svg>
+          </div>
+          <input v-model="newTaskContent" type="text" class="flat-task-list-input" placeholder="添加新任务..." maxlength="200"
+            @keypress.enter="addTask" ref="quickAddInput">
         </div>
       </div>
     </div>
@@ -157,7 +101,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
-import { isTaskOvertime, formatDuration } from '../utils/task-utils'
+import FlatTaskItem from './FlatTaskItem.vue'
 
 // 定义 props
 const props = defineProps({
@@ -172,6 +116,10 @@ const props = defineProps({
   searchQuery: {
     type: String,
     default: ''
+  },
+  editingTaskId: {
+    type: [Number, String],
+    default: null
   }
 })
 
@@ -190,8 +138,9 @@ const editingTask = ref(null)
 const isEditingTask = ref(false)
 const hoveredTaskId = ref(null)
 
-// TaskEdit组件引用
-const taskEditRef = ref(null)
+// 快速添加相关
+const newTaskContent = ref('')
+const quickAddInput = ref(null)
 
 // 折叠状态管理
 const collapsedGroups = ref(new Set())
@@ -295,121 +244,35 @@ const groupedTasks = computed(() => {
 // 计算属性：是否有多个分组
 const hasMultipleGroups = computed(() => groupedTasks.value.length > 1)
 
-// 获取任务当前持续时间
-const getCurrentDuration = (task) => {
-  timeUpdateTrigger.value // 触发响应式更新
-  if (task.status !== 'doing' || !task.startedAt) return 0
-  return Date.now() - new Date(task.startedAt).getTime() + (task.totalDuration || 0)
-}
 
-// 使用统一的工具函数
-
-// 获取高亮内容
-const getHighlightedContent = (task) => {
-  if (!props.searchQuery) return task.content
-  const regex = new RegExp(`(${props.searchQuery})`, 'gi')
-  return task.content.replace(regex, '<mark>$1</mark>')
-}
-
-
-
-// 格式化提醒时间
-const formatReminderTime = (reminderTime) => {
-  const date = new Date(reminderTime)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const taskDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  
-  const diffDays = Math.floor((taskDate - today) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays === 0) {
-    return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else if (diffDays === 1) {
-    return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else if (diffDays === -1) {
-    return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else {
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  }
-}
-
-
-// 任务操作方法
-const handleToggleComplete = async (task) => {
-  try {
-    if (task.status === 'done') {
-      // 如果已完成，重新开始任务
-      await taskStore.updateTask(task.id, { status: 'todo', completedAt: null })
-    } else {
-      // 如果未完成，标记为完成
-      await taskStore.completeTask(task.id)
-    }
-  } catch (error) {
-    console.error('切换任务完成状态失败:', error)
-  }
-}
-
-const handleStartTask = async (task) => {
-  try {
-    console.log('开始任务 - 当前状态:', task.status, '任务ID:', task.id)
-    await taskStore.startTask(task.id)
-  } catch (error) {
-    console.error('开始任务失败:', error)
-  }
-}
-
-const handlePauseTask = async (task) => {
-  try {
-    console.log('暂停任务 - 当前状态:', task.status, '任务ID:', task.id)
-    await taskStore.pauseTask(task.id)
-  } catch (error) {
-    console.error('暂停任务失败:', error)
-  }
-}
-
-const handleResumeTask = async (task) => {
-  try {
-    console.log('继续任务 - 当前状态:', task.status, '任务ID:', task.id)
-    await taskStore.startTask(task.id) // resume 实际上就是重新开始
-  } catch (error) {
-    console.error('继续任务失败:', error)
-  }
-}
-
-const handleCompleteTask = async (task) => {
-  try {
-    await taskStore.completeTask(task.id)
-  } catch (error) {
-    console.error('完成任务失败:', error)
-  }
-}
-
-const handleRestartTask = async (task) => {
-  try {
-    await taskStore.updateTask(task.id, {
-      status: 'todo',
-      completedAt: null,
-      startTime: null,
-      totalDuration: 0
-    })
-  } catch (error) {
-    console.error('重新开始任务失败:', error)
-  }
-}
-
-const handleDeleteTask = async (task) => {
-  if (confirm('确定要删除这个任务吗？')) {
-    try {
-      await taskStore.deleteTask(task.id)
-    } catch (error) {
-      console.error('删除任务失败:', error)
-    }
-  }
-}
 
 // 添加任务处理
 const handleAddTask = (taskData) => {
   emit('add-task', taskData)
+}
+
+// 快速添加任务
+const addTask = async () => {
+  const content = newTaskContent.value.trim()
+  if (!content) return
+
+  try {
+    const taskData = { content }
+    
+    // 如果当前在清单中，添加 listId
+    if (taskStore.currentListId !== null) {
+      taskData.listId = taskStore.currentListId
+    }
+    
+    await taskStore.createTask(taskData)
+    newTaskContent.value = ''
+
+    if (quickAddInput.value) {
+      quickAddInput.value.focus()
+    }
+  } catch (error) {
+    console.error('添加任务失败:', error)
+  }
 }
 
 // 任务编辑处理
@@ -472,8 +335,8 @@ const handleKeydown = (event) => {
 
 // 聚焦到添加任务输入框
 const focusAddTaskInput = () => {
-  if (taskEditRef.value && taskEditRef.value.focusInput) {
-    taskEditRef.value.focusInput()
+  if (quickAddInput.value) {
+    quickAddInput.value.focus()
   }
 }
 
@@ -561,6 +424,8 @@ onUnmounted(() => {
   stopTimeUpdateTimer()
   document.removeEventListener('keydown', handleKeydown)
 })
+
+
 </script>
 
 <style>
