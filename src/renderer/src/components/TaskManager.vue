@@ -102,28 +102,7 @@
       </div>
 
       <!-- 统计信息条 - 固定在底部 -->
-      <div class="task-manager-stats-bar flex-shrink-0">
-        <div class="task-manager-stats-item">
-          <span class="task-manager-stats-label">总任务:</span>
-          <span class="task-manager-stats-value">{{ displayTasks.length }}</span>
-        </div>
-        <div class="task-manager-stats-item">
-          <span class="task-manager-stats-label">已完成:</span>
-          <span class="task-manager-stats-value">{{ taskStore.statusCounts.done }}</span>
-        </div>
-        <div class="task-manager-stats-item">
-          <span class="task-manager-stats-label">进行中:</span>
-          <span class="task-manager-stats-value">{{ taskStore.statusCounts.doing }}</span>
-        </div>
-        <div class="task-manager-stats-item">
-          <span class="task-manager-stats-label">暂停中:</span>
-          <span class="task-manager-stats-value">{{ taskStore.statusCounts.paused }}</span>
-        </div>
-        <div class="task-manager-stats-item">
-          <span class="task-manager-stats-label">总耗时:</span>
-          <span class="task-manager-stats-value">{{ taskStore.formatDuration(taskStore.totalDuration) }}</span>
-        </div>
-      </div>
+      <!-- <TaskStatsBar :display-tasks="displayTasks" /> -->
     </main>
 
 
@@ -142,6 +121,7 @@ import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
+import TaskStatsBar from './TaskStatsBar.vue'
 
 
 const taskStore = useTaskStore()
@@ -561,46 +541,6 @@ watch(() => taskStore.searchQuery, (newQuery) => {
 
 // 不需要监听分类变化来重置状态，因为每个分类都有独立的状态
 </script>
-
-<style scoped>
-/* 挤压式布局样式 */
-.task-views-container {
-  transition: all 0.3s ease;
-}
-
-.task-views-container.flex {
-  display: flex;
-  height: 100%;
-}
-
-.task-list-container {
-  flex: 1;
-  min-width: 0;
-  transition: all 0.3s ease;
-}
-
-.task-list-container.with-panel {
-  flex: 0 0 calc(100% - 450px);
-}
-
-.edit-panel-container {
-  flex: 0 0 450px;
-  border-left: 1px solid #e5e5e5;
-  background: white;
-  overflow-y: auto;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .task-list-container.with-panel {
-    flex: 0 0 calc(100% - 100vw);
-  }
-  
-  .edit-panel-container {
-    flex: 0 0 100vw;
-  }
-}
-</style>
 
 <style>
 @import '../assets/styles/components/task-manager.css';

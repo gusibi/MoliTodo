@@ -1,7 +1,7 @@
 <template>
   <div class="flat-task-list-container" @click="handleContainerClick">
     <!-- 添加任务区域 -->
-    <TaskEdit ref="taskEditRef" :task="null" :is-editing="false" @add-task="handleAddTask" />
+    <!-- <TaskEdit ref="taskEditRef" :task="null" :is-editing="false" @add-task="handleAddTask" /> -->
 
     <!-- 任务列表内容区域 -->
     <div class="flat-task-list-content">
@@ -160,8 +160,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import TaskEdit from './TaskEdit.vue'
 import { useTaskStore } from '@/store/taskStore'
+import { isTaskOvertime, formatDuration } from '../utils/task-utils'
 
 // 定义 props
 const props = defineProps({
@@ -306,12 +306,7 @@ const getCurrentDuration = (task) => {
   return Date.now() - new Date(task.startedAt).getTime() + (task.totalDuration || 0)
 }
 
-// 判断任务是否超时
-const isTaskOvertime = (task) => {
-  if (task.status !== 'doing' || !task.startedAt) return false
-  const currentDuration = getCurrentDuration(task)
-  return currentDuration > 2 * 60 * 60 * 1000 // 超过2小时
-}
+// 使用统一的工具函数
 
 // 获取高亮内容
 const getHighlightedContent = (task) => {
@@ -365,18 +360,7 @@ const formatCreatedTime = (createdAt) => {
   }
 }
 
-// 格式化持续时间
-const formatDuration = (duration) => {
-  if (!duration) return '0分钟'
-  
-  const hours = Math.floor(duration / (1000 * 60 * 60))
-  const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60))
-  
-  if (hours > 0) {
-    return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`
-  }
-  return `${minutes}分钟`
-}
+// formatDuration 已从 task-utils 导入
 
 // 获取重复任务提示
 const getRecurrenceTooltip = (recurrence) => {

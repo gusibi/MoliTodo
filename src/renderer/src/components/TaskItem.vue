@@ -106,6 +106,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useTaskStore } from '../store/taskStore'
+import { formatDuration } from '../utils/task-utils'
 
 const taskStore = useTaskStore()
 
@@ -210,22 +211,7 @@ const isTaskOvertime = computed(() => {
   return new Date(props.task.reminderTime) < new Date()
 })
 
-// 格式化持续时间
-const formatDuration = (duration) => {
-  if (!duration) return '0分钟'
-
-  const hours = Math.floor(duration / 3600000)
-  const minutes = Math.floor((duration % 3600000) / 60000)
-  const seconds = Math.floor((duration % 60000) / 1000)
-
-  if (hours > 0) {
-    return `${hours}小时${minutes}分钟`
-  } else if (minutes > 0) {
-    return `${minutes}分钟${seconds}秒`
-  } else {
-    return `${seconds}秒`
-  }
-}
+// formatDuration 已从 task-utils 导入
 
 // 格式化提醒时间
 const formatReminderTime = (timestamp) => {

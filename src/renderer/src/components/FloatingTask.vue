@@ -81,6 +81,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, h } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
+import { formatDuration } from '../utils/task-utils'
 
 const props = defineProps({
   taskId: {
@@ -239,21 +240,7 @@ const updateDuration = () => {
   currentDuration.value = totalDuration
 }
 
-const formatDuration = (milliseconds) => {
-  if (!milliseconds) return '0分钟'
-
-  const hours = Math.floor(milliseconds / 3600000)
-  const minutes = Math.floor((milliseconds % 3600000) / 60000)
-  const seconds = Math.floor((milliseconds % 60000) / 1000)
-
-  if (hours > 0) {
-    return `${hours}小时${minutes}分钟`
-  } else if (minutes > 0) {
-    return `${minutes}分钟${seconds}秒`
-  } else {
-    return `${seconds}秒`
-  }
-}
+// formatDuration 已从 task-utils 导入
 
 const formatReminderTime = (timestamp) => {
   return taskStore.formatTimeDisplay(timestamp, 'reminder')

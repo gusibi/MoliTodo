@@ -319,6 +319,7 @@ import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import { playNotificationSound, getAvailableSounds } from '../utils/notificationSound.js'
 import { useTaskStore } from '../store/taskStore'
+import { formatDuration } from '../utils/task-utils'
 
 // 使用 taskStore
 const taskStore = useTaskStore()
@@ -648,20 +649,7 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-const formatDuration = (milliseconds) => {
-  if (!milliseconds) return '0分钟'
-  const hours = Math.floor(milliseconds / (1000 * 60 * 60))
-  const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60))
-  const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000)
-
-  if (hours > 0) {
-    return `${hours}小时${minutes}分钟`
-  } else if (minutes > 0) {
-    return `${minutes}分钟${seconds}秒`
-  } else {
-    return `${seconds}秒`
-  }
-}
+// formatDuration 已从 task-utils 导入
 
 // 自定义提醒管理方法
 const addCustomReminder = async () => {

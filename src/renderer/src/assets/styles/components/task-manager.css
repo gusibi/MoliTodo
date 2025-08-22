@@ -173,33 +173,39 @@
 
 /* 挤压式布局样式 */
 .task-views-container {
-  @apply transition-all duration-300;
+  @apply transition-all duration-300 ease-in-out;
 }
 
 .task-views-container.layout-flex {
-  @apply flex h-full;
+  display: flex;
+  height: 100%;
+}
+
+.task-views-container.flex {
+  display: flex;
+  height: 100%;
 }
 
 .task-list-container {
-  @apply flex-1 min-w-0 transition-all duration-300;
+  @apply flex-1 min-w-0 transition-all duration-300 ease-in-out;
 }
 
-.task-list-container.with-edit-panel {
+.task-list-container.with-panel {
   flex: 0 0 calc(100% - 280px);
 }
 
 .edit-panel-container {
-  @apply flex-none w-[280px] border-l border-border bg-background overflow-y-auto;
+  @apply border-l border-gray-200 bg-white overflow-y-auto;
+  flex: 0 0 280px;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .task-list-container.with-edit-panel {
+  .task-list-container.with-panel {
     flex: 0 0 calc(100% - 100vw);
   }
   
   .edit-panel-container {
-    @apply w-full;
     flex: 0 0 100vw;
   }
 }
