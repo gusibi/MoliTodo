@@ -113,11 +113,11 @@
 }
 
 .flat-task-group-title {
-  @apply flex items-center w-full;
+  @apply flex items-center w-full text-base;
 }
 
 .flat-task-group-info {
-  @apply flex items-center gap-2 font-medium text-sm;
+  @apply flex items-center gap-2 font-medium;
 }
 
 .flat-task-group-count {
