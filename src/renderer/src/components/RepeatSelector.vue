@@ -1,16 +1,5 @@
 <template>
   <div class="repeat-selector">
-    <div class="repeat-selector-header">
-      <label class="repeat-selector-title">重复设置</label>
-      <button 
-        class="repeat-selector-toggle"
-        :class="{ 'active': isEnabled }"
-        @click="toggleRepeat"
-      >
-        {{ isEnabled ? '开启' : '关闭' }}
-      </button>
-    </div>
-
     <div v-if="isEnabled" class="repeat-selector-content">
       <!-- 重复类型选择 -->
       <div class="section">

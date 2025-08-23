@@ -2,7 +2,7 @@
 
 /* 主容器 */
 .repeat-selector {
-  @apply bg-card border border-border rounded-l p-4 mb-4;
+  @apply bg-card p-4;
 }
 
 /* 头部区域 */

@@ -63,7 +63,7 @@
 }
 
 .task-edit-vertical .task-header-title-wrapper {
-  @apply flex items-center gap-3;
+  @apply flex items-center gap-3 border-b;
 }
 
 .task-edit-vertical .task-checkbox-wrapper {
@@ -186,6 +186,10 @@
   @apply relative mb-1;
 }
 
+.task-edit-vertical .task-option-section-list {
+  @apply relative mb-1 border-b;
+}
+
 .task-edit-vertical .task-option-item {
   @apply flex items-center justify-between rounded-md transition-all duration-200;
 }
@@ -220,6 +224,39 @@
 
 .task-edit-vertical .task-option-delete:hover {
   @apply bg-destructive/10 text-destructive;
+}
+
+/* iOS风格开关 */
+.task-edit-vertical .task-option-switch {
+  @apply flex-shrink-0 ml-2;
+}
+
+.task-edit-vertical .switch {
+  @apply relative inline-block w-11 h-6;
+}
+
+.task-edit-vertical .switch input {
+  @apply opacity-0 w-0 h-0;
+}
+
+.task-edit-vertical .slider {
+  @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-muted rounded-full transition-all duration-300;
+}
+
+.task-edit-vertical .slider:before {
+  @apply absolute content-[''] h-4 w-4 left-1 bottom-1 bg-background rounded-full transition-all duration-300;
+}
+
+.task-edit-vertical input:checked + .slider {
+  @apply bg-primary;
+}
+
+.task-edit-vertical input:checked + .slider:before {
+  @apply transform translate-x-5;
+}
+
+.task-edit-vertical .slider:hover {
+  @apply shadow-sm;
 }
 
 /* 下拉菜单 */
@@ -337,7 +374,7 @@
 }
 
 .task-edit-vertical .task-note-editor {
-  @apply border border-border rounded-md overflow-hidden;
+  @apply border-t border-border  overflow-hidden;
 }
 
 .task-edit-vertical .task-note-input-wrapper {

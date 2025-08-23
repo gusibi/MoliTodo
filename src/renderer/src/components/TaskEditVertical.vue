@@ -72,7 +72,76 @@
 
       <!-- 任务选项区域 -->
       <div v-if="isAddingTask" class="task-options">
-      
+        <!-- 列表选择 -->
+        <div class="task-option-section-list">
+          <div class="task-option-item">
+            <button class="task-option-btn" @click="toggleListPicker">
+              <div class="task-option-icon">
+                <i class="fas fa-tag"></i>
+              </div>
+              <div class="task-option-content">
+                <div class="task-option-title">{{ getSelectedListName() }}</div>
+              </div>
+            </button>
+          </div>
+          
+          <!-- 列表选择器下拉 -->
+          <div v-if="showListPicker" class="task-option-dropdown">
+            <div class="list-options">
+              <!-- 编辑模式 -->
+              <template v-if="props.isEditing">
+                <!-- 当前任务所属列表 -->
+                <div v-if="props.task && props.task.listId" class="current-list">
+                  <div class="current-list-label">当前列表</div>
+                  <button 
+                    class="list-option current-list-option"
+                    :class="{ 'active': selectedListId === props.task.listId }"
+                    @click="selectList(getCurrentTaskList())"
+                  >
+                    <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
+                      <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
+                    </div>
+                    <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
+                  </button>
+                </div>
+
+                <!-- 分隔线 -->
+                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="list-separator"></div>
+
+                <!-- 其他可选列表 -->
+                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="other-lists-label">移动到其他列表</div>
+                <button 
+                  v-for="list in getOtherLists()" 
+                  :key="list.id" 
+                  class="list-option"
+                  :class="{ 'active': selectedListId === list.id }"
+                  @click="selectList(list)"
+                >
+                  <div class="list-icon" :style="{ color: list.color }">
+                    <i :class="`fas fa-${list.icon}`"></i>
+                  </div>
+                  <span class="list-name">{{ list.name }}</span>
+                </button>
+              </template>
+
+              <!-- 添加模式：显示所有列表 -->
+              <template v-else>
+                <button 
+                  v-for="list in availableLists" 
+                  :key="list.id" 
+                  class="list-option"
+                  :class="{ 'active': selectedListId === list.id }"
+                  @click="selectList(list)"
+                >
+                  <div class="list-icon" :style="{ color: list.color }">
+                    <i :class="`fas fa-${list.icon}`"></i>
+                  </div>
+                  <span class="list-name">{{ list.name }}</span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
         <!-- 提醒设置 -->
         <div class="task-option-section">
           <div class="task-option-item" :class="{ 'active': selectedReminder }">
@@ -142,22 +211,30 @@
 
         <!-- 重复设置 -->
         <div class="task-option-section">
-          <div class="task-option-item" :class="{ 'active': selectedRecurrence }">
-            <button class="task-option-btn" @click="toggleRepeatPicker">
+          <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
+            <div class="task-option-btn">
               <div class="task-option-icon">
                 <i class="fas fa-redo"></i>
               </div>
               <div class="task-option-content">
-                <div class="task-option-title">{{ selectedRecurrence ? getRepeatDisplayText() : '重复' }}</div>
+                <div class="task-option-title">重复</div>
               </div>
-            </button>
-            <button v-if="selectedRecurrence" class="task-option-delete" @click="clearRecurrence">
-              <i class="fas fa-times"></i>
-            </button>
+              <!-- iOS风格开关 -->
+              <div class="task-option-switch">
+                <label class="switch">
+                  <input 
+                    type="checkbox" 
+                    :checked="!!selectedRecurrence" 
+                    @change="toggleRepeatEnabled"
+                  >
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
           </div>
           
-          <!-- 重复设置下拉 -->
-          <div v-if="showRepeatPicker" class="task-option-dropdown">
+          <!-- 重复配置面板 -->
+          <div v-if="selectedRecurrence" class="task-option-dropdown">
             <RepeatSelector 
               v-model="selectedRecurrence" 
               :base-date="getBaseDate()"
@@ -166,77 +243,6 @@
           </div>
         </div>
 
-        <!-- 列表选择 -->
-        <div class="task-option-section">
-          <div class="task-option-item">
-            <button class="task-option-btn" @click="toggleListPicker">
-              <div class="task-option-icon">
-                <i class="fas fa-tag"></i>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">{{ getSelectedListName() }}</div>
-              </div>
-            </button>
-          </div>
-          
-          <!-- 列表选择器下拉 -->
-          <div v-if="showListPicker" class="task-option-dropdown">
-            <div class="list-options">
-              <!-- 编辑模式 -->
-              <template v-if="props.isEditing">
-                <!-- 当前任务所属列表 -->
-                <div v-if="props.task && props.task.listId" class="current-list">
-                  <div class="current-list-label">当前列表</div>
-                  <button 
-                    class="list-option current-list-option"
-                    :class="{ 'active': selectedListId === props.task.listId }"
-                    @click="selectList(getCurrentTaskList())"
-                  >
-                    <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
-                      <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
-                    </div>
-                    <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
-                  </button>
-                </div>
-
-                <!-- 分隔线 -->
-                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="list-separator"></div>
-
-                <!-- 其他可选列表 -->
-                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="other-lists-label">移动到其他列表</div>
-                <button 
-                  v-for="list in getOtherLists()" 
-                  :key="list.id" 
-                  class="list-option"
-                  :class="{ 'active': selectedListId === list.id }"
-                  @click="selectList(list)"
-                >
-                  <div class="list-icon" :style="{ color: list.color }">
-                    <i :class="`fas fa-${list.icon}`"></i>
-                  </div>
-                  <span class="list-name">{{ list.name }}</span>
-                </button>
-              </template>
-
-              <!-- 添加模式：显示所有列表 -->
-              <template v-else>
-                <button 
-                  v-for="list in availableLists" 
-                  :key="list.id" 
-                  class="list-option"
-                  :class="{ 'active': selectedListId === list.id }"
-                  @click="selectList(list)"
-                >
-                  <div class="list-icon" :style="{ color: list.color }">
-                    <i :class="`fas fa-${list.icon}`"></i>
-                  </div>
-                  <span class="list-name">{{ list.name }}</span>
-                </button>
-              </template>
-            </div>
-          </div>
-        </div>
-       
       </div>
 
       <!-- 备注区域 -->
@@ -248,7 +254,7 @@
               placeholder="添加备注" 
               class="task-note-textarea"
               maxlength="1000"
-              rows="2"
+              rows="5"
               :style="{ minHeight: '3rem', maxHeight: '15rem' }"
               @input="autoResizeNote"
             ></textarea>
@@ -349,7 +355,6 @@ const availableLists = lists
 
 // 重复任务相关状态
 const selectedRecurrence = ref(null)
-const showRepeatPicker = ref(false)
 
 // 使用 storeToRefs 确保响应式
 const customReminderOptions = storeCustomReminderOptions
@@ -452,15 +457,24 @@ const toggleImportance = () => {
 // 切换提醒选择器
 const toggleReminderPicker = () => {
   showReminderPicker.value = !showReminderPicker.value
-  showRepeatPicker.value = false
   showListPicker.value = false
 }
 
 
 
-// 切换重复选择器
-const toggleRepeatPicker = () => {
-  showRepeatPicker.value = !showRepeatPicker.value
+// 切换重复功能开关
+const toggleRepeatEnabled = (event) => {
+  if (event.target.checked) {
+    // 开启重复时，设置默认的重复配置
+    selectedRecurrence.value = {
+      type: 'daily',
+      interval: 1
+    }
+  } else {
+    // 关闭重复时，清除重复配置
+    selectedRecurrence.value = null
+  }
+  // 关闭其他选择器
   showReminderPicker.value = false
   showListPicker.value = false
 }
@@ -469,30 +483,8 @@ const toggleRepeatPicker = () => {
 const toggleListPicker = () => {
   showListPicker.value = !showListPicker.value
   showReminderPicker.value = false
-  showRepeatPicker.value = false
 }
 
-// 初始化默认日期和时间
-const initializeDefaultDateTime = () => {
-  if (!selectedDate.value) {
-    const now = new Date()
-    selectedDate.value = getLocalDateString(now)
-  }
-
-  if (!selectedTime.value) {
-    const now = new Date()
-    const nextHour = new Date(now)
-    nextHour.setHours(now.getHours() + 1, 0, 0, 0)
-    const hours = String(nextHour.getHours()).padStart(2, '0')
-    selectedTime.value = `${hours}:00`
-  }
-
-  // 同步设置 dateTimeValue
-  if (selectedDate.value && selectedTime.value) {
-    const dateTimeStr = `${selectedDate.value}T${selectedTime.value}:00`
-    dateTimeValue.value = new Date(dateTimeStr)
-  }
-}
 
 // 清除日期时间
 const clearDateTime = () => {
@@ -506,10 +498,7 @@ const clearReminder = () => {
   selectedReminder.value = null
 }
 
-// 清除重复设置
-const clearRecurrence = () => {
-  selectedRecurrence.value = null
-}
+
 
 // 选择自定义提醒
 const selectCustomReminder = (reminderOption) => {
@@ -612,24 +601,7 @@ const getReminderDisplayText = () => {
   return selectedReminder.value ? selectedReminder.value.label : '提醒我'
 }
 
-// 获取重复显示文本
-const getRepeatDisplayText = () => {
-  if (!selectedRecurrence.value) return '重复'
-  
-  const { type, interval } = selectedRecurrence.value
-  switch (type) {
-    case 'daily':
-      return interval === 1 ? '每天' : `每${interval}天`
-    case 'weekly':
-      return interval === 1 ? '每周' : `每${interval}周`
-    case 'monthly':
-      return interval === 1 ? '每月' : `每${interval}月`
-    case 'yearly':
-      return interval === 1 ? '每年' : `每${interval}年`
-    default:
-      return '重复'
-  }
-}
+
 
 // 获取最小日期
 const getMinDate = () => {
@@ -637,18 +609,7 @@ const getMinDate = () => {
   return getLocalDateString(today)
 }
 
-// 获取最小时间
-const getMinTime = () => {
-  const now = new Date()
-  const today = getLocalDateString(now)
 
-  if (selectedDate.value === today) {
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    return `${hours}:${minutes}`
-  }
-  return '00:00'
-}
 
 // 获取 VueDatePicker 的最小时间
 const getMinTimeForDatePicker = () => {
