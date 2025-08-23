@@ -108,35 +108,35 @@
         <!-- 截止日期 -->
         <div class="task-option-section">
           <div class="task-option-item" :class="{ 'active': selectedDate }">
-            <button class="task-option-btn" @click="toggleDatePicker">
-              <div class="task-option-icon">
-                <i class="fas fa-calendar-alt"></i>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}</div>
-              </div>
-            </button>
+            <VueDatePicker 
+              v-model="dateTimeValue"
+              :enable-time-picker="true"
+              :min-date="getMinDate()"
+              :min-time="getMinTimeForDatePicker()"
+              :format="'yyyy-MM-dd HH:mm'"
+              :preview-format="'yyyy-MM-dd HH:mm'"
+              :text-input="false"
+              :auto-apply="true"
+              :close-on-scroll="true"
+              :close-on-click-outside="true"
+              placeholder="选择日期和时间"
+              class="vue-datepicker"
+              @update:model-value="handleDateTimeChange"
+            >
+              <template #trigger>
+                <button class="task-option-btn">
+                  <div class="task-option-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                  </div>
+                  <div class="task-option-content">
+                    <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}</div>
+                  </div>
+                </button>
+              </template>
+            </VueDatePicker>
             <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
               <i class="fas fa-times"></i>
             </button>
-          </div>
-          
-          <!-- 日期选择器下拉 -->
-          <div v-if="showDatePicker" class="task-option-dropdown">
-            <div class="date-picker">
-              <input 
-                type="date" 
-                v-model="selectedDate" 
-                :min="getMinDate()" 
-                class="date-input" 
-              />
-              <input 
-                type="time" 
-                v-model="selectedTime" 
-                :min="getMinTime()" 
-                class="time-input" 
-              />
-            </div>
           </div>
         </div>
 
@@ -295,6 +295,8 @@ import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } 
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '../store/taskStore'
 import RepeatSelector from './RepeatSelector.vue'
+import VueDatePicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 // 定义 props
 const props = defineProps({
@@ -333,7 +335,8 @@ const newStepContent = ref('')
 // 日期时间相关状态
 const selectedDate = ref('')
 const selectedTime = ref('')
-const showDatePicker = ref(false)
+
+const dateTimeValue = ref(null)
 
 // 提醒相关状态
 const selectedReminder = ref(null)
@@ -388,9 +391,9 @@ const resetAllStates = () => {
   newStepContent.value = ''
   selectedDate.value = ''
   selectedTime.value = ''
+  dateTimeValue.value = null
   selectedReminder.value = null
   selectedRecurrence.value = null
-  showDatePicker.value = false
   showReminderPicker.value = false
   showListPicker.value = false
   showRepeatPicker.value = false
@@ -449,28 +452,16 @@ const toggleImportance = () => {
 // 切换提醒选择器
 const toggleReminderPicker = () => {
   showReminderPicker.value = !showReminderPicker.value
-  showDatePicker.value = false
   showRepeatPicker.value = false
   showListPicker.value = false
 }
 
-// 切换日期选择器
-const toggleDatePicker = () => {
-  showDatePicker.value = !showDatePicker.value
-  showReminderPicker.value = false
-  showRepeatPicker.value = false
-  showListPicker.value = false
-  
-  if (showDatePicker.value) {
-    initializeDefaultDateTime()
-  }
-}
+
 
 // 切换重复选择器
 const toggleRepeatPicker = () => {
   showRepeatPicker.value = !showRepeatPicker.value
   showReminderPicker.value = false
-  showDatePicker.value = false
   showListPicker.value = false
 }
 
@@ -478,7 +469,6 @@ const toggleRepeatPicker = () => {
 const toggleListPicker = () => {
   showListPicker.value = !showListPicker.value
   showReminderPicker.value = false
-  showDatePicker.value = false
   showRepeatPicker.value = false
 }
 
@@ -496,12 +486,19 @@ const initializeDefaultDateTime = () => {
     const hours = String(nextHour.getHours()).padStart(2, '0')
     selectedTime.value = `${hours}:00`
   }
+
+  // 同步设置 dateTimeValue
+  if (selectedDate.value && selectedTime.value) {
+    const dateTimeStr = `${selectedDate.value}T${selectedTime.value}:00`
+    dateTimeValue.value = new Date(dateTimeStr)
+  }
 }
 
 // 清除日期时间
 const clearDateTime = () => {
   selectedDate.value = ''
   selectedTime.value = ''
+  dateTimeValue.value = null
 }
 
 // 清除提醒
@@ -651,6 +648,36 @@ const getMinTime = () => {
     return `${hours}:${minutes}`
   }
   return '00:00'
+}
+
+// 获取 VueDatePicker 的最小时间
+const getMinTimeForDatePicker = () => {
+  const now = new Date()
+  if (dateTimeValue.value) {
+    const selectedDateObj = new Date(dateTimeValue.value)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    selectedDateObj.setHours(0, 0, 0, 0)
+    
+    if (selectedDateObj.getTime() === today.getTime()) {
+      return { hours: now.getHours(), minutes: now.getMinutes() }
+    }
+  }
+  return { hours: 0, minutes: 0 }
+}
+
+// 处理日期时间变化
+const handleDateTimeChange = (newValue) => {
+  if (newValue) {
+    const date = new Date(newValue)
+    selectedDate.value = getLocalDateString(date)
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    selectedTime.value = `${hours}:${minutes}`
+  } else {
+    selectedDate.value = ''
+    selectedTime.value = ''
+  }
 }
 
 // 格式化选中的日期
@@ -951,6 +978,7 @@ const loadTaskData = () => {
     const reminderDate = new Date(props.task.reminderTime)
     selectedDate.value = getLocalDateString(reminderDate)
     selectedTime.value = reminderDate.toTimeString().slice(0, 5)
+    dateTimeValue.value = reminderDate
     
     if (props.task.reminderConfig) {
       selectedReminder.value = {
@@ -964,6 +992,14 @@ const loadTaskData = () => {
     selectedDate.value = props.task.dueDate || ''
     selectedTime.value = props.task.dueTime || ''
     selectedReminder.value = null
+    
+    // 设置 dateTimeValue
+    if (props.task.dueDate && props.task.dueTime) {
+      const dateTimeStr = `${props.task.dueDate}T${props.task.dueTime}:00`
+      dateTimeValue.value = new Date(dateTimeStr)
+    } else {
+      dateTimeValue.value = null
+    }
   }
   
   if (props.task.recurrence) {
@@ -1030,4 +1066,5 @@ defineExpose({
 
 <style>
 @import '../assets/styles/components/task-edit-vertical.css';
+@import '../assets/styles/components/VueDatePicker.css';
 </style>

@@ -195,7 +195,7 @@
 }
 
 .edit-panel-container {
-  @apply  bg-muted-foreground overflow-y-auto shadow-lg;
+  @apply bg-muted-foreground overflow-y-auto shadow-lg border-l border-border;
   flex: 0 0 280px;
 }
 

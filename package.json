@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "0.8.9v5",
+  "version": "0.8.9v6",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -45,6 +45,7 @@
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/vue3": "^6.1.19",
+    "@vuepic/vue-datepicker": "^11.0.2",
     "electron-store": "^8.1.0",
     "node-schedule": "^2.1.1",
     "pinia": "^2.1.7",

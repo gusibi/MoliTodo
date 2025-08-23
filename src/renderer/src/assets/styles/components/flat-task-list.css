@@ -15,7 +15,7 @@
 }
 
 .flat-task-list-input-container {
-  @apply flex items-center gap-3 px-3 py-2.5 border border-input rounded-lg bg-border transition-all duration-200;
+  @apply flex items-center gap-3 px-3 py-2.5 border border-input rounded-lg bg-border/50 transition-all duration-200;
 }
 
 .flat-task-list-input-container:focus-within {
