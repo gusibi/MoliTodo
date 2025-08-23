@@ -279,7 +279,7 @@ export default {
     
     // 监听器 - 立即执行一次以处理初始状态
     watch(() => props.visible, (visible) => {
-      console.log('Dialog visibility changed:', visible, 'editingList:', props.editingList)
+      // console.log('Dialog visibility changed:', visible, 'editingList:', props.editingList)
       if (visible) {
         // 使用 nextTick 确保在 DOM 更新后再加载数据
         nextTick(() => {

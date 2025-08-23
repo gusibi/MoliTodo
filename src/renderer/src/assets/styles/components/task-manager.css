@@ -19,7 +19,7 @@
 
 /* 分类标题区域样式 */
 .task-manager-category-header {
-  @apply px-6 py-4 border-b border-border/50 bg-transparent flex items-center justify-between;
+  @apply pl-7 pr-2 py-4 border-b border-border/50 bg-transparent flex items-center justify-between;
 }
 
 .task-manager-category-title {

@@ -27,7 +27,7 @@
         <div class="flat-task-checkbox">
           <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
             @change="handleToggleComplete" @click.stop />
-          <label :for="`flat-task-${task.id}`" class="flat-checkbox-label"></label>
+          <label :for="`flat-task-${task.id}`" class="flat-checkbox-label" @click.stop></label>
         </div>
         
         <!-- 任务详情 -->

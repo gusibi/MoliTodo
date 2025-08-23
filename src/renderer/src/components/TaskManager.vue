@@ -122,7 +122,7 @@ import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
-import TaskStatsBar from './TaskStatsBar.vue'
+import { getListIconClass } from '@/utils/icon-utils'
 
 
 const taskStore = useTaskStore()
@@ -384,8 +384,8 @@ const getCurrentTitle = () => {
 }
 
 const getCurrentIcon = () => {
-  if (currentListId.value !== null && currentList.value) {
-    return `icon-${currentList.value.icon}`
+  if (currentList.value !== null && currentList.value) {
+    return getListIconClass(currentList.value.icon)
   }
   return getCategoryIcon(currentCategory.value)
 }

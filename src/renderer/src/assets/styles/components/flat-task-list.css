@@ -125,7 +125,7 @@
 }
 
 .flat-task-group-collapse-icon {
-  @apply text-xs transition-transform duration-200 text-muted-foreground;
+  @apply text-xs transition-transform duration-200 text-muted-foreground pl-2;
 }
 
 /* Task List */
@@ -139,7 +139,7 @@
 
 /* Task Item Wrapper */
 .flat-task-item-wrapper {
-  @apply relative w-full border-b border-border/30 px-2;
+  @apply relative w-full border-b border-border/30 px-1;
 }
 
 .flat-task-item-wrapper:last-child {
@@ -187,7 +187,7 @@
 
 /* Task Left Side */
 .flat-task-left {
-  @apply flex items-center gap-3 flex-1 min-w-0 -mx-1 overflow-hidden;
+  @apply flex items-center gap-3 flex-1 min-w-0 -mx-2 overflow-hidden;
 }
 
 /* Status Indicator */
@@ -216,7 +216,7 @@
 
 /* Checkbox */
 .flat-task-checkbox {
-  @apply relative flex-shrink-0 pl-2;
+  @apply relative flex-shrink-0;
 }
 
 .flat-task-checkbox input[type="checkbox"] {

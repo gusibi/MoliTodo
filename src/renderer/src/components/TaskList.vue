@@ -96,6 +96,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TaskItem from './TaskItem.vue'
 import TaskEdit from './TaskEdit.vue'
 import { useTaskStore } from '@/store/taskStore'
+import { getListIconClass } from '@/utils/icon-utils'
 
 // 定义 props
 const props = defineProps({
@@ -164,28 +165,6 @@ const taskStore = useTaskStore()
 // 计算属性：是否在清单视图中
 const isInListView = computed(() => taskStore.currentListId !== null)
 
-// 获取清单图标类名
-const getListIconClass = (icon) => {
-  const iconMap = {
-    'list': 'fas fa-list',
-    'inbox': 'fas fa-inbox',
-    'star': 'fas fa-star',
-    'heart': 'fas fa-heart',
-    'bookmark': 'fas fa-bookmark',
-    'flag': 'fas fa-flag',
-    'folder': 'fas fa-folder',
-    'briefcase': 'fas fa-briefcase',
-    'home': 'fas fa-home',
-    'user': 'fas fa-user',
-    'calendar': 'fas fa-calendar',
-    'clock': 'fas fa-clock',
-    'target': 'fas fa-bullseye',
-    'trophy': 'fas fa-trophy',
-    'book': 'fas fa-book',
-    'music': 'fas fa-music'
-  }
-  return iconMap[icon] || 'fas fa-list'
-}
 
 // 按 list 分组任务
 const groupedTasks = computed(() => {

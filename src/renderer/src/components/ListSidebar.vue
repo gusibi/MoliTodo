@@ -74,6 +74,7 @@
 import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
 import { useTaskStore } from '../store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
+import { getListIconClass } from '@/utils/icon-utils'
 
 export default {
   name: 'ListSidebar',
@@ -101,27 +102,6 @@ export default {
     const listTaskCounts = computed(() => taskStore.listTaskCounts)
 
     // 方法
-    const getListIconClass = (icon) => {
-      const iconMap = {
-        'list': 'fas fa-list',
-        'inbox': 'fas fa-inbox',
-        'star': 'fas fa-star',
-        'heart': 'fas fa-heart',
-        'bookmark': 'fas fa-bookmark',
-        'flag': 'fas fa-flag',
-        'folder': 'fas fa-folder',
-        'briefcase': 'fas fa-briefcase',
-        'home': 'fas fa-home',
-        'user': 'fas fa-user',
-        'calendar': 'fas fa-calendar',
-        'clock': 'fas fa-clock',
-        'target': 'fas fa-bullseye',
-        'trophy': 'fas fa-trophy',
-        'book': 'fas fa-book',
-        'music': 'fas fa-music'
-      }
-      return iconMap[icon] || 'fas fa-list'
-    }
 
     const selectList = (listId) => {
       taskStore.setCurrentListId(listId)

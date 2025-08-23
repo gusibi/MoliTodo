@@ -692,9 +692,9 @@ export const useTaskStore = defineStore('task', () => {
   // 开始任务
   const startTask = async (taskId) => {
     try {
-      console.log('taskStore.startTask 被调用，任务ID:', taskId)
+      // console.log('taskStore.startTask 被调用，任务ID:', taskId)
       const result = await window.electronAPI.tasks.start(taskId)
-      console.log('startTask 结果:', result)
+      // console.log('startTask 结果:', result)
       if (result.success) {
         await getAllTasks()
       } else {
