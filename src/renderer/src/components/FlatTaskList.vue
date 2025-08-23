@@ -183,6 +183,7 @@ const isInListView = computed(() => taskStore.currentListId !== null)
 const groupedTasks = computed(() => {
   const allTasks = props.tasks
   
+  console.log("allTasks:", allTasks)
   if (!allTasks || allTasks.length === 0) {
     return []
   }

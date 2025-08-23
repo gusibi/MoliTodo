@@ -33,7 +33,7 @@
         <!-- 任务详情 -->
         <div class="flat-task-details">
           <div class="flat-task-title" v-html="getHighlightedContent(task)"></div>
-          <div v-if="task.description" class="flat-task-description">{{ task.description }}</div>
+          <div v-if="task.metadata?.note" class="flat-task-description" v-html="getHighlightedNote(task)"></div>
           
           <!-- 时间信息 -->
           <div class="flat-task-time-info">
@@ -145,6 +145,13 @@ const getHighlightedContent = (task) => {
   if (!props.searchQuery) return task.content
   const regex = new RegExp(`(${props.searchQuery})`, 'gi')
   return task.content.replace(regex, '<mark>$1</mark>')
+}
+
+// 获取高亮备注内容
+const getHighlightedNote = (task) => {
+  if (!task.metadata?.note || !props.searchQuery) return task.metadata?.note || ''
+  const regex = new RegExp(`(${props.searchQuery})`, 'gi')
+  return task.metadata.note.replace(regex, '<mark>$1</mark>')
 }
 
 // 格式化提醒时间

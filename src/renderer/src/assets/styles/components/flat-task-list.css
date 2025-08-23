@@ -250,7 +250,7 @@
 }
 
 .flat-task-description {
-  @apply text-xs my-1 leading-snug text-muted-foreground;
+  @apply text-2xs my-1 leading-snug text-muted-foreground;
 }
 
 /* Time Info Container */
@@ -369,7 +369,7 @@
 
 /* Search Highlight */
 .flat-task-list-container :deep(mark) {
-  @apply px-0.5 py-0 rounded-sm bg-warning/20 text-warning-foreground;
+  @apply px-0.5 py-0 rounded-sm bg-success/20 text-success-foreground;
 }
 
 /* Scrollbar Styles */

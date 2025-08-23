@@ -237,17 +237,13 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
-    // console.log("task service updateTask updates: ------", updates)
+    console.log("task service updateTask updates: ------", updates)
     // 更新内容
     if (updates.content !== undefined) {
       task.updateContent(updates.content);
     }
 
-    // 更新描述
-    if (updates.description !== undefined) {
-      task.description = updates.description;
-    }
-
+ 
     // 更新状态
     if (updates.status !== undefined) {
       task.updateStatus(updates.status);

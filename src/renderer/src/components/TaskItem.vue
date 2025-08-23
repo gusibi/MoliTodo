@@ -7,7 +7,7 @@
     'task-item-editing': isEditing
   }]" @dblclick="!isEditing && handleEditTask" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
 
-    <!-- <button class="task-item-expand" v-if="task.description">
+    <!-- <button class="task-item-expand" v-if="task.metadata.note">
       <i class="fas fa-chevron-right"></i>
     </button>
     <div class="task-item-expand-placeholder" v-else></div>
@@ -20,7 +20,7 @@
 
     <div class="task-item-info">
       <div class="task-item-title" v-html="highlightedContent"></div>
-      <div class="task-item-description" v-if="task.description">{{ task.description }}</div>
+      <div class="task-item-description" v-if="task.metadata.note">{{ task.metadata.note }}</div>
       <div class="task-item-tags">
         <!-- 重复任务徽标 -->
         <span v-if="task.recurrence" :class="['task-item-tag', 'task-item-tag-recurring', 'tooltip-container']"

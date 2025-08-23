@@ -170,5 +170,5 @@
 
 /* 高亮搜索结果 */
 .task-item-title mark {
-  @apply bg-warning/30 text-inherit p-0 rounded-sm;
+  @apply bg-success/30 text-inherit p-0 rounded-sm;
 }

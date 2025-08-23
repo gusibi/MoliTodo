@@ -120,7 +120,7 @@ const handleEdit = () => {
 
 // Handle tooltip show
 const handleShowTooltip = (event) => {
-  const tooltipText = `${props.task.content}${props.task.description ? '\n' + props.task.description : ''}`
+  const tooltipText = `${props.task.content}${props.task.metadata.note ? '\n' + props.task.metadata.note : ''}`
   emit('show-tooltip', { event, text: tooltipText })
 }
 

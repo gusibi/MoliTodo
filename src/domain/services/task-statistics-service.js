@@ -278,7 +278,7 @@ export class TaskStatisticsService {
       // 搜索内容和描述
       if (searchOptions.content) {
         const content = searchOptions.caseSensitive ? task.content : task.content.toLowerCase()
-        const description = searchOptions.caseSensitive ? (task.description || '') : (task.description || '').toLowerCase()
+        const description = searchOptions.caseSensitive ? (task.metadata?.note || '') : (task.metadata?.note || '').toLowerCase()
         matches = matches || content.includes(searchQuery) || description.includes(searchQuery)
       }
       

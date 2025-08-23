@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+// 搜索功能通过 IPC 调用主进程
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref([])
@@ -135,12 +136,27 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 本地搜索函数
+  const searchTasksLocally = (tasks, query, options = {}) => {
+    if (!query || !query.trim()) return tasks
+    
+    const searchTerm = options.caseSensitive ? query.trim() : query.trim().toLowerCase()
+    
+    return tasks.filter(task => {
+      const content = options.caseSensitive ? task.content : task.content.toLowerCase()
+      const note = task.metadata?.note || ''
+      const description = options.caseSensitive ? note : note.toLowerCase()
+      
+      return content.includes(searchTerm) || description.includes(searchTerm)
+    })
+  }
+
   // 获取排序后的任务列表
   const getSortedTasks = (category, listId = null, includeCompleted = null) => {
     let filteredTasks = getTasksByFilter(category, listId, includeCompleted)
     
     // 应用搜索过滤
-    filteredTasks = searchTasks(filteredTasks, searchQuery.value, searchOptions.value)
+    filteredTasks = searchTasksLocally(filteredTasks, searchQuery.value, searchOptions.value)
 
     // 排序逻辑
     if (category === 'completed') {
@@ -296,52 +312,6 @@ export const useTaskStore = defineStore('task', () => {
     return taskList.filter(task => task.listId === listId)
   }
 
-  // 计算属性：根据搜索条件过滤任务
-  const searchTasks = (taskList, query, options) => {
-    if (!query) {
-      return taskList
-    }
-
-    const searchQuery = options.caseSensitive ? query : query.toLowerCase()
-
-    return taskList.filter(task => {
-      let matches = false
-
-      // 搜索内容和描述
-      if (options.content) {
-        const content = options.caseSensitive ? task.content : task.content.toLowerCase()
-        const description = options.caseSensitive ? (task.description || '') : (task.description || '').toLowerCase()
-        matches = matches || content.includes(searchQuery) || description.includes(searchQuery)
-      }
-
-      // 搜索状态
-      if (options.status) {
-        const statusText = getStatusText(task.status)
-        const status = options.caseSensitive ? statusText : statusText.toLowerCase()
-        matches = matches || status.includes(searchQuery)
-      }
-
-      // 搜索日期
-      if (options.date) {
-        const dateTexts = [
-          task.createdAt ? formatTimeDisplay(task.createdAt, 'created') : '',
-          task.reminderTime ? formatTimeDisplay(task.reminderTime, 'reminder') : '',
-          task.completedAt ? formatTimeDisplay(task.completedAt, 'created') : ''
-        ]
-
-        for (const dateText of dateTexts) {
-          const date = options.caseSensitive ? dateText : dateText.toLowerCase()
-          if (date.includes(searchQuery)) {
-            matches = true
-            break
-          }
-        }
-      }
-
-      return matches
-    })
-  }
-
   // 计算属性：过滤后的任务
   const filteredTasks = computed(() => {
     let result = tasks.value
@@ -353,7 +323,7 @@ export const useTaskStore = defineStore('task', () => {
     result = filterTasksByCategory(result, currentCategory.value)
 
     // 根据搜索条件过滤
-    result = searchTasks(result, searchQuery.value, searchOptions.value)
+    result = searchTasksLocally(result, searchQuery.value, searchOptions.value)
 
     // 排序逻辑
     if (currentCategory.value === 'completed') {
@@ -650,6 +620,7 @@ export const useTaskStore = defineStore('task', () => {
   // 更新任务
   const updateTask = async (taskId, updates) => {
     try {
+      console.log("updates-----:", updates)
       const result = await window.electronAPI.tasks.update(taskId, updates)
       if (result.success) {
         await getAllTasks() // 重新获取任务列表

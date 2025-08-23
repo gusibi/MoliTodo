@@ -807,7 +807,10 @@ const handleAddTask = async () => {
     reminderTime: reminderTime,
     reminderConfig: cleanReminderConfig,
     listId: selectedListId.value,
-    recurrence: selectedRecurrence.value || null
+    recurrence: selectedRecurrence.value || null,
+    metadata: {
+      note: taskNote.value?.trim() || ''
+    }
   }
 
   console.log('准备发送的 taskData 序列化测试:', JSON.stringify(taskData))
@@ -834,7 +837,10 @@ const handleAddTask = async () => {
         reminderTime: reminderTime,
         reminderConfig: cleanReminderConfig,
         listId: selectedListId.value,
-        recurrence: cleanRecurrence
+        recurrence: cleanRecurrence,
+        metadata: {
+          note: taskNote.value?.trim() || ''
+        }
       }
 
       console.log("updates: ----", updates)
@@ -970,7 +976,7 @@ const loadTaskData = () => {
   isAddingTask.value = true
   newTaskContent.value = props.task.content || ''
   isImportant.value = props.task.isImportant || false
-  taskNote.value = props.task.note || ''
+  taskNote.value = props.task.metadata?.note || ''
   steps.value = props.task.steps || []
   
   // 优先使用reminderTime，如果没有则使用dueDate/dueTime
