@@ -15,17 +15,19 @@
       <!-- 重复类型选择 -->
       <div class="section">
         <label class="section-label">重复频率</label>
-        <div class="repeat-type-options">
-          <button
-            v-for="type in repeatTypes"
-            :key="type.value"
-            class="repeat-type-button"
-            :class="{ 'active': recurrence.type === type.value }"
-            @click="setRepeatType(type.value)"
+        <select 
+          v-model="recurrence.type" 
+          @change="setRepeatType(recurrence.type)"
+          class="repeat-type-select"
+        >
+          <option 
+            v-for="type in repeatTypes" 
+            :key="type.value" 
+            :value="type.value"
           >
             {{ type.label }}
-          </button>
-        </div>
+          </option>
+        </select>
       </div>
 
       <!-- 间隔设置 -->
@@ -234,11 +236,18 @@
       <div class="section">
         <label class="section-label">提醒时间</label>
         <div class="reminder-time-input">
-          <input
-            type="time"
-            v-model="reminderTime"
-            class="time-input"
-            @change="updateReminderTime"
+          <VueDatePicker
+            v-model="reminderTimeValue"
+            :time-picker="true"
+            :format="'HH:mm'"
+            :preview-format="'HH:mm'"
+            :text-input="false"
+            :auto-apply="true"
+            :close-on-scroll="true"
+            :close-on-click-outside="true"
+            placeholder="选择提醒时间"
+            class="vue-datepicker repeat-time-picker"
+            @update:model-value="updateReminderTime"
           />
           <span class="reminder-hint">为每个重复实例设置提醒时间</span>
         </div>
@@ -247,59 +256,46 @@
       <!-- 结束条件 -->
       <div class="section">
         <label class="section-label">结束条件</label>
-        <div class="end-condition-options">
-          <label class="end-option">
-            <input
-              type="radio"
-              :value="'never'"
-              v-model="endConditionType"
-              @change="updateEndCondition"
-              class="end-radio"
+        <div class="end-condition-container">
+          <select 
+            v-model="endConditionType" 
+            @change="updateEndCondition"
+            class="end-condition-select"
+          >
+            <option value="never">永不结束</option>
+            <option value="date">结束日期</option>
+            <option value="count">重复次数</option>
+          </select>
+          
+          <div v-if="endConditionType === 'date'" class="end-condition-input">
+            <VueDatePicker
+              v-model="endDateValue"
+              :enable-time-picker="false"
+              :format="'yyyy-MM-dd'"
+              :preview-format="'yyyy-MM-dd'"
+              :text-input="false"
+              :auto-apply="true"
+              :close-on-scroll="true"
+              :close-on-click-outside="true"
+              placeholder="选择结束日期"
+              class="vue-datepicker repeate-date-picker"
+              @update:model-value="updateEndDate"
             />
-            <span class="end-option-text">永不结束</span>
-          </label>
-          <label class="end-option">
-            <input
-              type="radio"
-              :value="'date'"
-              v-model="endConditionType"
-              @change="updateEndCondition"
-              class="end-radio"
-            />
-            <div class="end-option-content">
-              <span class="end-option-text">结束日期</span>
+          </div>
+          
+          <div v-if="endConditionType === 'count'" class="end-condition-input">
+            <div class="end-count-group">
               <input
-                v-if="endConditionType === 'date'"
-                type="date"
-                v-model="endDate"
-                class="end-date-input"
+                type="number"
+                v-model.number="endCount"
+                min="1"
+                max="999"
+                class="interval-input"
                 @change="updateEndCondition"
               />
+              <span class="end-count-unit">次</span>
             </div>
-          </label>
-          <label class="end-option">
-            <input
-              type="radio"
-              :value="'count'"
-              v-model="endConditionType"
-              @change="updateEndCondition"
-              class="end-radio"
-            />
-            <div class="end-option-content">
-              <span class="end-option-text">重复次数</span>
-              <div v-if="endConditionType === 'count'" class="end-count-group">
-                <input
-                  type="number"
-                  v-model.number="endCount"
-                  min="1"
-                  max="999"
-                  class="end-count-input"
-                  @change="updateEndCondition"
-                />
-                <span class="end-count-unit">次</span>
-              </div>
-            </div>
-          </label>
+          </div>
         </div>
       </div>
 
@@ -314,6 +310,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import VueDatePicker from '@vuepic/vue-datepicker'
 
 const props = defineProps({
   modelValue: {
@@ -358,6 +355,8 @@ const endCount = ref(1)
 const monthlyType = ref('byMonthDay')
 const yearlyType = ref('byMonthDay')
 const reminderTime = ref('')
+const reminderTimeValue = ref(null)
+const endDateValue = ref(null)
 
 // 常量数据
 const repeatTypes = [
@@ -461,13 +460,47 @@ const updateMonthlyType = () => {
   emitUpdate()
 }
 
-const updateReminderTime = () => {
-  if (reminderTime.value) {
+const updateReminderTime = (value) => {
+  if (value) {
+    let hours, minutes
+    
+    if (typeof value === 'string') {
+      // 如果是字符串格式 "HH:mm"
+      const timeParts = value.split(':')
+      hours = timeParts[0]
+      minutes = timeParts[1]
+    } else if (value instanceof Date) {
+      // 如果是 Date 对象
+      hours = value.getHours().toString().padStart(2, '0')
+      minutes = value.getMinutes().toString().padStart(2, '0')
+    } else if (value.hours !== undefined && value.minutes !== undefined) {
+      // 如果是对象格式 {hours: x, minutes: y}
+      hours = value.hours.toString().padStart(2, '0')
+      minutes = value.minutes.toString().padStart(2, '0')
+    } else {
+      console.warn('未知的时间格式:', value)
+      return
+    }
+    
+    reminderTime.value = `${hours}:${minutes}`
     recurrence.value.reminderTime = reminderTime.value
   } else {
+    reminderTime.value = ''
     delete recurrence.value.reminderTime
   }
   emitUpdate()
+}
+
+const updateEndDate = (value) => {
+  if (value) {
+    const year = value.getFullYear()
+    const month = (value.getMonth() + 1).toString().padStart(2, '0')
+    const day = value.getDate().toString().padStart(2, '0')
+    endDate.value = `${year}-${month}-${day}`
+  } else {
+    endDate.value = ''
+  }
+  updateEndCondition()
 }
 
 const updateEndCondition = () => {
@@ -747,6 +780,9 @@ onMounted(() => {
     // 初始化提醒时间
     if (recurrence.value.reminderTime) {
       reminderTime.value = recurrence.value.reminderTime
+      const [hours, minutes] = recurrence.value.reminderTime.split(':')
+      reminderTimeValue.value = new Date()
+      reminderTimeValue.value.setHours(parseInt(hours), parseInt(minutes), 0, 0)
     }
     
     // 初始化结束条件
@@ -755,6 +791,7 @@ onMounted(() => {
       endConditionType.value = type
       if (type === 'date' && end) {
         endDate.value = end
+        endDateValue.value = new Date(end)
       } else if (type === 'count' && count) {
         endCount.value = count
       }

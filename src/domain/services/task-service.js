@@ -237,7 +237,11 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
-    console.log("task service updateTask updates: ------", updates)
+    console.log("[updateTask] task service updateTask updates: ------", updates)
+
+    if (task.reminderTime === null && updates.reminderTime === null && updates.recurrence && updates.recurrence != ""){ // 如果重复配置有值, 尝试获取第一次的提醒时间
+        reminderTime = this.calculateRecurringReminderTime(updates.recurrence, updates.reminderTime);
+    }
     // 更新内容
     if (updates.content !== undefined) {
       task.updateContent(updates.content);
@@ -762,6 +766,7 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async updateRecurringTask(taskId, updates, recurrence = null) {
+    console.log("[updateRecurringTask] taskId: ", taskId, recurrence)
     // 如果有重复规则且包含提醒时间，重新计算提醒时间
     if (recurrence && recurrence.reminderTime) {
       updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);

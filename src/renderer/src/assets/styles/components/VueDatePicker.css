@@ -5,7 +5,7 @@
 
 /* 输入框样式 */
 .task-edit-vertical .dp__input {
-  @apply py-1.5 px-2 border border-border rounded-md text-xs text-foreground bg-background outline-none transition-all duration-200;
+  @apply py-1.5 border border-border rounded-md text-xs text-foreground bg-background outline-none transition-all duration-200;
 }
 
 .task-edit-vertical .dp__input:focus {
@@ -204,9 +204,6 @@
   @apply text-muted-foreground w-4 h-4;
 }
 
-.task-edit-vertical .dp__input_icon_pad {
-  @apply px-2;
-}
 
 /* 选择状态样式 */
 .task-edit-vertical .dp__selection_preview {

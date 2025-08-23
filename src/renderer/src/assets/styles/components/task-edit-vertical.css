@@ -253,7 +253,7 @@
 }
 
 .task-edit-vertical .reminder-option {
-  @apply w-full flex items-center gap-2 py-2 px-3 border-none bg-transparent cursor-pointer rounded-md text-left text-sm text-popover-foreground transition-all duration-200;
+  @apply w-full flex items-center gap-2 py-2 px-3 border-none bg-transparent cursor-pointer rounded-md text-left text-xs text-popover-foreground transition-all duration-200;
 }
 
 .task-edit-vertical .reminder-option:hover {

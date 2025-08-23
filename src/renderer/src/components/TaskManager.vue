@@ -325,6 +325,8 @@ const toggleSearch = () => {
 
 const setViewMode = (mode) => {
   viewMode.value = mode
+  // 切换视图时隐藏编辑面板
+  handleHideEditPanel()
   // 这里可以添加视图模式切换的逻辑
   console.log('切换到视图模式:', mode)
 }

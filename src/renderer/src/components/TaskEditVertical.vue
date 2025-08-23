@@ -848,7 +848,7 @@ const handleAddTask = async () => {
       if (props.task.seriesId && selectedRecurrence.value) {
         // 更新重复任务系列
         console.log("更新重复任务系列, 当前是子任务: ", props.task.seriesId)
-        await taskStore.updateRecurringTask(props.task.id, updates)
+        await taskStore.updateRecurringTask(props.task.id, updates,cleanRecurrence)
         handleCancelAdding()
       } else if (selectedRecurrence.value && !props.task.seriesId) {
         // 将普通任务转换为重复任务
