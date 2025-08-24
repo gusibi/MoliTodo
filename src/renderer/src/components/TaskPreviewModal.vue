@@ -21,7 +21,16 @@
           <span class="task-preview-count">共 {{ taskList.length }} 个任务</span>
         </div>
         
-        <div class="task-preview-list">
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="task-preview-loading">
+          <div class="task-preview-loading-spinner">
+            <i class="icon-loading"></i>
+          </div>
+          <p class="task-preview-loading-text">AI 正在生成任务列表...</p>
+        </div>
+        
+        <!-- 任务列表 -->
+        <div v-else class="task-preview-list">
           <div 
             v-for="(task, index) in taskList" 
             :key="index"
@@ -154,6 +163,11 @@ export default {
     // 可用的清单列表
     const availableLists = computed(() => {
       return taskStore.sortedLists
+    })
+    
+    // 是否处于加载状态
+    const isLoading = computed(() => {
+      return props.visible && taskList.value.length === 0 && props.tasks.length === 0
     })
     
     // 是否可以创建任务
@@ -292,6 +306,7 @@ export default {
     return {
       taskList,
       availableLists,
+      isLoading,
       canCreate,
       isCreating,
       createAllTasks,

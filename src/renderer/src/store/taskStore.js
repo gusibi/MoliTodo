@@ -1283,7 +1283,7 @@ export const useTaskStore = defineStore('task', () => {
         aiConfig.customProviders.forEach((customProvider, index) => {
           if (customProvider.apiKey && customProvider.baseURL) {
             models.push({
-              id: `custom-${index}`,
+              id: customProvider.id,
               name: customProvider.name || `Custom Model ${index + 1}`,
               provider: 'Custom',
               config: {
@@ -1352,7 +1352,7 @@ export const useTaskStore = defineStore('task', () => {
       }
 
       const listId = currentListId.value || 0
-      // 只传递模型标识符，避免序列化敏感配置数据
+      // 只传递基本的AI模型信息，配置由后端从 electron-store 获取
       const aiModelData = {
         id: selectedAIModel.value.id,
         name: selectedAIModel.value.name,

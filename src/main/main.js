@@ -41,6 +41,9 @@ class MoliTodoApp {
       // 初始化窗口管理器
       this.windowManager = new WindowManager(this);
       await this.windowManager.initialize();
+      
+      // 将 WindowManager 传递给 TaskService
+      this.taskService.windowManager = this.windowManager;
 
       // 初始化 IPC 处理器
       this.ipcHandlers = new IpcHandlers({

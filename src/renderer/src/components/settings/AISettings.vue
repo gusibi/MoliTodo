@@ -533,30 +533,35 @@ const testConnection = async () => {
   testResult.value = null
 
   try {
-    let config = {}
+    let aiModel = {}
     
     if (aiConfig.selectedProvider.startsWith('custom-')) {
       const customProvider = aiConfig.customProviders.find(p => p.id === aiConfig.selectedProvider)
       if (customProvider) {
-        config = {
-          provider: 'custom',
-          apiKey: customProvider.apiKey,
-          baseURL: customProvider.baseURL,
-          model: customProvider.model
+        aiModel = {
+          id: aiConfig.selectedProvider,
+          name: customProvider.name || '自定义配置',
+          provider: 'Custom'
         }
       }
     } else {
-      const provider = aiConfig.providers[aiConfig.selectedProvider]
-      config = {
-        provider: aiConfig.selectedProvider,
-        apiKey: provider.apiKey,
-        baseURL: provider.baseURL,
-        model: provider.model
+      // 获取提供商名称
+      const providerNames = {
+        'openai': 'OpenAI',
+        'google': 'Google', 
+        'anthropic': 'Anthropic',
+        'xai': 'xAI'
+      }
+      
+      aiModel = {
+        id: aiConfig.selectedProvider,
+        name: providerNames[aiConfig.selectedProvider] || aiConfig.selectedProvider,
+        provider: providerNames[aiConfig.selectedProvider] || aiConfig.selectedProvider
       }
     }
     
     // 调用主进程的测试连接方法
-    const result = await window.electronAPI.ai.testConnection(config)
+    const result = await window.electronAPI.ai.testConnectionByModel(aiModel)
     
     testResult.value = {
       type: result.success ? 'success' : 'error',

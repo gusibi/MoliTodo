@@ -1,12 +1,14 @@
 const Task = require('../entities/task');
+const { AIService } = require('../../infrastructure/ai/ai-service');
 
 /**
  * 任务管理服务 (Task Service)
  * 包含任务相关的业务逻辑和用例协调
  */
 class TaskService {
-  constructor(taskRepository) {
+  constructor(taskRepository, windowManager = null) {
     this.taskRepository = taskRepository;
+    this.windowManager = windowManager;
   }
 
   /**
@@ -961,7 +963,7 @@ class TaskService {
   /**
    * 使用AI生成任务列表
    * @param {string} content 用户输入的内容
-   * @param {Object} aiModel AI模型信息
+   * @param {Object} aiModel AI模型信息 { id, name, provider }
    * @param {number} listId 清单ID
    * @returns {Promise<Array>} 生成的任务列表
    */
@@ -974,34 +976,25 @@ class TaskService {
       throw new Error('AI模型信息不完整');
     }
 
+    if (!this.windowManager) {
+      throw new Error('WindowManager 未初始化，无法获取配置');
+    }
+
     try {
-      // TODO: 这里将调用AI服务来生成任务列表
-      // 目前返回一个示例结构，后续需要集成实际的AI服务
-      console.log(`使用AI模型 ${aiModel.name} (${aiModel.provider}) 生成任务列表:`, content);
+      // 调用AI服务生成任务列表
+      const result = await AIService.generateTaskList(content, aiModel, this.windowManager);
+      const generatedTasks = result.tasks;
       
-      // 示例返回结构
-      // 只保存可序列化的AI模型信息
-      const aiModelInfo = {
-        id: aiModel.id,
-        name: aiModel.name,
-        provider: aiModel.provider
-      };
-      
-      const generatedTasks = [
-        {
-            content: "去看电影",
-            dueDate: "2025-08-24",
-            dueTime: "15:00",
-            reminderTime: "2025-08-24T06:00:00.000Z",
-            listId: 0,
-            metadata: { "note": "" }
-          }
-      ];
+      // 为生成的任务添加 listId
+      const tasksWithListId = generatedTasks.map(task => ({
+        ...task,
+        listId: listId
+      }));
 
       return {
         success: true,
-        tasks: generatedTasks,
-        message: `成功使用 ${aiModel.name} (${aiModel.provider}) 生成了 ${generatedTasks.length} 个任务`
+        tasks: tasksWithListId,
+        message: `成功使用 ${aiModel.name} (${aiModel.provider}) 生成了 ${tasksWithListId.length} 个任务`
       };
     } catch (error) {
       console.error('[TaskService] AI生成任务列表失败:', error);

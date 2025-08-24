@@ -312,19 +312,24 @@ const addTask = async () => {
   try {
     // 如果选中了AI模型且启用了AI，使用AI生成任务列表
     if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
+      // 立即显示加载状态的任务预览弹窗
+      previewTasks.value = []
+      showTaskPreview.value = true
+      newTaskContent.value = ''
+      if (quickAddInput.value) {
+        quickAddInput.value.focus()
+      }
+      
       const result = await taskStore.generateTaskList(content)
       if (result.success) {
         console.log(`AI成功生成了 ${result.taskCount} 个任务:`, result.message)
-        // 显示任务预览弹窗
+        // 更新任务预览弹窗内容
         previewTasks.value = result.tasks
-        showTaskPreview.value = true
-        newTaskContent.value = ''
-        if (quickAddInput.value) {
-          quickAddInput.value.focus()
-        }
       } else {
         console.error('AI生成任务失败:', result.error)
-        // AI生成失败时，回退到普通任务创建
+        // AI生成失败时，关闭弹窗并回退到普通任务创建
+        showTaskPreview.value = false
+        newTaskContent.value = content // 恢复输入内容
         await createNormalTask(content)
       }
     } else {
@@ -333,6 +338,9 @@ const addTask = async () => {
     }
   } catch (error) {
     console.error('添加任务失败:', error)
+    // 发生错误时关闭弹窗
+    showTaskPreview.value = false
+    newTaskContent.value = content // 恢复输入内容
   }
 }
 

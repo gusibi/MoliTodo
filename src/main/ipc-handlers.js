@@ -633,6 +633,17 @@ class IpcHandlers {
       console.log("测试连接配置:", config);
       return await AIService.testConnection(config);
     });
+
+    // AI 连接测试 - 使用模型信息
+    ipcMain.handle('test-ai-connection-by-model', async (event, aiModel) => {
+      const { AIService } = require('../infrastructure/ai/ai-service');
+      try {
+        const modelConfig = AIService.getModelConfig(aiModel, this.windowManager);
+        return await AIService.testConnection(modelConfig);
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    });
   }
 
   setupWindowHandlers() {

@@ -44,7 +44,8 @@ const electronAPI = {
 
   // AI 相关 API
   ai: {
-    testConnection: (config) => ipcRenderer.invoke('test-ai-connection', config)
+    testConnection: (config) => ipcRenderer.invoke('test-ai-connection', config),
+    testConnectionByModel: (aiModel) => ipcRenderer.invoke('test-ai-connection-by-model', aiModel)
   },
 
   // 窗口相关 API
