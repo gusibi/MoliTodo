@@ -119,7 +119,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskList from './FlatTaskList.vue'
-import MonthlyView from './MonthlyView.vue'
+import MonthlyView from './calender_view/MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
 import { getListIconClass } from '@/utils/icon-utils'
@@ -576,5 +576,5 @@ watch(() => taskStore.currentListId, () => {
 </script>
 
 <style>
-@import '../assets/styles/components/task-manager.css';
+@import '@/assets/styles/components/task-manager.css';
 </style>

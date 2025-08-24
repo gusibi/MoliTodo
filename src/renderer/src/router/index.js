@@ -6,8 +6,8 @@ import SettingsView from '../views/SettingsView.vue'
 import TaskManagerView from '../views/TaskManagerView.vue'
 
 // 导入组件作为页面级组件
-import TaskPanel from '../components/TaskPanel.vue'
-import FloatingTask from '../components/FloatingTask.vue'
+import TaskPanel from '../components/float_view/TaskPanel.vue'
+import FloatingTask from '../components/float_view/FloatingTask.vue'
 
 const routes = [
   {

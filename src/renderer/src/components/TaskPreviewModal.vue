@@ -138,7 +138,7 @@
 
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 
 export default {
   name: 'TaskPreviewModal',
@@ -318,5 +318,5 @@ export default {
 </script>
 
 <style scoped>
-@import '../assets/styles/components/task-preview-modal.css';
+@import '@/assets/styles/components/task-preview-modal.css';
 </style>

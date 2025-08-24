@@ -46,11 +46,11 @@ let colorThemeStorageListener = null
 
 // 主题文件映射
 const themeModules = {
-  default: () => import('../assets/styles/themes/default.css?raw'),
-  twitter: () => import('../assets/styles/themes/twitter.css?raw'),
-  vercel: () => import('../assets/styles/themes/vercel.css?raw'),
-  morandi: () => import('../assets/styles/themes/morandi.css?raw'),
-  'mint-green': () => import('../assets/styles/themes/mint-green.css?raw')
+  default: () => import('@/assets/styles/themes/default.css?raw'),
+  twitter: () => import('@/assets/styles/themes/twitter.css?raw'),
+  vercel: () => import('@/assets/styles/themes/vercel.css?raw'),
+  morandi: () => import('@/assets/styles/themes/morandi.css?raw'),
+  'mint-green': () => import('@/assets/styles/themes/mint-green.css?raw')
 }
 
 // Initialize broadcast channel for color theme cross-window communication

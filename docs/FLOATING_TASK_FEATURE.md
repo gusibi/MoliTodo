@@ -37,7 +37,7 @@
 
 ### 文件结构
 ```
-src/renderer/src/components/FloatingTask.vue - 悬浮任务组件
+src/renderer/src/components/float_view/FloatingTask.vue - 悬浮任务组件
 src/renderer/src/assets/styles/components/floating-task.css - 悬浮任务样式
 src/main/window-manager.js - 窗口管理（包含悬浮任务窗口创建）
 src/main/ipc-handlers.js - IPC处理程序

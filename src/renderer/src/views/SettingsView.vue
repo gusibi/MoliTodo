@@ -13,13 +13,13 @@
 </template>
 
 <script setup>
-import CustomTitleBar from '@/components/CustomTitleBar.vue'
-import Settings from '@/components/Settings.vue'
+import CustomTitleBar from '@/components/settings/CustomTitleBar.vue'
+import Settings from '@/components/settings/Settings.vue'
 import '@/assets/styles/settings.css'
 </script>
 
 <style scoped>
-@import '../assets/styles/settings.css';
+@import '@/assets/styles/settings.css';
 
 .settings-view-container {
   @apply w-full h-full flex flex-col bg-transparent;

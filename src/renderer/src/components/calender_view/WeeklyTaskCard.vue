@@ -131,7 +131,7 @@ const handleHideTooltip = () => {
 </script>
 
 <style>
-@import '../assets/styles/components/weekly-view.css';
+@import '@/assets/styles/components/weekly-view.css';
 
 .weekly-task-card-title-row {
   @apply flex items-center justify-between gap-1;

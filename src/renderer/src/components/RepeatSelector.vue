@@ -821,5 +821,5 @@ watch(() => props.modelValue, (newValue) => {
 </script>
 
 <style scoped>
-@import '../assets/styles/components/RepeatSelector.css';
+@import '@/assets/styles/components/RepeatSelector.css';
 </style>

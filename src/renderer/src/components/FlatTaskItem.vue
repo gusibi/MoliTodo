@@ -239,5 +239,5 @@ const handleDeleteTask = async () => {
 </script>
 
 <style>
-@import '../assets/styles/components/flat-task-list.css';
+@import '@/assets/styles/components/flat-task-list.css';
 </style>

@@ -94,5 +94,5 @@ const goToToday = () => {
 </script>
 
 <style>
-@import '../assets/styles/components/monthly-calendar.css';
+@import '@/assets/styles/components/monthly-calendar.css';
 </style>

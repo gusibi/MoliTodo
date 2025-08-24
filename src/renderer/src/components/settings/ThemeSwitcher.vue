@@ -52,5 +52,5 @@ const availableThemes = computed(() => [
 </script>
 
 <style scoped>
-@import '../assets/styles/theme-switcher.css';
+@import '@/assets/styles/theme-switcher.css';
 </style>

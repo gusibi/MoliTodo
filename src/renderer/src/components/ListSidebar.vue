@@ -72,7 +72,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
@@ -271,5 +271,5 @@ export default {
 
 </script>
 <style scoped>
-@import '../assets/styles/components/sidebar-nav.css';
+@import '@/assets/styles/components/sidebar-nav.css';
 </style>

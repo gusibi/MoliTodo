@@ -6,7 +6,7 @@
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
-import FloatingIcon from '@/components/FloatingIcon.vue'
+import FloatingIcon from '@/components/float_view/FloatingIcon.vue'
 
 // 只在悬浮图标页面设置body的pointer-events
 onMounted(() => {

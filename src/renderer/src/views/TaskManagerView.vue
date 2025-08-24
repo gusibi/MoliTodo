@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import CustomTitleBar from '@/components/CustomTitleBar.vue'
+import CustomTitleBar from '@/components/settings/CustomTitleBar.vue'
 import TaskManager from '@/components/TaskManager.vue'
 </script>
 

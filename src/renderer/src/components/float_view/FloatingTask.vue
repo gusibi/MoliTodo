@@ -81,7 +81,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, h } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
-import { formatDuration } from '../utils/task-utils'
+import { formatDuration } from '@/utils/task-utils'
 
 const props = defineProps({
   taskId: {

@@ -325,5 +325,5 @@ export default {
 </script>
 
 <style scoped>
-@import '../assets/styles/components/list-create-dialog.css';
+@import '@/assets/styles/components/list-create-dialog.css';
 </style>

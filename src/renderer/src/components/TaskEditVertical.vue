@@ -299,7 +299,7 @@
 <script setup>
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 import RepeatSelector from './RepeatSelector.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -1032,6 +1032,6 @@ defineExpose({
 </script>
 
 <style>
-@import '../assets/styles/components/task-edit-vertical.css';
-@import '../assets/styles/components/VueDatePicker.css';
+@import '@/assets/styles/components/task-edit-vertical.css';
+@import '@/assets/styles/components/VueDatePicker.css';
 </style>

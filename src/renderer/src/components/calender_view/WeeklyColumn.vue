@@ -190,5 +190,5 @@ const handleHideTooltip = () => {
 </script>
 
 <style>
-@import '../assets/styles/components/weekly-view.css';
+@import '@/assets/styles/components/weekly-view.css';
 </style>

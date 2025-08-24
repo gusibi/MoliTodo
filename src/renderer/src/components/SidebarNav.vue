@@ -60,7 +60,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 import ListSidebar from './ListSidebar.vue'
 
 // Props
@@ -105,5 +105,5 @@ const getCategoryCount = (category) => {
 </script>
 
 <style scoped>
-@import '../assets/styles/components/sidebar-nav.css';
+@import '@/assets/styles/components/sidebar-nav.css';
 </style>

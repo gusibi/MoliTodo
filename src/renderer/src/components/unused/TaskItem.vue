@@ -105,7 +105,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '../utils/task-utils'
 
 const taskStore = useTaskStore()
@@ -284,7 +284,7 @@ const hideTooltip = () => {
 </script>
 
 <style>
-@import '../assets/styles/components/task-item.css';
+@import '@/assets/styles/components/task-item.css';
 
 .task-item-tag-recurring {
   background-color: var(--color-success-light);

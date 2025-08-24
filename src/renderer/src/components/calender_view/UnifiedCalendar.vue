@@ -258,7 +258,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 
 const props = defineProps({
   tasks: {
@@ -883,5 +883,5 @@ watch(() => props.tasks, () => {
 </script>
 
 <style>
-@import '../assets/styles/components/unified-calendar.css';
+@import '@/assets/styles/components/unified-calendar.css';
 </style>

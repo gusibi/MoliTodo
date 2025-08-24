@@ -408,5 +408,5 @@ onUnmounted(() => {
 </script>
 
 <style>
-@import '../assets/styles/components/task-list.css';
+@import '@/assets/styles/components/task-list.css';
 </style>

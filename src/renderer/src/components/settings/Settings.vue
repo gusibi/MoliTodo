@@ -322,10 +322,10 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
-import AISettings from './settings/AISettings.vue'
-import { playNotificationSound, getAvailableSounds } from '../utils/notificationSound.js'
-import { useTaskStore } from '../store/taskStore'
-import { formatDuration } from '../utils/task-utils'
+import AISettings from './AISettings.vue'
+import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
+import { useTaskStore } from '@/store/taskStore'
+import { formatDuration } from '@/utils/task-utils.js'
 
 // 使用 taskStore
 const taskStore = useTaskStore()

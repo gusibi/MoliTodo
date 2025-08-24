@@ -168,7 +168,7 @@
 <script setup>
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '@/store/taskStore'
 import RepeatSelector from './RepeatSelector.vue'
 import NextOccurrencesPreview from './NextOccurrencesPreview.vue'
 
@@ -1217,7 +1217,7 @@ defineExpose({
 </script>
 
 <style>
-@import '../assets/styles/components/task-list.css';
+@import '@/assets/styles/components/task-list.css';
 
 .task-add-date-picker {
   display: flex;
