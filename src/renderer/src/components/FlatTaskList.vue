@@ -92,9 +92,73 @@
           </div>
           <input v-model="newTaskContent" type="text" class="flat-task-list-input" placeholder="添加新任务..." maxlength="200"
             @keypress.enter="addTask" ref="quickAddInput">
+          
+          <!-- AI 选项按钮 -->
+          <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
+            <div class="flat-task-list-ai-button" 
+                 :class="{ 'active': taskStore.isAIEnabled }"
+                 @click="toggleAI"
+                 ref="aiButton">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" 
+                      :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
+                      :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
+                      stroke-width="2"/>
+                <path d="M19 11L19.5 13.5L22 14L19.5 14.5L19 17L18.5 14.5L16 14L18.5 13.5L19 11Z" 
+                      :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
+                      :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
+                      stroke-width="1.5"/>
+              </svg>
+            </div>
+            
+            <!-- AI 模型下拉列表 -->
+            <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
+              <div class="flat-task-list-ai-dropdown-list">
+                <!-- 不使用 AI 选项 -->
+                <div class="flat-task-list-ai-dropdown-item no-ai"
+                     :class="{ 'selected': !taskStore.selectedAIModel }"
+                     @click="selectAIModel(null)">
+                  <div class="flat-task-list-ai-model-info">
+                    <div class="flat-task-list-ai-model-name">不使用 AI</div>
+                    <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
+                  </div>
+                  <div class="flat-task-list-ai-model-check">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                
+                <!-- AI 模型选项 -->
+                <div v-for="model in taskStore.availableAIModels" 
+                     :key="model.id"
+                     class="flat-task-list-ai-dropdown-item"
+                     :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
+                     @click="selectAIModel(model)">
+                  <div class="flat-task-list-ai-model-info">
+                    <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
+                    <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
+                  </div>
+                  <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    
+    <!-- AI 任务预览弹窗 -->
+    <TaskPreviewModal 
+      :visible="showTaskPreview"
+      :tasks="previewTasks"
+      @close="closeTaskPreview"
+      @created="handleTasksCreated"
+    />
   </div>
 </template>
 
@@ -102,6 +166,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
+import TaskPreviewModal from './TaskPreviewModal.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 // 定义 props
@@ -142,6 +207,15 @@ const hoveredTaskId = ref(null)
 // 快速添加相关
 const newTaskContent = ref('')
 const quickAddInput = ref(null)
+
+// AI 相关响应式数据
+const showAIDropdown = ref(false)
+const aiButton = ref(null)
+const aiDropdown = ref(null)
+
+// TaskPreviewModal 相关状态
+const showTaskPreview = ref(false)
+const previewTasks = ref([])
 
 // 折叠状态管理
 const collapsedGroups = ref(new Set())
@@ -236,21 +310,46 @@ const addTask = async () => {
   if (!content) return
 
   try {
-    const taskData = { content }
-    
-    // 如果当前在清单中，添加 listId
-    if (taskStore.currentListId !== null) {
-      taskData.listId = taskStore.currentListId
-    }
-    
-    await taskStore.createTask(taskData)
-    newTaskContent.value = ''
-
-    if (quickAddInput.value) {
-      quickAddInput.value.focus()
+    // 如果选中了AI模型且启用了AI，使用AI生成任务列表
+    if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
+      const result = await taskStore.generateTaskList(content)
+      if (result.success) {
+        console.log(`AI成功生成了 ${result.taskCount} 个任务:`, result.message)
+        // 显示任务预览弹窗
+        previewTasks.value = result.tasks
+        showTaskPreview.value = true
+        newTaskContent.value = ''
+        if (quickAddInput.value) {
+          quickAddInput.value.focus()
+        }
+      } else {
+        console.error('AI生成任务失败:', result.error)
+        // AI生成失败时，回退到普通任务创建
+        await createNormalTask(content)
+      }
+    } else {
+      // 没有选择AI模型时，创建普通任务
+      await createNormalTask(content)
     }
   } catch (error) {
     console.error('添加任务失败:', error)
+  }
+}
+
+// 创建普通任务的辅助方法
+const createNormalTask = async (content) => {
+  const taskData = { content }
+  
+  // 如果当前在清单中，添加 listId
+  if (taskStore.currentListId !== null) {
+    taskData.listId = taskStore.currentListId
+  }
+  
+  await taskStore.createTask(taskData)
+  newTaskContent.value = ''
+
+  if (quickAddInput.value) {
+    quickAddInput.value.focus()
   }
 }
 
@@ -316,6 +415,32 @@ const handleKeydown = (event) => {
 const focusAddTaskInput = () => {
   if (quickAddInput.value) {
     quickAddInput.value.focus()
+  }
+}
+
+// AI 相关方法
+const toggleAI = () => {
+  if (taskStore.isAIEnabled) {
+    // 如果AI已启用，点击切换下拉列表显示状态
+    showAIDropdown.value = !showAIDropdown.value
+  } else {
+    // 如果AI未启用，启用AI并显示下拉列表
+    taskStore.toggleAI()
+    showAIDropdown.value = true
+  }
+}
+
+const selectAIModel = (model) => {
+  taskStore.selectAIModel(model)
+  showAIDropdown.value = false
+}
+
+const handleClickOutside = (event) => {
+  if (aiButton.value && aiButton.value.contains(event.target)) {
+    return
+  }
+  if (aiDropdown.value && !aiDropdown.value.contains(event.target)) {
+    showAIDropdown.value = false
   }
 }
 
@@ -387,6 +512,22 @@ const stopTimeUpdateTimer = () => {
   }
 }
 
+// TaskPreviewModal 相关方法
+const closeTaskPreview = () => {
+  showTaskPreview.value = false
+  previewTasks.value = []
+}
+
+const handleTasksCreated = (result) => {
+  if (result.success) {
+    console.log('任务创建成功:', result.message)
+    // 刷新任务列表
+    taskStore.getAllTasks()
+  } else {
+    console.error('任务创建失败:', result.message)
+  }
+}
+
 // 组件挂载时启动定时器
 onMounted(async () => {
   if (taskStore.lists.length === 0) {
@@ -395,13 +536,16 @@ onMounted(async () => {
 
   loadCollapsedState()
   startTimeUpdateTimer()
+  await taskStore.loadAIModels()
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleClickOutside)
 })
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
   stopTimeUpdateTimer()
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleClickOutside)
 })
 
 

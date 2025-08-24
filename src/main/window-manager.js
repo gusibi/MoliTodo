@@ -39,7 +39,37 @@ class WindowManager {
           { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
           { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
           { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
-        ]
+        ],
+        ai: {
+          enabled: true,
+          selectedProvider: '',
+          providers: {
+            openai: {
+              apiKey: '',
+              baseURL: 'https://api.openai.com/v1',
+              model: 'gpt-4o'
+            },
+            google: {
+              apiKey: '',
+              model: 'gemini-1.5-pro'
+            },
+            anthropic: {
+              apiKey: '',
+              model: 'claude-3-5-sonnet-20241022'
+            },
+            xai: {
+              apiKey: '',
+              baseURL: 'https://api.x.ai/v1',
+              model: 'grok-beta'
+            }
+          },
+          customProviders: [],
+          features: {
+            taskSuggestions: true,
+            autoCategories: false,
+            smartReminders: false
+          }
+        }
       }
     });
 

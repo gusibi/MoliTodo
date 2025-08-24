@@ -25,6 +25,11 @@ export const useTaskStore = defineStore('task', () => {
   const recurringTasks = ref([]) // 重复任务列表
   const showRecurringInstances = ref(false) // 是否显示重复任务实例
 
+  // AI 相关状态
+  const availableAIModels = ref([]) // 可用的AI模型列表
+  const selectedAIModel = ref(null) // 当前选中的AI模型
+  const isAIEnabled = ref(false) // AI功能是否启用
+
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
     if (!date) return false
@@ -1205,6 +1210,180 @@ export const useTaskStore = defineStore('task', () => {
     setShowRecurringInstances(!showRecurringInstances.value)
   }
 
+  // AI 相关方法
+  const loadAIModels = async () => {
+    try {
+      const config = await window.electronAPI.config.get()
+      const aiConfig = config.ai || {}
+      const providers = aiConfig.providers || {}
+      
+      // 构建可用的AI模型列表
+      const models = []
+      
+      // OpenAI 模型
+      if (providers.openai && providers.openai.apiKey) {
+        models.push({
+          id: 'openai-gpt-4o',
+          name: providers.openai.model || 'GPT-4o',
+          provider: 'OpenAI',
+          config: {
+            provider: 'openai',
+            model: providers.openai.model || 'gpt-4o',
+            apiKey: providers.openai.apiKey,
+            baseURL: providers.openai.baseURL || 'https://api.openai.com/v1'
+          }
+        })
+      }
+      
+      // Google 模型
+      if (providers.google && providers.google.apiKey) {
+        models.push({
+          id: 'google-gemini',
+          name: providers.google.model || 'Gemini 1.5 Pro',
+          provider: 'Google',
+          config: {
+            provider: 'google',
+            model: providers.google.model || 'gemini-1.5-pro',
+            apiKey: providers.google.apiKey
+          }
+        })
+      }
+      
+      // Anthropic 模型
+      if (providers.anthropic && providers.anthropic.apiKey) {
+        models.push({
+          id: 'anthropic-claude',
+          name: providers.anthropic.model || 'Claude 3.5 Sonnet',
+          provider: 'Anthropic',
+          config: {
+            provider: 'anthropic',
+            model: providers.anthropic.model || 'claude-3-5-sonnet-20241022',
+            apiKey: providers.anthropic.apiKey
+          }
+        })
+      }
+      
+      // xAI 模型
+      if (providers.xai && providers.xai.apiKey) {
+        models.push({
+          id: 'xai-grok',
+          name: providers.xai.model || 'Grok Beta',
+          provider: 'xAI',
+          config: {
+            provider: 'xai',
+            model: providers.xai.model || 'grok-beta',
+            apiKey: providers.xai.apiKey,
+            baseURL: providers.xai.baseURL || 'https://api.x.ai/v1'
+          }
+        })
+      }
+      
+      // 自定义提供商
+      if (aiConfig.customProviders && Array.isArray(aiConfig.customProviders)) {
+        aiConfig.customProviders.forEach((customProvider, index) => {
+          if (customProvider.apiKey && customProvider.baseURL) {
+            models.push({
+              id: `custom-${index}`,
+              name: customProvider.name || `Custom Model ${index + 1}`,
+              provider: 'Custom',
+              config: {
+                provider: 'custom',
+                model: customProvider.model || 'custom-model',
+                apiKey: customProvider.apiKey,
+                baseURL: customProvider.baseURL
+              }
+            })
+          }
+        })
+      }
+      
+      availableAIModels.value = models
+      
+      // 如果之前有选择的模型，尝试恢复
+      const savedModelId = localStorage.getItem('taskStore-selectedAIModel')
+      if (savedModelId) {
+        const savedModel = models.find(m => m.id === savedModelId)
+        if (savedModel) {
+          selectedAIModel.value = savedModel
+          isAIEnabled.value = true
+        }
+      }
+    } catch (error) {
+      console.error('加载AI模型配置失败:', error)
+    }
+  }
+  
+  const selectAIModel = (model) => {
+    selectedAIModel.value = model
+    if (model) {
+      isAIEnabled.value = true
+      localStorage.setItem('taskStore-selectedAIModel', model.id)
+    } else {
+      isAIEnabled.value = false
+      localStorage.removeItem('taskStore-selectedAIModel')
+    }
+  }
+  
+  const toggleAI = () => {
+    isAIEnabled.value = !isAIEnabled.value
+    if (!isAIEnabled.value) {
+      selectedAIModel.value = null
+      localStorage.removeItem('taskStore-selectedAIModel')
+    }
+  }
+  
+  const getSelectedAIModel = () => {
+    return selectedAIModel.value
+  }
+  
+  const isAIAvailable = () => {
+    return availableAIModels.value.length > 0
+  }
+
+  // 使用AI生成任务列表
+  const generateTaskList = async (content) => {
+    try {
+      if (!selectedAIModel.value || !isAIEnabled.value) {
+        throw new Error('请先选择AI模型')
+      }
+
+      if (!content || content.trim().length === 0) {
+        throw new Error('输入内容不能为空')
+      }
+
+      const listId = currentListId.value || 0
+      // 只传递模型标识符，避免序列化敏感配置数据
+      const aiModelData = {
+        id: selectedAIModel.value.id,
+        name: selectedAIModel.value.name,
+        provider: selectedAIModel.value.provider
+      }
+      console.log('[generateTaskList] 调用AI生成任务列表:', { content, aiModelData, listId })
+      const result = await window.electronAPI.tasks.generateTaskList(content, aiModelData, listId)
+      
+      if (result.success) {
+        // 直接返回生成的任务数据，不自动创建
+        return {
+          success: true,
+          message: result.message,
+          tasks: result.tasks,
+          taskCount: result.tasks.length
+        }
+      } else {
+        return {
+          success: false,
+          error: result.error
+        }
+      }
+    } catch (error) {
+      console.error('AI生成任务列表失败:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
   return {
     // 状态
     tasks,
@@ -1304,6 +1483,19 @@ export const useTaskStore = defineStore('task', () => {
     deleteRecurringSeries,
     getNextOccurrences,
     setShowRecurringInstances,
-    toggleRecurringInstances
+    toggleRecurringInstances,
+
+    // AI 相关方法
+    loadAIModels,
+    selectAIModel,
+    toggleAI,
+    getSelectedAIModel,
+    isAIAvailable,
+    generateTaskList,
+
+    // AI 相关状态
+    availableAIModels,
+    selectedAIModel,
+    isAIEnabled
   }
 })

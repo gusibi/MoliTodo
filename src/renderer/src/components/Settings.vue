@@ -267,6 +267,11 @@
             </div>
           </div>
 
+          <!-- AI 配置 -->
+          <div v-if="activeCategory === 'ai'">
+            <AISettings />
+          </div>
+
           <!-- 统计信息 -->
           <div v-if="activeCategory === 'statistics'">
             <h1 class="setting-page-title">统计信息</h1>
@@ -317,6 +322,7 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
+import AISettings from './settings/AISettings.vue'
 import { playNotificationSound, getAvailableSounds } from '../utils/notificationSound.js'
 import { useTaskStore } from '../store/taskStore'
 import { formatDuration } from '../utils/task-utils'
@@ -339,6 +345,7 @@ const config = reactive({
     size: 60,
     opacity: 80
   },
+  
   customReminders: [
     { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
     { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
@@ -433,6 +440,23 @@ const settingsCategories = [
         'stroke-linejoin': 'round',
         'stroke-width': '2',
         d: 'M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'
+      })
+    ])
+  },
+  {
+    id: 'ai',
+    name: 'AI 配置',
+    icon: h('svg', {
+      class: 'w-5 h-5',
+      fill: 'none',
+      stroke: 'currentColor',
+      viewBox: '0 0 24 24'
+    }, [
+      h('path', {
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        'stroke-width': '2',
+        d: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
       })
     ])
   },
@@ -717,6 +741,8 @@ const updateCustomReminder = (index) => {
   }, 500)
 }
 
+
+
 // 生命周期
 onMounted(async () => {
   await loadConfig()
@@ -849,4 +875,6 @@ onMounted(async () => {
 .add-reminder-btn i {
   @apply text-sm;
 }
+
+
 </style>

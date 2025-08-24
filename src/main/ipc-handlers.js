@@ -77,6 +77,28 @@ class IpcHandlers {
       return { success: true, task };
     });
 
+    // 使用AI生成任务列表
+    ipcMain.handle('generate-task-list', async (event, content, aiModel, listId) => {
+      try {
+        console.log('[IPC] 收到AI生成任务列表请求:', { content, aiModel, listId });
+        const result = await this.taskService.generateTaskList(content, aiModel, listId);
+        
+        console.log('[IPC] AI生成任务列表结果:', result);
+        if (result.success) {
+          this.broadcastTaskUpdates();
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('[IPC] AI生成任务列表失败:', error);
+        return {
+          success: false,
+          error: error.message,
+          tasks: []
+        };
+      }
+    });
+
     // 更新任务
     ipcMain.handle('update-task', async (event, taskId, updates) => {
       const task = await this.taskService.updateTask(taskId, updates);
@@ -565,7 +587,37 @@ class IpcHandlers {
           { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
           { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
           { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
-        ]
+        ],
+        ai: {
+          enabled: true,
+          selectedProvider: '',
+          providers: {
+            openai: {
+              apiKey: '',
+              baseURL: 'https://api.openai.com/v1',
+              model: 'gpt-4o'
+            },
+            google: {
+              apiKey: '',
+              model: 'gemini-1.5-pro'
+            },
+            anthropic: {
+              apiKey: '',
+              model: 'claude-3-5-sonnet-20241022'
+            },
+            xai: {
+              apiKey: '',
+              baseURL: 'https://api.x.ai/v1',
+              model: 'grok-beta'
+            }
+          },
+          customProviders: [],
+          features: {
+            taskSuggestions: true,
+            autoCategories: false,
+            smartReminders: false
+          }
+        }
       };
       
       Object.entries(defaultConfig).forEach(([key, value]) => {
@@ -573,6 +625,13 @@ class IpcHandlers {
       });
       
       return { success: true };
+    });
+
+    // AI 连接测试
+    ipcMain.handle('test-ai-connection', async (event, config) => {
+      const { AIService } = require('../infrastructure/ai/ai-service');
+      console.log("测试连接配置:", config);
+      return await AIService.testConnection(config);
     });
   }
 

@@ -9,6 +9,7 @@ const electronAPI = {
     getCompleted: () => ipcRenderer.invoke('get-completed-tasks'),
     create: (taskData) => ipcRenderer.invoke('create-task', taskData),
     createRecurring: (taskData) => ipcRenderer.invoke('task:createRecurring', taskData),
+    generateTaskList: (content, aiModel, listId) => ipcRenderer.invoke('generate-task-list', content, aiModel, listId),
     update: (taskId, updates) => ipcRenderer.invoke('update-task', taskId, updates),
     complete: (taskId) => ipcRenderer.invoke('complete-task', taskId),
     delete: (taskId) => ipcRenderer.invoke('delete-task', taskId),
@@ -39,6 +40,11 @@ const electronAPI = {
     update: (key, value) => ipcRenderer.invoke('update-config', key, value),
     save: () => ipcRenderer.invoke('save-config'),
     reset: () => ipcRenderer.invoke('reset-config')
+  },
+
+  // AI 相关 API
+  ai: {
+    testConnection: (config) => ipcRenderer.invoke('test-ai-connection', config)
   },
 
   // 窗口相关 API

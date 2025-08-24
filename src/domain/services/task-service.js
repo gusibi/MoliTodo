@@ -52,7 +52,7 @@ class TaskService {
     // console.log("createTaskInList: content: ", content)
     // console.log("createTaskInList: listId: ", listId)
     // console.log("createTaskInList: reminderTime: ", reminderTime)
-    // console.log("createTaskInList: taskData: ", taskData)
+    console.log("createTaskInList: taskData: ", taskData)
     // 从 taskData 中提取各个字段
     const {
       metadata = {},
@@ -79,7 +79,6 @@ class TaskService {
       metadata,
       recurrence
     );
-
     // 设置到期日期和时间
     if (dueDate) {
       task.dueDate = dueDate;
@@ -88,6 +87,7 @@ class TaskService {
       task.dueTime = dueTime;
     }
 
+    console.log("createTaskInList: save task ", task)
     return await this.taskRepository.save(task);
   }
 
@@ -956,6 +956,61 @@ class TaskService {
       const occurrenceDate = new Date(task.occurrenceDate);
       return occurrenceDate >= startDate && occurrenceDate <= endDate;
     });
+  }
+
+  /**
+   * 使用AI生成任务列表
+   * @param {string} content 用户输入的内容
+   * @param {Object} aiModel AI模型信息
+   * @param {number} listId 清单ID
+   * @returns {Promise<Array>} 生成的任务列表
+   */
+  async generateTaskList(content, aiModel, listId = 0) {
+    if (!content || content.trim().length === 0) {
+      throw new Error('输入内容不能为空');
+    }
+
+    if (!aiModel || !aiModel.id) {
+      throw new Error('AI模型信息不完整');
+    }
+
+    try {
+      // TODO: 这里将调用AI服务来生成任务列表
+      // 目前返回一个示例结构，后续需要集成实际的AI服务
+      console.log(`使用AI模型 ${aiModel.name} (${aiModel.provider}) 生成任务列表:`, content);
+      
+      // 示例返回结构
+      // 只保存可序列化的AI模型信息
+      const aiModelInfo = {
+        id: aiModel.id,
+        name: aiModel.name,
+        provider: aiModel.provider
+      };
+      
+      const generatedTasks = [
+        {
+            content: "去看电影",
+            dueDate: "2025-08-24",
+            dueTime: "15:00",
+            reminderTime: "2025-08-24T06:00:00.000Z",
+            listId: 0,
+            metadata: { "note": "" }
+          }
+      ];
+
+      return {
+        success: true,
+        tasks: generatedTasks,
+        message: `成功使用 ${aiModel.name} (${aiModel.provider}) 生成了 ${generatedTasks.length} 个任务`
+      };
+    } catch (error) {
+      console.error('[TaskService] AI生成任务列表失败:', error);
+      return {
+        success: false,
+        error: error.message,
+        tasks: []
+      };
+    }
   }
 }
 
