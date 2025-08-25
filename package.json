@@ -41,6 +41,7 @@
     "wait-on": "^7.0.1"
   },
   "dependencies": {
+    "zod": "^4.1.1",
     "@ai-sdk/anthropic": "^2.0.6",
     "@ai-sdk/google": "^2.0.8",
     "@ai-sdk/openai": "^2.0.19",
