@@ -813,6 +813,31 @@ onMounted(async () => {
   border-color: var(--border-hover-dark, #718096);
 }
 
+/* 滚动条样式 - 使用 Tailwind CSS */
+.setting-main-container::-webkit-scrollbar,
+.setting-content-area::-webkit-scrollbar,
+.setting-content-inner::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.setting-main-container::-webkit-scrollbar-track,
+.setting-content-area::-webkit-scrollbar-track,
+.setting-content-inner::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.setting-main-container::-webkit-scrollbar-thumb,
+.setting-content-area::-webkit-scrollbar-thumb,
+.setting-content-inner::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/15 rounded-sm transition-colors duration-200;
+}
+
+.setting-main-container::-webkit-scrollbar-thumb:hover,
+.setting-content-area::-webkit-scrollbar-thumb:hover,
+.setting-content-inner::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/25;
+}
+
 /* 自定义提醒设置样式 - 使用新的设计系统 */
 .setting-group-description {
   @apply text-sm text-muted-foreground mb-4 leading-relaxed;

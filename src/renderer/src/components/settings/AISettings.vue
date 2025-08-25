@@ -692,8 +692,33 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 滚动条样式 - 使用 Tailwind CSS */
+.ai-settings-container::-webkit-scrollbar,
+.ai-provider-list::-webkit-scrollbar,
+.ai-provider-config::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.ai-settings-container::-webkit-scrollbar-track,
+.ai-provider-list::-webkit-scrollbar-track,
+.ai-provider-config::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.ai-settings-container::-webkit-scrollbar-thumb,
+.ai-provider-list::-webkit-scrollbar-thumb,
+.ai-provider-config::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/15 rounded-sm transition-colors duration-200;
+}
+
+.ai-settings-container::-webkit-scrollbar-thumb:hover,
+.ai-provider-list::-webkit-scrollbar-thumb:hover,
+.ai-provider-config::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/25;
+}
+
 .ai-settings-container {
-  @apply w-full;
+  @apply space-y-6;
 }
 
 .ai-provider-list {
