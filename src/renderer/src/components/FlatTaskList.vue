@@ -156,6 +156,7 @@
     <TaskPreviewModal 
       :visible="showTaskPreview"
       :tasks="previewTasks"
+      :original-input="originalTaskInput"
       @close="closeTaskPreview"
       @created="handleTasksCreated"
     />
@@ -216,6 +217,7 @@ const aiDropdown = ref(null)
 // TaskPreviewModal 相关状态
 const showTaskPreview = ref(false)
 const previewTasks = ref([])
+const originalTaskInput = ref('')
 
 // 折叠状态管理
 const collapsedGroups = ref(new Set())
@@ -312,6 +314,8 @@ const addTask = async () => {
   try {
     // 如果选中了AI模型且启用了AI，使用AI生成任务列表
     if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
+      // 保存原始输入内容
+      originalTaskInput.value = content
       // 立即显示加载状态的任务预览弹窗
       previewTasks.value = []
       showTaskPreview.value = true
@@ -524,6 +528,7 @@ const stopTimeUpdateTimer = () => {
 const closeTaskPreview = () => {
   showTaskPreview.value = false
   previewTasks.value = []
+  originalTaskInput.value = ''
 }
 
 const handleTasksCreated = (result) => {

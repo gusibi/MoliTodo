@@ -1,6 +1,28 @@
 <template>
   <div v-if="visible" class="task-preview-modal-overlay" @click="handleOverlayClick">
     <div class="task-preview-dialog" @click.stop>
+      <!-- 原始输入内容展示 -->
+      <div v-if="originalInput" class="task-preview-original-input">
+        <div class="task-preview-original-label">原始输入：</div>
+        <div class="task-preview-original-content">{{ originalInput }}</div>
+        <button 
+          class="task-preview-copy-btn" 
+          :class="{
+            'copy-success': copyStatus === 'success',
+            'copy-error': copyStatus === 'error',
+            'copy-copying': copyStatus === 'copying'
+          }"
+          @click="copyOriginalInput"
+          :title="copyStatus === 'success' ? '复制成功!' : copyStatus === 'error' ? '复制失败' : '复制原始输入'"
+          :disabled="copyStatus === 'copying'"
+        >
+          <div v-if="copyStatus === 'success'" class="copy-icon-success"></div>
+          <div v-else-if="copyStatus === 'error'" class="copy-icon-error"></div>
+          <div v-else-if="copyStatus === 'copying'" class="copy-icon-loading"></div>
+          <div v-else class="copy-icon"></div>
+        </button>
+      </div>
+      
       <div class="task-preview-dialog-header">
         <button class="task-preview-header-btn task-preview-btn-cancel" @click="close">
           <i class="icon-close"></i>
@@ -24,58 +46,56 @@
         <!-- 加载状态 -->
         <div v-if="isLoading" class="task-preview-loading">
           <div class="task-preview-loading-spinner">
-            <i class="icon-loading"></i>
+            <div class="loading-circle"></div>
           </div>
           <p class="task-preview-loading-text">AI 正在生成任务列表...</p>
         </div>
         
         <!-- 任务列表 -->
         <div v-else class="task-preview-list">
+          <!-- 任务项 -->
           <div 
             v-for="(task, index) in taskList" 
             :key="index"
             class="task-preview-item"
           >
-            <!-- 任务内容 -->
-            <div class="task-preview-field">
-              <label class="task-preview-label">任务内容</label>
-              <input 
-                v-model="task.content"
-                type="text"
-                class="task-preview-input"
-                placeholder="输入任务内容"
-                maxlength="200"
-              />
-            </div>
-            
-            <!-- 截止日期和时间 -->
-            <div class="task-preview-field-row">
-              <div class="task-preview-field">
-                <label class="task-preview-label">截止日期</label>
+            <!-- 第一行：任务内容 + 操作按钮 -->
+            <div class="task-preview-row task-preview-row-main">
+              <div class="task-preview-content-wrapper">
                 <input 
-                  v-model="task.dueDate"
-                  type="date"
-                  class="task-preview-input"
+                  v-model="task.content"
+                  type="text"
+                  class="task-preview-input-main"
+                  placeholder="输入任务内容"
+                  maxlength="200"
                 />
               </div>
-              
-              <div class="task-preview-field">
-                <label class="task-preview-label">截止时间</label>
-                <input 
-                  v-model="task.dueTime"
-                  type="time"
-                  class="task-preview-input"
-                />
+              <div class="task-preview-actions-wrapper">
+                <button 
+                  class="task-preview-delete-btn"
+                  @click="removeTask(index)"
+                  title="删除任务"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </div>
             
-            <!-- 清单选择和提醒时间 -->
-            <div class="task-preview-field-row">
-              <div class="task-preview-field">
-                <label class="task-preview-label">所属清单</label>
+            <!-- 第二行：提醒时间 + 所属清单 -->
+            <div class="task-preview-row task-preview-row-meta">
+              <div class="task-preview-meta-item">
+                <label class="task-preview-meta-label">提醒时间</label>
+                <input 
+                  v-model="task.reminderTime"
+                  type="datetime-local"
+                  class="task-preview-input-meta"
+                />
+              </div>
+              <div class="task-preview-meta-item">
+                <label class="task-preview-meta-label">所属清单</label>
                 <select 
                   v-model="task.listId"
-                  class="task-preview-select"
+                  class="task-preview-select-meta"
                 >
                   <option 
                     v-for="list in availableLists" 
@@ -86,31 +106,19 @@
                   </option>
                 </select>
               </div>
-              
-              <div class="task-preview-field">
-                <label class="task-preview-label">提醒时间</label>
-                <input 
-                  v-model="task.reminderTime"
-                  type="datetime-local"
-                  class="task-preview-input"
-                />
-              </div>
             </div>
             
-            <!-- 备注 -->
-            <div class="task-preview-field">
-              <label class="task-preview-label">备注</label>
-              <textarea 
+            <!-- 第三行：备注 -->
+            <div class="task-preview-row task-preview-row-note">
+              <label class="task-preview-note-label">备注</label>
+              <input 
                 v-model="task.metadata.note"
-                class="task-preview-textarea"
+                type="text"
+                class="task-preview-input-note"
                 placeholder="添加备注"
-                rows="2"
-                maxlength="500"
-              ></textarea>
+                maxlength="100"
+              />
             </div>
-            
-            <!-- 分隔线 -->
-            <div v-if="index < taskList.length - 1" class="task-preview-divider"></div>
           </div>
         </div>
         
@@ -150,12 +158,17 @@ export default {
     tasks: {
       type: Array,
       default: () => []
+    },
+    originalInput: {
+      type: String,
+      default: ''
     }
   },
   emits: ['close', 'created'],
   setup(props, { emit }) {
     const taskStore = useTaskStore()
     const isCreating = ref(false)
+    const copyStatus = ref('idle') // 'idle', 'copying', 'success', 'error'
     
     // 本地任务列表副本，用于编辑
     const taskList = ref([])
@@ -287,6 +300,39 @@ export default {
       close()
     }
     
+    // 删除任务
+    const removeTask = (index) => {
+      taskList.value.splice(index, 1)
+    }
+    
+    // 复制原始输入
+    const copyOriginalInput = async () => {
+      copyStatus.value = 'copying'
+      try {
+        await navigator.clipboard.writeText(props.originalInput)
+        copyStatus.value = 'success'
+      } catch (err) {
+        console.error('复制失败:', err)
+        try {
+          // 降级方案：使用传统方法
+          const textArea = document.createElement('textarea')
+          textArea.value = props.originalInput
+          document.body.appendChild(textArea)
+          textArea.select()
+          document.execCommand('copy')
+          document.body.removeChild(textArea)
+          copyStatus.value = 'success'
+        } catch (fallbackErr) {
+          copyStatus.value = 'error'
+        }
+      }
+      
+      // 2秒后重置状态
+      setTimeout(() => {
+        copyStatus.value = 'idle'
+      }, 2000)
+    }
+    
     // 监听 visible 变化，初始化数据
     watch(() => props.visible, (visible) => {
       if (visible) {
@@ -311,7 +357,10 @@ export default {
       isCreating,
       createAllTasks,
       close,
-      handleOverlayClick
+      handleOverlayClick,
+      removeTask,
+      copyOriginalInput,
+      copyStatus
     }
   }
 }
