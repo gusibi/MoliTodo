@@ -1340,6 +1340,99 @@ export const useTaskStore = defineStore('task', () => {
     return availableAIModels.value.length > 0
   }
 
+  // 流式生成任务列表
+  const streamGenerateTaskList = async (content, onChunk, onComplete, onError) => {
+    console.log('[taskStore] streamGenerateTaskList 开始', { content, onChunk: !!onChunk, onComplete: !!onComplete, onError: !!onError })
+    
+    try {
+      if (!selectedAIModel.value || !isAIEnabled.value) {
+        throw new Error('请先选择AI模型')
+      }
+
+      if (!content || content.trim().length === 0) {
+        throw new Error('输入内容不能为空')
+      }
+
+      const listId = currentListId.value || 0
+      const aiModelData = {
+        id: selectedAIModel.value.id,
+        name: selectedAIModel.value.name,
+        provider: selectedAIModel.value.provider
+      }
+
+      console.log('[taskStore] AI模型和列表信息:', { aiModelData, listId })
+
+      // 设置事件监听器
+      if (onChunk) {
+        console.log('[taskStore] 设置onChunk监听器')
+        window.electronAPI.onStreamTaskGenerationChunk((event, text) => {
+          console.log('[taskStore] 接收到chunk事件:', text)
+          onChunk(text)
+        })
+      }
+
+      if (onComplete) {
+        console.log('[taskStore] 设置onComplete监听器')
+        window.electronAPI.onStreamTaskGenerationComplete((event, result) => {
+          console.log('[taskStore] 接收到complete事件:', result)
+          // 清理监听器
+          window.electronAPI.removeStreamTaskGenerationListeners()
+          
+          if (result.success) {
+            onComplete({
+              success: true,
+              message: result.message,
+              tasks: result.tasks,
+              taskCount: result.tasks.length
+            })
+          } else {
+            onComplete({
+              success: false,
+              error: result.error
+            })
+          }
+        })
+      }
+
+      if (onError) {
+        console.log('[taskStore] 设置onError监听器')
+        window.electronAPI.onStreamTaskGenerationError((event, errorResult) => {
+          console.log('[taskStore] 接收到error事件:', errorResult)
+          // 清理监听器
+          window.electronAPI.removeStreamTaskGenerationListeners()
+          onError({
+            success: false,
+            error: errorResult.error
+          })
+        })
+      }
+
+      console.log('[taskStore] 调用AI流式生成任务列表:', { content, aiModelData, listId })
+      
+      // 启动流式生成
+      const result = await window.electronAPI.tasks.streamGenerateTaskList(content, aiModelData, listId)
+      
+      console.log('[taskStore] streamGenerateTaskList IPC返回结果:', result)
+      return result
+    } catch (error) {
+      console.error('AI流式生成任务列表失败:', error)
+      // 清理监听器
+      window.electronAPI.removeStreamTaskGenerationListeners()
+      
+      if (onError) {
+        onError({
+          success: false,
+          error: error.message
+        })
+      }
+      
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
   // 使用AI生成任务列表
   const generateTaskList = async (content) => {
     try {
@@ -1492,6 +1585,7 @@ export const useTaskStore = defineStore('task', () => {
     getSelectedAIModel,
     isAIAvailable,
     generateTaskList,
+    streamGenerateTaskList,
 
     // AI 相关状态
     availableAIModels,

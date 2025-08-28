@@ -301,8 +301,12 @@
   @apply h-px bg-border my-2;
 }
 
+.task-preview-footer {
+  @apply flex items-center justify-between pt-4 border-t border-border mt-auto;
+}
+
 .task-preview-actions {
-  @apply flex gap-4 justify-end pt-4 border-t border-border mt-auto;
+  @apply flex gap-4 justify-end;
 }
 
 .task-preview-btn {
@@ -428,4 +432,33 @@
   .task-preview-btn {
     @apply w-full;
   }
+}
+
+/* 流式内容显示区域样式 */
+.task-preview-stream-content {
+  @apply mt-4 p-4 bg-muted/20 rounded-lg border border-border/50;
+}
+
+.task-preview-stream-header {
+  @apply flex items-center justify-between gap-2 mb-3 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors;
+}
+
+.task-preview-stream-header i:first-child {
+  @apply text-blue-500;
+}
+
+.task-preview-stream-toggle {
+  @apply text-muted-foreground transition-transform duration-200 ml-auto;
+}
+
+.task-preview-stream-toggle.collapsed {
+  @apply -rotate-90;
+}
+
+.task-preview-stream-text {
+  @apply text-sm text-foreground whitespace-pre-wrap font-mono bg-background p-3 rounded border border-border/30 max-h-32 overflow-y-auto;
+}
+
+.task-preview-waiting-text {
+  @apply text-muted-foreground italic text-center py-4;
 }

@@ -10,6 +10,7 @@ const electronAPI = {
     create: (taskData) => ipcRenderer.invoke('create-task', taskData),
     createRecurring: (taskData) => ipcRenderer.invoke('task:createRecurring', taskData),
     generateTaskList: (content, aiModel, listId) => ipcRenderer.invoke('generate-task-list', content, aiModel, listId),
+    streamGenerateTaskList: (content, aiModel, listId) => ipcRenderer.invoke('stream-generate-task-list', content, aiModel, listId),
     update: (taskId, updates) => ipcRenderer.invoke('update-task', taskId, updates),
     complete: (taskId) => ipcRenderer.invoke('complete-task', taskId),
     delete: (taskId) => ipcRenderer.invoke('delete-task', taskId),
@@ -106,6 +107,22 @@ const electronAPI = {
   // 通知音效 API
   onPlayNotificationSound: (callback) => {
     ipcRenderer.on('play-notification-sound', callback);
+  },
+
+  // 流式任务生成事件监听 API
+  onStreamTaskGenerationChunk: (callback) => {
+    ipcRenderer.on('stream-task-generation-chunk', callback);
+  },
+  onStreamTaskGenerationComplete: (callback) => {
+    ipcRenderer.on('stream-task-generation-complete', callback);
+  },
+  onStreamTaskGenerationError: (callback) => {
+    ipcRenderer.on('stream-task-generation-error', callback);
+  },
+  removeStreamTaskGenerationListeners: () => {
+    ipcRenderer.removeAllListeners('stream-task-generation-chunk');
+    ipcRenderer.removeAllListeners('stream-task-generation-complete');
+    ipcRenderer.removeAllListeners('stream-task-generation-error');
   },
 
   // 拖拽相关 API

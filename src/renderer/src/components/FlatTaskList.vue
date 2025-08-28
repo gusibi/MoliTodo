@@ -157,6 +157,7 @@
       :visible="showTaskPreview"
       :tasks="previewTasks"
       :original-input="originalTaskInput"
+      :stream-content="streamContent"
       @close="closeTaskPreview"
       @created="handleTasksCreated"
     />
@@ -218,6 +219,7 @@ const aiDropdown = ref(null)
 const showTaskPreview = ref(false)
 const previewTasks = ref([])
 const originalTaskInput = ref('')
+const streamContent = ref('')
 
 // 折叠状态管理
 const collapsedGroups = ref(new Set())
@@ -312,28 +314,62 @@ const addTask = async () => {
   if (!content) return
 
   try {
-    // 如果选中了AI模型且启用了AI，使用AI生成任务列表
+    // 如果选中了AI模型且启用了AI，使用AI流式生成任务列表
     if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
+      console.log('[FlatTaskList] 开始AI流式生成任务，输入内容:', content)
       // 保存原始输入内容
       originalTaskInput.value = content
       // 立即显示加载状态的任务预览弹窗
       previewTasks.value = []
+      streamContent.value = ''
       showTaskPreview.value = true
       newTaskContent.value = ''
       if (quickAddInput.value) {
         quickAddInput.value.focus()
       }
       
-      const result = await taskStore.generateTaskList(content)
-      if (result.success) {
-        console.log(`AI成功生成了 ${result.taskCount} 个任务:`, result.message)
-        // 更新任务预览弹窗内容
-        previewTasks.value = result.tasks
-      } else {
-        console.error('AI生成任务失败:', result.error)
-        // AI生成失败时，关闭弹窗并回退到普通任务创建
+      try {
+        console.log('[FlatTaskList] 调用流式生成方法')
+        const result = await taskStore.streamGenerateTaskList(
+          content,
+          (chunk) => {
+            console.log('[FlatTaskList] 接收到流式数据块:', chunk)
+            // 实时更新流式内容显示
+            streamContent.value = chunk
+          },
+          (finalResult) => {
+            console.log('[FlatTaskList] 流式生成完成:', finalResult)
+            if (finalResult.success && finalResult.tasks) {
+              console.log(`[FlatTaskList] AI成功生成了 ${finalResult.tasks.length} 个任务`)
+              // 更新任务预览弹窗内容
+              previewTasks.value = finalResult.tasks.map(task => ({
+                ...task,
+                listId: task.listId || taskStore.currentListId,
+                dueDate: task.dueDate || null,
+                dueTime: task.dueTime || null,
+                reminderTime: task.reminderTime || null,
+                metadata: task.metadata || { note: '' }
+              }))
+            } else {
+              console.error('[FlatTaskList] AI生成任务失败:', finalResult.error)
+              // AI生成失败时，关闭弹窗并回退到普通任务创建
+              showTaskPreview.value = false
+              newTaskContent.value = content // 恢复输入内容
+              createNormalTask(content)
+            }
+          },
+          (error) => {
+            console.error('[FlatTaskList] 流式生成错误:', error)
+            // 发生错误时关闭弹窗并回退到普通任务创建
+            showTaskPreview.value = false
+            newTaskContent.value = content // 恢复输入内容
+            createNormalTask(content)
+          }
+        )
+      } catch (error) {
+        console.error('[FlatTaskList] 流式生成异常:', error)
         showTaskPreview.value = false
-        newTaskContent.value = content // 恢复输入内容
+        newTaskContent.value = content
         await createNormalTask(content)
       }
     } else {
@@ -529,6 +565,7 @@ const closeTaskPreview = () => {
   showTaskPreview.value = false
   previewTasks.value = []
   originalTaskInput.value = ''
+  streamContent.value = ''
 }
 
 const handleTasksCreated = (result) => {

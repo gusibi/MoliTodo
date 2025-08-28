@@ -99,6 +99,44 @@ class IpcHandlers {
       }
     });
 
+    // 流式生成任务列表
+    ipcMain.handle('stream-generate-task-list', async (event, content, aiModel, listId) => {
+      try {
+        console.log('[IPC] 收到AI流式生成任务列表请求:', { content, aiModel, listId });
+        
+        // 流式数据回调函数
+        const onChunk = (text) => {
+          console.log('[IPC] 发送chunk到渲染进程:', text);
+          // 发送流式数据到渲染进程
+          event.sender.send('stream-task-generation-chunk', text);
+        };
+        
+        console.log('[IPC] 调用taskService.streamGenerateTaskList');
+        const result = await this.taskService.streamGenerateTaskList(content, aiModel, listId, onChunk);
+        
+        console.log('[IPC] AI流式生成任务列表结果:', result);
+        
+        // 发送完成信号
+        console.log('[IPC] 发送complete事件到渲染进程');
+        event.sender.send('stream-task-generation-complete', result);
+        
+        return result;
+      } catch (error) {
+        console.error('[IPC] AI流式生成任务列表失败:', error);
+        
+        // 发送错误信号
+        const errorResult = {
+          success: false,
+          error: error.message,
+          tasks: []
+        };
+        console.log('[IPC] 发送error事件到渲染进程:', errorResult);
+        event.sender.send('stream-task-generation-error', errorResult);
+        
+        return errorResult;
+      }
+    });
+
     // 更新任务
     ipcMain.handle('update-task', async (event, taskId, updates) => {
       const task = await this.taskService.updateTask(taskId, updates);

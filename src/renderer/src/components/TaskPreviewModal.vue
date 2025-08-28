@@ -39,20 +39,29 @@
       </div>
       
       <div class="task-preview-dialog-body">
-        <div class="task-preview-stats">
-          <span class="task-preview-count">共 {{ taskList.length }} 个任务</span>
-        </div>
+
         
         <!-- 加载状态 -->
-        <div v-if="isLoading" class="task-preview-loading">
-          <div class="task-preview-loading-spinner">
-            <div class="loading-circle"></div>
+        <!-- AI生成内容显示区域 - 支持折叠 -->
+        <div v-if="isLoading || streamContent" class="task-preview-stream-content">
+          <div class="task-preview-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
+            <i class="fas fa-robot"></i>
+            <span class="flex items-center gap-2">
+              <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+              {{ isLoading ? 'AI正在生成任务列表...' : 'AI生成详情' }}
+            </span>
+            <i :class="['fas', 'fa-chevron-down', 'task-preview-stream-toggle', { 'collapsed': isStreamCollapsed }]"></i>
           </div>
-          <p class="task-preview-loading-text">AI 正在生成任务列表...</p>
+          <div v-show="!isStreamCollapsed" class="task-preview-stream-text">
+            <div v-if="isLoading && !streamContent" class="task-preview-waiting-text">
+              等待AI响应中...
+            </div>
+            <div v-else>{{ streamContent }}</div>
+          </div>
         </div>
         
         <!-- 任务列表 -->
-        <div v-else class="task-preview-list">
+        <div v-if="taskList.length > 0" class="task-preview-list">
           <!-- 任务项 -->
           <div 
             v-for="(task, index) in taskList" 
@@ -122,22 +131,27 @@
           </div>
         </div>
         
-        <div class="task-preview-actions">
-          <button 
-            class="task-preview-btn task-preview-btn-secondary"
-            @click="close"
-          >
-            取消
-          </button>
-          <button 
-            class="task-preview-btn task-preview-btn-primary"
-            @click="createAllTasks"
-            :disabled="!canCreate || isCreating"
-          >
-            <i v-if="isCreating" class="icon-loading"></i>
-            <span v-if="isCreating">创建中...</span>
-            <span v-else>创建所有任务</span>
-          </button>
+        <div class="task-preview-footer">
+          <div class="task-preview-stats">
+            <span class="task-preview-count">共 {{ taskList.length }} 个任务</span>
+          </div>
+          <div class="task-preview-actions">
+            <button 
+              class="task-preview-btn task-preview-btn-secondary"
+              @click="close"
+            >
+              取消
+            </button>
+            <button 
+              class="task-preview-btn task-preview-btn-primary"
+              @click="createAllTasks"
+              :disabled="!canCreate || isCreating"
+            >
+              <i v-if="isCreating" class="icon-loading"></i>
+              <span v-if="isCreating">创建中...</span>
+              <span v-else>创建所有任务</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -162,6 +176,10 @@ export default {
     originalInput: {
       type: String,
       default: ''
+    },
+    streamContent: {
+      type: String,
+      default: ''
     }
   },
   emits: ['close', 'created'],
@@ -172,6 +190,12 @@ export default {
     
     // 本地任务列表副本，用于编辑
     const taskList = ref([])
+    
+    // 流式生成状态
+    const isStreamGenerating = ref(false)
+    
+    // 流式内容折叠状态
+    const isStreamCollapsed = ref(false)
     
     // 可用的清单列表
     const availableLists = computed(() => {
@@ -220,6 +244,8 @@ export default {
         }
       }))
     }
+    
+
     
     // 创建所有任务
     const createAllTasks = async () => {
@@ -360,7 +386,9 @@ export default {
       handleOverlayClick,
       removeTask,
       copyOriginalInput,
-      copyStatus
+      copyStatus,
+      isStreamGenerating,
+      isStreamCollapsed
     }
   }
 }

@@ -1007,6 +1007,61 @@ class TaskService {
       };
     }
   }
+
+  /**
+   * 流式生成任务列表
+   * @param {string} content - 用户输入的内容
+   * @param {Object} aiModel - AI模型信息
+   * @param {number} listId - 列表ID
+   * @param {Function} onChunk - 流式数据回调函数
+   * @returns {Promise<Array>} 生成的任务列表
+   */
+  async streamGenerateTaskList(content, aiModel, listId = 0, onChunk) {
+    console.log('[TaskService] streamGenerateTaskList 开始', { content, aiModel, listId, onChunk: !!onChunk });
+    
+    if (!content || content.trim().length === 0) {
+      throw new Error('输入内容不能为空');
+    }
+
+    if (!aiModel || !aiModel.id) {
+      throw new Error('AI模型信息不完整');
+    }
+
+    if (!this.windowManager) {
+      throw new Error('WindowManager 未初始化，无法获取配置');
+    }
+
+    try {
+      console.log('[TaskService] 调用AIService.streamGenerateTaskList');
+      // 调用AI服务流式生成任务列表
+      const result = await AIService.streamGenerateTaskList(content, aiModel, this.windowManager, onChunk);
+      console.log('[TaskService] AIService返回结果:', result);
+      
+      const generatedTasks = result.tasks;
+      
+      // 为生成的任务添加 listId
+      const tasksWithListId = generatedTasks.map(task => ({
+        ...task,
+        listId: listId
+      }));
+
+      const finalResult = {
+        success: true,
+        tasks: tasksWithListId,
+        message: `成功使用 ${aiModel.name} (${aiModel.provider}) 生成了 ${tasksWithListId.length} 个任务`
+      };
+      
+      console.log('[TaskService] 最终返回结果:', finalResult);
+      return finalResult;
+    } catch (error) {
+      console.error('[TaskService] AI流式生成任务列表失败:', error);
+      return {
+        success: false,
+        error: error.message,
+        tasks: []
+      };
+    }
+  }
 }
 
 module.exports = TaskService;
