@@ -212,7 +212,7 @@
         <!-- 重复设置 -->
         <div class="task-option-section">
           <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
-            <div class="task-option-btn">
+            <div class="task-option-btn" @click="toggleRepeatPicker">
               <div class="task-option-icon">
                 <i class="fas fa-redo"></i>
               </div>
@@ -220,7 +220,7 @@
                 <div class="task-option-title">重复</div>
               </div>
               <!-- iOS风格开关 -->
-              <div class="task-option-switch">
+              <div class="task-option-switch" @click.stop>
                 <label class="switch">
                   <input 
                     type="checkbox" 
@@ -234,7 +234,7 @@
           </div>
           
           <!-- 重复配置面板 -->
-          <div v-if="selectedRecurrence" class="task-option-dropdown">
+          <div v-if="showRepeatPicker && selectedRecurrence" class="task-option-dropdown">
             <RepeatSelector 
               v-model="selectedRecurrence" 
               :base-date="getBaseDate()"
@@ -355,6 +355,7 @@ const availableLists = lists
 
 // 重复任务相关状态
 const selectedRecurrence = ref(null)
+const showRepeatPicker = ref(false)
 
 // 使用 storeToRefs 确保响应式
 const customReminderOptions = storeCustomReminderOptions
@@ -470,13 +471,28 @@ const toggleRepeatEnabled = (event) => {
       type: 'daily',
       interval: 1
     }
+    // 开启时自动展开面板
+    showRepeatPicker.value = true
   } else {
     // 关闭重复时，清除重复配置
     selectedRecurrence.value = null
+    // 关闭时收起面板
+    showRepeatPicker.value = false
   }
   // 关闭其他选择器
   showReminderPicker.value = false
   showListPicker.value = false
+}
+
+// 切换重复面板展开状态
+const toggleRepeatPicker = () => {
+  // 只有在已启用重复功能时才能切换面板
+  if (selectedRecurrence.value) {
+    showRepeatPicker.value = !showRepeatPicker.value
+    // 关闭其他选择器
+    showReminderPicker.value = false
+    showListPicker.value = false
+  }
 }
 
 // 切换列表选择器
@@ -691,8 +707,6 @@ const handleRecurrenceChange = (newRecurrence) => {
   selectedRecurrence.value = newRecurrence
 }
 
-
-
 // 计算并验证提醒时间的合并方法
 const calculateAndValidateReminderTime = () => {
   console.log('=== 计算并验证提醒时间 ===')
@@ -723,8 +737,30 @@ const calculateAndValidateReminderTime = () => {
   if (reminderTime) {
     const now = new Date()
     const reminderDateTime = new Date(reminderTime)
-    isValid = reminderDateTime > now
-    console.log('提醒时间验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+    
+    // 在编辑模式下，如果提醒时间没有变化，跳过过去时间的验证
+    if (props.isEditing && props.task) {
+      if (props.task.reminderTime) {
+        const originalReminderTime = new Date(props.task.reminderTime)
+        const newReminderTime = new Date(reminderTime)
+        
+        // 如果提醒时间没有变化（精确到分钟），跳过验证
+        if (Math.abs(originalReminderTime.getTime() - newReminderTime.getTime()) < 60000) {
+          console.log('编辑模式：提醒时间未变化，跳过过去时间验证')
+          isValid = true
+        } else {
+          isValid = reminderDateTime > now
+          console.log('编辑模式：提醒时间已变化，执行验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+        }
+      } else {
+        // 原任务没有提醒时间，现在新增提醒时间，需要验证
+        isValid = reminderDateTime > now
+        console.log('编辑模式：新增提醒时间，执行验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+      }
+    } else {
+      isValid = reminderDateTime > now
+      console.log('提醒时间验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
+    }
   } else if (!selectedReminder.value && !selectedDate.value) {
     console.log('没有提醒设置，验证通过')
     isValid = true
@@ -971,8 +1007,11 @@ const loadTaskData = () => {
   
   if (props.task.recurrence) {
     selectedRecurrence.value = props.task.recurrence
+    // 编辑现有重复任务时，默认不展开面板
+    showRepeatPicker.value = false
   } else {
     selectedRecurrence.value = null
+    showRepeatPicker.value = false
   }
   
   if (props.task.listId) {

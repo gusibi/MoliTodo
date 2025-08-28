@@ -374,8 +374,10 @@ class Task {
   /**
    * 设置提醒时间
    * @param {Date} reminderTime 提醒时间
+   * @param {boolean} allowBeforeTime 是否允许设置过去的时间
+   * @param {Date} originalReminderTime 原始提醒时间（用于编辑模式对比）
    */
-  setReminder(reminderTime, allowBeforeTime=false) {
+  setReminder(reminderTime, allowBeforeTime=false, originalReminderTime=null) {
     if (reminderTime) {
       const isUnixEpoch = reminderTime.getTime() === 0;
       
@@ -383,7 +385,15 @@ class Task {
         const now = new Date();
         const minAllowedTime = new Date(now.getTime() - 30 * 1000);
         
-        if (reminderTime <= minAllowedTime && !allowBeforeTime) {
+        // 如果提供了原始提醒时间，且新时间与原时间相同（精确到分钟），跳过验证
+        if (originalReminderTime) {
+          const timeDiff = Math.abs(reminderTime.getTime() - originalReminderTime.getTime());
+          if (timeDiff < 60000) { // 小于1分钟认为没有变化
+            // 时间没有变化，跳过过去时间验证
+          } else if (reminderTime <= minAllowedTime && !allowBeforeTime) {
+            throw new Error('提醒时间不能是过去的时间');
+          }
+        } else if (reminderTime <= minAllowedTime && !allowBeforeTime) {
           throw new Error('提醒时间不能是过去的时间');
         }
       }

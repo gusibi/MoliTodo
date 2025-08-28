@@ -261,10 +261,11 @@ class TaskService {
         task.clearReminder();
       } else if (updates.recurrence && updates.recurrence != "") {
         console.log("重复任务不校验, recurrence: ", updates.recurrence)
-        task.setReminder(new Date(updates.reminderTime), true);
+        task.setReminder(new Date(updates.reminderTime), true, task.reminderTime);
       }else{
         // 统一处理：所有提醒时间都应该是 Date 对象或 ISO 字符串
-        task.setReminder(new Date(updates.reminderTime), false);
+        // 传入原始提醒时间用于对比，避免对未变化的提醒时间进行过去时间验证
+        task.setReminder(new Date(updates.reminderTime), false, task.reminderTime);
       }
     }
 
@@ -335,7 +336,8 @@ class TaskService {
       throw new Error('任务不存在');
     }
     console.log("taskId: ${taskId}, reminderTime: ", reminderTime)
-    task.setReminder(reminderTime);
+    // 传入原始提醒时间用于对比，避免对未变化的提醒时间进行过去时间验证
+    task.setReminder(reminderTime, false, task.reminderTime);
     return await this.taskRepository.save(task);
   }
 
