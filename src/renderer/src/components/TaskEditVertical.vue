@@ -26,7 +26,7 @@
               :style="{ minHeight: '1.5rem', maxHeight: '15rem' }"
               @focus="handleStartAdding" 
               @blur="handleInputBlur"
-              @keyup.ctrl.enter="handleAddTask" 
+              @keyup.ctrl.enter="handleSaveTaskContent" 
               @keyup.escape="handleCancelAdding"
               @input="autoResize"
             ></textarea>
@@ -271,6 +271,7 @@
               rows="5"
               :style="{ minHeight: '3rem', maxHeight: '15rem' }"
               @input="autoResizeNote"
+              @blur="handleNoteBlur"
             ></textarea>
             <div class="task-note-counter">{{ taskNote.length }}/1000</div>
           </div>
@@ -291,16 +292,6 @@
         </div>
         
         <div class="task-actions-right">
-          <!-- 添加/保存按钮 -->
-          <button 
-            v-if="newTaskContent.trim()" 
-            class="task-action-save" 
-            @click="handleAddTask"
-          >
-            {{ props.isEditing ? '保存' : '添加' }}
-          </button>
-          
-          <!-- 删除按钮（仅编辑模式显示） -->
           <button v-if="props.isEditing" class="task-action-delete" @click="handleDeleteTask">
             <i class="fas fa-trash"></i>
           </button>
@@ -347,6 +338,9 @@ const newTaskContent = ref('')
 const isAddingTask = ref(false)
 const isImportant = ref(false)
 const taskNote = ref('')
+
+// 防抖定时器
+let noteDebounceTimer = null
 
 // 步骤相关状态
 const steps = ref([])
@@ -429,7 +423,12 @@ const resetAllStates = () => {
 }
 
 // 处理输入框失焦
-const handleInputBlur = (event) => {
+const handleInputBlur = async (event) => {
+  // 如果是编辑模式，先保存内容
+  if (props.isEditing && props.task && newTaskContent.value.trim()) {
+    await handleSaveTaskContent()
+  }
+  
   // 延迟处理，避免与按钮点击冲突
   setTimeout(() => {
     if (!taskEditContainer.value?.contains(document.activeElement)) {
@@ -573,7 +572,7 @@ const toggleReminderPicker = () => {
 
 
 // 切换重复功能开关
-const toggleRepeatEnabled = (event) => {
+const toggleRepeatEnabled = async (event) => {
   if (event.target.checked) {
     // 开启重复时，设置默认的重复配置
     selectedRecurrence.value = {
@@ -591,6 +590,11 @@ const toggleRepeatEnabled = (event) => {
   // 关闭其他选择器
   showReminderPicker.value = false
   showListPicker.value = false
+  
+  // 如果是编辑模式，自动保存重复配置
+  if (props.isEditing && props.task) {
+    await handleSaveRecurrence()
+  }
 }
 
 // 切换重复面板展开状态
@@ -601,6 +605,60 @@ const toggleRepeatPicker = () => {
     // 关闭其他选择器
     showReminderPicker.value = false
     showListPicker.value = false
+  }
+}
+
+// 处理重复规则变化
+const handleRecurrenceChange = async (recurrence) => {
+  selectedRecurrence.value = recurrence
+  
+  // 如果是编辑模式，自动保存重复配置
+  if (props.isEditing && props.task) {
+    await handleSaveRecurrence()
+  }
+}
+
+// 保存重复配置
+const handleSaveRecurrence = async () => {
+  if (!props.task || !props.isEditing) return
+  
+  try {
+    // 清理重复规则对象，确保可序列化
+    const cleanRecurrence = selectedRecurrence.value ? {
+      type: selectedRecurrence.value.type,
+      interval: selectedRecurrence.value.interval,
+      daysOfWeek: selectedRecurrence.value.daysOfWeek || [],
+      byMonthDay: selectedRecurrence.value.byMonthDay || null,
+      byWeekDay: selectedRecurrence.value.byWeekDay || null,
+      byMonth: selectedRecurrence.value.byMonth || null,
+      endCondition: selectedRecurrence.value.endCondition || null,
+      reminderTime: selectedRecurrence.value.reminderTime || null
+    } : null
+    
+    const updates = {
+      recurrence: cleanRecurrence
+    }
+    
+    if (props.task.seriesId && selectedRecurrence.value) {
+      // 更新重复任务系列
+      await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
+    } else if (selectedRecurrence.value && !props.task.seriesId) {
+      // 将普通任务转换为重复任务
+      await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
+    } else if (!selectedRecurrence.value && props.task.seriesId) {
+      // 将重复任务转换为普通任务
+      await taskStore.updateTask(props.task.id, {
+        seriesId: null,
+        recurrence: null
+      })
+    } else {
+      // 更新普通任务的重复配置
+      await taskStore.updateTask(props.task.id, updates)
+    }
+    
+    console.log('重复配置已自动保存:', cleanRecurrence)
+  } catch (error) {
+    console.error('自动保存重复配置失败:', error)
   }
 }
 
@@ -619,14 +677,24 @@ const clearDateTime = () => {
 }
 
 // 清除提醒
-const clearReminder = () => {
+const clearReminder = async () => {
   selectedReminder.value = null
+  
+  // 如果是编辑模式，自动保存提醒时间清除
+  if (props.isEditing && props.task) {
+    try {
+      await taskStore.updateTaskReminder(props.task.id, null)
+      console.log('提醒已清除并自动保存')
+    } catch (error) {
+      console.error('自动保存提醒清除失败:', error)
+    }
+  }
 }
 
 
 
 // 选择自定义提醒
-const selectCustomReminder = (reminderOption) => {
+const selectCustomReminder = async (reminderOption) => {
   const now = new Date()
   let reminderTime = null
   let displayText = reminderOption.label
@@ -691,6 +759,17 @@ const selectCustomReminder = (reminderOption) => {
   }
 
   showReminderPicker.value = false
+  
+  // 如果是编辑模式，自动保存提醒时间
+  if (props.isEditing && props.task) {
+    try {
+      const reminderTimeISO = reminderTime ? reminderTime.toISOString() : null
+      await taskStore.updateTaskReminder(props.task.id, reminderTimeISO)
+      console.log('自定义提醒时间已自动保存:', reminderTimeISO)
+    } catch (error) {
+      console.error('自动保存自定义提醒时间失败:', error)
+    }
+  }
 }
 
 // 选择列表
@@ -782,16 +861,37 @@ const getMinTimeForDatePicker = () => {
 }
 
 // 处理日期时间变化
-const handleDateTimeChange = (newValue) => {
+const handleDateTimeChange = async (newValue) => {
   if (newValue) {
     const date = new Date(newValue)
     selectedDate.value = getLocalDateString(date)
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     selectedTime.value = `${hours}:${minutes}`
+    
+    // 如果是编辑模式，自动保存提醒时间
+    if (props.isEditing && props.task) {
+      try {
+        const reminderTime = date.toISOString()
+        await taskStore.updateTaskReminder(props.task.id, reminderTime)
+        console.log('提醒时间已自动保存:', reminderTime)
+      } catch (error) {
+        console.error('自动保存提醒时间失败:', error)
+      }
+    }
   } else {
     selectedDate.value = ''
     selectedTime.value = ''
+    
+    // 如果是编辑模式且清除了时间，也要自动保存
+    if (props.isEditing && props.task) {
+      try {
+        await taskStore.updateTaskReminder(props.task.id, null)
+        console.log('提醒时间已清除并自动保存')
+      } catch (error) {
+        console.error('自动保存提醒时间清除失败:', error)
+      }
+    }
   }
 }
 
@@ -840,10 +940,7 @@ const getBaseDate = () => {
   return new Date()
 }
 
-// 处理重复设置变化
-const handleRecurrenceChange = (newRecurrence) => {
-  selectedRecurrence.value = newRecurrence
-}
+
 
 // 计算并验证提醒时间的合并方法
 const calculateAndValidateReminderTime = () => {
@@ -916,98 +1013,6 @@ const calculateAndValidateReminderTime = () => {
   return { reminderTime, cleanReminderConfig, isValid }
 }
 
-// 添加/更新任务
-const handleAddTask = async () => {
-  if (!newTaskContent.value.trim()) return
-
-  // 计算并验证提醒时间, 如果是循环任务，这里不校验,且提醒时间需要置空,在存储时动态生成
-  const { reminderTime, cleanReminderConfig, isValid } = calculateAndValidateReminderTime()
-  if (!isValid && !selectedRecurrence.value) {
-    alert('提醒时间不能设置为过去的时间，请重新选择')
-    return
-  }
-  console.log("reminderTime: ", reminderTime)
-  console.log("cleanReminderConfig: ", cleanReminderConfig)
-
-  const taskData = {
-    content: newTaskContent.value.trim(),
-    dueDate: selectedDate.value,
-    dueTime: selectedTime.value,
-    reminderTime: reminderTime,
-    reminderConfig: cleanReminderConfig,
-    listId: selectedListId.value,
-    recurrence: selectedRecurrence.value || null,
-    metadata: {
-      note: taskNote.value?.trim() || ''
-    }
-  }
-
-  console.log('准备发送的 taskData 序列化测试:', JSON.stringify(taskData))
-
-  if (props.isEditing && props.task) {
-    // 编辑模式，处理重复任务的更新逻辑
-    try {
-      // 清理重复规则对象，确保可序列化
-      const cleanRecurrence = selectedRecurrence.value ? {
-        type: selectedRecurrence.value.type,
-        interval: selectedRecurrence.value.interval,
-        daysOfWeek: selectedRecurrence.value.daysOfWeek || [],
-        byMonthDay: selectedRecurrence.value.byMonthDay || null,
-        byWeekDay: selectedRecurrence.value.byWeekDay || null,
-        byMonth: selectedRecurrence.value.byMonth || null,
-        endCondition: selectedRecurrence.value.endCondition || null,
-        reminderTime: selectedRecurrence.value.reminderTime || null
-      } : null
-      
-      const updates = {
-        content: newTaskContent.value.trim(),
-        dueDate: selectedDate.value || null,
-        dueTime: selectedTime.value || null,
-        reminderTime: reminderTime,
-        reminderConfig: cleanReminderConfig,
-        listId: selectedListId.value,
-        recurrence: cleanRecurrence,
-        metadata: {
-          note: taskNote.value?.trim() || '',
-          steps: steps.value
-        }
-      }
-
-      console.log("updates: ----", updates)
-      
-      if (props.task.seriesId && selectedRecurrence.value) {
-        // 更新重复任务系列
-        await taskStore.updateRecurringTask(props.task.id, updates,cleanRecurrence)
-        handleCancelAdding()
-      } else if (selectedRecurrence.value && !props.task.seriesId) {
-        // 将普通任务转换为重复任务
-        await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
-        handleCancelAdding()
-      } else if (!selectedRecurrence.value && props.task.seriesId) {
-        // 将重复任务转换为普通任务
-        await taskStore.updateTask(props.task.id, {
-          ...updates,
-          seriesId: null,
-          recurrence: null
-        })
-        handleCancelAdding()
-      } else {
-        // 更新普通任务
-        taskData.id = props.task.id
-        emit('update-task', taskData)
-        handleCancelAdding()
-      }
-    } catch (error) {
-      console.error('更新任务失败:', error)
-    }
-  } else {
-    // 添加模式，发送添加事件
-    console.log("add task: taskData: ", taskData)
-    emit('add-task', taskData)
-    handleCancelAdding()
-  }
-}
-
 // 删除任务
 const handleDeleteTask = () => {
   if (props.task) {
@@ -1038,6 +1043,9 @@ const handleToggleComplete = async (task) => {
   }
 }
 
+// 任务内容防抖定时器
+const contentDebounceTimer = ref(null)
+
 // 自动调整textarea高度
 const autoResize = () => {
   const textarea = addTaskInput.value
@@ -1052,6 +1060,40 @@ const autoResize = () => {
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
   
   textarea.style.height = newHeight + 'px'
+  
+  // 如果是编辑模式，启动防抖自动保存
+  if (props.isEditing && props.task) {
+    debounceSaveTaskContent()
+  }
+}
+
+// 防抖保存任务内容
+const debounceSaveTaskContent = () => {
+  if (contentDebounceTimer.value) {
+    clearTimeout(contentDebounceTimer.value)
+  }
+  
+  contentDebounceTimer.value = setTimeout(async () => {
+    if (newTaskContent.value.trim()) {
+      await handleSaveTaskContent()
+    }
+  }, 1000) // 1秒后保存
+}
+
+// 保存任务内容
+const handleSaveTaskContent = async () => {
+  if (!props.task || !props.isEditing || !newTaskContent.value.trim()) return
+  
+  try {
+    const updates = {
+      content: newTaskContent.value.trim()
+    }
+    
+    await taskStore.updateTask(props.task.id, updates)
+    console.log('任务内容已自动保存:', updates.content)
+  } catch (error) {
+    console.error('自动保存任务内容失败:', error)
+  }
 }
 
 // 自动调整备注区域textarea高度
@@ -1068,6 +1110,60 @@ const autoResizeNote = (event) => {
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
   
   textarea.style.height = newHeight + 'px'
+  
+  // 如果是编辑模式，启动防抖自动保存
+  if (props.isEditing && props.task) {
+    debounceSaveNote()
+  }
+}
+
+// 防抖保存备注
+const debounceSaveNote = () => {
+  // 清除之前的定时器
+  if (noteDebounceTimer) {
+    clearTimeout(noteDebounceTimer)
+  }
+  
+  // 设置新的定时器，1秒后保存
+  noteDebounceTimer = setTimeout(async () => {
+    if (props.isEditing && props.task) {
+      try {
+        const currentMetadata = props.task.metadata || {}
+        const updatedMetadata = {
+          ...currentMetadata,
+          note: taskNote.value?.trim() || ''
+        }
+        await taskStore.updateTaskMetadata(props.task.id, updatedMetadata)
+        console.log('备注已自动保存:', taskNote.value)
+      } catch (error) {
+        console.error('自动保存备注失败:', error)
+      }
+    }
+  }, 1000)
+}
+
+// 备注失焦时立即保存
+const handleNoteBlur = async () => {
+  if (props.isEditing && props.task) {
+    // 清除防抖定时器
+    if (noteDebounceTimer) {
+      clearTimeout(noteDebounceTimer)
+      noteDebounceTimer = null
+    }
+    
+    // 立即保存
+    try {
+      const currentMetadata = props.task.metadata || {}
+      const updatedMetadata = {
+        ...currentMetadata,
+        note: taskNote.value?.trim() || ''
+      }
+      await taskStore.updateTaskMetadata(props.task.id, updatedMetadata)
+      console.log('备注失焦自动保存:', taskNote.value)
+    } catch (error) {
+      console.error('备注失焦自动保存失败:', error)
+    }
+  }
 }
 
 // 组件挂载时初始化
@@ -1094,6 +1190,15 @@ onMounted(async () => {
 // 组件卸载时移除监听器
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  
+  // 清理防抖定时器
+  if (noteDebounceTimer) {
+    clearTimeout(noteDebounceTimer)
+    noteDebounceTimer = null
+  }
+  if (contentDebounceTimer.value) {
+    clearTimeout(contentDebounceTimer.value)
+  }
 })
 
 // 加载任务数据的通用函数

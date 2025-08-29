@@ -637,6 +637,27 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 更新任务提醒时间
+  const updateTaskReminder = async (taskId, reminderTime) => {
+    try {
+      console.log('更新任务提醒时间:', taskId, reminderTime)
+      const updates = { reminderTime }
+      const result = await window.electronAPI.tasks.update(taskId, updates)
+      if (result.success) {
+        // 更新本地任务数据，避免重新获取所有任务
+        const taskIndex = tasks.value.findIndex(task => task.id === taskId)
+        if (taskIndex !== -1) {
+          tasks.value[taskIndex].reminderTime = reminderTime
+          tasks.value[taskIndex].updatedAt = new Date().toISOString()
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('更新任务提醒时间失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // 完成任务
   const completeTask = async (taskId) => {
     try {
@@ -1654,6 +1675,7 @@ export const useTaskStore = defineStore('task', () => {
     getCompletedTasks,
     createTask,
     updateTask,
+    updateTaskReminder,
     completeTask,
     deleteTask,
     startTask,
