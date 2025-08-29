@@ -45,7 +45,31 @@
       </div>
 
       <!-- 步骤区域 -->
-      <!-- <div v-if="isAddingTask" class="task-steps">
+      <div v-if="isAddingTask" class="task-steps">
+           <div v-if="steps.length > 0" class="steps-list">
+          <div v-for="(step, index) in steps" :key="step.id" class="step-item">
+            <input type="checkbox" :checked="step.status === 'done'" @change="toggleStepStatus(step)" class="step-checkbox" />
+            <input 
+              v-if="editingStepId === step.id"
+              v-model="editingStepContent"
+              type="text"
+              class="step-content-input"
+              @blur="saveStepEdit(step)"
+              @keyup.enter="saveStepEdit(step)"
+              @keyup.escape="cancelStepEdit"
+              ref="stepEditInput"
+            />
+            <span 
+              v-else
+              class="step-content" 
+              :class="{ 'completed': step.status === 'done' }"
+              @dblclick="startStepEdit(step)"
+            >{{ step.content }}</span>
+            <button class="step-delete-btn" @click="removeStep(index)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
         <div class="step-add">
           <button class="step-add-btn" @click="addStep">
             <i class="fas fa-plus step-add-icon"></i>
@@ -58,17 +82,7 @@
             @keyup.enter="addStep"
           />
         </div>
-        
-        <div v-if="steps.length > 0" class="steps-list">
-          <div v-for="(step, index) in steps" :key="index" class="step-item">
-            <input type="checkbox" v-model="step.completed" class="step-checkbox" />
-            <span class="step-content" :class="{ 'completed': step.completed }">{{ step.content }}</span>
-            <button class="step-delete-btn" @click="removeStep(index)">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-      </div> -->
+      </div>
 
       <!-- 任务选项区域 -->
       <div v-if="isAddingTask" class="task-options">
@@ -337,6 +351,8 @@ const taskNote = ref('')
 // 步骤相关状态
 const steps = ref([])
 const newStepContent = ref('')
+const editingStepId = ref(null)
+const editingStepContent = ref('')
 
 // 日期时间相关状态
 const selectedDate = ref('')
@@ -434,19 +450,112 @@ const handleClickOutside = (event) => {
 }
 
 // 添加步骤
-const addStep = () => {
+const addStep = async () => {
   if (newStepContent.value.trim()) {
-    steps.value.push({
-      content: newStepContent.value.trim(),
-      completed: false
-    })
-    newStepContent.value = ''
+    const stepContent = newStepContent.value.trim()
+    
+    if (props.isEditing && props.task) {
+      // 编辑模式：使用API添加步骤
+      try {
+        const newStep = await taskStore.addTaskStep(props.task.id, stepContent)
+        steps.value.push(newStep.step)
+        newStepContent.value = ''
+      } catch (error) {
+        console.error('添加步骤失败:', error)
+      }
+    } else {
+      // 新建模式：本地添加步骤
+      const newStep = {
+        id: Date.now(), // 临时ID，保存时会由后端生成正式ID
+        content: stepContent,
+        status: 'todo'
+      }
+      steps.value.push(newStep)
+      newStepContent.value = ''
+    }
   }
 }
 
 // 删除步骤
-const removeStep = (index) => {
-  steps.value.splice(index, 1)
+const removeStep = async (index) => {
+  const step = steps.value[index]
+  
+  if (props.isEditing && props.task) {
+    // 编辑模式：使用API删除步骤
+    try {
+      await taskStore.deleteTaskStep(props.task.id, step.id)
+      steps.value.splice(index, 1)
+    } catch (error) {
+      console.error('删除步骤失败:', error)
+    }
+  } else {
+    // 新建模式：本地删除步骤
+    steps.value.splice(index, 1)
+  }
+}
+
+// 切换步骤状态
+const toggleStepStatus = async (step) => {
+  // 如果是编辑模式且有任务，立即更新任务状态
+  if (props.isEditing && props.task) {
+    try {
+      // 使用taskStore的API更新步骤状态
+      await taskStore.toggleTaskStepStatus(props.task.id, step.id)
+    } catch (error) {
+      console.error('更新步骤状态失败:', error)
+    }
+  }
+}
+
+// 开始编辑步骤
+const startStepEdit = (step) => {
+  editingStepId.value = step.id
+  editingStepContent.value = step.content
+  
+  // 下一帧聚焦到输入框
+  nextTick(() => {
+    const input = document.querySelector('.step-content-input')
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
+// 保存步骤编辑
+const saveStepEdit = async (step) => {
+  if (!editingStepContent.value.trim()) {
+    cancelStepEdit()
+    return
+  }
+  
+  const newContent = editingStepContent.value.trim()
+  if (newContent === step.content) {
+    cancelStepEdit()
+    return
+  }
+  
+  if (props.isEditing && props.task) {
+    // 编辑模式：使用API更新步骤
+    try {
+      await taskStore.updateTaskStep(props.task.id, step.id, { content: newContent })
+      step.content = newContent
+      cancelStepEdit()
+    } catch (error) {
+      console.error('更新步骤失败:', error)
+      cancelStepEdit()
+    }
+  } else {
+    // 新建模式：本地更新步骤
+    step.content = newContent
+    cancelStepEdit()
+  }
+}
+
+// 取消步骤编辑
+const cancelStepEdit = () => {
+  editingStepId.value = null
+  editingStepContent.value = ''
 }
 
 // 切换重要性
@@ -588,6 +697,35 @@ const selectCustomReminder = (reminderOption) => {
 const selectList = (list) => {
   selectedListId.value = list.id
   showListPicker.value = false
+  
+  // 如果是编辑模式且列表发生变化，立即更新任务列表
+  if (props.isEditing && props.task && props.task.listId !== list.id) {
+    handleUpdateTaskList(list.id)
+  }
+}
+
+// 更新任务列表（轻量级方法，只更新列表）
+const handleUpdateTaskList = async (newListId) => {
+  if (!props.task || !props.isEditing) return
+  
+  try {
+    const result = await taskStore.moveTaskToList(props.task.id, newListId)
+    if (result.success) {
+      // 更新本地任务数据的listId
+      if (props.task) {
+        props.task.listId = newListId
+      }
+      console.log('任务列表更新成功')
+    } else {
+      console.error('更新任务列表失败:', result.error)
+      // 恢复原来的选择
+      selectedListId.value = props.task.listId
+    }
+  } catch (error) {
+    console.error('更新任务列表失败:', error)
+    // 恢复原来的选择
+    selectedListId.value = props.task.listId
+  }
 }
 
 // 获取选中的列表名称
@@ -743,26 +881,20 @@ const calculateAndValidateReminderTime = () => {
       if (props.task.reminderTime) {
         const originalReminderTime = new Date(props.task.reminderTime)
         const newReminderTime = new Date(reminderTime)
-        
         // 如果提醒时间没有变化（精确到分钟），跳过验证
         if (Math.abs(originalReminderTime.getTime() - newReminderTime.getTime()) < 60000) {
-          console.log('编辑模式：提醒时间未变化，跳过过去时间验证')
           isValid = true
         } else {
           isValid = reminderDateTime > now
-          console.log('编辑模式：提醒时间已变化，执行验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
         }
       } else {
         // 原任务没有提醒时间，现在新增提醒时间，需要验证
         isValid = reminderDateTime > now
-        console.log('编辑模式：新增提醒时间，执行验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
       }
     } else {
       isValid = reminderDateTime > now
-      console.log('提醒时间验证结果:', isValid, '当前时间:', now.toLocaleString(), '提醒时间:', reminderDateTime.toLocaleString())
     }
   } else if (!selectedReminder.value && !selectedDate.value) {
-    console.log('没有提醒设置，验证通过')
     isValid = true
   }
 
@@ -836,7 +968,8 @@ const handleAddTask = async () => {
         listId: selectedListId.value,
         recurrence: cleanRecurrence,
         metadata: {
-          note: taskNote.value?.trim() || ''
+          note: taskNote.value?.trim() || '',
+          steps: steps.value
         }
       }
 
@@ -844,16 +977,13 @@ const handleAddTask = async () => {
       
       if (props.task.seriesId && selectedRecurrence.value) {
         // 更新重复任务系列
-        console.log("更新重复任务系列, 当前是子任务: ", props.task.seriesId)
         await taskStore.updateRecurringTask(props.task.id, updates,cleanRecurrence)
         handleCancelAdding()
       } else if (selectedRecurrence.value && !props.task.seriesId) {
         // 将普通任务转换为重复任务
-        console.log("将普通任务转换为重复任务: ", props.task.id)
         await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
         handleCancelAdding()
       } else if (!selectedRecurrence.value && props.task.seriesId) {
-        console.log("将重复任务转换为普通任务, : ", props.task.seriesId)
         // 将重复任务转换为普通任务
         await taskStore.updateTask(props.task.id, {
           ...updates,
@@ -974,7 +1104,7 @@ const loadTaskData = () => {
   newTaskContent.value = props.task.content || ''
   isImportant.value = props.task.isImportant || false
   taskNote.value = props.task.metadata?.note || ''
-  steps.value = props.task.steps || []
+  steps.value = props.task.metadata?.steps || []
   
   // 优先使用reminderTime，如果没有则使用dueDate/dueTime
   if (props.task.reminderTime) {

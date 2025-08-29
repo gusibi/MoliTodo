@@ -260,8 +260,7 @@ const isInListView = computed(() => taskStore.currentListId !== null)
 // 按 list 分组任务
 const groupedTasks = computed(() => {
   const allTasks = props.tasks
-  
-  console.log("allTasks:", allTasks)
+  console.log("allTasks:", JSON.stringify(allTasks)) 
   if (!allTasks || allTasks.length === 0) {
     return []
   }

@@ -731,7 +731,9 @@ export const useTaskStore = defineStore('task', () => {
   // 更新任务元数据
   const updateTaskMetadata = async (taskId, metadata) => {
     try {
-      const result = await window.electronAPI.invoke('task:updateMetadata', { taskId, metadata })
+      // 序列化metadata以确保可以通过IPC传递
+      const serializedMetadata = JSON.parse(JSON.stringify(metadata))
+      const result = await window.electronAPI.invoke('task:updateMetadata', { taskId, metadata: serializedMetadata })
       if (result.success) {
         await getAllTasks()
       }
@@ -1210,6 +1212,145 @@ export const useTaskStore = defineStore('task', () => {
     setShowRecurringInstances(!showRecurringInstances.value)
   }
 
+  // 步骤操作相关方法
+  
+  // 生成步骤ID
+  const generateStepId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9)
+  }
+  
+  // 添加任务步骤
+  const addTaskStep = async (taskId, stepContent) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        return { success: false, error: '任务不存在' }
+      }
+      console.log("[store] 添加步骤---", taskId, stepContent) 
+      const newStep = {
+        id: generateStepId(),
+        content: stepContent.trim(),
+        status: 'todo'
+      }
+      
+      const currentSteps = task.metadata?.steps || []
+      const updatedSteps = [...currentSteps, newStep]
+      console.log('[store]添加步骤', taskId, newStep)
+      
+      const result = await updateTaskMetadata(taskId, {
+        ...task.metadata,
+        steps: updatedSteps
+      })
+      
+      return result.success ? { success: true, step: newStep } : result
+    } catch (error) {
+      console.error('添加步骤失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+  
+  // 更新任务步骤
+  const updateTaskStep = async (taskId, stepId, updates) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        return { success: false, error: '任务不存在' }
+      }
+      
+      const currentSteps = task.metadata?.steps || []
+      const stepIndex = currentSteps.findIndex(s => s.id === stepId)
+      
+      if (stepIndex === -1) {
+        return { success: false, error: '步骤不存在' }
+      }
+      
+      const updatedSteps = [...currentSteps]
+      updatedSteps[stepIndex] = { ...updatedSteps[stepIndex], ...updates }
+      
+      const result = await updateTaskMetadata(taskId, {
+        ...task.metadata,
+        steps: updatedSteps
+      })
+      
+      console.log('[store] 更新步骤', taskId, stepId, updates)
+      // 检查是否需要自动更新任务状态
+      if (result.success && updates.status && task.status === 'todo') {
+        await startTask(taskId)
+      }
+      
+      return result
+    } catch (error) {
+      console.error('更新步骤失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+  
+  // 删除任务步骤
+  const deleteTaskStep = async (taskId, stepId) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        return { success: false, error: '任务不存在' }
+      }
+      
+      const currentSteps = task.metadata?.steps || []
+      const updatedSteps = currentSteps.filter(s => s.id !== stepId)
+      
+      const result = await updateTaskMetadata(taskId, {
+        ...task.metadata,
+        steps: updatedSteps
+      })
+      
+      return result
+    } catch (error) {
+      console.error('删除步骤失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+  
+  // 切换步骤状态
+  const toggleTaskStepStatus = async (taskId, stepId) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        return { success: false, error: '任务不存在' }
+      }
+      
+      const currentSteps = task.metadata?.steps || []
+      const step = currentSteps.find(s => s.id === stepId)
+      console.log('[store] currentSteps', taskId, stepId, step.content, "oldStatus:", step.status)
+      
+      if (!step) {
+        return { success: false, error: '步骤不存在' }
+      }
+      
+      const newStatus = step.status === 'done' ? 'todo' : 'done'
+      console.log('[store] currentSteps', taskId, stepId, step.content, "newStatus:", newStatus)
+      console.log('[store] newStatus', taskId, stepId, step.content, newStatus)
+      return await updateTaskStep(taskId, stepId, { status: newStatus })
+    } catch (error) {
+      console.error('切换步骤状态失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+  
+  // 检查并更新任务状态（当有步骤完成且任务状态为todo时，自动转为doing）
+  const checkAndUpdateTaskStatus = async (taskId, steps) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task || task.status !== 'todo') {
+        return
+      }
+      
+      const hasCompletedSteps = steps.some(step => step.status === 'done')
+      if (hasCompletedSteps) {
+        await updateTask(taskId, { status: 'doing' })
+      }
+    } catch (error) {
+      console.error('自动更新任务状态失败:', error)
+    }
+  }
+
   // AI 相关方法
   const loadAIModels = async () => {
     try {
@@ -1577,6 +1718,12 @@ export const useTaskStore = defineStore('task', () => {
     getNextOccurrences,
     setShowRecurringInstances,
     toggleRecurringInstances,
+
+    // 步骤操作方法
+    addTaskStep,
+    updateTaskStep,
+    deleteTaskStep,
+    toggleTaskStepStatus,
 
     // AI 相关方法
     loadAIModels,

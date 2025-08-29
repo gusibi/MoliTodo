@@ -158,11 +158,19 @@
 }
 
 .task-edit-vertical .step-content {
-  @apply flex-1 text-xs text-foreground;
+  @apply flex-1 text-xs text-foreground cursor-pointer;
 }
 
 .task-edit-vertical .step-content.completed {
   @apply line-through text-muted-foreground;
+}
+
+.task-edit-vertical .step-content-input {
+  @apply flex-1 text-xs text-foreground bg-transparent border-none outline-none py-0 px-0;
+}
+
+.task-edit-vertical .step-content-input:focus {
+  @apply bg-accent/20 px-1 rounded;
 }
 
 .task-edit-vertical .step-delete-btn {

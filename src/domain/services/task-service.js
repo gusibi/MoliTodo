@@ -512,6 +512,7 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async updateTaskMetadata(taskId, metadata) {
+    console.log('更新任务元数据', taskId, metadata)
     const task = await this.taskRepository.findById(taskId);
     if (!task) {
       throw new Error('任务不存在');
@@ -522,6 +523,7 @@ class TaskService {
     }
 
     task.updateMetadata(metadata);
+    console.log('更新任务元数据-----', taskId, metadata)
     return await this.taskRepository.save(task);
   }
 

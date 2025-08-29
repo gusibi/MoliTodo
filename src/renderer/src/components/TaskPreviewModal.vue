@@ -39,9 +39,6 @@
       </div>
       
       <div class="task-preview-dialog-body">
-
-        
-        <!-- 加载状态 -->
         <!-- AI生成内容显示区域 - 支持折叠 -->
         <div v-if="isLoading || streamContent" class="task-preview-stream-content">
           <div class="task-preview-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
