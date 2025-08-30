@@ -1,30 +1,30 @@
-/* TaskPreviewModal 组件样式 - 使用 Tailwind CSS */
+/* TaskPreviewModal 组件样式 - 现代化设计风格 */
 
 .task-preview-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm;
-  animation: fadeIn 0.2s ease-out;
+  @apply fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-md;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .task-preview-dialog {
-  @apply bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-border;
-  animation: slideIn 0.3s ease-out;
+  @apply bg-background rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col border border-border;
+  animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* 原始输入内容展示区域 */
 .task-preview-original-input {
-  @apply p-4 px-6 bg-muted/30 border-b border-border flex flex-col gap-2 relative;
+  @apply p-4 bg-muted/30 border-b border-border flex flex-col gap-2 relative;
 }
 
 .task-preview-original-label {
-  @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+  @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider;
 }
 
 .task-preview-original-content {
-  @apply text-sm text-foreground bg-background p-2 pr-10 rounded-md border border-border break-words;
+  @apply text-sm text-foreground bg-background p-3 pr-10 rounded-lg border border-border break-words;
 }
 
 .task-preview-copy-btn {
-  @apply absolute top-6 right-6 w-6 h-6 border-0 rounded bg-background hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-200 text-xs text-muted-foreground hover:text-foreground;
+  @apply absolute top-5 right-5 w-7 h-7 border-0 rounded-md bg-background hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-300 text-muted-foreground hover:text-foreground;
 }
 
 .task-preview-copy-btn:disabled {
@@ -32,15 +32,15 @@
 }
 
 .task-preview-copy-btn.copy-success {
-  @apply bg-green-100 text-green-600 hover:bg-green-100;
+  @apply bg-green-500 text-white hover:bg-green-500;
 }
 
 .task-preview-copy-btn.copy-error {
-  @apply text-warning hover:bg-warning;
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive;
 }
 
 .task-preview-copy-btn.copy-copying {
-  @apply bg-blue-100 text-blue-600;
+  @apply bg-primary text-primary-foreground;
 }
 
 .copy-icon {
@@ -82,7 +82,7 @@
 }
 
 .task-preview-dialog-header {
-  @apply p-2 flex items-center justify-between border-b border-border bg-card sticky top-0 z-10;
+  @apply px-4 py-3 flex items-center justify-between border-b border-border bg-background sticky top-0 z-10;
 }
 
 .task-preview-dialog-header h3 {
@@ -90,19 +90,19 @@
 }
 
 .task-preview-header-btn {
-  @apply w-8 h-8 border-0 rounded-md bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 text-sm;
+  @apply w-8 h-8 border-0 rounded-md bg-secondary hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-300 text-sm;
 }
 
 .task-preview-header-btn:hover {
-  @apply bg-accent;
+  @apply scale-105;
 }
 
 .task-preview-header-btn.task-preview-btn-cancel {
-  @apply text-muted-foreground;
+  @apply text-muted-foreground hover:text-foreground;
 }
 
 .task-preview-header-btn.task-preview-btn-cancel:hover {
-  @apply text-foreground bg-accent;
+  @apply bg-destructive/10 text-destructive;
 }
 
 .task-preview-header-btn.task-preview-btn-confirm {
@@ -122,11 +122,11 @@
 }
 
 .task-preview-dialog-body {
-  @apply p-2 flex-1 overflow-y-auto flex flex-col gap-2;
+  @apply p-4 flex-1 overflow-y-auto flex flex-col gap-3;
 }
 
 .task-preview-stats {
-  @apply flex items-center justify-center p-2 bg-muted rounded-lg border border-border;
+  @apply flex items-center justify-center p-3 bg-muted rounded-lg border border-border;
 }
 
 .task-preview-count {
@@ -152,15 +152,15 @@
 
 /* 任务列表样式 */
 .task-preview-list {
-  @apply flex-1 flex flex-col gap-2 p-1;
+  @apply flex-1 flex flex-col gap-3;
 }
 
 .task-preview-item {
-  @apply bg-card border border-border rounded-lg p-4 transition-all duration-200;
+  @apply bg-card border border-border rounded-lg p-4 transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5;
 }
 
 .task-preview-item:hover {
-  @apply border-primary shadow-lg shadow-primary/10;
+  @apply transform;
 }
 
 .task-preview-row {
@@ -190,11 +190,11 @@
 }
 
 .task-preview-meta-item {
-  @apply flex items-center gap-2 min-w-40;
+  @apply flex items-center gap-2 min-w-36;
 }
 
 .task-preview-meta-label {
-  @apply text-xs font-medium text-muted-foreground whitespace-nowrap flex-shrink-0;
+  @apply text-xs font-medium text-muted-foreground whitespace-nowrap flex-shrink-0 uppercase tracking-wide;
 }
 
 /* 第三行：备注 */
@@ -203,7 +203,7 @@
 }
 
 .task-preview-note-label {
-  @apply text-xs font-medium text-muted-foreground whitespace-nowrap flex-shrink-0;
+  @apply text-xs font-medium text-muted-foreground whitespace-nowrap flex-shrink-0 uppercase tracking-wide;
 }
 
 .task-preview-input-note {
@@ -253,44 +253,44 @@
 
 /* 输入框样式 */
 .task-preview-input-main {
-  @apply w-full py-1 px-1 border border-border rounded-md text-sm font-medium leading-normal bg-background transition-all duration-200;
+  @apply w-full py-2 px-3 border border-border rounded-lg text-base font-medium leading-normal bg-background transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-accent-foreground;
 }
 
 .task-preview-input-main:focus {
-  @apply outline-none border-primary ring-2 ring-primary/20;
+  @apply outline-none;
 }
 
 .task-preview-input-meta {
-  @apply w-full py-2 px-2.5 border border-border rounded text-xs leading-normal bg-background transition-all duration-200;
+  @apply w-full py-2 px-3 border border-border rounded-md text-sm leading-normal bg-background transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-accent-foreground;
 }
 
 .task-preview-input-meta:focus {
-  @apply outline-none border-primary ring-2 ring-primary/20;
+  @apply outline-none;
 }
 
 .task-preview-select-meta {
-  @apply w-full py-2 px-2.5 border border-border rounded text-xs leading-normal bg-background cursor-pointer transition-all duration-200;
+  @apply w-full py-2 px-3 border border-border rounded-md text-sm leading-normal bg-background cursor-pointer transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-accent-foreground;
 }
 
 .task-preview-select-meta:focus {
-  @apply outline-none border-primary ring-2 ring-primary/20;
+  @apply outline-none;
 }
 
 .task-preview-input-note {
-  @apply w-full py-2 px-2.5 border border-border rounded text-xs leading-normal bg-background transition-all duration-200;
+  @apply w-full py-2 px-3 border border-border rounded-md text-sm leading-normal bg-background transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-accent-foreground;
 }
 
 .task-preview-input-note:focus {
-  @apply outline-none border-primary ring-2 ring-primary/20;
+  @apply outline-none;
 }
 
 /* 删除按钮样式 */
 .task-preview-delete-btn {
-  @apply flex items-center justify-center w-8 h-8 p-0 border border-destructive rounded-md bg-destructive text-destructive-foreground cursor-pointer transition-all duration-200 text-sm;
+  @apply flex items-center justify-center w-8 h-8 p-0 border-0 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 cursor-pointer transition-all duration-200 text-sm;
 }
 
 .task-preview-delete-btn:hover {
-  @apply bg-destructive/90 scale-105;
+  @apply scale-105;
 }
 
 .task-preview-delete-btn:active {
@@ -302,31 +302,31 @@
 }
 
 .task-preview-footer {
-  @apply flex items-center justify-between pt-4 border-t border-border mt-auto;
+  @apply px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between;
 }
 
 .task-preview-actions {
-  @apply flex gap-4 justify-end;
+  @apply flex gap-2;
 }
 
 .task-preview-btn {
-  @apply p-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 flex items-center gap-2 border-0 min-w-24 justify-center;
+  @apply px-4 py-2 rounded-md font-medium text-sm cursor-pointer transition-all duration-200 min-w-20 text-center border;
 }
 
 .task-preview-btn-secondary {
-  @apply bg-secondary text-secondary-foreground border border-border;
+  @apply bg-secondary text-secondary-foreground border-border hover:bg-accent hover:text-accent-foreground;
 }
 
 .task-preview-btn-secondary:hover {
-  @apply bg-secondary/80;
+  @apply transform scale-105;
 }
 
 .task-preview-btn-primary {
-  @apply bg-primary text-primary-foreground;
+  @apply bg-primary text-primary-foreground border-transparent hover:bg-primary/90;
 }
 
 .task-preview-btn-primary:hover:not(:disabled) {
-  @apply bg-primary/90;
+  @apply transform scale-105;
 }
 
 .task-preview-btn-primary:disabled {
@@ -337,16 +337,18 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
+    backdrop-filter: blur(8px);
   }
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(-30px) scale(0.9);
   }
   to {
     opacity: 1;
@@ -360,6 +362,15 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
@@ -436,29 +447,29 @@
 
 /* 流式内容显示区域样式 */
 .task-preview-stream-content {
-  @apply mt-2 px-4 py-2 bg-muted/20 rounded-lg border border-border/50;
+  @apply mb-3 px-3 py-3 bg-muted/30 rounded-lg border border-border;
 }
 
 .task-preview-stream-header {
-  @apply flex items-center justify-between gap-2 mb-2 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors;
+  @apply flex items-center justify-between gap-2 mb-2 font-medium text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer;
 }
 
 .task-preview-stream-header i:first-child {
-  @apply text-primary;
+  @apply text-primary text-sm;
 }
 
 .task-preview-stream-toggle {
-  @apply text-muted-foreground transition-transform duration-200 ml-auto;
+  @apply text-muted-foreground transition-all duration-200 hover:text-foreground;
 }
 
 .task-preview-stream-toggle.collapsed {
-  @apply -rotate-90;
+  @apply rotate-180;
 }
 
 .task-preview-stream-text {
-  @apply text-sm text-foreground whitespace-pre-wrap font-mono bg-background p-3 rounded border border-border/30 max-h-32 overflow-y-auto;
+  @apply p-3 bg-background rounded-md border border-border text-sm text-foreground whitespace-pre-wrap overflow-y-auto max-h-32;
 }
 
 .task-preview-waiting-text {
-  @apply text-muted-foreground italic text-center py-4;
+  @apply text-center text-muted-foreground py-4 text-sm;
 }

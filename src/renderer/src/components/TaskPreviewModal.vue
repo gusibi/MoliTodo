@@ -2,9 +2,6 @@
   <div v-if="visible" class="task-preview-modal-overlay" @click="handleOverlayClick">
     <div class="task-preview-dialog" @click.stop>
        <div class="task-preview-dialog-header">
-        <button class="task-preview-header-btn task-preview-btn-cancel" @click="close">
-          <i class="icon-close"></i>
-        </button>
         <h3>AI 生成的任务列表</h3>
       </div>
       <!-- 原始输入内容展示 -->
@@ -126,17 +123,8 @@
             <span class="task-preview-count">共 {{ taskList.length }} 个任务</span>
           </div>
           <div class="task-preview-actions">
-            <button 
-              class="task-preview-btn task-preview-btn-secondary"
-              @click="close"
-            >
-              取消
-            </button>
-            <button 
-              class="task-preview-btn task-preview-btn-primary"
-              @click="createAllTasks"
-              :disabled="!canCreate || isCreating"
-            >
+            <button class="task-preview-btn task-preview-btn-secondary" @click="close">取消</button>
+            <button class="task-preview-btn task-preview-btn-primary" @click="createAllTasks" :disabled="!canCreate || isCreating">
               <i v-if="isCreating" class="icon-loading"></i>
               <span v-if="isCreating">创建中...</span>
               <span v-else>创建所有任务</span>
