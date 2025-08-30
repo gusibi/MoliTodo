@@ -36,7 +36,7 @@
 }
 
 .task-preview-copy-btn.copy-error {
-  @apply bg-red-100 text-red-600 hover:bg-red-100;
+  @apply text-warning hover:bg-warning;
 }
 
 .task-preview-copy-btn.copy-copying {
@@ -436,15 +436,15 @@
 
 /* 流式内容显示区域样式 */
 .task-preview-stream-content {
-  @apply mt-4 p-4 bg-muted/20 rounded-lg border border-border/50;
+  @apply mt-2 px-4 py-2 bg-muted/20 rounded-lg border border-border/50;
 }
 
 .task-preview-stream-header {
-  @apply flex items-center justify-between gap-2 mb-3 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors;
+  @apply flex items-center justify-between gap-2 mb-2 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors;
 }
 
 .task-preview-stream-header i:first-child {
-  @apply text-blue-500;
+  @apply text-primary;
 }
 
 .task-preview-stream-toggle {

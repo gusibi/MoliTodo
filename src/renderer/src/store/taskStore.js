@@ -1237,7 +1237,7 @@ export const useTaskStore = defineStore('task', () => {
   
   // 生成步骤ID
   const generateStepId = () => {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    return Date.now().toString()
   }
   
   // 添加任务步骤

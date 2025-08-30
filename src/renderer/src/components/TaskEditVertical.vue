@@ -48,7 +48,10 @@
       <div v-if="isAddingTask" class="task-steps">
            <div v-if="steps.length > 0" class="steps-list">
           <div v-for="(step, index) in steps" :key="step.id" class="step-item">
-            <input type="checkbox" :checked="step.status === 'done'" @change="toggleStepStatus(step)" class="step-checkbox" />
+            <div class="flat-task-checkbox">
+              <input type="checkbox" :id="`step-${step.id}`" :checked="step.status === 'done'" @change="toggleStepStatus(step)" @click.stop />
+              <label :for="`step-${step.id}`" class="flat-checkbox-label"></label>
+            </div>
             <input 
               v-if="editingStepId === step.id"
               v-model="editingStepContent"
@@ -478,6 +481,11 @@ const addStep = async () => {
 // 删除步骤
 const removeStep = async (index) => {
   const step = steps.value[index]
+  
+  // 弹窗确认删除
+  if (!confirm('确定要删除这个步骤吗？')) {
+    return
+  }
   
   if (props.isEditing && props.task) {
     // 编辑模式：使用API删除步骤
@@ -1084,9 +1092,18 @@ const debounceSaveTaskContent = () => {
 const handleSaveTaskContent = async () => {
   if (!props.task || !props.isEditing || !newTaskContent.value.trim()) return
   
+  // 检查内容是否真的发生了变化
+  const newContent = newTaskContent.value.trim()
+  const originalContent = props.task.content || ''
+  
+  if (newContent === originalContent) {
+    console.log('任务内容未发生变化，跳过保存')
+    return
+  }
+  
   try {
     const updates = {
-      content: newTaskContent.value.trim()
+      content: newContent
     }
     
     await taskStore.updateTask(props.task.id, updates)

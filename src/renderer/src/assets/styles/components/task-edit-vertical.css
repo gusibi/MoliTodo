@@ -118,7 +118,7 @@
 
 /* 步骤区域 */
 .task-edit-vertical .task-steps {
-  @apply mb-4 pl-8;
+  @apply mb-2 pl-2;
 }
 
 .task-edit-vertical .step-add {
@@ -126,7 +126,7 @@
 }
 
 .task-edit-vertical .step-add-btn {
-  @apply w-5 h-5 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-muted-foreground transition-all duration-200;
+  @apply w-4 h-4 border-none bg-transparent cursor-pointer rounded flex items-center justify-center text-muted-foreground transition-all duration-200;
 }
 
 .task-edit-vertical .step-add-btn:hover {

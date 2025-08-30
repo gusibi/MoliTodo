@@ -1,6 +1,12 @@
 <template>
   <div v-if="visible" class="task-preview-modal-overlay" @click="handleOverlayClick">
     <div class="task-preview-dialog" @click.stop>
+       <div class="task-preview-dialog-header">
+        <button class="task-preview-header-btn task-preview-btn-cancel" @click="close">
+          <i class="icon-close"></i>
+        </button>
+        <h3>AI 生成的任务列表</h3>
+      </div>
       <!-- 原始输入内容展示 -->
       <div v-if="originalInput" class="task-preview-original-input">
         <div class="task-preview-original-label">原始输入：</div>
@@ -23,20 +29,7 @@
         </button>
       </div>
       
-      <div class="task-preview-dialog-header">
-        <button class="task-preview-header-btn task-preview-btn-cancel" @click="close">
-          <i class="icon-close"></i>
-        </button>
-        <h3>AI 生成的任务列表</h3>
-        <button 
-          class="task-preview-header-btn task-preview-btn-confirm" 
-          @click="createAllTasks"
-          :disabled="!canCreate || isCreating"
-        >
-          <i v-if="isCreating" class="icon-loading"></i>
-          <i v-else class="icon-check"></i>
-        </button>
-      </div>
+     
       
       <div class="task-preview-dialog-body">
         <!-- AI生成内容显示区域 - 支持折叠 -->
