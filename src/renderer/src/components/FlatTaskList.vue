@@ -86,7 +86,7 @@
               v-model="newTaskContent" 
               class="flat-task-list-textarea" 
               placeholder="添加新任务..." 
-              rows="2"
+              rows="1"
               maxlength="200"
               @keypress.enter.prevent="addTask"
               ref="quickAddInput"
