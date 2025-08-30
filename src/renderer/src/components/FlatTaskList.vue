@@ -79,72 +79,105 @@
 
       <!-- 快速添加框 -->
       <div class="flat-task-list-quick-add">
-        <div class="flat-task-list-input-container">
-          <!-- 左侧图标 -->
-          <div class="flat-task-list-icon">
-            <svg v-if="!newTaskContent.trim()" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
-            </svg>
-          </div>
-          <input v-model="newTaskContent" type="text" class="flat-task-list-input" placeholder="添加新任务..." maxlength="200"
-            @keypress.enter="addTask" ref="quickAddInput">
-          
-          <!-- AI 选项按钮 -->
-          <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
-            <div class="flat-task-list-ai-button" 
-                 :class="{ 'active': taskStore.isAIEnabled }"
-                 @click="toggleAI"
-                 ref="aiButton">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" 
-                      :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
-                      :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
-                      stroke-width="2"/>
-                <path d="M19 11L19.5 13.5L22 14L19.5 14.5L19 17L18.5 14.5L16 14L18.5 13.5L19 11Z" 
-                      :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
-                      :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
-                      stroke-width="1.5"/>
-              </svg>
-            </div>
+        <!-- 主输入区域 -->
+        <div class="flat-task-list-main-input">
+          <div class="flat-task-list-input-wrapper">
+            <textarea 
+              v-model="newTaskContent" 
+              class="flat-task-list-textarea" 
+              placeholder="添加新任务..." 
+              rows="2"
+              maxlength="200"
+              @keypress.enter.prevent="addTask"
+              ref="quickAddInput"
+            ></textarea>
             
-            <!-- AI 模型下拉列表 -->
-            <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
-              <div class="flat-task-list-ai-dropdown-list">
-                <!-- 不使用 AI 选项 -->
-                <div class="flat-task-list-ai-dropdown-item no-ai"
-                     :class="{ 'selected': !taskStore.selectedAIModel }"
-                     @click="selectAIModel(null)">
-                  <div class="flat-task-list-ai-model-info">
-                    <div class="flat-task-list-ai-model-name">不使用 AI</div>
-                    <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
-                  </div>
-                  <div class="flat-task-list-ai-model-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-                
-                <!-- AI 模型选项 -->
-                <div v-for="model in taskStore.availableAIModels" 
-                     :key="model.id"
-                     class="flat-task-list-ai-dropdown-item"
-                     :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
-                     @click="selectAIModel(model)">
-                  <div class="flat-task-list-ai-model-info">
-                    <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
-                    <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
-                  </div>
-                  <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
+            <!-- 输入框内部控制区域 -->
+            <div class="flat-task-list-inline-controls">
+              <!-- 左侧选项 -->
+              <div class="flat-task-list-inline-options">
+                <!-- AI模型选择 -->
+                 <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
+                   <button 
+                     class="flat-task-list-ai-toggle"
+                     :class="{ 'active': taskStore.isAIEnabled }"
+                     @click="toggleAI"
+                     ref="aiButton"
+                   >
+                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" 
+                             :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
+                             :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
+                             stroke-width="2"/>
+                     </svg>
+                     <span class="flat-task-list-ai-label">
+                       {{ taskStore.selectedAIModel ? taskStore.selectedAIModel.name : 'AI' }}
+                     </span>
+                   </button>
+                   
+                   <!-- AI 模型下拉列表 -->
+                   <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
+                     <div class="flat-task-list-ai-dropdown-list">
+                       <!-- 不使用 AI 选项 -->
+                       <div class="flat-task-list-ai-dropdown-item no-ai"
+                            :class="{ 'selected': !taskStore.selectedAIModel }"
+                            @click="selectAIModel(null)">
+                         <div class="flat-task-list-ai-model-info">
+                           <div class="flat-task-list-ai-model-name">不使用 AI</div>
+                           <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
+                         </div>
+                         <div class="flat-task-list-ai-model-check">
+                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                           </svg>
+                         </div>
+                       </div>
+                       
+                       <!-- AI 模型选项 -->
+                       <div v-for="model in taskStore.availableAIModels" 
+                            :key="model.id"
+                            class="flat-task-list-ai-dropdown-item"
+                            :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
+                            @click="selectAIModel(model)">
+                         <div class="flat-task-list-ai-model-info">
+                           <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
+                           <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
+                         </div>
+                         <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
+                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                             <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                           </svg>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                   <!-- 任务拆分选项 -->
+                <button 
+                  @click="shouldSplitTask = !shouldSplitTask"
+                  :class="['flat-task-list-split-btn', { 'active': shouldSplitTask }]"
+                  :title="shouldSplitTask ? '关闭拆分任务：AI 生成的详细步骤会放在步骤中' : '打开拆分任务：AI 会将任务拆分生成多个任务'"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="flat-task-list-split-text">拆分</span>
+                </button>
+              </div>
+              
+              <!-- 右侧发送按钮 -->
+              <div class="flat-task-list-input-actions">
+                <button 
+                  class="flat-task-list-send-btn"
+                  :disabled="!newTaskContent.trim()"
+                  @click="addTask"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -208,6 +241,7 @@ const hoveredTaskId = ref(null)
 
 // 快速添加相关
 const newTaskContent = ref('')
+const shouldSplitTask = ref(false)
 const quickAddInput = ref(null)
 
 // AI 相关响应式数据
@@ -363,7 +397,8 @@ const addTask = async () => {
             showTaskPreview.value = false
             newTaskContent.value = content // 恢复输入内容
             createNormalTask(content)
-          }
+          },
+          shouldSplitTask.value
         )
       } catch (error) {
         console.error('[FlatTaskList] 流式生成异常:', error)
@@ -400,26 +435,7 @@ const createNormalTask = async (content) => {
   }
 }
 
-// 任务编辑处理
-const handleTaskEdit = (task) => {
-  if (task.status === 'done') {
-    return
-  }
-  editingTask.value = task
-  isEditingTask.value = true
-}
 
-// 更新任务处理
-const handleUpdateTask = (taskData) => {
-  emit('update-task', taskData)
-  handleCancelEdit()
-}
-
-// 取消编辑处理
-const handleCancelEdit = () => {
-  editingTask.value = null
-  isEditingTask.value = false
-}
 
 // 任务点击处理 - 发射事件给父组件
 const handleTaskClick = (task) => {

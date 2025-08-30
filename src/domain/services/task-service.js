@@ -1016,10 +1016,11 @@ class TaskService {
    * @param {Object} aiModel - AI模型信息
    * @param {number} listId - 列表ID
    * @param {Function} onChunk - 流式数据回调函数
+   * @param {boolean} shouldSplitTask - 是否拆分任务
    * @returns {Promise<Array>} 生成的任务列表
    */
-  async streamGenerateTaskList(content, aiModel, listId = 0, onChunk) {
-    console.log('[TaskService] streamGenerateTaskList 开始', { content, aiModel, listId, onChunk: !!onChunk });
+  async streamGenerateTaskList(content, aiModel, listId = 0, onChunk, shouldSplitTask = false) {
+    console.log('[TaskService] streamGenerateTaskList 开始', { content, aiModel, listId, onChunk: !!onChunk, shouldSplitTask });
     
     if (!content || content.trim().length === 0) {
       throw new Error('输入内容不能为空');
@@ -1036,7 +1037,7 @@ class TaskService {
     try {
       console.log('[TaskService] 调用AIService.streamGenerateTaskList');
       // 调用AI服务流式生成任务列表
-      const result = await AIService.streamGenerateTaskList(content, aiModel, this.windowManager, onChunk);
+      const result = await AIService.streamGenerateTaskList(content, aiModel, this.windowManager, onChunk, shouldSplitTask);
       console.log('[TaskService] AIService返回结果:', result);
       
       const generatedTasks = result.tasks;

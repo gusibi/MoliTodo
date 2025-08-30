@@ -1,8 +1,11 @@
 <template>
-  <div v-if="visible" class="task-preview-modal-overlay" @click="handleOverlayClick">
+  <div v-if="visible" class="task-preview-modal-overlay">
     <div class="task-preview-dialog" @click.stop>
        <div class="task-preview-dialog-header">
         <h3>AI 生成的任务列表</h3>
+        <button class="task-preview-close-btn" @click="close" title="关闭">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
       <!-- 原始输入内容展示 -->
       <div v-if="originalInput" class="task-preview-original-input">
@@ -25,8 +28,6 @@
           <div v-else class="copy-icon"></div>
         </button>
       </div>
-      
-     
       
       <div class="task-preview-dialog-body">
         <!-- AI生成内容显示区域 - 支持折叠 -->
@@ -115,6 +116,54 @@
                 maxlength="100"
               />
             </div>
+            
+            <!-- 第四行：步骤标题 -->
+            <div v-if="task.metadata.steps && task.metadata.steps.length > 0" class="task-preview-steps-header" @click="toggleSteps(index)">
+              <label class="task-preview-steps-label">
+                <i class="fas fa-list-ol"></i>
+                执行步骤 ({{ task.metadata.steps.length }})
+              </label>
+              <i :class="['fas', 'fa-chevron-down', 'task-preview-steps-toggle', { 'collapsed': task.stepsCollapsed }]"></i>
+            </div>
+            
+            <!-- 第五行：步骤列表 -->
+            <div v-if="task.metadata.steps && task.metadata.steps.length > 0" v-show="!task.stepsCollapsed" class="task-preview-steps-list">
+                <div 
+                  v-for="(step, stepIndex) in task.metadata.steps" 
+                  :key="step.id"
+                  class="task-preview-step-item"
+                >
+                  <div class="task-preview-step-number">{{ stepIndex + 1 }}.</div>
+                  <div class="task-preview-step-content-wrapper">
+                    <input 
+                      v-model="step.content"
+                      type="text"
+                      class="task-preview-step-input"
+                      placeholder="步骤内容"
+                      maxlength="200"
+                    />
+                  </div>
+                  <div class="task-preview-step-status-wrapper">
+                    <select 
+                      v-model="step.status"
+                      class="task-preview-step-status"
+                    >
+                      <option value="todo">待办</option>
+                      <option value="doing">进行中</option>
+                      <option value="done">已完成</option>
+                    </select>
+                  </div>
+                  <div class="task-preview-step-actions-wrapper">
+                    <button 
+                      class="task-preview-step-delete-btn"
+                      @click="removeStep(index, stepIndex)"
+                      title="删除步骤"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
         
@@ -216,8 +265,10 @@ export default {
         dueDate: task.dueDate || '',
         dueTime: task.dueTime || '',
         reminderTime: formatDateTimeForInput(task.reminderTime),
+        stepsCollapsed: false, // 步骤展开/折叠状态
         metadata: {
           note: task.metadata?.note || '',
+          steps: task.metadata?.steps || [],
           ...task.metadata
         }
       }))
@@ -254,7 +305,8 @@ export default {
             dueTime: task.dueTime || null,
             reminderTime: formatDateTimeForSave(task.reminderTime),
             metadata: {
-              note: task.metadata?.note || ''
+              note: task.metadata?.note || '',
+              steps: task.metadata?.steps || []
             }
           }
           
@@ -299,14 +351,21 @@ export default {
       emit('close')
     }
     
-    // 处理遮罩层点击
-    const handleOverlayClick = () => {
-      close()
-    }
+
     
     // 删除任务
     const removeTask = (index) => {
       taskList.value.splice(index, 1)
+    }
+    
+    // 切换步骤展开/折叠状态
+    const toggleSteps = (taskIndex) => {
+      taskList.value[taskIndex].stepsCollapsed = !taskList.value[taskIndex].stepsCollapsed
+    }
+    
+    // 删除步骤
+    const removeStep = (taskIndex, stepIndex) => {
+      taskList.value[taskIndex].metadata.steps.splice(stepIndex, 1)
     }
     
     // 复制原始输入
@@ -361,8 +420,9 @@ export default {
       isCreating,
       createAllTasks,
       close,
-      handleOverlayClick,
       removeTask,
+      toggleSteps,
+      removeStep,
       copyOriginalInput,
       copyStatus,
       isStreamGenerating,

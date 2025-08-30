@@ -89,6 +89,14 @@
   @apply text-base font-semibold text-foreground m-0 flex-1 text-center;
 }
 
+.task-preview-close-btn {
+  @apply w-8 h-8 border-0 rounded-md bg-transparent hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground;
+}
+
+.task-preview-close-btn:hover {
+  @apply scale-105;
+}
+
 .task-preview-header-btn {
   @apply w-8 h-8 border-0 rounded-md bg-secondary hover:bg-accent cursor-pointer flex items-center justify-center transition-all duration-300 text-sm;
 }
@@ -472,4 +480,61 @@
 
 .task-preview-waiting-text {
   @apply text-center text-muted-foreground py-4 text-sm;
+}
+
+/* Steps 相关样式 */
+.task-preview-steps {
+  @apply mt-2 border-t border-border pt-2;
+}
+
+.task-preview-steps-header {
+  @apply flex items-center justify-between gap-2 mb-2 p-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer bg-muted/10 rounded-md border border-border;
+}
+
+.task-preview-steps-toggle {
+  @apply text-muted-foreground transition-all duration-200 hover:text-foreground;
+}
+
+.task-preview-steps-toggle.collapsed {
+  @apply rotate-180;
+}
+
+.task-preview-steps-list {
+  @apply space-y-2 w-full;
+}
+
+.task-preview-step-item {
+  @apply flex items-center gap-2 p-2 bg-muted/20 rounded-md border border-border w-full;
+}
+
+.task-preview-step-number {
+  @apply text-xs font-medium text-muted-foreground min-w-6 text-center;
+}
+
+.task-preview-step-content-wrapper {
+  @apply flex-1 min-w-0;
+}
+
+.task-preview-step-input {
+  @apply w-full text-xs py-1.5 px-2 bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary;
+}
+
+.task-preview-step-status-wrapper {
+  @apply min-w-20;
+}
+
+.task-preview-step-status {
+  @apply w-full text-xs py-1.5 px-2 bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary;
+}
+
+.task-preview-step-actions-wrapper {
+  @apply flex items-center;
+}
+
+.task-preview-step-delete-btn {
+  @apply w-6 h-6 border-0 rounded bg-destructive/10 hover:bg-destructive/20 text-destructive cursor-pointer flex items-center justify-center transition-all duration-200 text-xs;
+}
+
+.task-preview-step-delete-btn:hover {
+  @apply scale-105;
 }

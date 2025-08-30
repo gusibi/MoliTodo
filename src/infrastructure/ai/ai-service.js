@@ -423,10 +423,11 @@ class AIService {
    * @param {Object} aiModel - AI模型信息 { id, name, provider }
    * @param {Object} windowManager - WindowManager实例，用于获取配置
    * @param {Function} onChunk - 流式数据回调函数
+   * @param {boolean} shouldSplitTask - 是否拆分任务
    * @returns {Promise<Object>} 生成结果
    */
-  static async streamGenerateTaskList(content, aiModel, windowManager, onChunk) {
-    console.log('[AIService] streamGenerateTaskList 开始', { content, aiModel, onChunk: !!onChunk });
+  static async streamGenerateTaskList(content, aiModel, windowManager, onChunk, shouldSplitTask = false) {
+    console.log('[AIService] streamGenerateTaskList 开始', { content, aiModel, onChunk: !!onChunk, shouldSplitTask });
     
     try {
       console.log('[AIService] 获取模型配置');
@@ -439,65 +440,9 @@ class AIService {
       const currentTime = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString();
       console.log('[AIService] 当前时间:', currentTime);
       
-      const prompt = `{
-  "user_prompt": {
-    "role": "你是一名顶级的任务规划师（Task Planner）和项目经理（Project Manager）。",
-    "capabilities": [
-      "深入分析用户提供的目标，理解其核心需求。",
-      "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
-      "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
-      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
-      "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
-    ]
-  },
-  "instructions": {
-    "goal": "根据用户提供的'user_goal'和'context'，生成一个结构化的'task_list' JSON 对象。",
-    "steps": [
-      "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
-      "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
-      "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，每个步骤生成一个任务对象。",
-      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
-      "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
-    ],
-    "rules": {
-      "task_atomicity": "对于项目型任务，每个子任务都应该是最小的可执行单元。",
-      "time_inference": {
-        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
-        "today": "使用 'context.current_time' 的天。",
-        "tomorrow": "使用 'context.current_time' 的后一天。",
-        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
-        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
-        "default_time": "如果未指定任何时间，默认为当天 23:59。"
-      },
-      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
-      "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
-      "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
-    }
-  },
-  "context": {
-    "current_time": "${currentTime}",
-    "user_goal": "${content}"
-  },
-  "output_format_and_examples": {
-    "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
-    "example_1_simple": {
-      "input_goal": "今天下午3点去看电影",
-      "output": {
-        "task_list": [
-          {
-            "content": "去看电影",
-            "dueDate": "2025-08-24",
-            "dueTime": "15:00",
-            "reminderTime": "2025-08-24T04:00:00.000Z",
-            "listId": 1755532210105,
-            "metadata": { "note": "" }
-          }
-        ],
-        "output_description": "已为您创建任务"去看电影"，时间是今天下午3点。"
-      }
-    }
-  }
-}`;
+      // 根据 shouldSplitTask 参数选择不同的 prompt
+      const prompt = shouldSplitTask ? this.getSplitTaskPrompt(content, currentTime) : this.getTaskWithStepsPrompt(content, currentTime);
+      console.log('[AIService] 使用的prompt类型:', shouldSplitTask ? '拆分任务' : '单个任务 使用步骤');
 
       let fullText = '';
       
@@ -592,6 +537,221 @@ class AIService {
     }
   }
   
+  /**
+   * 获取拆分任务的 prompt
+   * @param {string} content - 用户输入内容
+   * @param {string} currentTime - 当前时间
+   * @returns {string} prompt 字符串
+   */
+  static getSplitTaskPrompt(content, currentTime) {
+    console.log("getSplitTaskPrompt", content, currentTime)
+    return `{
+  "user_prompt": {
+    "role": "你是一名顶级的任务规划师（Task Planner）和项目经理（Project Manager）。",
+    "capabilities": [
+      "深入分析用户提供的目标，理解其核心需求。",
+      "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
+      "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
+      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
+      "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
+    ]
+  },
+  "instructions": {
+    "goal": "根据用户提供的'user_goal'和'context'，生成一个结构化的'task_list' JSON 对象。",
+    "steps": [
+      "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
+      "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
+      "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，每个步骤生成一个任务对象。",
+      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
+      "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
+    ],
+    "rules": {
+      "task_atomicity": "对于项目型任务，每个子任务都应该是最小的可执行单元。",
+      "time_inference": {
+        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
+        "today": "使用 'context.current_time' 的天。",
+        "tomorrow": "使用 'context.current_time' 的后一天。",
+        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
+        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
+        "default_time": "如果未指定任何时间，默认为当天 23:59。"
+      },
+      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
+      "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
+      "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
+    }
+  },
+  "context": {
+    "current_time": "${currentTime}",
+    "user_goal": "${content}"
+  },
+  "output_format_and_examples": {
+    "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
+    "example_1_complex": {
+      "input_goal": "今天下午完成 AI 生成任务功能",
+      "output": {
+        "task_list": [
+          {
+            "content": "后端：设计并实现 AI 模型调用接口",
+            "dueDate": "2025-08-24",
+            "dueTime": "18:00",
+            "reminderTime": "2025-08-24T17:00:00.000Z",
+            "listId": 1755532210103,
+            "metadata": { "note": "需要考虑认证和速率限制" }
+          },
+          {
+            "content": "前端：开发任务生成按钮和交互逻辑",
+            "dueDate": "2025-08-24",
+            "dueTime": "18:00",
+            "reminderTime": "2025-08-24T17:00:00.000Z",
+            "listId": 1755532210103,
+            "metadata": { "note": "" }
+          },
+          {
+            "content": "联调前后端接口并完成测试",
+            "dueDate": "2025-08-24",
+            "dueTime": "18:00",
+            "reminderTime": "2025-08-24T17:00:00.000Z",
+            "listId": 1755532210103,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务，并安排在今天下午18:00前完成。"
+      }
+    },
+    "example_2_complex": {
+      "input_goal": "明天要完成第一版产品宣传网站的上线",
+      "output": {
+        "task_list": [
+          { "content": "完成网站首页的 UI 设计稿", "dueDate": "2025-08-25", "dueTime": "12:00", "reminderTime": "2025-08-25T11:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "重点突出产品核心卖点" } },
+          { "content": "编写网站所需的宣传文案", "dueDate": "2025-08-25", "dueTime": "15:00", "reminderTime": "2025-08-25T14:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "" } },
+          { "content": "开发网站前端页面并部署到测试环境", "dueDate": "2025-08-25", "dueTime": "20:00", "reminderTime": "2025-08-25T19:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "确保移动端兼容性" } },
+          { "content": "最终测试并正式上线网站", "dueDate": "2025-08-25", "dueTime": "23:00", "reminderTime": "2025-08-25T22:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "检查域名解析和 SSL 证书" } }
+        ],
+        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，并安排在明天完成。"
+      }
+    },
+    "example_3_simple": {
+      "input_goal": "今天下午3点去看电影",
+      "output": {
+        "task_list": [
+          {
+            "content": "去看电影",
+            "dueDate": "2025-08-24",
+            "dueTime": "15:00",
+            "reminderTime": "2025-08-24T04:00:00.000Z",
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您创建任务“去看电影”，时间是今天下午3点。"
+      }
+    }
+  }
+}`;
+  }
+
+  /**
+   * 获取单个任务的 prompt
+   * @param {string} content - 用户输入内容
+   * @param {string} currentTime - 当前时间
+   * @returns {string} prompt 字符串
+   */
+  static getTaskWithStepsPrompt(content, currentTime) {
+    console.log("getTaskWithStepsPrompt", content, currentTime)
+    return `{
+  "user_prompt": {
+    "role": "你是一名顶级的任务规划师（Task Planner）和项目经理（Project Manager）。",
+    "capabilities": [
+      "深入分析用户提供的目标，理解其核心需求。",
+      "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
+      "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
+      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
+      "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
+    ]
+  },
+  "instructions": {
+    "goal": "根据用户提供的'user_goal'和'context'，生成一个结构化的'task_list' JSON 对象。",
+    "steps": [
+      "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
+      "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
+      "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，将每个步骤都放到对应的任务的步骤中。",
+      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
+      "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
+    ],
+    "rules": {
+      "task_atomicity": "对于项目型任务，每个步骤都应该是最小的可执行单元。",
+      "time_inference": {
+        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
+        "today": "使用 'context.current_time' 的天。",
+        "tomorrow": "使用 'context.current_time' 的后一天。",
+        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
+        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
+        "default_time": "如果未指定任何时间，默认为当天 23:59。"
+      },
+      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
+      "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
+      "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
+    }
+  },
+  "context": {
+    "current_time": "${currentTime}",
+    "user_goal": "${content}"
+  },
+  "output_format_and_examples": {
+    "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
+    "example_1_complex": {
+      "input_goal": "今天下午完成 AI 生成任务功能",
+      "output": {
+        "task_list": [
+          {
+            "content": "今天下午完成 AI 生成任务功能",
+            "dueDate": "2025-08-24",
+            "dueTime": "18:00",
+            "reminderTime": "2025-08-24T17:00:00.000Z",
+            "listId": 1755532210103,
+            "metadata": { 
+                "note": "需要考虑认证和速率限制", 
+                "steps": [
+                    {"id": "1", "content": "后端：设计并实现 AI 模型调用接口", "status": "todo"},
+                    {"id": "2", "content": "前端：开发任务生成按钮和交互逻辑", "status": "todo"},
+                    {"id": "3", "content": "联调前后端接口并完成测试", "status": "todo"}
+                ]
+            }
+          }
+        ],
+        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务，并安排在今天下午18:00前完成。"
+      }
+    },
+    "example_2_complex": {
+      "input_goal": "明天要完成第一版产品宣传网站的上线,今天下午3点去看电影",
+      "output": {
+        "task_list": [
+          { "content": "明天要完成第一版产品宣传网站的上线", "dueDate": "2025-08-25", "dueTime": "12:00", "reminderTime": "2025-08-25T11:00:00.000Z", "listId": 1755532210104, 
+            "metadata": { 
+                "note": "重点突出产品核心卖点,检查域名解析和 SSL 证书,确保移动端兼容性",
+                "steps": [
+                    {"id": "1", "content": "完成网站首页的 UI 设计稿", "status": "todo"},
+                    {"id": "2", "content": "编写网站所需的宣传文案", "status": "todo"},
+                    {"id": "3", "content": "开发网站前端页面并部署到测试环", "status": "todo"},
+                    {"id": "4", "content": "最终测试并正式上线网站", "status": "todo"}
+                ] } },
+            {
+            "content": "去看电影",
+            "dueDate": "2025-08-24",
+            "dueTime": "15:00",
+            "reminderTime": "2025-08-24T04:00:00.000Z",
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，并安排在明天完成。"
+      }
+    }
+    }
+  }
+}`;
+  }
+
   /**
    * 获取支持的提供商列表
    * @returns {Array} 提供商列表

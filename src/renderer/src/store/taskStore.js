@@ -1503,8 +1503,8 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   // 流式生成任务列表
-  const streamGenerateTaskList = async (content, onChunk, onComplete, onError) => {
-    console.log('[taskStore] streamGenerateTaskList 开始', { content, onChunk: !!onChunk, onComplete: !!onComplete, onError: !!onError })
+  const streamGenerateTaskList = async (content, onChunk, onComplete, onError, shouldSplitTask = false) => {
+    console.log('[taskStore] streamGenerateTaskList 开始', { content, onChunk: !!onChunk, onComplete: !!onComplete, onError: !!onError, shouldSplitTask })
     
     try {
       if (!selectedAIModel.value || !isAIEnabled.value) {
@@ -1569,10 +1569,10 @@ export const useTaskStore = defineStore('task', () => {
         })
       }
 
-      console.log('[taskStore] 调用AI流式生成任务列表:', { content, aiModelData, listId })
+      console.log('[taskStore] 调用AI流式生成任务列表:', { content, aiModelData, listId, shouldSplitTask })
       
       // 启动流式生成
-      const result = await window.electronAPI.tasks.streamGenerateTaskList(content, aiModelData, listId)
+      const result = await window.electronAPI.tasks.streamGenerateTaskList(content, aiModelData, listId, shouldSplitTask)
       
       console.log('[taskStore] streamGenerateTaskList IPC返回结果:', result)
       return result

@@ -9,43 +9,91 @@
   @apply flex flex-col flex-1 overflow-hidden px-1;
 }
 
-/* Quick Add Section */
+/* 快速添加区域 */
 .flat-task-list-quick-add {
-  @apply sticky bottom-0 px-6 py-4 bg-background/95 backdrop-blur-sm  z-10 mt-auto;
+  @apply m-4 bg-card border border-border rounded-lg shadow-sm;
 }
 
-.flat-task-list-input-container {
-  @apply flex items-center gap-3 px-3 py-2.5 border border-input rounded-lg bg-border/50 transition-all duration-200;
+/* 主输入区域 */
+.flat-task-list-main-input {
+  @apply relative;
 }
 
-.flat-task-list-input-container:focus-within {
+.flat-task-list-input-wrapper {
+  @apply relative p-3 border border-border rounded-lg bg-background transition-all duration-200;
+}
+
+.flat-task-list-input-wrapper:focus-within {
   @apply border-ring ring-2 ring-ring/20;
 }
 
-.flat-task-list-icon {
-  @apply flex items-center justify-center text-muted-foreground transition-colors duration-200;
+.flat-task-list-textarea {
+  @apply w-full bg-transparent border-0 outline-none text-foreground placeholder:text-muted-foreground resize-none min-h-[2.5rem] leading-relaxed pr-0 pb-8;
 }
 
-.flat-task-list-input {
-  @apply flex-1 text-base bg-transparent text-foreground outline-none placeholder-muted-foreground;
+/* 输入框内部控制区域 */
+.flat-task-list-inline-controls {
+  @apply absolute bottom-2 left-3 right-3 flex items-center justify-between;
 }
 
-/* AI Button Styles */
+.flat-task-list-inline-options {
+  @apply flex items-center gap-3;
+}
+
+.flat-task-list-split-btn {
+  @apply flex items-center gap-1.5 px-2 py-1 rounded text-sm text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer border border-transparent hover:border-border/50;
+}
+
+.flat-task-list-split-btn.active {
+  @apply text-primary bg-primary/10 border-primary/20;
+}
+
+.flat-task-list-split-btn svg {
+  @apply transition-colors duration-200;
+}
+
+.flat-task-list-split-btn.active svg {
+  @apply text-primary;
+}
+
+.flat-task-list-split-text {
+  @apply text-xs font-medium;
+}
+
 .flat-task-list-ai-container {
   @apply relative;
 }
 
-.flat-task-list-ai-button {
-  @apply flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent;
+.flat-task-list-ai-toggle {
+  @apply flex items-center gap-1.5 px-2 py-1 border border-border rounded-md bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 text-xs;
 }
 
-.flat-task-list-ai-button.active {
-  @apply text-primary bg-primary/10 hover:bg-primary/20;
+.flat-task-list-ai-toggle.active {
+  @apply bg-primary text-primary-foreground border-primary;
 }
+
+.flat-task-list-ai-label {
+  @apply font-medium;
+}
+
+.flat-task-list-input-actions {
+  @apply flex items-center gap-2;
+}
+
+.flat-task-list-send-btn {
+  @apply flex items-center justify-center w-7 h-7 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-all duration-200;
+}
+
+/* AI下拉菜单容器 */
+.flat-task-list-ai-section {
+  @apply relative;
+}
+
+
 
 /* AI Dropdown Styles */
 .flat-task-list-ai-dropdown {
-  @apply absolute right-0 bottom-full mb-2 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden;
+  @apply absolute left-0 bottom-full mb-2 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden;
 }
 
 .flat-task-list-ai-dropdown-header {
