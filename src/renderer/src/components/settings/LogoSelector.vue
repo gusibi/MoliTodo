@@ -77,12 +77,12 @@ const logoOptions = ref([
   },
   {
     id: 'icon-3',
-    name: '蓝色主题',
+    name: '紫色时间',
     path: 'resources/icon-3.png'
   },
   {
     id: 'icon-4',
-    name: '绿色主题',
+    name: '极简主题',
     path: 'resources/icon-4.png'
   }
 ])
