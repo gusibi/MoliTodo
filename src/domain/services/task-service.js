@@ -523,7 +523,6 @@ class TaskService {
     }
 
     task.updateMetadata(metadata);
-    console.log('更新任务元数据-----', taskId, metadata)
     return await this.taskRepository.save(task);
   }
 

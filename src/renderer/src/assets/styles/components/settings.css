@@ -1,0 +1,106 @@
+/* Settings Component Styles - Using Tailwind CSS */
+
+/* Sound Selector */
+.setting-sound-selector {
+  @apply flex items-center gap-3;
+}
+
+.setting-select {
+  @apply px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[140px];
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.setting-btn-small {
+  @apply px-3 py-1.5 text-xs rounded border border-border bg-secondary text-secondary-foreground cursor-pointer;
+  @apply transition-all duration-200 hover:bg-secondary/80 hover:border-border/80 active:translate-y-px;
+}
+
+/* Dark mode adaptations are handled by Tailwind's dark mode classes automatically */
+
+/* Scrollbar Styles */
+.setting-main-container::-webkit-scrollbar,
+.setting-content-area::-webkit-scrollbar,
+.setting-content-inner::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.setting-main-container::-webkit-scrollbar-track,
+.setting-content-area::-webkit-scrollbar-track,
+.setting-content-inner::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.setting-main-container::-webkit-scrollbar-thumb,
+.setting-content-area::-webkit-scrollbar-thumb,
+.setting-content-inner::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/15 rounded-sm transition-colors duration-200;
+}
+
+.setting-main-container::-webkit-scrollbar-thumb:hover,
+.setting-content-area::-webkit-scrollbar-thumb:hover,
+.setting-content-inner::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/25;
+}
+
+/* Custom Reminders Settings */
+.setting-group-description {
+  @apply text-sm text-muted-foreground mb-4 leading-relaxed;
+}
+
+.custom-reminders-list {
+  @apply flex flex-col gap-3 mb-5;
+}
+
+.custom-reminder-item {
+  @apply flex items-center gap-3 p-4 border border-border rounded-lg bg-card;
+  @apply transition-all duration-200 hover:shadow-md;
+}
+
+.custom-reminder-info {
+  @apply flex-1 flex flex-col gap-3;
+}
+
+.custom-reminder-label-input {
+  @apply px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm font-medium;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+  @apply placeholder:text-muted-foreground;
+}
+
+.custom-reminder-config {
+  @apply flex items-center gap-2 flex-wrap;
+}
+
+.custom-reminder-type-select,
+.custom-reminder-unit-select,
+.custom-reminder-day-select {
+  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs min-w-[80px];
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.custom-reminder-value-input,
+.custom-reminder-time-input {
+  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs w-20;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.custom-reminder-unit-label {
+  @apply text-xs text-muted-foreground whitespace-nowrap;
+}
+
+.custom-reminder-actions {
+  @apply flex gap-2;
+}
+
+.custom-reminder-delete-btn {
+  @apply p-2 border-0 rounded bg-destructive text-destructive-foreground cursor-pointer;
+  @apply transition-all duration-200 hover:bg-destructive/90 active:scale-95;
+}
+
+.add-reminder-btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md;
+  @apply transition-all duration-200 hover:bg-primary/90 active:scale-95 mt-3;
+}
+
+.add-reminder-btn i {
+  @apply text-sm;
+}

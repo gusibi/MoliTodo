@@ -124,49 +124,11 @@
               <ColorThemeSwitcher />
             </div>
 
-            <div class="setting-group">
-              <h3 class="setting-group-title">悬浮图标</h3>
-              <div class="setting-item">
-                <div class="setting-item-info">
-                  <div class="setting-item-label">显示悬浮图标</div>
-                  <div class="setting-item-description">在桌面显示任务管理悬浮图标</div>
-                </div>
-                <div class="setting-item-control">
-                  <button class="setting-toggle" :class="{ 'setting-toggle-active': config.floatingIcon.visible }"
-                    @click="toggleFloatingIcon">
-                    <span class="setting-toggle-button"></span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-item-info">
-                  <div class="setting-item-label">图标大小</div>
-                  <div class="setting-item-description">调整悬浮图标的显示大小</div>
-                </div>
-                <div class="setting-item-control">
-                  <div class="setting-slider-group">
-                    <input type="range" class="setting-slider" min="40" max="120" v-model="config.floatingIcon.size"
-                      @input="updateConfig('floatingIcon.size', parseInt(config.floatingIcon.size))" />
-                    <span class="setting-slider-value">{{ config.floatingIcon.size }}px</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-item-info">
-                  <div class="setting-item-label">透明度</div>
-                  <div class="setting-item-description">调整悬浮图标的透明度</div>
-                </div>
-                <div class="setting-item-control">
-                  <div class="setting-slider-group">
-                    <input type="range" class="setting-slider" min="20" max="100" v-model="config.floatingIcon.opacity"
-                      @input="updateConfig('floatingIcon.opacity', parseInt(config.floatingIcon.opacity))" />
-                    <span class="setting-slider-value">{{ config.floatingIcon.opacity }}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FloatingIconSettings 
+              :config="config" 
+              @update-config="updateConfig" 
+              @show-message="showMessage" 
+            />
           </div>
 
           <!-- 数据管理 -->
@@ -323,6 +285,7 @@ import { ref, reactive, onMounted, h } from 'vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import AISettings from './AISettings.vue'
+import FloatingIconSettings from './FloatingIconSettings.vue'
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '@/utils/task-utils.js'
@@ -543,16 +506,7 @@ const testNotificationSound = async () => {
   }
 }
 
-const toggleFloatingIcon = async () => {
-  try {
-    config.floatingIcon.visible = !config.floatingIcon.visible
-    await updateConfig('floatingIcon.visible', config.floatingIcon.visible)
-    showMessage(config.floatingIcon.visible ? '已显示悬浮图标' : '已隐藏悬浮图标', 'success')
-  } catch (error) {
-    console.error('切换悬浮图标失败:', error)
-    showMessage('设置失败', 'error')
-  }
-}
+
 
 const updateConfig = async (key, value) => {
   try {
@@ -752,154 +706,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.setting-sound-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.setting-select {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 6px;
-  background: var(--bg-color, #ffffff);
-  color: var(--text-color, #1a202c);
-  font-size: 14px;
-  min-width: 140px;
-  transition: border-color 0.2s ease;
-}
-
-.setting-select:focus {
-  outline: none;
-  border-color: var(--primary-color, #3b82f6);
-  box-shadow: 0 0 0 3px var(--primary-color-alpha, rgba(59, 130, 246, 0.1));
-}
-
-.setting-btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color, #e2e8f0);
-  background: var(--bg-secondary, #f8fafc);
-  color: var(--text-color, #1a202c);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.setting-btn-small:hover {
-  background: var(--bg-hover, #e2e8f0);
-  border-color: var(--border-hover, #cbd5e1);
-}
-
-.setting-btn-small:active {
-  transform: translateY(1px);
-}
-
-/* 深色模式适配 */
-[data-theme="dark"] .setting-select {
-  background: var(--bg-dark, #2d3748);
-  border-color: var(--border-dark, #4a5568);
-  color: var(--text-dark, #e2e8f0);
-}
-
-[data-theme="dark"] .setting-btn-small {
-  background: var(--bg-secondary-dark, #4a5568);
-  border-color: var(--border-dark, #4a5568);
-  color: var(--text-dark, #e2e8f0);
-}
-
-[data-theme="dark"] .setting-btn-small:hover {
-  background: var(--bg-hover-dark, #718096);
-  border-color: var(--border-hover-dark, #718096);
-}
-
-/* 滚动条样式 - 使用 Tailwind CSS */
-.setting-main-container::-webkit-scrollbar,
-.setting-content-area::-webkit-scrollbar,
-.setting-content-inner::-webkit-scrollbar {
-  @apply w-1;
-}
-
-.setting-main-container::-webkit-scrollbar-track,
-.setting-content-area::-webkit-scrollbar-track,
-.setting-content-inner::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-.setting-main-container::-webkit-scrollbar-thumb,
-.setting-content-area::-webkit-scrollbar-thumb,
-.setting-content-inner::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/15 rounded-sm transition-colors duration-200;
-}
-
-.setting-main-container::-webkit-scrollbar-thumb:hover,
-.setting-content-area::-webkit-scrollbar-thumb:hover,
-.setting-content-inner::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/25;
-}
-
-/* 自定义提醒设置样式 - 使用新的设计系统 */
-.setting-group-description {
-  @apply text-sm text-muted-foreground mb-4 leading-relaxed;
-}
-
-.custom-reminders-list {
-  @apply flex flex-col gap-3 mb-5;
-}
-
-.custom-reminder-item {
-  @apply flex items-center gap-3 p-4 border border-border rounded-lg bg-card;
-  @apply transition-all duration-200 hover:shadow-md;
-}
-
-.custom-reminder-info {
-  @apply flex-1 flex flex-col gap-3;
-}
-
-.custom-reminder-label-input {
-  @apply px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm font-medium;
-  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
-  @apply placeholder:text-muted-foreground;
-}
-
-.custom-reminder-config {
-  @apply flex items-center gap-2 flex-wrap;
-}
-
-.custom-reminder-type-select,
-.custom-reminder-unit-select,
-.custom-reminder-day-select {
-  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs min-w-[80px];
-  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
-}
-
-.custom-reminder-value-input,
-.custom-reminder-time-input {
-  @apply px-2.5 py-1.5 border border-border rounded bg-background text-foreground text-xs w-20;
-  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
-}
-
-.custom-reminder-unit-label {
-  @apply text-xs text-muted-foreground whitespace-nowrap;
-}
-
-.custom-reminder-actions {
-  @apply flex gap-2;
-}
-
-.custom-reminder-delete-btn {
-  @apply p-2 border-0 rounded bg-destructive text-destructive-foreground cursor-pointer;
-  @apply transition-all duration-200 hover:bg-destructive/90 active:scale-95;
-}
-
-.add-reminder-btn {
-  @apply inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md;
-  @apply transition-all duration-200 hover:bg-primary/90 active:scale-95 mt-3;
-}
-
-.add-reminder-btn i {
-  @apply text-sm;
-}
-
-
+@import '@/assets/styles/components/settings.css';
 </style>

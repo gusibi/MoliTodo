@@ -503,13 +503,19 @@ const removeStep = async (index) => {
 
 // 切换步骤状态
 const toggleStepStatus = async (step) => {
-  // 如果是编辑模式且有任务，立即更新任务状态
+  // 立即更新本地状态以提供即时反馈
+  const newStatus = step.status === 'done' ? 'todo' : 'done'
+  step.status = newStatus
+  
+  // 如果是编辑模式且有任务，同时更新服务器状态
   if (props.isEditing && props.task) {
     try {
       // 使用taskStore的API更新步骤状态
       await taskStore.toggleTaskStepStatus(props.task.id, step.id)
     } catch (error) {
       console.error('更新步骤状态失败:', error)
+      // 如果API调用失败，回滚本地状态
+      step.status = step.status === 'done' ? 'todo' : 'done'
     }
   }
 }
