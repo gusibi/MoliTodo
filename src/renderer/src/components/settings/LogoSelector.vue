@@ -22,7 +22,7 @@
         :class="{ 'logo-option-active': props.config.selectedLogo === logo.id }"
         @click="selectLogo(logo.id)"
       >
-        <img :src="logo.path" :alt="logo.name" class="logo-option-image" />
+        <img :src="logo.path.replace('resources/', '/')" :alt="logo.name" class="logo-option-image" />
         <span class="logo-option-name">{{ logo.name }}</span>
         <div v-if="props.config.selectedLogo === logo.id" class="logo-option-check">
           <svg class="logo-check-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -53,37 +53,37 @@ const logoOptions = ref([
   {
     id: 'default',
     name: '默认图标',
-    path: '/icon.png'
+    path: 'resources/icon.png'
   },
   {
     id: 'icon-v1',
     name: '经典版本',
-    path: '/icon-v1.png'
+    path: 'resources/icon-v1.png'
   },
   {
     id: 'icon-v2',
     name: '现代版本',
-    path: '/icon-v2.png'
+    path: 'resources/icon-v2.png'
   },
   {
     id: 'icon-1',
     name: '简约风格',
-    path: '/icon-1.png'
+    path: 'resources/icon-1.png'
   },
   {
     id: 'icon-2',
     name: '彩色版本',
-    path: '/icon-2.png'
+    path: 'resources/icon-2.png'
   },
   {
     id: 'icon-3',
     name: '蓝色主题',
-    path: '/icon-3.png'
+    path: 'resources/icon-3.png'
   },
   {
     id: 'icon-4',
     name: '绿色主题',
-    path: '/icon-4.png'
+    path: 'resources/icon-4.png'
   }
 ])
 
@@ -93,7 +93,7 @@ const currentLogo = computed(() => {
 })
 
 const currentLogoPath = computed(() => {
-  return currentLogo.value.path
+  return currentLogo.value.path.replace('resources/', '/')
 })
 
 // 方法

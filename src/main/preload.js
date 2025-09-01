@@ -76,6 +76,11 @@ const electronAPI = {
     getStats: () => ipcRenderer.invoke('get-database-stats')
   },
 
+  // 应用相关 API
+  app: {
+    updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath)
+  },
+
   // 事件监听 API
   events: {
     on: (channel, callback) => {

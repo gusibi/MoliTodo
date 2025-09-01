@@ -1,5 +1,6 @@
-const { ipcMain, dialog } = require('electron');
+const { ipcMain, dialog, app } = require('electron');
 const fs = require('fs').promises;
+const path = require('path');
 
 class IpcHandlers {
   constructor({ taskService, listService, notificationService, windowManager }) {
@@ -937,6 +938,50 @@ class IpcHandlers {
         const [x, y] = this.windowManager.floatingWindow.getPosition();
         this.windowManager.updateConfig('floatingIcon.x', x);
         this.windowManager.updateConfig('floatingIcon.y', y);
+      }
+    });
+
+    // 应用图标更新
+    ipcMain.handle('update-app-icon', async (event, iconPath) => {
+      try {
+        // 解析图标路径
+        let fullIconPath;
+        
+        if (path.isAbsolute(iconPath)) {
+          fullIconPath = iconPath;
+        } else {
+          // 相对路径处理
+          if (process.env.NODE_ENV === 'development') {
+            // 开发环境：相对于项目根目录
+            fullIconPath = path.join(__dirname, '../../', iconPath);
+          } else {
+            // 生产环境：使用 process.resourcesPath
+            fullIconPath = path.join(process.resourcesPath, iconPath);
+          }
+        }
+        
+        // 检查文件是否存在
+        try {
+          await fs.access(fullIconPath);
+        } catch (error) {
+          throw new Error(`图标文件不存在: ${fullIconPath}`);
+        }
+        
+        // 更新应用图标 (macOS 使用 dock.setIcon)
+        if (process.platform === 'darwin') {
+          app.dock.setIcon(fullIconPath);
+        } else {
+          // Windows/Linux 使用 setIcon
+          app.setIcon(fullIconPath);
+        }
+        
+        // 注意：托盘图标保持不变，不随应用图标切换
+        
+        console.log(`应用图标已更新: ${fullIconPath}`);
+        return { success: true, iconPath: fullIconPath };
+      } catch (error) {
+        console.error('更新应用图标失败:', error);
+        return { success: false, error: error.message };
       }
     });
   }
