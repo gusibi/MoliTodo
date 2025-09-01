@@ -7,7 +7,7 @@
     <!-- 左侧：应用图标和标题 -->
     <div class="flex items-center gap-3 px-4 flex-shrink-0">
       <div class="w-6 h-6 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-        <img src="/tray-icon.png" alt="MoliTodo" class="w-5 h-5 object-contain" />
+        <img src="/tray-icon-v2.png" alt="MoliTodo" class="w-5 h-5 object-contain" />
       </div>
       <span class="text-sm font-medium text-foreground whitespace-nowrap">
         MoliTodo

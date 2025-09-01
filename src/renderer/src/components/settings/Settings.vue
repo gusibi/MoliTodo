@@ -124,6 +124,11 @@
               <ColorThemeSwitcher />
             </div>
 
+            <LogoSelector 
+              :config="config" 
+              @update:config="handleLogoConfigUpdate" 
+            />
+
             <FloatingIconSettings 
               :config="config" 
               @update-config="updateConfig" 
@@ -286,6 +291,7 @@ import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import AISettings from './AISettings.vue'
 import FloatingIconSettings from './FloatingIconSettings.vue'
+import LogoSelector from './LogoSelector.vue'
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '@/utils/task-utils.js'
@@ -303,6 +309,7 @@ const config = reactive({
     soundFile: 'ding-126626.mp3',
     volume: 50
   },
+  selectedLogo: 'default',
   floatingIcon: {
     visible: true,
     size: 60,
@@ -506,7 +513,21 @@ const testNotificationSound = async () => {
   }
 }
 
-
+// 处理Logo配置更新
+const handleLogoConfigUpdate = async (updatedConfig) => {
+  try {
+    // 更新本地配置
+    Object.assign(config, updatedConfig)
+    
+    // 保存selectedLogo到配置文件
+    if (window.electronAPI && window.electronAPI.config) {
+      await window.electronAPI.config.set('selectedLogo', updatedConfig.selectedLogo)
+    }
+  } catch (error) {
+    console.error('更新Logo配置失败:', error)
+    showMessage('更新Logo配置失败', 'error')
+  }
+}
 
 const updateConfig = async (key, value) => {
   try {

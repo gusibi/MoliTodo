@@ -890,6 +890,22 @@ class IpcHandlers {
       console.log(message, ...args);
     });
 
+    // 获取资源路径
+    ipcMain.handle('get-resource-path', (event, resourcePath) => {
+      const path = require('path');
+      let fullPath;
+      
+      if (process.env.NODE_ENV === 'development') {
+        // 开发环境：相对于项目根目录
+        fullPath = path.join(__dirname, '../../', resourcePath);
+      } else {
+        // 生产环境：使用 process.resourcesPath
+        fullPath = path.join(process.resourcesPath, resourcePath);
+      }
+      
+      return fullPath;
+    });
+
     // 获取任务数量
     ipcMain.handle('get-task-count', async () => {
       return await this.taskService.getIncompleteTaskCount();

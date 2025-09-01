@@ -135,7 +135,8 @@ const electronAPI = {
 
   // 工具 API
   utils: {
-    log: (message, ...args) => ipcRenderer.invoke('log-message', message, ...args)
+    log: (message, ...args) => ipcRenderer.invoke('log-message', message, ...args),
+    getResourcePath: (resourcePath) => ipcRenderer.invoke('get-resource-path', resourcePath)
   },
 
   // 通用 IPC 调用 API（用于清单等新功能）
