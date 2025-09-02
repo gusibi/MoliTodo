@@ -155,12 +155,15 @@ class WindowManager {
       return;
     }
 
+    const currentIcon = this.getCurrentAppIcon();
+    
     this.taskManagerWindow = new BrowserWindow({
       width: 1200,
       height: 800,
       minWidth: 1000,
       minHeight: 600,
       title: 'MoliTodo - 任务管理',
+      icon: currentIcon,
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
@@ -195,11 +198,14 @@ class WindowManager {
       return;
     }
 
+    const currentIcon = this.getCurrentAppIcon();
+    
     this.settingsWindow = new BrowserWindow({
       width: 900,
       height: 650,
       resizable: false,
       title: '设置',
+      icon: currentIcon,
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
@@ -253,11 +259,14 @@ class WindowManager {
       panelY = workArea.y + workArea.height - maxHeight;
     }
 
+    const currentIcon = this.getCurrentAppIcon();
+    
     this.taskPanelWindow = new BrowserWindow({
       width: 320,
       height: maxHeight,
       x: panelX,
       y: panelY,
+      icon: currentIcon,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
@@ -411,6 +420,37 @@ class WindowManager {
     return this.configStore.get(key);
   }
 
+  // 获取当前应用图标
+  getCurrentAppIcon() {
+    const selectedLogo = this.configStore.get('selectedLogo', 'default');
+    let iconPath;
+    
+    // 根据选中的logo ID获取对应的资源路径
+    const logoMap = {
+      'icon-3': 'resources/icon-3.png',
+      'default': 'resources/icon.png',
+      'icon-v1': 'resources/icon-v1.png',
+      'icon-1': 'resources/icon-1.png',
+      'icon-2': 'resources/icon-2.png',
+      'icon-4': 'resources/icon-4.png'
+    };
+    
+    const resourcePath = logoMap[selectedLogo] || logoMap['default'];
+    
+    if (process.env.NODE_ENV === 'development') {
+      iconPath = path.join(__dirname, '../../', resourcePath);
+    } else {
+      iconPath = path.join(process.resourcesPath, resourcePath);
+    }
+    
+    try {
+      return nativeImage.createFromPath(iconPath);
+    } catch (error) {
+      console.warn('无法加载应用图标，使用默认图标:', error);
+      return null;
+    }
+  }
+
   // 窗口控制方法
   minimizeWindow(windowType) {
     const window = this.getWindowByType(windowType);
@@ -471,6 +511,8 @@ class WindowManager {
     const x = Math.floor(Math.random() * (width - 280)) + 20;
     const y = Math.floor(Math.random() * (height - 200)) + 20;
 
+    const currentIcon = this.getCurrentAppIcon();
+    
     const floatingTaskWindow = new BrowserWindow({
       width: 420, // 扩大窗口宽度以适配内容
       height: 80, // 初始高度
@@ -478,6 +520,7 @@ class WindowManager {
       minHeight: 80, // 最小高度限制
       x: x,
       y: y,
+      icon: currentIcon,
       frame: false,
       transparent: true,
       alwaysOnTop: true,

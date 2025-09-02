@@ -83,7 +83,7 @@
 
 /* 标题和按钮在同一行 */
 .task-header {
-  @apply flex items-center justify-between gap-2 mb-2;
+  @apply flex items-center justify-between pl-1;
 }
 
 .task-title {

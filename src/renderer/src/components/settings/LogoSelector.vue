@@ -99,7 +99,7 @@ const currentLogoPath = computed(() => {
 })
 
 // 方法
-const selectLogo = (logoId) => {
+const selectLogo = async (logoId) => {
   const selectedLogo = logoOptions.value.find(logo => logo.id === logoId)
   if (selectedLogo) {
     // 更新配置
@@ -109,9 +109,16 @@ const selectLogo = (logoId) => {
     }
     emit('update:config', updatedConfig)
     
+    // 保存选中的图标到配置存储
+    try {
+      await window.electronAPI.config.update('selectedLogo', logoId)
+    } catch (error) {
+      console.error('保存图标配置失败:', error)
+    }
+    
     // 更新应用图标
     try {
-      window.electronAPI?.app?.updateAppIcon(selectedLogo.resourcePath)
+      await window.electronAPI?.app?.updateAppIcon(selectedLogo.resourcePath)
     } catch (error) {
       console.error('更新应用图标失败:', error)
     }

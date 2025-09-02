@@ -975,6 +975,33 @@ class IpcHandlers {
           app.setIcon(fullIconPath);
         }
         
+        // 更新所有窗口的图标
+        const { nativeImage } = require('electron');
+        const windowIcon = nativeImage.createFromPath(fullIconPath);
+        
+        // 更新所有现有窗口的图标
+        const windows = [
+          this.windowManager.floatingWindow,
+          this.windowManager.taskManagerWindow,
+          this.windowManager.settingsWindow,
+          this.windowManager.taskPanelWindow
+        ];
+        
+        windows.forEach(window => {
+          if (window && !window.isDestroyed()) {
+            window.setIcon(windowIcon);
+          }
+        });
+        
+        // 更新悬浮任务窗口的图标
+        if (this.windowManager.floatingTaskWindows) {
+          this.windowManager.floatingTaskWindows.forEach(window => {
+            if (window && !window.isDestroyed()) {
+              window.setIcon(windowIcon);
+            }
+          });
+        }
+        
         // 注意：托盘图标保持不变，不随应用图标切换
         
         console.log(`应用图标已更新: ${fullIconPath}`);

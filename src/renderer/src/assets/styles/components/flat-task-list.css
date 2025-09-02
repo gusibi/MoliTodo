@@ -11,7 +11,7 @@
 
 /* 快速添加区域 */
 .flat-task-list-quick-add {
-  @apply m-4 bg-card border border-border rounded-lg shadow-sm;
+  @apply m-2 bg-card border border-border rounded-lg shadow-sm;
 }
 
 /* 主输入区域 */
