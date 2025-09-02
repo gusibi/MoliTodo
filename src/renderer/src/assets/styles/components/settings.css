@@ -119,7 +119,7 @@
 }
 
 .logo-grid {
-  @apply grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 mt-4;
+  @apply grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3 mt-4;
 }
 
 .logo-option {

@@ -18,7 +18,8 @@ export const playNotificationSound = async (soundFile = 'ding-126626.mp3', volum
     }
 
     // 创建新的音频实例
-    audioInstance = new Audio(`/${soundFile}`)
+    // 使用相对路径以兼容 Vite 的 base: './' 配置
+    audioInstance = new Audio(soundFile)
     audioInstance.volume = Math.max(0, Math.min(1, volume / 100)) // 确保音量在 0-1 范围内
     
     // 播放音效
@@ -65,7 +66,8 @@ export const stopNotificationSound = () => {
  */
 export const preloadSound = (soundFile) => {
   try {
-    const audio = new Audio(`/${soundFile}`)
+    // 使用相对路径以兼容 Vite 的 base: './' 配置
+    const audio = new Audio(soundFile)
     audio.preload = 'auto'
     return audio
   } catch (error) {

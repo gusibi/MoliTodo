@@ -22,8 +22,8 @@
         :class="{ 'logo-option-active': props.config.selectedLogo === logo.id }"
         @click="selectLogo(logo.id)"
       >
-        <img :src="logo.path.replace('resources/', '/')" :alt="logo.name" class="logo-option-image" />
-        <span class="logo-option-name">{{ logo.name }}</span>
+        <img :src="logo.displayPath" :alt="logo.name" class="logo-option-image" />
+        <!-- <span class="logo-option-name">{{ logo.name }}</span> -->
         <div v-if="props.config.selectedLogo === logo.id" class="logo-option-check">
           <svg class="logo-check-icon" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -50,40 +50,42 @@ const emit = defineEmits(['update:config'])
 
 // 可用的logo选项
 const logoOptions = ref([
+    {
+    id: 'icon-3',
+    name: '紫色时间',
+    displayPath: '/icon-3.png',
+    resourcePath: 'resources/icon-3.png'
+  },
   {
     id: 'default',
     name: '默认图标',
-    path: 'resources/icon.png'
+    displayPath: '/icon.png',
+    resourcePath: 'resources/icon.png'
   },
   {
     id: 'icon-v1',
     name: '经典版本',
-    path: 'resources/icon-v1.png'
-  },
-  {
-    id: 'icon-v2',
-    name: '现代版本',
-    path: 'resources/icon-v2.png'
+    displayPath: '/icon-v1.png',
+    resourcePath: 'resources/icon-v1.png'
   },
   {
     id: 'icon-1',
     name: '简约风格',
-    path: 'resources/icon-1.png'
+    displayPath: '/icon-1.png',
+    resourcePath: 'resources/icon-1.png'
   },
   {
     id: 'icon-2',
     name: '彩色版本',
-    path: 'resources/icon-2.png'
+    displayPath: '/icon-2.png',
+    resourcePath: 'resources/icon-2.png'
   },
-  {
-    id: 'icon-3',
-    name: '紫色时间',
-    path: 'resources/icon-3.png'
-  },
+
   {
     id: 'icon-4',
     name: '极简主题',
-    path: 'resources/icon-4.png'
+    displayPath: '/icon-4.png',
+    resourcePath: 'resources/icon-4.png'
   }
 ])
 
@@ -93,7 +95,7 @@ const currentLogo = computed(() => {
 })
 
 const currentLogoPath = computed(() => {
-  return currentLogo.value.path.replace('resources/', '/')
+  return currentLogo.value.displayPath
 })
 
 // 方法
@@ -109,7 +111,7 @@ const selectLogo = (logoId) => {
     
     // 更新应用图标
     try {
-      window.electronAPI?.app?.updateAppIcon(selectedLogo.path)
+      window.electronAPI?.app?.updateAppIcon(selectedLogo.resourcePath)
     } catch (error) {
       console.error('更新应用图标失败:', error)
     }

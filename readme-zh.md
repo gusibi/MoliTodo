@@ -1,7 +1,7 @@
 # MoliTodo
 
 <div align="center">
-  <img src="resources/icon.png" alt="MoliTodo Logo" width="128" height="128">
+  <img src="resources/icon-3.png" alt="MoliTodo Logo" width="128" height="128">
   
   **AI 智能驱动的悬浮式待办事项应用**
   

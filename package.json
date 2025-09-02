@@ -92,7 +92,7 @@
           "arch": "arm64"
         }
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon-3.png"
     },
     "win": {
       "target": [
@@ -103,7 +103,7 @@
           ]
         }
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon-3.png"
     }
   }
 }
