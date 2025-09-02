@@ -3,6 +3,15 @@
     <!-- 添加任务区域 -->
     <!-- <TaskEdit ref="taskEditRef" :task="null" :is-editing="false" @add-task="handleAddTask" /> -->
 
+    <!-- 时间筛选器 - 只在计划中视图显示 -->
+    <div v-if="currentCategory === 'planned'" class="flat-task-list-time-filter-container">
+      <TimeFilter 
+        v-model="currentTimeFilter" 
+        :tasks="props.tasks"
+        @filter-change="handleTimeFilterChange" 
+      />
+    </div>
+
     <!-- 任务列表内容区域 -->
     <div class="flat-task-list-content">
       <!-- 加载状态 -->
@@ -202,6 +211,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
+import TimeFilter from './TimeFilter.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 // 定义 props
@@ -288,12 +298,33 @@ const timeUpdateTrigger = ref(0)
 // 使用任务存储
 const taskStore = useTaskStore()
 
+// 获取当前分类
+const currentCategory = computed(() => taskStore.currentCategory)
+
+// 时间筛选相关
+const currentTimeFilter = ref('all')
+
+// 处理时间筛选变化
+const handleTimeFilterChange = (filterKey) => {
+  currentTimeFilter.value = filterKey
+  // 不修改 currentCategory，只更新本地筛选状态
+}
+
 // 计算属性：是否在清单视图中
 const isInListView = computed(() => taskStore.currentListId !== null)
 
+// 根据时间筛选器过滤任务
+const filteredTasksByTime = computed(() => {
+  const allTasks = props.tasks || []
+  if (currentTimeFilter.value === 'all') {
+    return allTasks
+  }
+  return taskStore.filterTasksByCategory(allTasks, currentTimeFilter.value)
+})
+
 // 按 list 分组任务
 const groupedTasks = computed(() => {
-  const allTasks = props.tasks
+  const allTasks = filteredTasksByTime.value
   // console.log("allTasks:", JSON.stringify(allTasks)) 
   if (!allTasks || allTasks.length === 0) {
     return []
@@ -336,10 +367,6 @@ const hasMultipleGroups = computed(() => groupedTasks.value.length > 1)
 
 
 
-// 添加任务处理
-const handleAddTask = (taskData) => {
-  emit('add-task', taskData)
-}
 
 // 快速添加任务
 const addTask = async () => {

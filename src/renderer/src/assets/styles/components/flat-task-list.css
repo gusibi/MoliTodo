@@ -1,5 +1,23 @@
 /* Flat Task List Component Styles */
 
+/* Time Filter Container */
+.flat-task-list-time-filter-container {
+  @apply py-3 pl-6 pr-2 border-b border-border/30;
+}
+
+/* Time Filter Button Overrides */
+.flat-task-list-time-filter-container .filter-btn {
+  @apply px-1.5 py-1 text-2xs;
+}
+
+.flat-task-list-time-filter-container .filter-btn i {
+  @apply w-2 h-2 mr-1.5;
+}
+
+.flat-task-list-time-filter-container .filter-count {
+  @apply ml-1.5 px-1.5 py-0.5 text-2xs min-w-[16px];
+}
+
 /* Container */
 .flat-task-list-container {
   @apply flex flex-col h-full bg-background;

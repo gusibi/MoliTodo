@@ -8,11 +8,12 @@
           <span>今天</span>
           <span class="nav-count">{{ getCategoryCount('today') }}</span>
         </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'inbox' }" @click="switchCategory('inbox')">
-          <i class="fas fa-inbox"></i>
-          <span>收件箱</span>
-          <span class="nav-count">{{ getCategoryCount('inbox') }}</span>
+        <div class="nav-item" :class="{ active: currentCategory === 'planned' }" @click="switchCategory('planned')">
+          <i class="fas fa-calendar-week"></i>
+          <span>计划中</span>
+          <span class="nav-count">{{ getCategoryCount('planned') }}</span>
         </div>
+
         <div class="nav-item" :class="{ active: currentCategory === 'doing' }" @click="switchCategory('doing')">
           <i class="fas fa-play-circle"></i>
           <span>进行中</span>
@@ -23,15 +24,16 @@
           <span>暂停中</span>
           <span class="nav-count">{{ getCategoryCount('paused') }}</span>
         </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'planned' }" @click="switchCategory('planned')">
-          <i class="fas fa-calendar-week"></i>
-          <span>计划中</span>
-          <span class="nav-count">{{ getCategoryCount('planned') }}</span>
-        </div>
+
         <div class="nav-item" :class="{ active: currentCategory === 'all' }" @click="switchCategory('all')">
           <i class="fas fa-list"></i>
           <span>所有任务</span>
           <span class="nav-count">{{ getCategoryCount('all') }}</span>
+        </div>
+        <div class="nav-item" :class="{ active: currentCategory === 'inbox' }" @click="switchCategory('inbox')">
+          <i class="fas fa-inbox"></i>
+          <span>收件箱</span>
+          <span class="nav-count">{{ getCategoryCount('inbox') }}</span>
         </div>
         <div class="nav-item" :class="{ active: currentCategory === 'completed' }" @click="switchCategory('completed')">
           <i class="fas fa-check-circle"></i>

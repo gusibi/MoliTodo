@@ -62,6 +62,50 @@ export const useTaskStore = defineStore('task', () => {
     return false
   }
 
+  // 辅助函数：判断任务是否只有提醒时间是今天
+  const isOnlyTodayTask = (task) => {
+    // 只筛选提醒时间是今天的任务
+    return isToday(task.reminderTime)
+  }
+
+  // 辅助函数：判断任务是否过期
+  const isOverdueTask = (task) => {
+    if (!task.reminderTime || task.status === 'done') return false
+    const reminderDate = new Date(task.reminderTime)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // 设置为今天的开始时间
+    return reminderDate < today
+  }
+
+  // 辅助函数：判断任务是否为明天
+  const isTomorrowTask = (task) => {
+    if (!task.reminderTime) return false
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const targetDate = new Date(task.reminderTime)
+    return tomorrow.toDateString() === targetDate.toDateString()
+  }
+
+  // 辅助函数：判断任务是否在本周
+  const isThisWeekTask = (task) => {
+    if (!task.reminderTime) return false
+    const today = new Date()
+    const targetDate = new Date(task.reminderTime)
+    
+    // 获取本周的开始和结束日期（周一到周日）
+    const startOfWeek = new Date(today)
+    const dayOfWeek = today.getDay()
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // 周日为0，需要特殊处理
+    startOfWeek.setDate(today.getDate() + diff)
+    startOfWeek.setHours(0, 0, 0, 0)
+    
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    endOfWeek.setHours(23, 59, 59, 999)
+    
+    return targetDate >= startOfWeek && targetDate <= endOfWeek
+  }
+
   // 辅助函数：获取状态显示文本
   const getStatusText = (status) => {
     const statusMap = {
@@ -94,6 +138,9 @@ export const useTaskStore = defineStore('task', () => {
           filteredTasks = filteredTasks.filter(task => task.status !== 'done')
         }
         break
+      case 'onlyToday':
+        filteredTasks = filteredTasks.filter(task => isOnlyTodayTask(task) && task.status !== 'done')
+        break
       case 'doing':
         filteredTasks = filteredTasks.filter(task => task.status === 'doing')
         break
@@ -102,6 +149,15 @@ export const useTaskStore = defineStore('task', () => {
         break
       case 'planned':
         filteredTasks = filteredTasks.filter(task => !!task.reminderTime && task.status !== 'done')
+        break
+      case 'overdue':
+        filteredTasks = filteredTasks.filter(task => isOverdueTask(task))
+        break
+      case 'tomorrow':
+        filteredTasks = filteredTasks.filter(task => isTomorrowTask(task) && task.status !== 'done')
+        break
+      case 'thisWeek':
+        filteredTasks = filteredTasks.filter(task => isThisWeekTask(task) && task.status !== 'done')
         break
       case 'all':
         // 根据设置决定是否包含已完成任务
@@ -288,12 +344,21 @@ export const useTaskStore = defineStore('task', () => {
         case 'today':
           // 今天视图：包含提醒日期是今天的任务、今天创建的任务、以及正在进行的任务
           return isTodayTask(task)
+        case 'onlyToday':
+          // 只筛选提醒时间是今天的任务
+          return isOnlyTodayTask(task) && task.status !== 'done'
         case 'doing':
           return task.status === 'doing'
         case 'paused':
           return task.status === 'paused'
         case 'planned':
           return !!task.reminderTime && task.status !== 'done'
+        case 'overdue':
+          return isOverdueTask(task)
+        case 'tomorrow':
+          return isTomorrowTask(task) && task.status !== 'done'
+        case 'thisWeek':
+          return isThisWeekTask(task) && task.status !== 'done'
         case 'completed':
           return task.status === 'done'
         default:
@@ -412,9 +477,13 @@ export const useTaskStore = defineStore('task', () => {
     return {
       inbox: currentTasks.filter(t => t.status === 'todo' && !t.reminderTime).length,
       today: todayCount,
+      onlyToday: currentTasks.filter(t => isOnlyTodayTask(t) && t.status !== 'done').length,
       doing: currentTasks.filter(t => t.status === 'doing').length,
       paused: currentTasks.filter(t => t.status === 'paused').length,
       planned: currentTasks.filter(t => !!t.reminderTime && t.status !== 'done').length,
+      overdue: currentTasks.filter(t => isOverdueTask(t)).length,
+      tomorrow: currentTasks.filter(t => isTomorrowTask(t) && t.status !== 'done').length,
+      thisWeek: currentTasks.filter(t => isThisWeekTask(t) && t.status !== 'done').length,
       all: showCompletedInAll.value ? currentTasks.length : currentTasks.filter(t => t.status !== 'done').length,
       completed: currentTasks.filter(t => t.status === 'done').length
     }
@@ -1722,6 +1791,7 @@ export const useTaskStore = defineStore('task', () => {
     getCategoryCount,
     getCategoryStats,
     getSortedTasks,
+    filterTasksByCategory,
 
     // 自定义提醒选项方法
     getDefaultReminderOptions,
