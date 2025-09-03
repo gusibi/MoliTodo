@@ -4,37 +4,72 @@
 }
 
 .kanban-board-container {
-  @apply h-full grid grid-cols-4 gap-6 overflow-auto;
-}
-
-/* 响应式布局 */
-@screen lg {
-  .kanban-board-container {
-    @apply gap-4;
-  }
-}
-
-@screen md {
-  .kanban-board-container {
-    @apply gap-3;
-  }
-}
-
-@screen sm {
-  .kanban-board-container {
-    @apply flex overflow-x-auto gap-4 pb-4;
-  }
+  @apply h-full flex gap-4 overflow-auto;
+  /* 确保容器能够正确处理列的宽度 */
+  min-width: 0;
 }
 
 /* 看板列 */
 .kanban-column {
   @apply bg-card rounded-lg border border-border p-4 flex flex-col;
   min-height: 500px;
+  /* 设置最小宽度 */
+  min-width: 280px;
+  /* 默认情况下，列平均分配宽度 */
+  flex: 1;
+  /* 确保列不会超出容器 */
+  max-width: 100%;
 }
 
-@screen sm {
+/* 响应式布局 - 当窗口足够宽时，每列占 1/4 */
+@media (min-width: 1200px) {
+  .kanban-board-container {
+    @apply gap-6;
+  }
+  
   .kanban-column {
-    @apply min-w-[280px] flex-shrink-0;
+    /* 当窗口宽度 >= 1200px 时，每列占 1/4 宽度 */
+    flex: 0 1 calc(25% - 18px); /* 25% 减去 gap 的影响 */
+    max-width: calc(25% - 18px);
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .kanban-board-container {
+    @apply gap-4;
+  }
+  
+  .kanban-column {
+    /* 中等屏幕，列稍微宽一些 */
+    flex: 0 1 calc(25% - 12px);
+    max-width: calc(25% - 12px);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .kanban-board-container {
+    @apply gap-3;
+  }
+  
+  .kanban-column {
+    /* 平板屏幕，列更宽 */
+    flex: 0 1 calc(50% - 6px);
+    max-width: calc(50% - 6px);
+  }
+}
+
+/* 小屏幕 - 水平滚动 */
+@media (max-width: 767px) {
+  .kanban-board-container {
+    @apply overflow-x-auto gap-4 pb-4;
+    /* 小屏幕时不使用 flex-wrap，保持水平滚动 */
+    flex-wrap: nowrap;
+  }
+  
+  .kanban-column {
+    /* 小屏幕时保持固定宽度，允许水平滚动 */
+    flex: 0 0 280px;
+    max-width: 280px;
   }
 }
 

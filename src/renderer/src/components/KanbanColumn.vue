@@ -1,13 +1,8 @@
 <template>
-  <div
-    :class="[
-      'kanban-column',
-      { 'kanban-column--drag-over': isDragOver }
-    ]"
-    @dragover.prevent="handleDragOver"
-    @dragleave="handleDragLeave"
-    @drop="handleDrop"
-  >
+  <div :class="[
+    'kanban-column',
+    { 'kanban-column--drag-over': isDragOver }
+  ]" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <!-- 列头部 -->
     <div class="kanban-column-header">
       <div class="kanban-column-title">
@@ -22,21 +17,9 @@
     <!-- 列内容 -->
     <div class="kanban-column-content">
       <!-- 任务列表 -->
-      <TransitionGroup
-        v-if="tasks.length > 0"
-        name="kanban-card"
-        tag="div"
-        class="space-y-3"
-      >
-        <KanbanCard
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-          @drag-start="handleCardDragStart"
-          @drag-end="handleCardDragEnd"
-          @click="handleCardClick"
-          @edit="handleCardEdit"
-        />
+      <TransitionGroup v-if="tasks.length > 0" name="kanban-card" tag="div" class="space-y-3">
+        <KanbanCard v-for="task in tasks" :key="task.id" :task="task" @drag-start="handleCardDragStart"
+          @drag-end="handleCardDragEnd" @click="handleCardClick" @edit="handleCardEdit" />
       </TransitionGroup>
 
       <!-- 空状态 -->
@@ -49,12 +32,7 @@
     </div>
 
     <!-- 添加任务 -->
-    <KanbanAddTask
-      v-if="canAddTask"
-      :status="status"
-      :list-id="listId"
-      @add-task="handleAddTask"
-    />
+    <KanbanAddTask v-if="canAddTask" :status="status" :list-id="listId" @add-task="handleAddTask" />
   </div>
 </template>
 
@@ -136,7 +114,7 @@ const handleDrop = (event) => {
 
   try {
     const taskData = JSON.parse(event.dataTransfer.getData('application/json'))
-    
+
     // 如果任务已经在当前列，不需要移动
     if (taskData.status === props.status) {
       return

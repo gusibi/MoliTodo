@@ -48,11 +48,11 @@
             <!-- 进行时间 -->
             <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="flat-task-time flat-task-time-doing">
               <i class="fas fa-play"></i>
-              <span>{{ formatDuration(getCurrentDuration(task)) }}</span>
+              <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
             <div v-else-if="task.status === 'doing' && isTaskOvertime(task)" class="flat-task-time flat-task-time-overtime">
               <i class="fas fa-clock"></i>
-              <span>{{ formatDuration(getCurrentDuration(task)) }}</span>
+              <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
             <div v-else-if="task.status === 'paused'" class="flat-task-time flat-task-time-paused">
               <i class="fas fa-pause"></i>
@@ -95,8 +95,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { isTaskOvertime, formatDuration } from '../utils/task-utils'
+
+import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 
 // 定义 props
@@ -133,12 +133,13 @@ const emit = defineEmits([
 // 使用 taskStore
 const taskStore = useTaskStore()
 
-// 获取任务当前持续时间
-const getCurrentDuration = (task) => {
+// 获取任务当前持续时间（包含响应式更新触发器）
+const getCurrentDurationWithTrigger = (task) => {
   props.timeUpdateTrigger // 触发响应式更新
-  if (task.status !== 'doing' || !task.startedAt) return 0
-  return Date.now() - new Date(task.startedAt).getTime() + (task.totalDuration || 0)
+  return getCurrentDuration(task)
 }
+
+
 
 // 获取高亮内容
 const getHighlightedContent = (task) => {
@@ -154,22 +155,7 @@ const getHighlightedNote = (task) => {
   return task.metadata.note.replace(regex, '<mark>$1</mark>')
 }
 
-// 格式化提醒时间
-const formatReminderTime = (reminderTime) => {
-  const date = new Date(reminderTime)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-  const taskDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  
-  if (taskDate.getTime() === today.getTime()) {
-    return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else if (taskDate.getTime() === tomorrow.getTime()) {
-    return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
-  } else {
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  }
-}
+
 
 // 事件处理函数
 const handleTaskClick = () => {
