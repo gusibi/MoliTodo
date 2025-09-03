@@ -9,74 +9,82 @@
     <div class="kanban-card-header">
       <div class="kanban-card-content" v-html="getFormattedContent()">
       </div>
-      <div class="kanban-card-actions">
+      <!-- <div class="kanban-card-actions">
         <button class="kanban-card-action-btn" @click.stop="handleEdit" title="编辑任务">
           <i class="fas fa-edit"></i>
         </button>
+      </div> -->
+    </div>
+
+    <!-- 任务描述 -->
+    <div v-if="task.metadata?.note" class="kanban-card-description">
+      {{ task.metadata.note }}
+    </div>
+
+    <!-- 时间信息 -->
+    <div v-if="hasTimeInfo" class="kanban-card-time-info">
+      <!-- 提醒时间和任务状态时间在同一行 -->
+      <div class="kanban-card-time-row">
+        <!-- 提醒时间 -->
+        <div v-if="task.reminderTime" class="kanban-card-reminder-time" :class="{
+          'kanban-card-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'
+        }">
+          <i class="fas fa-calendar"></i>
+          <span>{{ getFormattedReminderTime() }}</span>
+        </div>
+
+        <!-- 进行时间 -->
+        <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="kanban-card-time kanban-card-time-doing">
+          <i class="fas fa-play"></i>
+          <span>{{ getFormattedDuration() }}</span>
+        </div>
+        <div v-else-if="task.status === 'doing' && isTaskOvertime(task)"
+          class="kanban-card-time kanban-card-time-overtime">
+          <i class="fas fa-clock"></i>
+          <span>{{ getFormattedDuration() }}</span>
+        </div>
+        <div v-else-if="task.status === 'paused'" class="kanban-card-time kanban-card-time-paused">
+          <i class="fas fa-pause"></i>
+          <span>{{ getFormattedDuration() }}</span>
+        </div>
+        <div v-else-if="task.status === 'done' && task.totalDuration"
+          class="kanban-card-time kanban-card-time-completed">
+          <i class="fas fa-check"></i>
+          <span>{{ getFormattedDuration() }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- 卡片元信息 -->
-    <div v-if="hasMetaInfo" class="kanban-card-meta">
-      <!-- 提醒时间 -->
-      <div v-if="task.reminderTime" class="kanban-card-meta-item">
-        <i class="fas fa-bell kanban-card-meta-icon"></i>
-        <span :class="getReminderTimeClass()">
-          {{ getFormattedReminderTime() }}
-        </span>
-      </div>
-
-      <!-- 到期时间 -->
-      <div v-if="task.dueDate" class="kanban-card-meta-item">
-        <i class="fas fa-calendar kanban-card-meta-icon"></i>
-        <span :class="getDueDateClass()">
-          {{ getFormattedDueDate() }}
-        </span>
-      </div>
-
-      <!-- 时间追踪 -->
-      <div v-if="hasTimeTracking" class="kanban-card-meta-item">
-        <i class="fas fa-clock kanban-card-meta-icon"></i>
-        <span class="kanban-card-time">
-          {{ getFormattedDuration() }}
-        </span>
-      </div>
-
-      <!-- 创建时间 -->
-      <div class="kanban-card-meta-item">
-        <i class="fas fa-calendar-plus kanban-card-meta-icon"></i>
-        <span class="kanban-card-time">
-          {{ getFormattedCreatedTime() }}
-        </span>
-      </div>
-    </div>
-
-    <!-- 标签和图标 -->
-    <div v-if="hasBadges" class="kanban-card-badges">
-      <!-- 备注图标 -->
-      <span v-if="task.comment && task.comment.trim()" class="kanban-card-badge kanban-card-badge--comment">
-        <i class="fas fa-comment"></i>
-        备注
-      </span>
-
-      <!-- 重复任务图标 -->
-      <span v-if="task.isRecurring" class="kanban-card-badge kanban-card-badge--recurring">
+    <!-- 任务操作按钮 -->
+    <!-- <div class="kanban-card-actions-bottom">
+      <button v-if="task.status === 'todo'" class="kanban-card-btn kanban-card-btn-start"
+        @click.stop="handleStartTask" title="开始">
+        <i class="fas fa-play"></i>
+      </button>
+      <button v-if="task.status === 'doing'" class="kanban-card-btn kanban-card-btn-pause"
+        @click.stop="handlePauseTask" title="暂停">
+        <i class="fas fa-pause"></i>
+      </button>
+      <button v-if="task.status === 'paused'" class="kanban-card-btn kanban-card-btn-resume"
+        @click.stop="handleResumeTask" title="继续">
+        <i class="fas fa-play"></i>
+      </button>
+      <button v-if="task.status === 'done'" class="kanban-card-btn kanban-card-btn-restart"
+        @click.stop="handleRestartTask" title="重新开始">
         <i class="fas fa-redo"></i>
-        重复
-      </span>
-
-      <!-- 时间追踪图标 -->
-      <span v-if="hasTimeTracking" class="kanban-card-badge kanban-card-badge--tracking">
-        <i class="fas fa-stopwatch"></i>
-        计时
-      </span>
-    </div>
+      </button>
+      <button v-if="task.status === 'done'" class="kanban-card-btn kanban-card-btn-delete" 
+        @click.stop="handleDeleteTask" title="删除">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div> -->
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import { formatReminderTime, formatDuration, formatDueDate, getDueDateCssClass, getCurrentDuration } from '../utils/task-utils'
+import { formatReminderTime, formatDuration, getCurrentDuration, isTaskOvertime } from '../utils/task-utils'
+import { useTaskStore } from '@/store/taskStore'
 
 const props = defineProps({
   task: {
@@ -86,30 +94,24 @@ const props = defineProps({
   isDragging: {
     type: Boolean,
     default: false
+  },
+  timeUpdateTrigger: {
+    type: Number,
+    default: 0
   }
 })
 
 const emit = defineEmits(['drag-start', 'drag-end', 'click', 'edit'])
 
 const isDragging = ref(false)
+const taskStore = useTaskStore()
 
 // 计算属性
-const hasMetaInfo = computed(() => {
+const hasTimeInfo = computed(() => {
   return props.task.reminderTime ||
-    props.task.dueDate ||
-    hasTimeTracking.value ||
-    true // 总是显示创建时间
-})
-
-const hasBadges = computed(() => {
-  return (props.task.comment && props.task.comment.trim()) ||
-    props.task.isRecurring ||
-    hasTimeTracking.value
-})
-
-const hasTimeTracking = computed(() => {
-  return (props.task.totalWorkDuration && props.task.totalWorkDuration > 0) ||
-    props.task.status === 'doing'
+    props.task.status === 'doing' ||
+    props.task.status === 'paused' ||
+    (props.task.status === 'done' && props.task.totalDuration)
 })
 
 // 方法
@@ -136,56 +138,62 @@ const handleEdit = () => {
   emit('edit', props.task)
 }
 
+// 获取任务当前持续时间（包含响应式更新触发器）
+const getCurrentDurationWithTrigger = (task) => {
+  props.timeUpdateTrigger // 触发响应式更新
+  return getCurrentDuration(task)
+}
+
 const getFormattedReminderTime = () => {
   if (!props.task.reminderTime) return ''
   return formatReminderTime(props.task.reminderTime)
 }
 
 const getFormattedDuration = () => {
-  if (!props.task.totalWorkDuration) return '0分钟'
-  return formatDuration(getCurrentDuration(props.task))
+  return formatDuration(getCurrentDurationWithTrigger(props.task))
 }
 
-const getReminderTimeClass = () => {
-  if (!props.task.reminderTime) return ''
-
-  const now = new Date()
-  const reminderTime = new Date(props.task.reminderTime)
-
-  if (reminderTime < now) {
-    return 'kanban-card-time--overdue'
-  } else if (reminderTime - now < 60 * 60 * 1000) { // 1小时内
-    return 'kanban-card-time--due-soon'
+// 任务操作方法
+const handleStartTask = async () => {
+  try {
+    await taskStore.startTask(props.task.id)
+  } catch (error) {
+    console.error('开始任务失败:', error)
   }
-
-  return 'kanban-card-time'
 }
 
-const getFormattedDueDate = () => {
-  return formatDueDate(props.task.dueDate)
+const handlePauseTask = async () => {
+  try {
+    await taskStore.pauseTask(props.task.id)
+  } catch (error) {
+    console.error('暂停任务失败:', error)
+  }
 }
 
-const getDueDateClass = () => {
-  return getDueDateCssClass(props.task.dueDate)
+const handleResumeTask = async () => {
+  try {
+    await taskStore.startTask(props.task.id) // resume 实际上就是重新开始
+  } catch (error) {
+    console.error('继续任务失败:', error)
+  }
 }
 
-const getFormattedCreatedTime = () => {
-  const createdAt = new Date(props.task.createdAt)
-  const now = new Date()
-  const diffMs = now - createdAt
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) {
-    return '今天创建'
-  } else if (diffDays === 1) {
-    return '昨天创建'
-  } else if (diffDays < 7) {
-    return `${diffDays}天前创建`
-  } else {
-    return createdAt.toLocaleDateString('zh-CN', {
-      month: 'short',
-      day: 'numeric'
+const handleRestartTask = async () => {
+  try {
+    await taskStore.updateTask(props.task.id, {
+      status: 'todo',
+      completedAt: null,
+      startTime: null,
+      totalDuration: 0
     })
+  } catch (error) {
+    console.error('重新开始任务失败:', error)
+  }
+}
+
+const handleDeleteTask = async () => {
+  if (confirm('确定要删除这个任务吗？')) {
+    await taskStore.deleteTask(props.task.id)
   }
 }
 

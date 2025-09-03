@@ -41,6 +41,7 @@
         :tasks="todoTasks"
         :can-add-task="true"
         :list-id="currentListId"
+        :time-update-trigger="timeUpdateTrigger"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -53,6 +54,7 @@
         :tasks="doingTasks"
         :can-add-task="false"
         :list-id="currentListId"
+        :time-update-trigger="timeUpdateTrigger"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -65,6 +67,7 @@
         :tasks="pausedTasks"
         :can-add-task="false"
         :list-id="currentListId"
+        :time-update-trigger="timeUpdateTrigger"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -77,6 +80,7 @@
         :tasks="doneTasks"
         :can-add-task="false"
         :list-id="currentListId"
+        :time-update-trigger="timeUpdateTrigger"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -87,7 +91,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted, onMounted } from 'vue'
 import KanbanColumn from './KanbanColumn.vue'
 
 const props = defineProps({
@@ -114,6 +118,10 @@ const emit = defineEmits(['add-task', 'update-task', 'edit-task', 'show-edit-pan
 const error = ref(null)
 const isUpdating = ref(false)
 const dragTimeout = ref(null)
+
+// 时间更新定时器和响应式更新触发器
+let timeUpdateTimer = null
+const timeUpdateTrigger = ref(0)
 
 // 防抖处理拖拽操作
 const debouncedTaskDrop = (dropData) => {
@@ -206,11 +214,25 @@ const handleCardEdit = (task) => {
   emit('edit-task', task)
 }
 
+// 启动时间更新定时器
+onMounted(() => {
+  timeUpdateTimer = setInterval(() => {
+    const hasDoingTasks = props.tasks.some(task => task.status === 'doing')
+    if (hasDoingTasks) {
+      timeUpdateTrigger.value++
+    }
+  }, 1000)
+})
+
 // 清理函数
 const cleanup = () => {
   if (dragTimeout.value) {
     clearTimeout(dragTimeout.value)
     dragTimeout.value = null
+  }
+  if (timeUpdateTimer) {
+    clearInterval(timeUpdateTimer)
+    timeUpdateTimer = null
   }
 }
 

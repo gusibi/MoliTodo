@@ -93,7 +93,7 @@
 }
 
 .kanban-column-title {
-  @apply text-lg font-semibold text-foreground flex items-center gap-2;
+  @apply text-base font-semibold text-foreground flex items-center gap-2;
 }
 
 .kanban-column-icon {

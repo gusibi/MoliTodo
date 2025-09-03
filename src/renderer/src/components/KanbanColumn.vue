@@ -18,7 +18,9 @@
     <div class="kanban-column-content">
       <!-- 任务列表 -->
       <TransitionGroup v-if="tasks.length > 0" name="kanban-card" tag="div" class="space-y-3">
-        <KanbanCard v-for="task in tasks" :key="task.id" :task="task" @drag-start="handleCardDragStart"
+        <KanbanCard v-for="task in tasks" :key="task.id" :task="task" 
+          :time-update-trigger="timeUpdateTrigger"
+          @drag-start="handleCardDragStart"
           @drag-end="handleCardDragEnd" @click="handleCardClick" @edit="handleCardEdit" />
       </TransitionGroup>
 
@@ -58,6 +60,10 @@ const props = defineProps({
   listId: {
     type: Number,
     default: null
+  },
+  timeUpdateTrigger: {
+    type: Number,
+    default: 0
   }
 })
 
