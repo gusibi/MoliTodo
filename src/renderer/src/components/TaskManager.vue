@@ -95,11 +95,17 @@
           :search-query="searchQuery" @edit-task="handleEditTask" @create-task="handleAddTask"
           @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
 
-        <!-- 看板视图 (待实现) -->
-        <div v-else-if="viewMode === 'kanban'"
-          class="flex items-center justify-center py-16 text-muted-foreground text-base">
-          <p>看板视图开发中...</p>
-        </div>
+        <!-- 看板视图 -->
+        <KanbanBoard v-else-if="viewMode === 'kanban'" 
+          :tasks="displayTasks" 
+          :loading="loading"
+          :search-query="searchQuery"
+          :current-list-id="currentListId"
+          @add-task="handleAddTask" 
+          @update-task="handleUpdateTaskWithStatusTracking" 
+          @edit-task="handleEditTask"
+          @show-edit-panel="handleShowEditPanel" 
+        />
       </div>
 
       <!-- 统计信息条 - 固定在底部 -->
@@ -122,6 +128,7 @@ import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './calender_view/MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
+import KanbanBoard from './KanbanBoard.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 
@@ -273,6 +280,21 @@ const handleDeleteTask = async (task) => {
 const handleUpdateTask = async (taskData) => {
   try {
     await taskStore.updateTask(taskData.id, taskData)
+  } catch (error) {
+    console.error('更新任务失败:', error)
+  }
+}
+
+const handleUpdateTaskWithStatusTracking = async (taskData) => {
+  try {
+    // 如果包含状态变化信息，使用状态追踪更新
+    if (taskData._statusChange) {
+      const { from, to } = taskData._statusChange
+      await taskStore.updateTaskStatusWithTracking(taskData.id, to, from)
+    } else {
+      // 否则使用普通更新
+      await taskStore.updateTask(taskData.id, taskData)
+    }
   } catch (error) {
     console.error('更新任务失败:', error)
   }

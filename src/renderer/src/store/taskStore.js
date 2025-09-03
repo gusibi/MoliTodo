@@ -910,6 +910,61 @@ export const useTaskStore = defineStore('task', () => {
     showCompletedInMonthly.value = show
   }
 
+  // ==================== 看板功能相关方法 ====================
+
+  // 按状态分组任务
+  const getTasksByStatus = (status, listId = null, includeCompleted = null) => {
+    return getTasksByFilter('all', listId, includeCompleted).filter(task => task.status === status)
+  }
+
+  // 获取看板任务分组
+  const getKanbanTaskGroups = (listId = null, includeCompleted = null) => {
+    const allTasks = getTasksByFilter('all', listId, includeCompleted)
+    
+    // 应用搜索过滤
+    const filteredTasks = searchTasksLocally(allTasks, searchQuery.value, searchOptions.value)
+    
+    return {
+      todo: filteredTasks.filter(task => task.status === 'todo'),
+      doing: filteredTasks.filter(task => task.status === 'doing'),
+      paused: filteredTasks.filter(task => task.status === 'paused'),
+      done: filteredTasks.filter(task => task.status === 'done')
+    }
+  }
+
+  // 更新任务状态并处理时间追踪
+  const updateTaskStatusWithTracking = async (taskId, newStatus, fromStatus = null) => {
+    try {
+      const task = tasks.value.find(t => t.id === taskId)
+      if (!task) {
+        throw new Error('任务不存在')
+      }
+
+      const currentStatus = fromStatus || task.status
+      
+      // 根据状态变化调用相应的方法
+      if (newStatus === 'doing' && (currentStatus === 'todo' || currentStatus === 'paused')) {
+        // 开始任务（从待办或暂停状态）
+        return await startTask(taskId)
+      } else if (newStatus === 'paused' && currentStatus === 'doing') {
+        // 暂停任务（从进行中状态）
+        return await pauseTask(taskId)
+      } else if (newStatus === 'done') {
+        // 完成任务
+        return await completeTask(taskId)
+      } else if (newStatus === 'todo' && currentStatus === 'done') {
+        // 从已完成恢复到待办
+        return await updateTask(taskId, { status: 'todo' })
+      } else {
+        // 其他状态变化，直接更新状态
+        return await updateTask(taskId, { status: newStatus })
+      }
+    } catch (error) {
+      console.error('更新任务状态失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // 设置当前清单
   const setCurrentListId = (listId) => {
     currentListId.value = listId
@@ -1777,6 +1832,11 @@ export const useTaskStore = defineStore('task', () => {
     setShowCompletedInAll,
     setShowCompletedInToday,
     setShowCompletedInWeekly,
+
+    // 看板功能方法
+    getTasksByStatus,
+    getKanbanTaskGroups,
+    updateTaskStatusWithTracking,
     setShowCompletedInMonthly,
 
     // 辅助函数

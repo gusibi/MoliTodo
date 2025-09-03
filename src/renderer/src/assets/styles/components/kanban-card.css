@@ -1,0 +1,131 @@
+/* 看板卡片 */
+.kanban-card {
+  @apply bg-background border border-border rounded-lg p-3 cursor-pointer;
+  @apply hover:shadow-md transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  transform: translateZ(0); /* 启用硬件加速 */
+}
+
+.kanban-card--dragging {
+  @apply opacity-60 shadow-xl;
+  transform: rotate(3deg) scale(1.02) translateZ(0);
+  transition: none;
+  z-index: 1000;
+}
+
+.kanban-card:hover {
+  @apply border-border/80 shadow-sm;
+}
+
+/* 卡片头部 */
+.kanban-card-header {
+  @apply flex items-start justify-between gap-2 mb-2;
+}
+
+.kanban-card-content {
+  @apply flex-1 text-sm text-foreground leading-relaxed;
+  @apply break-words hyphens-auto;
+}
+
+.kanban-card-actions {
+  @apply flex items-center gap-1 opacity-0 transition-opacity duration-200;
+}
+
+.kanban-card:hover .kanban-card-actions {
+  @apply opacity-100;
+}
+
+.kanban-card-action-btn {
+  @apply w-6 h-6 flex items-center justify-center rounded text-muted-foreground;
+  @apply hover:text-foreground hover:bg-muted transition-colors duration-200;
+}
+
+/* 卡片元信息 */
+.kanban-card-meta {
+  @apply mt-3 pt-2 border-t border-border/50 space-y-1;
+}
+
+.kanban-card-meta-item {
+  @apply flex items-center gap-2 text-xs text-muted-foreground;
+}
+
+.kanban-card-meta-icon {
+  @apply w-3 h-3 flex-shrink-0;
+}
+
+/* 时间信息 */
+.kanban-card-time {
+  @apply text-xs text-muted-foreground;
+}
+
+.kanban-card-time--overdue {
+  @apply text-destructive font-medium;
+}
+
+.kanban-card-time--due-soon {
+  @apply text-orange-500 font-medium;
+}
+
+/* 标签和图标 */
+.kanban-card-badges {
+  @apply flex items-center gap-1 mt-2;
+}
+
+.kanban-card-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs;
+}
+
+.kanban-card-badge--comment {
+  @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300;
+}
+
+.kanban-card-badge--recurring {
+  @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+}
+
+.kanban-card-badge--tracking {
+  @apply bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300;
+}
+
+/* 拖拽指示器 */
+.kanban-card-drag-handle {
+  @apply cursor-grab active:cursor-grabbing;
+}
+
+.kanban-card-drag-handle:hover {
+  @apply text-muted-foreground/80;
+}
+
+/* 优先级指示器 */
+.kanban-card-priority {
+  @apply w-1 h-full absolute left-0 top-0 rounded-l-lg;
+}
+
+.kanban-card-priority--high {
+  @apply bg-red-500;
+}
+
+.kanban-card-priority--medium {
+  @apply bg-yellow-500;
+}
+
+.kanban-card-priority--low {
+  @apply bg-green-500;
+}
+
+/* 状态特定样式 */
+.kanban-card--todo {
+  @apply border-l-4 border-l-blue-500;
+}
+
+.kanban-card--doing {
+  @apply border-l-4 border-l-orange-500;
+}
+
+.kanban-card--paused {
+  @apply border-l-4 border-l-yellow-500;
+}
+
+.kanban-card--done {
+  @apply border-l-4 border-l-green-500 opacity-75;
+}

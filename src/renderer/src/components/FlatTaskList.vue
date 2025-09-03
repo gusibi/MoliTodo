@@ -34,7 +34,7 @@
           </ul>
         </div>
         <div class="flat-task-list-empty-hint">
-          💡 提示：您可以使用快捷键 {{ getShortcutText() }} 快速添加任务
+          💡 提示：您可以使用快捷键 {{ getShortcutText('add') }} 快速添加任务
         </div>
       </div>
 
@@ -207,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
@@ -309,6 +309,13 @@ const handleTimeFilterChange = (filterKey) => {
   currentTimeFilter.value = filterKey
   // 不修改 currentCategory，只更新本地筛选状态
 }
+
+// 监听分类变化，当切换到非planned分类时，重置时间筛选器为'all'
+watch(() => currentCategory.value, (newCategory) => {
+  if (newCategory !== 'planned') {
+    currentTimeFilter.value = 'all'
+  }
+})
 
 // 计算属性：是否在清单视图中
 const isInListView = computed(() => taskStore.currentListId !== null)

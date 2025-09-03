@@ -1,0 +1,220 @@
+/* 看板主容器 */
+.kanban-board {
+  @apply h-full p-6 bg-background overflow-hidden;
+}
+
+.kanban-board-container {
+  @apply h-full grid grid-cols-4 gap-6 overflow-auto;
+}
+
+/* 响应式布局 */
+@screen lg {
+  .kanban-board-container {
+    @apply gap-4;
+  }
+}
+
+@screen md {
+  .kanban-board-container {
+    @apply gap-3;
+  }
+}
+
+@screen sm {
+  .kanban-board-container {
+    @apply flex overflow-x-auto gap-4 pb-4;
+  }
+}
+
+/* 看板列 */
+.kanban-column {
+  @apply bg-card rounded-lg border border-border p-4 flex flex-col;
+  min-height: 500px;
+}
+
+@screen sm {
+  .kanban-column {
+    @apply min-w-[280px] flex-shrink-0;
+  }
+}
+
+.kanban-column--drag-over {
+  @apply bg-primary/5 border-primary border-dashed;
+  animation: pulse-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 5px rgba(var(--primary), 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(var(--primary), 0.6);
+  }
+}
+
+/* 列头部 */
+.kanban-column-header {
+  @apply flex items-center justify-between mb-4 pb-2 border-b border-border;
+}
+
+.kanban-column-title {
+  @apply text-lg font-semibold text-foreground flex items-center gap-2;
+}
+
+.kanban-column-icon {
+  @apply w-5 h-5 transition-colors duration-200;
+}
+
+.kanban-column-icon--todo {
+  @apply text-blue-500;
+}
+
+.kanban-column-icon--doing {
+  @apply text-orange-500;
+}
+
+.kanban-column-icon--paused {
+  @apply text-yellow-500;
+}
+
+.kanban-column-icon--done {
+  @apply text-green-500;
+}
+
+.kanban-column-count {
+  @apply text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full min-w-[24px] text-center;
+}
+
+/* 列内容区域 */
+.kanban-column-content {
+  @apply flex-1 overflow-y-auto space-y-3;
+}
+
+/* 卡片动画 */
+.kanban-card-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.kanban-card-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.kanban-card-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.kanban-card-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+
+.kanban-card-move {
+  transition: transform 0.3s ease;
+}
+
+/* 加载状态 */
+.kanban-board-loading {
+  @apply h-full;
+}
+
+.kanban-card-skeleton {
+  @apply bg-background border border-border rounded-lg p-3;
+  min-height: 80px;
+}
+
+/* 错误状态 */
+.kanban-error {
+  @apply flex items-center justify-center h-full text-center;
+}
+
+.kanban-error-content {
+  @apply max-w-md mx-auto p-6;
+}
+
+.kanban-error-icon {
+  @apply w-12 h-12 text-destructive mx-auto mb-4;
+}
+
+.kanban-error-title {
+  @apply text-lg font-semibold text-foreground mb-2;
+}
+
+.kanban-error-message {
+  @apply text-muted-foreground mb-4;
+}
+
+.kanban-error-button {
+  @apply px-4 py-2 bg-primary text-primary-foreground rounded-md;
+  @apply hover:bg-primary/90 transition-colors duration-200;
+}
+
+.kanban-column-content::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.kanban-column-content::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground;
+}
+
+/* 空状态 */
+.kanban-column-empty {
+  @apply flex-1 flex items-center justify-center text-muted-foreground text-sm py-8;
+}
+
+/* 添加任务区域 */
+.kanban-add-task {
+  @apply mt-3 pt-3 border-t border-border;
+}
+
+.kanban-add-task-button {
+  @apply w-full p-3 border-2 border-dashed border-muted-foreground/30 rounded-lg;
+  @apply text-muted-foreground hover:text-foreground hover:border-muted-foreground/60;
+  @apply transition-all duration-200 cursor-pointer;
+  @apply flex items-center justify-center gap-2 text-sm;
+  transform: translateZ(0);
+}
+
+.kanban-add-task-button:hover {
+  @apply bg-muted/50;
+  transform: translateY(-1px) translateZ(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-add-task-button:active {
+  transform: translateY(0) translateZ(0);
+}
+
+.kanban-add-task-form {
+  @apply space-y-2;
+}
+
+.kanban-add-task-input {
+  @apply w-full p-2 border border-border rounded-md bg-background;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  @apply text-sm placeholder:text-muted-foreground;
+}
+
+.kanban-add-task-actions {
+  @apply flex gap-2;
+}
+
+.kanban-add-task-submit {
+  @apply px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm;
+  @apply hover:bg-primary/90 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+.kanban-add-task-cancel {
+  @apply px-3 py-1.5 bg-muted text-muted-foreground rounded-md text-sm;
+  @apply hover:bg-muted/80 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-muted focus:ring-offset-2;
+}
