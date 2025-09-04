@@ -229,29 +229,21 @@
 
 
 
-/* Vue 过渡效果 */
+/* Vue 过渡效果 - 简化为淡入淡出，移除滑动效果 */
 .kanban-edit-panel-enter-active {
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: opacity 0.2s ease-out;
 }
 
 .kanban-edit-panel-leave-active {
-  transition: all 0.2s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  transition: opacity 0.15s ease-in;
 }
 
 .kanban-edit-panel-enter-from {
   opacity: 0;
 }
 
-.kanban-edit-panel-enter-from .kanban-edit-panel-container {
-  transform: translateX(100%);
-}
-
 .kanban-edit-panel-leave-to {
   opacity: 0;
-}
-
-.kanban-edit-panel-leave-to .kanban-edit-panel-container {
-  transform: translateX(100%);
 }
 
 .kanban-edit-panel-backdrop {
