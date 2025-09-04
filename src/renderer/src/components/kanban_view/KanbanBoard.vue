@@ -42,6 +42,7 @@
         :can-add-task="true"
         :list-id="currentListId"
         :time-update-trigger="timeUpdateTrigger"
+        :editing-task-id="editingTaskId"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -55,6 +56,7 @@
         :can-add-task="false"
         :list-id="currentListId"
         :time-update-trigger="timeUpdateTrigger"
+        :editing-task-id="editingTaskId"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -68,6 +70,7 @@
         :can-add-task="false"
         :list-id="currentListId"
         :time-update-trigger="timeUpdateTrigger"
+        :editing-task-id="editingTaskId"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -81,6 +84,7 @@
         :can-add-task="false"
         :list-id="currentListId"
         :time-update-trigger="timeUpdateTrigger"
+        :editing-task-id="editingTaskId"
         @task-dropped="debouncedTaskDrop"
         @add-task="handleAddTask"
         @card-click="handleCardClick"
@@ -108,6 +112,10 @@ const props = defineProps({
     default: ''
   },
   currentListId: {
+    type: Number,
+    default: null
+  },
+  editingTaskId: {
     type: Number,
     default: null
   }
@@ -214,7 +222,7 @@ const handleCardEdit = (task) => {
   emit('edit-task', task)
 }
 
-// 启动时间更新定时器
+// 启动时间更新定时器和滚动条交互
 onMounted(() => {
   timeUpdateTimer = setInterval(() => {
     const hasDoingTasks = props.tasks.some(task => task.status === 'doing')
@@ -222,6 +230,34 @@ onMounted(() => {
       timeUpdateTrigger.value++
     }
   }, 1000)
+
+  // 添加滚动条交互
+  const kanbanContainer = document.querySelector('.kanban-board-container')
+  const columnContents = document.querySelectorAll('.kanban-column-content')
+  
+  // 处理水平滚动条
+  if (kanbanContainer) {
+    let scrollTimeout
+    kanbanContainer.addEventListener('scroll', () => {
+      kanbanContainer.classList.add('scrolling')
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        kanbanContainer.classList.remove('scrolling')
+      }, 1000)
+    })
+  }
+  
+  // 处理垂直滚动条
+  columnContents.forEach(content => {
+    let scrollTimeout
+    content.addEventListener('scroll', () => {
+      content.classList.add('scrolling')
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        content.classList.remove('scrolling')
+      }, 1000)
+    })
+  })
 })
 
 // 清理函数

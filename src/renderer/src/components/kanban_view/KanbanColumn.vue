@@ -20,6 +20,7 @@
       <TransitionGroup v-if="tasks.length > 0" name="kanban-card" tag="div" class="space-y-3">
         <KanbanCard v-for="task in tasks" :key="task.id" :task="task" 
           :time-update-trigger="timeUpdateTrigger"
+          :is-editing="editingTaskId === task.id"
           @drag-start="handleCardDragStart"
           @drag-end="handleCardDragEnd" @click="handleCardClick" @edit="handleCardEdit" />
       </TransitionGroup>
@@ -64,6 +65,10 @@ const props = defineProps({
   timeUpdateTrigger: {
     type: Number,
     default: 0
+  },
+  editingTaskId: {
+    type: Number,
+    default: null
   }
 })
 

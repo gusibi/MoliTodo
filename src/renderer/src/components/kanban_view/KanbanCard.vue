@@ -2,8 +2,11 @@
   <div :class="[
     'kanban-card',
     `kanban-card--${task.status}`,
-    { 'kanban-card--dragging': isDragging }
-  ]" :draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd" @click="handleClick" tabindex="0"
+    {
+      'kanban-card--dragging': isDragging,
+      'kanban-card--editing': isEditing
+    }
+  ]" :draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd" tabindex="0"
     @keydown.enter="handleClick" @keydown.space.prevent="handleClick" @contextmenu.prevent="handleRightClick">
     <!-- 卡片头部 -->
     <div class="kanban-card-header">
@@ -115,6 +118,10 @@ const props = defineProps({
   timeUpdateTrigger: {
     type: Number,
     default: 0
+  },
+  isEditing: {
+    type: Boolean,
+    default: false
   }
 })
 

@@ -106,6 +106,7 @@
               :loading="loading"
               :search-query="searchQuery"
               :current-list-id="currentListId"
+              :editing-task-id="selectedTask?.id"
               @add-task="handleAddTask" 
               @update-task="handleUpdateTaskWithStatusTracking" 
               @edit-task="handleEditTask"

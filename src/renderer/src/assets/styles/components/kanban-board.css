@@ -7,6 +7,10 @@
   @apply h-full flex gap-4 overflow-auto;
   /* 确保容器能够正确处理列的宽度 */
   min-width: 0;
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
+  /* 优化滚动性能 */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 看板列 */
@@ -123,6 +127,10 @@
 /* 列内容区域 */
 .kanban-column-content {
   @apply flex-1 overflow-y-auto space-y-3;
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
+  /* 优化滚动性能 */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 卡片动画 */
@@ -184,20 +192,135 @@
   @apply hover:bg-primary/90 transition-colors duration-200;
 }
 
+/* 优化的滚动条样式 - 支持明暗主题 */
+
+/* 垂直滚动条（列内容） */
 .kanban-column-content::-webkit-scrollbar {
-  @apply w-2;
+  width: 6px;
 }
 
 .kanban-column-content::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
+  border-radius: 3px;
 }
 
 .kanban-column-content::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full;
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+  transition: all 0.2s ease;
 }
 
 .kanban-column-content::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground;
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* 水平滚动条（看板容器） */
+.kanban-board-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.kanban-board-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* 滚动条交叉点 */
+.kanban-board-container::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 滚动条样式 */
+.kanban-column-content {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.kanban-board-container {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+/* 鼠标悬停时显示滚动条 */
+.kanban-column-content::-webkit-scrollbar-thumb {
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.kanban-column-content:hover::-webkit-scrollbar-thumb,
+.kanban-column-content::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+.kanban-board-container::-webkit-scrollbar-thumb {
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.kanban-board-container:hover::-webkit-scrollbar-thumb,
+.kanban-board-container::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* 滚动时显示滚动条 */
+.kanban-column-content.scrolling::-webkit-scrollbar-thumb,
+.kanban-board-container.scrolling::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+/* 深色主题优化 */
+@media (prefers-color-scheme: dark) {
+  .kanban-column-content::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+  
+  .kanban-column-content::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.6);
+  }
+  
+  .kanban-board-container::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+  
+  .kanban-board-container::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.6);
+  }
+}
+
+/* 浅色主题优化 */
+@media (prefers-color-scheme: light) {
+  .kanban-column-content::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+  }
+  
+  .kanban-column-content::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+  
+  .kanban-board-container::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+  }
+  
+  .kanban-board-container::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
 }
 
 /* 空状态 */

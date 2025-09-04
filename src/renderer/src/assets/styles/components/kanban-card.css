@@ -1,8 +1,7 @@
 /* 看板卡片 */
 .kanban-card {
-  @apply bg-background  rounded-lg p-3 cursor-pointer;
+  @apply bg-background border border-border rounded-lg p-3 cursor-pointer;
   @apply hover:shadow-md transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   @apply w-full; /* 确保卡片宽度与列宽度保持同步 */
   transform: translateZ(0); /* 启用硬件加速 */
   /* 确保卡片内容不会溢出 */
@@ -15,6 +14,12 @@
   transform: rotate(3deg) scale(1.02) translateZ(0);
   transition: none;
   z-index: 1000;
+}
+
+.kanban-card--editing {
+  @apply border-2 border-primary shadow-md;
+  /* 添加轻微的发光效果 */
+  box-shadow: 0 0 0 1px rgba(var(--primary), 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .kanban-card:hover {
@@ -154,7 +159,16 @@
 }
 
 .kanban-card--done {
-  @apply  opacity-75;
+  @apply border-l-4 border-l-green-500;
+}
+
+/* 已完成任务的内容添加删除线 */
+.kanban-card--done .kanban-card-content {
+  @apply line-through text-muted-foreground;
+}
+
+.kanban-card--done .kanban-card-description {
+  @apply line-through;
 }
 
 /* 响应式宽度控制 */
