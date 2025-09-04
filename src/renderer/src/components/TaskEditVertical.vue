@@ -578,9 +578,14 @@ const toggleImportance = () => {
 
 
 // 切换提醒选择器
-const toggleReminderPicker = () => {
+const toggleReminderPicker = async () => {
   showReminderPicker.value = !showReminderPicker.value
   showListPicker.value = false
+  
+  // 每次打开提醒选择器时重新加载提醒选项，确保数据最新
+  if (showReminderPicker.value) {
+    await taskStore.refreshCustomReminderOptions()
+  }
 }
 
 
@@ -955,77 +960,6 @@ const getBaseDate = () => {
 }
 
 
-
-// 计算并验证提醒时间的合并方法
-const calculateAndValidateReminderTime = () => {
-  console.log('=== 计算并验证提醒时间 ===')
-
-  let reminderTime = null
-  let reminderConfig = null
-  let isValid = true
-
-  // 处理普通任务的提醒时间
-  if (selectedReminder.value) {
-    if (selectedDate.value && selectedTime.value) {
-      // 使用日期时间选择器中的时间
-      const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-      reminderTime = new Date(customReminderStr).toISOString()
-    }else if (selectedReminder.value.value === 'custom' && selectedReminder.value.reminderTime) {
-      reminderTime = selectedReminder.value.reminderTime
-      reminderConfig = selectedReminder.value.config
-    }
-  } else if (selectedDate.value && selectedTime.value) {
-    // 当没有选择提醒类型，但设置了日期和时间时，直接使用这个日期时间作为提醒时间
-    const customReminderStr = `${selectedDate.value}T${selectedTime.value}:00`
-    reminderTime = new Date(customReminderStr).toISOString()
-  }
-
-  console.log("reminderTime------: ", reminderTime)
-
-  // 验证提醒时间是否有效
-  if (reminderTime) {
-    const now = new Date()
-    const reminderDateTime = new Date(reminderTime)
-    
-    // 在编辑模式下，如果提醒时间没有变化，跳过过去时间的验证
-    if (props.isEditing && props.task) {
-      if (props.task.reminderTime) {
-        const originalReminderTime = new Date(props.task.reminderTime)
-        const newReminderTime = new Date(reminderTime)
-        // 如果提醒时间没有变化（精确到分钟），跳过验证
-        if (Math.abs(originalReminderTime.getTime() - newReminderTime.getTime()) < 60000) {
-          isValid = true
-        } else {
-          isValid = reminderDateTime > now
-        }
-      } else {
-        // 原任务没有提醒时间，现在新增提醒时间，需要验证
-        isValid = reminderDateTime > now
-      }
-    } else {
-      isValid = reminderDateTime > now
-    }
-  } else if (!selectedReminder.value && !selectedDate.value) {
-    isValid = true
-  }
-
-  // 确保 reminderConfig 是可序列化的
-  let cleanReminderConfig = null
-  if (reminderConfig) {
-    cleanReminderConfig = {
-      type: reminderConfig.type,
-      value: reminderConfig.value,
-      unit: reminderConfig.unit,
-      time: reminderConfig.time,
-      dayOffset: reminderConfig.dayOffset,
-      label: reminderConfig.label,
-      id: reminderConfig.id
-    }
-    console.log('清理后的提醒配置:', cleanReminderConfig)
-  }
-
-  return { reminderTime, cleanReminderConfig, isValid }
-}
 
 // 删除任务
 const handleDeleteTask = () => {

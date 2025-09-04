@@ -303,6 +303,13 @@
             </div>
           </div>
         </div>
+        <!-- 添加新的自定义配置按钮 -->
+        <div class="add-custom-provider">
+          <button class="add-custom-provider-btn" @click="addCustomProvider">
+            <span class="add-icon">+</span>
+            添加自定义配置
+          </button>
+        </div>
       </div>
     </div>
     

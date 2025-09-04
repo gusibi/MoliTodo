@@ -24,7 +24,7 @@
 }
 
 .setting-nav-item {
-  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
+  @apply flex items-center px-3 py-2 text-xs font-medium rounded-lg cursor-pointer;
   @apply text-sidebar-foreground hover:bg-sidebar-accent;
   @apply transition-colors duration-150;
 }
@@ -56,7 +56,7 @@
 }
 
 .setting-page-description {
-  @apply text-muted-foreground mb-8;
+  @apply text-sm text-muted-foreground mb-8;
 }
 
 /* 设置分组 */
@@ -65,7 +65,7 @@
 }
 
 .setting-group-title {
-  @apply text-lg font-semibold text-foreground mb-4;
+  @apply text-base font-semibold text-foreground mb-4;
 }
 
 /* 设置项 */
@@ -82,7 +82,7 @@
 }
 
 .setting-item-description {
-  @apply text-sm text-muted-foreground mt-1;
+  @apply text-xs text-muted-foreground mt-1;
 }
 
 .setting-item-control {

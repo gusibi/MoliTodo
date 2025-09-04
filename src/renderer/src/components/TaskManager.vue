@@ -128,7 +128,7 @@ import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './calender_view/MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
-import KanbanBoard from './KanbanBoard.vue'
+import KanbanBoard from './kanban_view/KanbanBoard.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 

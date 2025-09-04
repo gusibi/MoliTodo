@@ -83,7 +83,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { formatReminderTime, formatDuration, getCurrentDuration, isTaskOvertime } from '../utils/task-utils'
+import { formatReminderTime, formatDuration, getCurrentDuration, isTaskOvertime } from '@/utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 
 const props = defineProps({
