@@ -41,7 +41,6 @@
     "wait-on": "^7.0.1"
   },
   "dependencies": {
-    "zod": "^4.1.1",
     "@ai-sdk/anthropic": "^2.0.6",
     "@ai-sdk/google": "^2.0.8",
     "@ai-sdk/openai": "^2.0.19",
@@ -57,7 +56,8 @@
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "vue": "^3.3.8",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "zod": "^4.1.1"
   },
   "build": {
     "appId": "com.MoliTodo.app",
