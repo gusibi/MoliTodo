@@ -199,6 +199,72 @@
   flex: 0 0 280px;
 }
 
+/* 任务视图容器的 flex 布局（仅用于列表视图） */
+.task-manager-views-flex {
+  display: flex !important;
+}
+
+/* 看板视图包装器 */
+.kanban-view-wrapper {
+  @apply relative w-full h-full;
+  /* 确保看板视图不受 flex 布局影响 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* 看板内容容器 */
+.kanban-content {
+  @apply w-full h-full;
+  /* 确保看板内容保持静止 */
+  position: relative;
+}
+
+/* 看板视图覆盖式编辑面板 */
+.kanban-edit-panel-overlay {
+  @apply absolute inset-0 z-50 flex items-stretch justify-end;
+}
+
+
+
+/* Vue 过渡效果 */
+.kanban-edit-panel-enter-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.kanban-edit-panel-leave-active {
+  transition: all 0.2s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+}
+
+.kanban-edit-panel-enter-from {
+  opacity: 0;
+}
+
+.kanban-edit-panel-enter-from .kanban-edit-panel-container {
+  transform: translateX(100%);
+}
+
+.kanban-edit-panel-leave-to {
+  opacity: 0;
+}
+
+.kanban-edit-panel-leave-to .kanban-edit-panel-container {
+  transform: translateX(100%);
+}
+
+.kanban-edit-panel-backdrop {
+  @apply absolute inset-0 bg-black/20 backdrop-blur-sm;
+}
+
+.kanban-edit-panel-container {
+  @apply relative bg-background shadow-2xl border-l border-border;
+  @apply w-full max-w-md max-h-full overflow-hidden;
+  /* 默认状态 */
+  transform: translateX(0);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .task-list-container.with-panel {
@@ -207,5 +273,10 @@
   
   .edit-panel-container {
     flex: 0 0 100vw;
+  }
+
+  .kanban-edit-panel-container {
+    @apply max-w-none;
+    width: 100%;
   }
 }

@@ -1,6 +1,6 @@
 /* 看板卡片 */
 .kanban-card {
-  @apply bg-background border border-border rounded-lg p-3 cursor-pointer;
+  @apply bg-background  rounded-lg p-3 cursor-pointer;
   @apply hover:shadow-md transition-all duration-200;
   @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   @apply w-full; /* 确保卡片宽度与列宽度保持同步 */
@@ -18,7 +18,7 @@
 }
 
 .kanban-card:hover {
-  @apply border-border/80 shadow-sm;
+  @apply shadow-sm;
 }
 
 /* 卡片头部 */
@@ -142,19 +142,19 @@
 
 /* 状态特定样式 */
 .kanban-card--todo {
-  @apply border-l-4 border-l-blue-500;
+  
 }
 
 .kanban-card--doing {
-  @apply border-l-4 border-l-orange-500;
+  
 }
 
 .kanban-card--paused {
-  @apply border-l-4 border-l-yellow-500;
+  
 }
 
 .kanban-card--done {
-  @apply border-l-4 border-l-green-500 opacity-75;
+  @apply  opacity-75;
 }
 
 /* 响应式宽度控制 */
@@ -290,4 +290,46 @@
 .kanban-card * {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* 右键菜单样式 */
+.kanban-card-context-menu {
+  @apply fixed bg-background border border-border rounded-lg shadow-lg py-1;
+  @apply min-w-[120px];
+  z-index: 9999;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+.context-menu-overlay {
+  @apply fixed inset-0;
+  background: transparent;
+  z-index: 9998;
+}
+
+.context-menu-item {
+  @apply flex items-center gap-2 px-3 py-2 text-sm text-foreground cursor-pointer;
+  @apply hover:bg-muted transition-colors duration-150;
+}
+
+.context-menu-item i {
+  @apply w-4 h-4 flex-shrink-0;
+}
+
+.context-menu-item-danger {
+  @apply text-destructive hover:bg-destructive/10;
+}
+
+.context-menu-item-danger:hover {
+  @apply text-destructive;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

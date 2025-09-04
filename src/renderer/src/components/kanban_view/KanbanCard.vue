@@ -4,7 +4,7 @@
     `kanban-card--${task.status}`,
     { 'kanban-card--dragging': isDragging }
   ]" :draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd" @click="handleClick" tabindex="0"
-    @keydown.enter="handleClick" @keydown.space.prevent="handleClick">
+    @keydown.enter="handleClick" @keydown.space.prevent="handleClick" @contextmenu.prevent="handleRightClick">
     <!-- 卡片头部 -->
     <div class="kanban-card-header">
       <div class="kanban-card-content" v-html="getFormattedContent()">
@@ -78,7 +78,24 @@
         <i class="fas fa-trash"></i>
       </button>
     </div> -->
+
   </div>
+
+  <!-- 右键菜单 - 渲染在卡片外部 -->
+  <Teleport to="body">
+    <div v-if="showContextMenu" class="context-menu-overlay" @click="closeContextMenu">
+      <div class="kanban-card-context-menu" :style="contextMenuStyle" @click.stop>
+        <div class="context-menu-item" @click="handleContextEdit">
+          <i class="fas fa-edit"></i>
+          <span>编辑</span>
+        </div>
+        <div class="context-menu-item context-menu-item-danger" @click="handleContextDelete">
+          <i class="fas fa-trash"></i>
+          <span>删除</span>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -105,6 +122,15 @@ const emit = defineEmits(['drag-start', 'drag-end', 'click', 'edit'])
 
 const isDragging = ref(false)
 const taskStore = useTaskStore()
+
+// 右键菜单相关状态
+const showContextMenu = ref(false)
+const contextMenuStyle = ref({})
+
+// 监听全局点击事件来关闭右键菜单
+const closeContextMenu = () => {
+  showContextMenu.value = false
+}
 
 // 计算属性
 const hasTimeInfo = computed(() => {
@@ -136,6 +162,45 @@ const handleClick = () => {
 
 const handleEdit = () => {
   emit('edit', props.task)
+}
+
+// 右键菜单处理
+const handleRightClick = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // 计算菜单位置 - 使用鼠标点击位置
+  const menuWidth = 120 // 菜单宽度
+  const menuHeight = 80 // 菜单高度
+
+  let left = event.clientX
+  let top = event.clientY
+
+  // 防止菜单超出视窗
+  if (left + menuWidth > window.innerWidth) {
+    left = window.innerWidth - menuWidth - 10
+  }
+  if (top + menuHeight > window.innerHeight) {
+    top = window.innerHeight - menuHeight - 10
+  }
+
+  contextMenuStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`
+  }
+
+  showContextMenu.value = true
+}
+
+const handleContextEdit = () => {
+  closeContextMenu()
+  // 使用和左键点击相同的逻辑
+  handleClick()
+}
+
+const handleContextDelete = () => {
+  closeContextMenu()
+  handleDeleteTask()
 }
 
 // 获取任务当前持续时间（包含响应式更新触发器）
