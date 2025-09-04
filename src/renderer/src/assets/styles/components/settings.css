@@ -1,5 +1,19 @@
 /* Settings Component Styles - Using Tailwind CSS */
 
+/* Navigation Styles */
+.setting-nav-item {
+  @apply flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors duration-200;
+  @apply hover:bg-muted;
+}
+
+.setting-nav-item-active {
+  @apply bg-primary/10 text-primary;
+}
+
+.setting-nav-icon {
+  @apply flex-shrink-0 w-5 h-5 flex items-center justify-center;
+}
+
 /* Sound Selector */
 .setting-sound-selector {
   @apply flex items-center gap-3;

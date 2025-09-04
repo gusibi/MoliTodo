@@ -1,0 +1,252 @@
+/* AI设置组件样式 */
+
+/* 滚动条样式 - 使用 Tailwind CSS */
+.ai-settings-container::-webkit-scrollbar,
+.ai-provider-list::-webkit-scrollbar,
+.ai-provider-config::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.ai-settings-container::-webkit-scrollbar-track,
+.ai-provider-list::-webkit-scrollbar-track,
+.ai-provider-config::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.ai-settings-container::-webkit-scrollbar-thumb,
+.ai-provider-list::-webkit-scrollbar-thumb,
+.ai-provider-config::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/15 rounded-sm transition-colors duration-200;
+}
+
+.ai-settings-container::-webkit-scrollbar-thumb:hover,
+.ai-provider-list::-webkit-scrollbar-thumb:hover,
+.ai-provider-config::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/25;
+}
+
+.ai-settings-container {
+  @apply space-y-5;
+}
+
+.ai-provider-list {
+  @apply border border-border rounded-lg overflow-hidden bg-card;
+}
+
+.ai-provider-item {
+  @apply border-b border-border last:border-b-0;
+}
+
+.ai-provider-header {
+  @apply flex items-center p-3 cursor-pointer transition-all duration-200 bg-card hover:bg-muted/50;
+}
+
+.ai-provider-active {
+  @apply bg-primary/5 border-l-4 border-l-primary;
+}
+
+.ai-provider-config {
+  @apply px-3 pb-3 bg-background border-t border-border;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.ai-provider-icon {
+  @apply flex-shrink-0 w-10 h-10 flex items-center justify-center;
+  @apply bg-muted rounded-lg mr-3;
+}
+
+.ai-provider-info {
+  @apply flex-1;
+}
+
+.ai-provider-name {
+  @apply font-semibold text-foreground mb-1 text-xs;
+}
+
+.ai-provider-description {
+  @apply text-2xs text-muted-foreground;
+}
+
+.ai-provider-status {
+  @apply flex-shrink-0;
+}
+
+.ai-provider-actions {
+  @apply ml-2;
+}
+
+.ai-provider-toggle {
+  @apply ml-2;
+}
+
+.ai-provider-chevron {
+  @apply w-4 h-4 text-muted-foreground transition-transform duration-200;
+}
+
+.ai-provider-chevron-expanded {
+  @apply rotate-90;
+}
+
+.ai-provider-status-dot {
+  @apply w-2.5 h-2.5 rounded-full;
+}
+
+.status-connected {
+  @apply bg-green-500;
+}
+
+.status-disconnected {
+  @apply bg-gray-300;
+}
+
+.ai-config-form {
+  @apply space-y-3;
+}
+
+.setting-form-item {
+  @apply flex flex-col gap-1.5;
+}
+
+.setting-form-label {
+  @apply text-xs font-medium text-foreground;
+}
+
+.setting-form-input {
+  @apply px-2.5 py-1.5 border border-border rounded-md bg-background text-foreground text-sm;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.setting-form-select {
+  @apply px-2.5 py-1.5 border border-border rounded-md bg-background text-foreground text-sm;
+  @apply transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary;
+}
+
+.ai-test-section {
+  @apply flex items-center gap-3 mt-5 pt-3 border-t border-border;
+}
+
+.ai-test-button {
+  @apply px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs;
+  @apply transition-all duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.ai-test-loading {
+  @apply flex items-center gap-1.5;
+}
+
+.ai-test-result {
+  @apply px-2.5 py-1.5 rounded-md text-xs;
+}
+
+.ai-test-result.success {
+  @apply bg-green-100 text-green-800 border border-green-200;
+}
+
+.ai-test-result.error {
+  @apply bg-red-100 text-red-800 border border-red-200;
+}
+
+/* 自定义配置样式 */
+.custom-providers-list {
+  @apply mb-5;
+}
+
+.custom-providers-title {
+  @apply text-base font-semibold text-foreground mb-3;
+}
+
+.custom-provider-item {
+  @apply border border-border rounded-lg mb-3 overflow-hidden;
+}
+
+.custom-provider-header {
+  @apply flex items-center justify-between p-3 bg-muted/30;
+}
+
+.custom-provider-info {
+  @apply flex items-center gap-2.5;
+}
+
+.custom-provider-name {
+  @apply font-medium text-foreground text-sm;
+}
+
+.custom-provider-status {
+  @apply text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600;
+}
+
+.custom-provider-status.configured {
+  @apply bg-green-100 text-green-700;
+}
+
+.custom-provider-actions {
+  @apply flex items-center gap-1.5;
+}
+
+.custom-provider-select-btn {
+  @apply px-2.5 py-0.5 text-xs border border-border rounded-md;
+  @apply transition-colors duration-200 hover:bg-muted;
+}
+
+.custom-provider-select-btn.active {
+  @apply bg-primary text-primary-foreground border-primary;
+}
+
+.custom-provider-delete-btn {
+  @apply p-0.5 text-muted-foreground hover:text-destructive transition-colors duration-200;
+}
+
+.custom-provider-form {
+  @apply p-3 border-t border-border space-y-3;
+}
+
+.add-custom-provider {
+  @apply p-3 border-t border-border;
+}
+
+.add-custom-provider-btn {
+  @apply text-sm flex items-center justify-center gap-1.5 w-full p-2.5 border-2 border-dashed border-border;
+  @apply rounded-lg text-muted-foreground hover:border-primary hover:text-primary transition-colors duration-200;
+}
+
+.add-icon {
+  @apply text-base font-bold;
+}
+
+.setting-button {
+  @apply px-3 py-1.5 bg-primary text-primary-foreground rounded-md;
+  @apply transition-all duration-200 hover:bg-primary/90;
+  @apply text-xs font-medium;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .ai-test-result.success {
+  @apply bg-green-900/20 text-green-400 border-green-800;
+}
+
+[data-theme="dark"] .ai-test-result.error {
+  @apply bg-red-900/20 text-red-400 border-red-800;
+}
+
+[data-theme="dark"] .custom-provider-status {
+  @apply bg-gray-800 text-gray-300;
+}
+
+[data-theme="dark"] .custom-provider-status.configured {
+  @apply bg-green-900/30 text-green-400;
+}
+
+[data-theme="dark"] .custom-provider-delete-btn {
+  @apply text-red-400 border-red-800 hover:bg-red-900/20 hover:border-red-700;
+}

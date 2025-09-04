@@ -9,6 +9,7 @@
 @import './components/task-form.css';
 @import './components/flat-task-list.css';
 @import './components/custom-titlebar.css';
+@import './components/ai-settings.css';
 
 /* Main CSS Entry Point */
 
