@@ -1,26 +1,21 @@
 <template>
   <div class="flat-task-item-wrapper">
-    <li class="flat-task-item"
-      :class="{ 
-        'flat-task-item-completed': task.status === 'done',
-        'flat-task-item-editing': isEditing,
-        'flat-task-item-hovered': isHovered
-      }"
-      @click="handleTaskClick"
-      @mouseenter="$emit('mouseenter')"
-      @mouseleave="$emit('mouseleave')">
-      
+    <li class="flat-task-item" :class="{
+      'flat-task-item-completed': task.status === 'done',
+      'flat-task-item-editing': isEditing,
+      'flat-task-item-hovered': isHovered
+    }" @click="handleTaskClick" @mouseenter="$emit('mouseenter')" @mouseleave="$emit('mouseleave')">
+
       <!-- 状态指示小红点 -->
-      <div class="flat-task-status-indicator"
-        :class="{
-          'flat-task-status-todo': task.status === 'todo',
-          'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
-          'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
-          'flat-task-status-paused': task.status === 'paused',
-          'flat-task-status-done': task.status === 'done'
-        }">
+      <div class="flat-task-status-indicator" :class="{
+        'flat-task-status-todo': task.status === 'todo',
+        'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
+        'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
+        'flat-task-status-paused': task.status === 'paused',
+        'flat-task-status-done': task.status === 'done'
+      }">
       </div>
-      
+
       <!-- 任务左侧部分（包含勾选框和文本） -->
       <div class="flat-task-left">
         <!-- 圆形勾选框 -->
@@ -29,12 +24,12 @@
             @change="handleToggleComplete" @click.stop />
           <label :for="`flat-task-${task.id}`" class="flat-checkbox-label" @click.stop></label>
         </div>
-        
+
         <!-- 任务详情 -->
         <div class="flat-task-details">
           <div class="flat-task-title" v-html="getHighlightedContent(task)"></div>
           <div v-if="task.metadata?.note" class="flat-task-description" v-html="getHighlightedNote(task)"></div>
-          
+
           <!-- 时间信息 -->
           <div class="flat-task-time-info">
             <!-- 提醒时间 -->
@@ -44,13 +39,14 @@
               <i class="fas fa-calendar"></i>
               <span>{{ formatReminderTime(task.reminderTime) }}</span>
             </div>
-            
+
             <!-- 进行时间 -->
             <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="flat-task-time flat-task-time-doing">
               <i class="fas fa-play"></i>
               <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
-            <div v-else-if="task.status === 'doing' && isTaskOvertime(task)" class="flat-task-time flat-task-time-overtime">
+            <div v-else-if="task.status === 'doing' && isTaskOvertime(task)"
+              class="flat-task-time flat-task-time-overtime">
               <i class="fas fa-clock"></i>
               <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
@@ -58,11 +54,12 @@
               <i class="fas fa-pause"></i>
               <span>{{ formatDuration(task.totalDuration || 0) }}</span>
             </div>
-            <div v-else-if="task.status === 'done' && task.totalDuration" class="flat-task-time flat-task-time-completed">
+            <div v-else-if="task.status === 'done' && task.totalDuration"
+              class="flat-task-time flat-task-time-completed">
               <i class="fas fa-check"></i>
               <span>{{ formatDuration(task.totalDuration) }}</span>
             </div>
-            
+
           </div>
         </div>
       </div>
@@ -70,12 +67,12 @@
       <!-- 任务右侧标签和操作 - 单行水平对齐 -->
       <div class="flat-task-right">
         <!-- 任务操作按钮 -->
-        <button v-if="task.status === 'todo'" class="flat-task-btn flat-task-btn-start"
-          @click.stop="handleStartTask" title="开始">
+        <button v-if="task.status === 'todo'" class="flat-task-btn flat-task-btn-start" @click.stop="handleStartTask"
+          title="开始">
           <i class="fas fa-play"></i>
         </button>
-        <button v-if="task.status === 'doing'" class="flat-task-btn flat-task-btn-pause"
-          @click.stop="handlePauseTask" title="暂停">
+        <button v-if="task.status === 'doing'" class="flat-task-btn flat-task-btn-pause" @click.stop="handlePauseTask"
+          title="暂停">
           <i class="fas fa-pause"></i>
         </button>
         <button v-if="task.status === 'paused'" class="flat-task-btn flat-task-btn-resume"
@@ -86,9 +83,10 @@
           @click.stop="handleRestartTask" title="重新开始">
           <i class="fas fa-redo"></i>
         </button>
-          <button v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-delete" @click.stop="handleDeleteTask" title="删除">
-        <i class="fas fa-trash"></i>
-      </button>
+        <button v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-delete" @click.stop="handleDeleteTask"
+          title="删除">
+          <i class="fas fa-trash"></i>
+        </button>
       </div>
     </li>
   </div>

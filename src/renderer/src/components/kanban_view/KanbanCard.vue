@@ -6,8 +6,8 @@
       'kanban-card--dragging': isDragging,
       'kanban-card--editing': isEditing
     }
-  ]" :draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd" tabindex="0"
-    @keydown.enter="handleClick" @keydown.space.prevent="handleClick" @contextmenu.prevent="handleRightClick">
+  ]" :draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd" tabindex="0" @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick" @contextmenu.prevent="handleRightClick">
     <!-- 卡片头部 -->
     <div class="kanban-card-header">
       <div class="kanban-card-content" v-html="getFormattedContent()">
