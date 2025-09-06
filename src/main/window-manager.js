@@ -11,6 +11,7 @@ class WindowManager {
     this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
     this.tray = null;
     this.appInstance = appInstance;
+    this.taskService = null; // 将在main.js中设置
 
     this.configStore = new Store({
       name: 'config',
@@ -81,6 +82,14 @@ class WindowManager {
   async initialize() {
     this.createFloatingWindow();
     this.createTray();
+
+    // 延迟更新托盘菜单，确保taskService已经完全初始化
+    setTimeout(() => {
+      if (this.tray && this.taskService) {
+        console.log('延迟更新托盘菜单...');
+        this.updateTrayMenu().catch(console.error);
+      }
+    }, 1000);
   }
 
   createFloatingWindow() {
@@ -156,7 +165,7 @@ class WindowManager {
     }
 
     const currentIcon = this.getCurrentAppIcon();
-    
+
     this.taskManagerWindow = new BrowserWindow({
       width: 1200,
       height: 800,
@@ -199,7 +208,7 @@ class WindowManager {
     }
 
     const currentIcon = this.getCurrentAppIcon();
-    
+
     this.settingsWindow = new BrowserWindow({
       width: 900,
       height: 650,
@@ -260,7 +269,7 @@ class WindowManager {
     }
 
     const currentIcon = this.getCurrentAppIcon();
-    
+
     this.taskPanelWindow = new BrowserWindow({
       width: 320,
       height: maxHeight,
@@ -338,7 +347,7 @@ class WindowManager {
       this.tray = new Tray(resizedImage);
       this.tray.setToolTip('MoliTodo - 悬浮待办');
 
-      this.updateTrayMenu();
+      this.updateTrayMenu().catch(console.error);
 
       this.tray.on('click', () => {
         this.tray.popUpContextMenu();
@@ -348,8 +357,44 @@ class WindowManager {
     }
   }
 
-  updateTrayMenu() {
+  async updateTrayMenu() {
     const floatingIconVisible = this.configStore.get('floatingIcon.visible', true);
+
+    // 获取今日任务数量
+    let todayTaskCount = 0;
+    try {
+      if (this.taskService) {
+        const allTasks = await this.taskService.getAllTasks();
+
+        // 计算今日任务数量（与FloatingIcon.vue保持一致的逻辑）
+        const todayTasks = allTasks.filter(task => {
+          // 提醒日期是今天的任务
+          if (this.isToday(task.reminderTime)) return true;
+          // 今天创建的任务
+          if (this.isToday(task.createdAt)) return true;
+          // 正在进行的任务
+          if (task.status === 'doing') return true;
+          // 有提醒时间，且已经过期还未完成的任务
+          if (task.reminderTime && task.status !== 'done') {
+            const reminderDate = new Date(task.reminderTime);
+            const today = new Date();
+            if (reminderDate < today && !this.isToday(task.reminderTime)) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        // 过滤掉已完成的任务（与FloatingIcon.vue保持一致）
+        todayTaskCount = todayTasks.filter(task => task.status !== 'done').length;
+        console.log('托盘菜单更新 - 今日未完成任务数量:', todayTaskCount);
+      }
+    } catch (error) {
+      console.error('获取今日任务数量失败:', error);
+    }
+
+    // 构建菜单标签
+    const taskManagerLabel = todayTaskCount > 0 ? `任务管理 (${todayTaskCount > 99 ? '99+' : todayTaskCount})` : '任务管理';
 
     const contextMenu = Menu.buildFromTemplate([
       {
@@ -358,12 +403,12 @@ class WindowManager {
           const newVisible = !floatingIconVisible;
           this.configStore.set('floatingIcon.visible', newVisible);
           this.applyFloatingIconConfig();
-          this.updateTrayMenu();
+          this.updateTrayMenu().catch(console.error);
         }
       },
       { type: 'separator' },
       {
-        label: '任务管理',
+        label: taskManagerLabel,
         click: () => this.createTaskManagerWindow()
       },
       {
@@ -380,7 +425,112 @@ class WindowManager {
     ]);
 
     this.tray.setContextMenu(contextMenu);
+
+    // 更新托盘工具提示显示任务数量
+    const tooltipText = todayTaskCount > 0
+      ? `MoliTodo - 悬浮待办 (今日任务: ${todayTaskCount > 99 ? '99+' : todayTaskCount})`
+      : 'MoliTodo - 悬浮待办';
+    this.tray.setToolTip(tooltipText);
+
+    // 在macOS上，尝试设置托盘标题显示数字
+    if (process.platform === 'darwin' && this.tray) {
+      if (todayTaskCount > 0) {
+        const displayCount = todayTaskCount > 99 ? '99+' : todayTaskCount.toString();
+        this.tray.setTitle(displayCount);
+        console.log('托盘标题已更新，显示数字:', displayCount);
+      } else {
+        this.tray.setTitle('');
+        console.log('清除托盘标题');
+      }
+    }
+
+    // 暂时注释掉图标更新，确保原图标正常显示
+    // if (this.tray) {
+    //   const iconWithBadge = this.createTrayIconWithBadge(todayTaskCount);
+    //   if (iconWithBadge) {
+    //     this.tray.setImage(iconWithBadge);
+    //     console.log('托盘图标已更新，显示数字:', todayTaskCount);
+    //   } else {
+    //     console.log('创建带数字的图标失败，保持原图标');
+    //   }
+    // }
   }
+
+  // 辅助函数：判断日期是否为今天
+  isToday(date) {
+    if (!date) return false;
+    const today = new Date();
+    const targetDate = new Date(date);
+    return today.toDateString() === targetDate.toDateString();
+  }
+
+  // 手动刷新托盘菜单（用于调试）
+  async refreshTrayMenu() {
+    if (this.tray) {
+      console.log('手动刷新托盘菜单...');
+      await this.updateTrayMenu();
+    } else {
+      console.log('托盘不存在，无法刷新');
+    }
+  }
+
+  // 创建带有数字角标的托盘图标
+  createTrayIconWithBadge(count = 0) {
+    try {
+      let trayIconPath;
+      if (process.env.NODE_ENV === 'development') {
+        trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
+      } else {
+        // 在打包后的应用中，资源文件位于应用根目录的 resources 文件夹
+        trayIconPath = path.join(process.resourcesPath, 'resources/tray-icon.png');
+      }
+      const fs = require('fs');
+
+      // 先确保原始图标存在并可用
+      if (!fs.existsSync(trayIconPath)) {
+        console.warn('托盘图标文件不存在，路径:', trayIconPath);
+        return null;
+      }
+
+      let baseImage = nativeImage.createFromPath(trayIconPath);
+      if (baseImage.isEmpty()) {
+        console.warn('托盘图标为空');
+        return null;
+      }
+
+      // 如果没有任务数量，直接返回原图标
+      if (count <= 0) {
+        console.log('没有任务，返回原始图标');
+        return baseImage.resize({ width: 16, height: 16 });
+      }
+
+      // 尝试使用简单的PNG生成方法
+      try {
+        console.log('尝试创建带数字的图标，任务数:', count);
+
+        // 创建一个简单的16x16像素的图标
+        const displayCount = count > 99 ? '99+' : count.toString();
+
+        // 使用更简单的方法：创建一个基于原图标的副本，然后尝试添加文字
+        // 如果失败，就返回原图标
+        const resizedBase = baseImage.resize({ width: 16, height: 16 });
+
+        // 暂时返回原图标，但在控制台显示我们正在处理数字
+        console.log('返回原始图标，数字:', displayCount);
+        return resizedBase;
+
+      } catch (numberError) {
+        console.log('数字图标创建失败，返回原图标:', numberError.message);
+        return baseImage.resize({ width: 16, height: 16 });
+      }
+
+    } catch (error) {
+      console.error('创建托盘图标失败:', error);
+      return null;
+    }
+  }
+
+
 
   applyFloatingIconConfig() {
     if (!this.floatingWindow || this.floatingWindow.isDestroyed()) {
@@ -424,7 +574,7 @@ class WindowManager {
   getCurrentAppIcon() {
     const selectedLogo = this.configStore.get('selectedLogo', 'default');
     let iconPath;
-    
+
     // 根据选中的logo ID获取对应的资源路径
     const logoMap = {
       'icon-3': 'resources/icon-3.png',
@@ -434,15 +584,15 @@ class WindowManager {
       'icon-2': 'resources/icon-2.png',
       'icon-4': 'resources/icon-4.png'
     };
-    
+
     const resourcePath = logoMap[selectedLogo] || logoMap['default'];
-    
+
     if (process.env.NODE_ENV === 'development') {
       iconPath = path.join(__dirname, '../../', resourcePath);
     } else {
       iconPath = path.join(process.resourcesPath, resourcePath);
     }
-    
+
     try {
       return nativeImage.createFromPath(iconPath);
     } catch (error) {
@@ -512,7 +662,7 @@ class WindowManager {
     const y = Math.floor(Math.random() * (height - 200)) + 20;
 
     const currentIcon = this.getCurrentAppIcon();
-    
+
     const floatingTaskWindow = new BrowserWindow({
       width: 420, // 扩大窗口宽度以适配内容
       height: 80, // 初始高度

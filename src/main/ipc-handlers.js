@@ -1072,6 +1072,11 @@ class IpcHandlers {
         window.webContents.send('tasks-updated');
       }
     });
+
+    // 更新托盘菜单中的任务数量
+    if (this.windowManager && this.windowManager.updateTrayMenu) {
+      this.windowManager.updateTrayMenu().catch(console.error);
+    }
   }
 
   // 广播清单更新到所有窗口

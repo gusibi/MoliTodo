@@ -40,6 +40,8 @@ class MoliTodoApp {
 
       // 初始化窗口管理器
       this.windowManager = new WindowManager(this);
+      // 将 TaskService 传递给 WindowManager
+      this.windowManager.taskService = this.taskService;
       await this.windowManager.initialize();
       
       // 将 WindowManager 传递给 TaskService
@@ -58,6 +60,14 @@ class MoliTodoApp {
       this.setupAppEvents();
 
       console.log('MoliTodo Vue 应用已启动');
+      
+      // 应用完全启动后，更新托盘菜单显示任务数量
+      setTimeout(() => {
+        if (this.windowManager && this.windowManager.tray) {
+          console.log('应用启动完成，更新托盘菜单...');
+          this.windowManager.updateTrayMenu().catch(console.error);
+        }
+      }, 2000);
     } catch (error) {
       console.error('应用初始化失败:', error);
       app.quit();
