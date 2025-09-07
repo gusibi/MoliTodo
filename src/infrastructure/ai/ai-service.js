@@ -450,7 +450,7 @@ class AIService {
       const { textStream } = await streamText({
         model: modelInstance,
         prompt: prompt,
-        maxTokens: 1000,
+        maxTokens: 100000,
         temperature: 0.7
       });
       console.log('[AIService] streamText调用成功，开始处理流式数据');
@@ -750,6 +750,124 @@ class AIService {
     }
   }
 }`;
+  }
+
+  /**
+   * 生成任务报告
+   * @param {String} prompt - 格式化的提示内容
+   * @param {Object} aiModel - AI模型信息 { id, name, provider }
+   * @param {Object} windowManager - WindowManager实例，用于获取配置
+   * @returns {Promise<Object>} 生成结果
+   */
+  static async generateReport(prompt, aiModel, windowManager) {
+    try {
+      const modelConfig = this.getModelConfig(aiModel, windowManager);
+      const modelInstance = this.getModelInstance(modelConfig);
+      
+      console.log('[AIService] 开始生成报告，模型:', aiModel.name);
+      
+      const { text } = await generateText({
+        model: modelInstance,
+        prompt: prompt,
+        maxTokens: 2000,
+        temperature: 0.3
+      });
+
+      console.log('[AIService] 报告生成成功，长度:', text.length);
+      
+      return {
+        success: true,
+        report: text.trim(),
+        originalResponse: text
+      };
+      
+    } catch (error) {
+      console.error('[AIService] 生成报告失败:', error);
+      
+      let errorMessage = '生成报告失败';
+      
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage = 'API密钥无效或已过期';
+      } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+        errorMessage = '模型不存在或API端点错误';
+      } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
+        errorMessage = 'API调用频率超限，请稍后重试';
+      } else if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = '网络连接超时，请检查网络设置';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * 流式生成任务报告
+   * @param {String} prompt - 格式化的提示内容
+   * @param {Object} aiModel - AI模型信息 { id, name, provider }
+   * @param {Object} windowManager - WindowManager实例，用于获取配置
+   * @param {Function} onChunk - 流式数据回调函数
+   * @returns {Promise<Object>} 生成结果
+   */
+  static async streamGenerateReport(prompt, aiModel, windowManager, onChunk) {
+    console.log('[AIService] streamGenerateReport 开始生成报告');
+    
+    try {
+      const modelConfig = this.getModelConfig(aiModel, windowManager);
+      const modelInstance = this.getModelInstance(modelConfig);
+      
+      console.log('[AIService] 开始流式生成报告，模型:', aiModel.name, prompt);
+
+      let fullText = '';
+      
+      const { textStream } = await streamText({
+        model: modelInstance,
+        prompt: prompt,
+        maxTokens: 200000,
+        temperature: 0.3
+      });
+
+      // 处理流式数据
+      let chunkCount = 0;
+      for await (const textPart of textStream) {
+        chunkCount++;
+        fullText += textPart;
+        // console.log(`[AIService] 接收到报告第${chunkCount}个chunk`);
+        
+        // 调用回调函数，传递当前累积的文本
+        if (onChunk) {
+          onChunk(fullText);
+        }
+      }
+
+      console.log(`[AIService] 报告流式生成完成，共接收${chunkCount}个chunk，总长度:`, fullText.length);
+      
+      return {
+        success: true,
+        report: fullText.trim(),
+        originalResponse: fullText
+      };
+      
+    } catch (error) {
+      console.error('[AIService] 流式生成报告失败:', error);
+      
+      let errorMessage = '生成报告失败';
+      
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage = 'API密钥无效或已过期';
+      } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+        errorMessage = '模型不存在或API端点错误';
+      } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
+        errorMessage = 'API调用频率超限，请稍后重试';
+      } else if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = '网络连接超时，请检查网络设置';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
 
   /**

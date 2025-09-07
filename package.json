@@ -51,6 +51,7 @@
     "@vuepic/vue-datepicker": "^11.0.2",
     "ai": "^5.0.22",
     "electron-store": "^8.1.0",
+    "marked": "^16.2.1",
     "node-schedule": "^2.1.1",
     "pinia": "^2.1.7",
     "sqlite": "^5.1.1",

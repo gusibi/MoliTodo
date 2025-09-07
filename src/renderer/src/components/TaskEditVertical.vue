@@ -5,281 +5,219 @@
       <!-- 可滚动内容区域 -->
       <div class="task-content-scrollable">
         <!-- 任务标题区域 -->
-      <div class="task-header">
-        <div class="task-header-title-wrapper">
-          <!-- 复选框 -->
-          <div class="flat-task-checkbox">
-            <input type="checkbox" :id="`task-edit-${task?.id || 'new'}`" :checked="task?.status === 'done'"
-              @change="handleToggleComplete(task)" @click.stop />
-            <label :for="`task-edit-${task?.id || 'new'}`" class="flat-checkbox-label"></label>
-          </div>
-          
-          <!-- 任务标题输入 -->
-          <div class="task-title-input-wrapper">
-            <textarea 
-              ref="addTaskInput" 
-              v-model="newTaskContent" 
-              :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'"
-              class="task-title-input"
-              maxlength="1000"
-              rows="1"
-              :style="{ minHeight: '1.5rem', maxHeight: '15rem' }"
-              @focus="handleStartAdding" 
-              @blur="handleInputBlur"
-              @keyup.ctrl.enter="handleSaveTaskContent" 
-              @keyup.escape="handleCancelAdding"
-              @input="autoResize"
-            ></textarea>
-            <div class="task-input-counter" v-if="isAddingTask">
-              {{ newTaskContent.length }}/1000
+        <div class="task-header">
+          <div class="task-header-title-wrapper">
+            <!-- 复选框 -->
+            <div class="flat-task-checkbox">
+              <input type="checkbox" :id="`task-edit-${task?.id || 'new'}`" :checked="task?.status === 'done'"
+                @change="handleToggleComplete(task)" @click.stop />
+              <label :for="`task-edit-${task?.id || 'new'}`" class="flat-checkbox-label"></label>
             </div>
-          </div>
-          
-          <!-- 重要性标记 -->
-          <!-- <div class="task-importance-wrapper">
+
+            <!-- 任务标题输入 -->
+            <div class="task-title-input-wrapper">
+              <textarea ref="addTaskInput" v-model="newTaskContent"
+                :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'" class="task-title-input" maxlength="1000"
+                rows="1" :style="{ minHeight: '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
+                @blur="handleInputBlur" @keyup.ctrl.enter="handleSaveTaskContent" @keyup.escape="handleCancelAdding"
+                @input="autoResize"></textarea>
+              <div class="task-input-counter" v-if="isAddingTask">
+                {{ newTaskContent.length }}/1000
+              </div>
+            </div>
+
+            <!-- 重要性标记 -->
+            <!-- <div class="task-importance-wrapper">
             <button class="task-importance-btn" :class="{ 'active': isImportant }" @click="toggleImportance">
               <i class="fas fa-star importance-icon"></i>
             </button>
           </div> -->
-        </div>
-      </div>
-
-      <!-- 步骤区域 -->
-      <div v-if="isAddingTask" class="task-steps">
-           <div v-if="steps.length > 0" class="steps-list">
-          <div v-for="(step, index) in steps" :key="step.id" class="step-item">
-            <div class="flat-task-checkbox">
-              <input type="checkbox" :id="`step-${step.id}`" :checked="step.status === 'done'" @change="toggleStepStatus(step)" @click.stop />
-              <label :for="`step-${step.id}`" class="flat-checkbox-label"></label>
-            </div>
-            <input 
-              v-if="editingStepId === step.id"
-              v-model="editingStepContent"
-              type="text"
-              class="step-content-input"
-              @blur="saveStepEdit(step)"
-              @keyup.enter="saveStepEdit(step)"
-              @keyup.escape="cancelStepEdit"
-              ref="stepEditInput"
-            />
-            <span 
-              v-else
-              class="step-content" 
-              :class="{ 'completed': step.status === 'done' }"
-              @dblclick="startStepEdit(step)"
-            >{{ step.content }}</span>
-            <button class="step-delete-btn" @click="removeStep(index)">
-              <i class="fas fa-times"></i>
-            </button>
           </div>
         </div>
-        <div class="step-add">
-          <button class="step-add-btn" @click="addStep">
-            <i class="fas fa-plus step-add-icon"></i>
-          </button>
-          <input 
-            v-model="newStepContent" 
-            type="text" 
-            placeholder="添加步骤" 
-            class="step-add-input"
-            @keyup.enter="addStep"
-          />
-        </div>
-      </div>
 
-      <!-- 任务选项区域 -->
-      <div v-if="isAddingTask" class="task-options">
-        <!-- 列表选择 -->
-        <div class="task-option-section-list">
-          <div class="task-option-item">
-            <button class="task-option-btn" @click="toggleListPicker">
-              <div class="task-option-icon">
-                <i class="fas fa-tag"></i>
+        <!-- 步骤区域 -->
+        <div v-if="isAddingTask" class="task-steps">
+          <div v-if="steps.length > 0" class="steps-list">
+            <div v-for="(step, index) in steps" :key="step.id" class="step-item">
+              <div class="flat-task-checkbox">
+                <input type="checkbox" :id="`step-${step.id}`" :checked="step.status === 'done'"
+                  @change="toggleStepStatus(step)" @click.stop />
+                <label :for="`step-${step.id}`" class="flat-checkbox-label"></label>
               </div>
-              <div class="task-option-content">
-                <div class="task-option-title">{{ getSelectedListName() }}</div>
-              </div>
-            </button>
-          </div>
-          
-          <!-- 列表选择器下拉 -->
-          <div v-if="showListPicker" class="task-option-dropdown">
-            <div class="list-options">
-              <!-- 编辑模式 -->
-              <template v-if="props.isEditing">
-                <!-- 当前任务所属列表 -->
-                <div v-if="props.task && props.task.listId" class="current-list">
-                  <div class="current-list-label">当前列表</div>
-                  <button 
-                    class="list-option current-list-option"
-                    :class="{ 'active': selectedListId === props.task.listId }"
-                    @click="selectList(getCurrentTaskList())"
-                  >
-                    <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
-                      <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
-                    </div>
-                    <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
-                  </button>
-                </div>
-
-                <!-- 分隔线 -->
-                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="list-separator"></div>
-
-                <!-- 其他可选列表 -->
-                <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="other-lists-label">移动到其他列表</div>
-                <button 
-                  v-for="list in getOtherLists()" 
-                  :key="list.id" 
-                  class="list-option"
-                  :class="{ 'active': selectedListId === list.id }"
-                  @click="selectList(list)"
-                >
-                  <div class="list-icon" :style="{ color: list.color }">
-                    <i :class="`fas fa-${list.icon}`"></i>
-                  </div>
-                  <span class="list-name">{{ list.name }}</span>
-                </button>
-              </template>
-
-              <!-- 添加模式：显示所有列表 -->
-              <template v-else>
-                <button 
-                  v-for="list in availableLists" 
-                  :key="list.id" 
-                  class="list-option"
-                  :class="{ 'active': selectedListId === list.id }"
-                  @click="selectList(list)"
-                >
-                  <div class="list-icon" :style="{ color: list.color }">
-                    <i :class="`fas fa-${list.icon}`"></i>
-                  </div>
-                  <span class="list-name">{{ list.name }}</span>
-                </button>
-              </template>
-            </div>
-          </div>
-        </div>
-        <!-- 提醒设置 -->
-        <div class="task-option-section">
-          <div class="task-option-item" :class="{ 'active': selectedReminder }">
-            <button class="task-option-btn" @click="toggleReminderPicker">
-              <div class="task-option-icon">
-                <i class="fas fa-bell"></i>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
-              </div>
-            </button>
-            <button v-if="selectedReminder" class="task-option-delete" @click="clearReminder">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <!-- 提醒选择器下拉 -->
-          <div v-if="showReminderPicker" class="task-option-dropdown">
-            <div class="reminder-options">
-              <button 
-                v-for="reminder in customReminderOptions" 
-                :key="reminder.id" 
-                class="reminder-option"
-                @click="selectCustomReminder(reminder)"
-              >
-                <i class="fas fa-clock reminder-option-icon"></i>
-                <span>{{ reminder.label }}</span>
+              <input v-if="editingStepId === step.id" v-model="editingStepContent" type="text"
+                class="step-content-input" @blur="saveStepEdit(step)" @keyup.enter="saveStepEdit(step)"
+                @keyup.escape="cancelStepEdit" ref="stepEditInput" />
+              <span v-else class="step-content" :class="{ 'completed': step.status === 'done' }"
+                @dblclick="startStepEdit(step)">{{ step.content }}</span>
+              <button class="step-delete-btn" @click="removeStep(index)">
+                <i class="fas fa-times"></i>
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- 截止日期 -->
-        <div class="task-option-section">
-          <div class="task-option-item" :class="{ 'active': selectedDate }">
-            <VueDatePicker 
-              v-model="dateTimeValue"
-              :enable-time-picker="true"
-              :min-date="getMinDate()"
-              :min-time="getMinTimeForDatePicker()"
-              :format="'yyyy-MM-dd HH:mm'"
-              :preview-format="'yyyy-MM-dd HH:mm'"
-              :text-input="false"
-              :auto-apply="true"
-              :close-on-scroll="true"
-              :close-on-click-outside="true"
-              placeholder="选择日期和时间"
-              class="vue-datepicker"
-              @update:model-value="handleDateTimeChange"
-            >
-              <template #trigger>
-                <button class="task-option-btn">
-                  <div class="task-option-icon">
-                    <i class="fas fa-calendar-alt"></i>
-                  </div>
-                  <div class="task-option-content">
-                    <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}</div>
-                  </div>
-                </button>
-              </template>
-            </VueDatePicker>
-            <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
-              <i class="fas fa-times"></i>
+          <div class="step-add">
+            <button class="step-add-btn" @click="addStep">
+              <i class="fas fa-plus step-add-icon"></i>
             </button>
+            <input v-model="newStepContent" type="text" placeholder="添加步骤" class="step-add-input"
+              @keyup.enter="addStep" />
           </div>
         </div>
 
-        <!-- 重复设置 -->
-        <div class="task-option-section">
-          <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
-            <div class="task-option-btn" @click="toggleRepeatPicker">
-              <div class="task-option-icon">
-                <i class="fas fa-redo"></i>
-              </div>
-              <div class="task-option-content">
-                <div class="task-option-title">重复</div>
-              </div>
-              <!-- iOS风格开关 -->
-              <div class="task-option-switch" @click.stop>
-                <label class="switch">
-                  <input 
-                    type="checkbox" 
-                    :checked="!!selectedRecurrence" 
-                    @change="toggleRepeatEnabled"
-                  >
-                  <span class="slider"></span>
-                </label>
+        <!-- 任务选项区域 -->
+        <div v-if="isAddingTask" class="task-options">
+          <!-- 列表选择 -->
+          <div class="task-option-section-list">
+            <div class="task-option-item">
+              <button class="task-option-btn" @click="toggleListPicker">
+                <div class="task-option-icon">
+                  <i class="fas fa-tag"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">{{ getSelectedListName() }}</div>
+                </div>
+              </button>
+            </div>
+
+            <!-- 列表选择器下拉 -->
+            <div v-if="showListPicker" class="task-option-dropdown">
+              <div class="list-options">
+                <!-- 编辑模式 -->
+                <template v-if="props.isEditing">
+                  <!-- 当前任务所属列表 -->
+                  <div v-if="props.task && props.task.listId" class="current-list">
+                    <div class="current-list-label">当前列表</div>
+                    <button class="list-option current-list-option"
+                      :class="{ 'active': selectedListId === props.task.listId }"
+                      @click="selectList(getCurrentTaskList())">
+                      <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
+                        <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
+                      </div>
+                      <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
+                    </button>
+                  </div>
+
+                  <!-- 分隔线 -->
+                  <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="list-separator">
+                  </div>
+
+                  <!-- 其他可选列表 -->
+                  <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="other-lists-label">
+                    移动到其他列表</div>
+                  <button v-for="list in getOtherLists()" :key="list.id" class="list-option"
+                    :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
+                    <div class="list-icon" :style="{ color: list.color }">
+                      <i :class="`fas fa-${list.icon}`"></i>
+                    </div>
+                    <span class="list-name">{{ list.name }}</span>
+                  </button>
+                </template>
+
+                <!-- 添加模式：显示所有列表 -->
+                <template v-else>
+                  <button v-for="list in availableLists" :key="list.id" class="list-option"
+                    :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
+                    <div class="list-icon" :style="{ color: list.color }">
+                      <i :class="`fas fa-${list.icon}`"></i>
+                    </div>
+                    <span class="list-name">{{ list.name }}</span>
+                  </button>
+                </template>
               </div>
             </div>
           </div>
-          
-          <!-- 重复配置面板 -->
-          <div v-if="showRepeatPicker && selectedRecurrence" class="task-option-dropdown">
-            <RepeatSelector 
-              v-model="selectedRecurrence" 
-              :base-date="getBaseDate()"
-              @update:modelValue="handleRecurrenceChange"
-            />
+          <!-- 提醒设置 -->
+          <div class="task-option-section">
+            <div class="task-option-item" :class="{ 'active': selectedReminder }">
+              <button class="task-option-btn" @click="toggleReminderPicker">
+                <div class="task-option-icon">
+                  <i class="fas fa-bell"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
+                </div>
+              </button>
+              <button v-if="selectedReminder" class="task-option-delete" @click="clearReminder">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <!-- 提醒选择器下拉 -->
+            <div v-if="showReminderPicker" class="task-option-dropdown">
+              <div class="reminder-options">
+                <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option"
+                  @click="selectCustomReminder(reminder)">
+                  <i class="fas fa-clock reminder-option-icon"></i>
+                  <span>{{ reminder.label }}</span>
+                </button>
+              </div>
+            </div>
           </div>
+
+          <!-- 截止日期 -->
+          <div class="task-option-section">
+            <div class="task-option-item" :class="{ 'active': selectedDate }">
+              <VueDatePicker v-model="dateTimeValue" :enable-time-picker="true" :min-date="getMinDate()"
+                :min-time="getMinTimeForDatePicker()" :format="'yyyy-MM-dd HH:mm'" :preview-format="'yyyy-MM-dd HH:mm'"
+                :text-input="false" :auto-apply="true" :close-on-scroll="true" :close-on-click-outside="true"
+                placeholder="选择日期和时间" class="vue-datepicker" @update:model-value="handleDateTimeChange">
+                <template #trigger>
+                  <button class="task-option-btn">
+                    <div class="task-option-icon">
+                      <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="task-option-content">
+                      <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}
+                      </div>
+                    </div>
+                  </button>
+                </template>
+              </VueDatePicker>
+              <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 重复设置 -->
+          <div class="task-option-section">
+            <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
+              <div class="task-option-btn" @click="toggleRepeatPicker">
+                <div class="task-option-icon">
+                  <i class="fas fa-redo"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">重复</div>
+                </div>
+                <!-- iOS风格开关 -->
+                <div class="task-option-switch" @click.stop>
+                  <label class="switch">
+                    <input type="checkbox" :checked="!!selectedRecurrence" @change="toggleRepeatEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 重复配置面板 -->
+            <div v-if="showRepeatPicker && selectedRecurrence" class="task-option-dropdown">
+              <RepeatSelector v-model="selectedRecurrence" :base-date="getBaseDate()"
+                @update:modelValue="handleRecurrenceChange" />
+            </div>
+          </div>
+
         </div>
 
-      </div>
-
-      <!-- 备注区域 -->
-      <div v-if="isAddingTask" class="task-note">
-        <div class="task-note-editor">
-          <div class="task-note-input-wrapper">
-            <textarea 
-              v-model="taskNote" 
-              placeholder="添加备注" 
-              class="task-note-textarea"
-              maxlength="1000"
-              rows="5"
-              :style="{ minHeight: '3rem', maxHeight: '15rem' }"
-              @input="autoResizeNote"
-              @blur="handleNoteBlur"
-            ></textarea>
-            <div class="task-note-counter">{{ taskNote.length }}/1000</div>
+        <!-- 备注区域 -->
+        <div v-if="isAddingTask" class="task-note">
+          <div class="task-note-editor">
+            <div class="task-note-input-wrapper">
+              <textarea v-model="taskNote" placeholder="添加备注" class="task-note-textarea" maxlength="1000" rows="5"
+                :style="{ minHeight: '3rem', maxHeight: '15rem' }" @input="autoResizeNote"
+                @blur="handleNoteBlur"></textarea>
+              <div class="task-note-counter">{{ taskNote.length }}/1000</div>
+            </div>
           </div>
         </div>
-      </div>
       </div>
 
       <!-- 操作按钮区域 -->
@@ -289,11 +227,11 @@
             <i class="fas fa-right-to-bracket"></i>
           </button>
         </div>
-        
+
         <div class="task-actions-center">
           <span v-if="props.isEditing" class="task-created-date">创建于 {{ formatCreatedDate() }}</span>
         </div>
-        
+
         <div class="task-actions-right">
           <button v-if="props.isEditing" class="task-action-delete" @click="handleDeleteTask">
             <i class="fas fa-trash"></i>
@@ -431,7 +369,7 @@ const handleInputBlur = async (event) => {
   if (props.isEditing && props.task && newTaskContent.value.trim()) {
     await handleSaveTaskContent()
   }
-  
+
   // 延迟处理，避免与按钮点击冲突
   setTimeout(() => {
     if (!taskEditContainer.value?.contains(document.activeElement)) {
@@ -455,7 +393,7 @@ const handleClickOutside = (event) => {
 const addStep = async () => {
   if (newStepContent.value.trim()) {
     const stepContent = newStepContent.value.trim()
-    
+
     if (props.isEditing && props.task) {
       // 编辑模式：使用API添加步骤
       try {
@@ -481,12 +419,12 @@ const addStep = async () => {
 // 删除步骤
 const removeStep = async (index) => {
   const step = steps.value[index]
-  
+
   // 弹窗确认删除
   if (!confirm('确定要删除这个步骤吗？')) {
     return
   }
-  
+
   if (props.isEditing && props.task) {
     // 编辑模式：使用API删除步骤
     try {
@@ -506,7 +444,7 @@ const toggleStepStatus = async (step) => {
   // 立即更新本地状态以提供即时反馈
   const newStatus = step.status === 'done' ? 'todo' : 'done'
   step.status = newStatus
-  
+
   // 如果是编辑模式且有任务，同时更新服务器状态
   if (props.isEditing && props.task) {
     try {
@@ -524,7 +462,7 @@ const toggleStepStatus = async (step) => {
 const startStepEdit = (step) => {
   editingStepId.value = step.id
   editingStepContent.value = step.content
-  
+
   // 下一帧聚焦到输入框
   nextTick(() => {
     const input = document.querySelector('.step-content-input')
@@ -541,13 +479,13 @@ const saveStepEdit = async (step) => {
     cancelStepEdit()
     return
   }
-  
+
   const newContent = editingStepContent.value.trim()
   if (newContent === step.content) {
     cancelStepEdit()
     return
   }
-  
+
   if (props.isEditing && props.task) {
     // 编辑模式：使用API更新步骤
     try {
@@ -581,7 +519,7 @@ const toggleImportance = () => {
 const toggleReminderPicker = async () => {
   showReminderPicker.value = !showReminderPicker.value
   showListPicker.value = false
-  
+
   // 每次打开提醒选择器时重新加载提醒选项，确保数据最新
   if (showReminderPicker.value) {
     await taskStore.refreshCustomReminderOptions()
@@ -609,7 +547,7 @@ const toggleRepeatEnabled = async (event) => {
   // 关闭其他选择器
   showReminderPicker.value = false
   showListPicker.value = false
-  
+
   // 如果是编辑模式，自动保存重复配置
   if (props.isEditing && props.task) {
     await handleSaveRecurrence()
@@ -630,7 +568,7 @@ const toggleRepeatPicker = () => {
 // 处理重复规则变化
 const handleRecurrenceChange = async (recurrence) => {
   selectedRecurrence.value = recurrence
-  
+
   // 如果是编辑模式，自动保存重复配置
   if (props.isEditing && props.task) {
     await handleSaveRecurrence()
@@ -640,7 +578,7 @@ const handleRecurrenceChange = async (recurrence) => {
 // 保存重复配置
 const handleSaveRecurrence = async () => {
   if (!props.task || !props.isEditing) return
-  
+
   try {
     // 清理重复规则对象，确保可序列化
     const cleanRecurrence = selectedRecurrence.value ? {
@@ -653,11 +591,11 @@ const handleSaveRecurrence = async () => {
       endCondition: selectedRecurrence.value.endCondition || null,
       reminderTime: selectedRecurrence.value.reminderTime || null
     } : null
-    
+
     const updates = {
       recurrence: cleanRecurrence
     }
-    
+
     if (props.task.seriesId && selectedRecurrence.value) {
       // 更新重复任务系列
       await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
@@ -674,7 +612,7 @@ const handleSaveRecurrence = async () => {
       // 更新普通任务的重复配置
       await taskStore.updateTask(props.task.id, updates)
     }
-    
+
     console.log('重复配置已自动保存:', cleanRecurrence)
   } catch (error) {
     console.error('自动保存重复配置失败:', error)
@@ -698,7 +636,7 @@ const clearDateTime = () => {
 // 清除提醒
 const clearReminder = async () => {
   selectedReminder.value = null
-  
+
   // 如果是编辑模式，自动保存提醒时间清除
   if (props.isEditing && props.task) {
     try {
@@ -737,7 +675,7 @@ const selectCustomReminder = async (reminderOption) => {
     targetDate.setDate(now.getDate() + reminderOption.dayOffset)
     const [hours, minutes] = reminderOption.time.split(':').map(Number)
     targetDate.setHours(hours, minutes, 0, 0)
-    
+
     if (reminderOption.dayOffset === 0 && targetDate <= now) {
       targetDate.setDate(now.getDate() + 1)
     }
@@ -778,7 +716,7 @@ const selectCustomReminder = async (reminderOption) => {
   }
 
   showReminderPicker.value = false
-  
+
   // 如果是编辑模式，自动保存提醒时间
   if (props.isEditing && props.task) {
     try {
@@ -795,7 +733,7 @@ const selectCustomReminder = async (reminderOption) => {
 const selectList = (list) => {
   selectedListId.value = list.id
   showListPicker.value = false
-  
+
   // 如果是编辑模式且列表发生变化，立即更新任务列表
   if (props.isEditing && props.task && props.task.listId !== list.id) {
     handleUpdateTaskList(list.id)
@@ -805,7 +743,7 @@ const selectList = (list) => {
 // 更新任务列表（轻量级方法，只更新列表）
 const handleUpdateTaskList = async (newListId) => {
   if (!props.task || !props.isEditing) return
-  
+
   try {
     const result = await taskStore.moveTaskToList(props.task.id, newListId)
     if (result.success) {
@@ -871,7 +809,7 @@ const getMinTimeForDatePicker = () => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     selectedDateObj.setHours(0, 0, 0, 0)
-    
+
     if (selectedDateObj.getTime() === today.getTime()) {
       return { hours: now.getHours(), minutes: now.getMinutes() }
     }
@@ -887,7 +825,7 @@ const handleDateTimeChange = async (newValue) => {
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     selectedTime.value = `${hours}:${minutes}`
-    
+
     // 如果是编辑模式，自动保存提醒时间
     if (props.isEditing && props.task) {
       try {
@@ -901,7 +839,7 @@ const handleDateTimeChange = async (newValue) => {
   } else {
     selectedDate.value = ''
     selectedTime.value = ''
-    
+
     // 如果是编辑模式且清除了时间，也要自动保存
     if (props.isEditing && props.task) {
       try {
@@ -941,7 +879,7 @@ const formatCreatedDate = () => {
     const today = new Date()
     const todayStr = getLocalDateString(today)
     const taskDateStr = getLocalDateString(date)
-    
+
     if (taskDateStr === todayStr) {
       return '今天'
     } else {
@@ -971,7 +909,7 @@ const handleDeleteTask = () => {
 // 切换任务完成状态
 const handleToggleComplete = async (task) => {
   if (!task) return
-  
+
   try {
     if (task.status === 'done') {
       // 如果已完成，重新开始任务
@@ -998,17 +936,17 @@ const contentDebounceTimer = ref(null)
 const autoResize = () => {
   const textarea = addTaskInput.value
   if (!textarea) return
-  
+
   // 重置高度以获取正确的scrollHeight
   textarea.style.height = 'auto'
-  
+
   // 计算新高度，限制在最小和最大值之间
   const minHeight = 24 // 1.5rem = 24px
   const maxHeight = 240 // 15rem = 240px
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
-  
+
   textarea.style.height = newHeight + 'px'
-  
+
   // 如果是编辑模式，启动防抖自动保存
   if (props.isEditing && props.task) {
     debounceSaveTaskContent()
@@ -1020,7 +958,7 @@ const debounceSaveTaskContent = () => {
   if (contentDebounceTimer.value) {
     clearTimeout(contentDebounceTimer.value)
   }
-  
+
   contentDebounceTimer.value = setTimeout(async () => {
     if (newTaskContent.value.trim()) {
       await handleSaveTaskContent()
@@ -1031,21 +969,21 @@ const debounceSaveTaskContent = () => {
 // 保存任务内容
 const handleSaveTaskContent = async () => {
   if (!props.task || !props.isEditing || !newTaskContent.value.trim()) return
-  
+
   // 检查内容是否真的发生了变化
   const newContent = newTaskContent.value.trim()
   const originalContent = props.task.content || ''
-  
+
   if (newContent === originalContent) {
     console.log('任务内容未发生变化，跳过保存')
     return
   }
-  
+
   try {
     const updates = {
       content: newContent
     }
-    
+
     await taskStore.updateTask(props.task.id, updates)
     console.log('任务内容已自动保存:', updates.content)
   } catch (error) {
@@ -1057,17 +995,17 @@ const handleSaveTaskContent = async () => {
 const autoResizeNote = (event) => {
   const textarea = event.target
   if (!textarea) return
-  
+
   // 重置高度以获取正确的scrollHeight
   textarea.style.height = 'auto'
-  
+
   // 计算新高度，限制在最小和最大值之间
   const minHeight = 48 // 3rem = 48px (2行最小高度)
   const maxHeight = 240 // 15rem = 240px
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
-  
+
   textarea.style.height = newHeight + 'px'
-  
+
   // 如果是编辑模式，启动防抖自动保存
   if (props.isEditing && props.task) {
     debounceSaveNote()
@@ -1080,7 +1018,7 @@ const debounceSaveNote = () => {
   if (noteDebounceTimer) {
     clearTimeout(noteDebounceTimer)
   }
-  
+
   // 设置新的定时器，1秒后保存
   noteDebounceTimer = setTimeout(async () => {
     if (props.isEditing && props.task) {
@@ -1107,7 +1045,7 @@ const handleNoteBlur = async () => {
       clearTimeout(noteDebounceTimer)
       noteDebounceTimer = null
     }
-    
+
     // 立即保存
     try {
       const currentMetadata = props.task.metadata || {}
@@ -1147,7 +1085,7 @@ onMounted(async () => {
 // 组件卸载时移除监听器
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  
+
   // 清理防抖定时器
   if (noteDebounceTimer) {
     clearTimeout(noteDebounceTimer)
@@ -1161,20 +1099,20 @@ onUnmounted(() => {
 // 加载任务数据的通用函数
 const loadTaskData = () => {
   if (!props.task) return
-  
+
   isAddingTask.value = true
   newTaskContent.value = props.task.content || ''
   isImportant.value = props.task.isImportant || false
   taskNote.value = props.task.metadata?.note || ''
   steps.value = props.task.metadata?.steps || []
-  
+
   // 优先使用reminderTime，如果没有则使用dueDate/dueTime
   if (props.task.reminderTime) {
     const reminderDate = new Date(props.task.reminderTime)
     selectedDate.value = getLocalDateString(reminderDate)
     selectedTime.value = reminderDate.toTimeString().slice(0, 5)
     dateTimeValue.value = reminderDate
-    
+
     if (props.task.reminderConfig) {
       selectedReminder.value = {
         value: 'custom',
@@ -1187,7 +1125,7 @@ const loadTaskData = () => {
     selectedDate.value = props.task.dueDate || ''
     selectedTime.value = props.task.dueTime || ''
     selectedReminder.value = null
-    
+
     // 设置 dateTimeValue
     if (props.task.dueDate && props.task.dueTime) {
       const dateTimeStr = `${props.task.dueDate}T${props.task.dueTime}:00`
@@ -1196,7 +1134,7 @@ const loadTaskData = () => {
       dateTimeValue.value = null
     }
   }
-  
+
   if (props.task.recurrence) {
     selectedRecurrence.value = props.task.recurrence
     // 编辑现有重复任务时，默认不展开面板
@@ -1205,7 +1143,7 @@ const loadTaskData = () => {
     selectedRecurrence.value = null
     showRepeatPicker.value = false
   }
-  
+
   if (props.task.listId) {
     selectedListId.value = props.task.listId
   }

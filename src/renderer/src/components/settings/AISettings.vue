@@ -365,6 +365,116 @@
         </div>
       </div>
     </div>
+
+    <!-- 报告模板配置 -->
+    <div v-if="isProviderConfigured(aiConfig.selectedProvider)" class="setting-group">
+      <h3 class="setting-group-title">报告模板配置</h3>
+      <p class="setting-group-description">自定义 AI 生成的日报和周报模板，支持 Markdown 格式和占位符</p>
+      
+      <div class="setting-item template-setting-item">
+        <div class="setting-item-info">
+          <div class="setting-item-label">日报模板</div>
+          <div class="setting-item-description">
+            自定义日报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}
+          </div>
+        </div>
+        <div class="setting-item-control template-control">
+          <textarea 
+            v-model="aiConfig.reportTemplates.daily"
+            class="template-textarea"
+            :placeholder="defaultDailyTemplate"
+            rows="12"
+            @input="updateReportTemplate('daily', $event.target.value)"
+          />
+          <div class="template-actions">
+            <button 
+              class="template-action-btn reset-btn"
+              @click="resetTemplate('daily')"
+              title="重置为默认模板"
+            >
+              <i class="fas fa-undo"></i>
+              重置默认
+            </button>
+            <button 
+              class="template-action-btn preview-btn"
+              @click="previewTemplate('daily')"
+              title="预览模板效果"
+            >
+              <i class="fas fa-eye"></i>
+              预览
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-item template-setting-item">
+        <div class="setting-item-info">
+          <div class="setting-item-label">周报模板</div>
+          <div class="setting-item-description">
+            自定义周报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}
+          </div>
+        </div>
+        <div class="setting-item-control template-control">
+          <textarea 
+            v-model="aiConfig.reportTemplates.weekly"
+            class="template-textarea"
+            :placeholder="defaultWeeklyTemplate"
+            rows="12"
+            @input="updateReportTemplate('weekly', $event.target.value)"
+          />
+          <div class="template-actions">
+            <button 
+              class="template-action-btn reset-btn"
+              @click="resetTemplate('weekly')"
+              title="重置为默认模板"
+            >
+              <i class="fas fa-undo"></i>
+              重置默认
+            </button>
+            <button 
+              class="template-action-btn preview-btn"
+              @click="previewTemplate('weekly')"
+              title="预览模板效果"
+            >
+              <i class="fas fa-eye"></i>
+              预览
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模板帮助信息 -->
+      <div class="template-help">
+        <div class="template-help-header">
+          <i class="fas fa-info-circle"></i>
+          <span>模板使用说明</span>
+        </div>
+        <div class="template-help-content">
+          <div class="help-section">
+            <h4>可用占位符：</h4>
+            <ul>
+              <li><code>{{project_name}}</code> - 项目名称</li>
+              <li><code>{{report_period}}</code> - 报告时间周期</li>
+              <li><code>{{report_type}}</code> - 报告类型（日报/周报）</li>
+              <li><code>{{summary}}</code> - AI 生成的工作总结</li>
+              <li><code>{{completed_tasks}}</code> - 已完成任务列表</li>
+              <li><code>{{inprogress_tasks}}</code> - 进行中任务列表（包含子任务进度）</li>
+              <li><code>{{planned_tasks}}</code> - 计划中任务列表</li>
+              <li><code>{{risks_issues}}</code> - 风险和问题列表</li>
+            </ul>
+          </div>
+          <div class="help-section">
+            <h4>模板格式：</h4>
+            <ul>
+              <li>支持标准 Markdown 语法</li>
+              <li>占位符会被 AI 自动替换为实际内容</li>
+              <li>如果某个占位符没有对应内容，会显示"无"或"暂无"</li>
+              <li>留空使用默认模板</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -400,6 +510,10 @@ const aiConfig = reactive({
     taskSuggestions: true,
     autoCategories: false,
     smartReminders: false
+  },
+  reportTemplates: {
+    daily: '',
+    weekly: ''
   }
 })
 
@@ -494,6 +608,84 @@ const updateCustomProviderConfig = async (providerId, field, value) => {
 const toggleFeature = async (featureName) => {
   aiConfig.features[featureName] = !aiConfig.features[featureName]
   await saveConfig()
+}
+
+// 默认模板
+const defaultDailyTemplate = `# {{project_name}} 日报
+
+**日期:** {{report_period}}
+
+## 📝 今日小结
+{{summary}}
+
+## ✅ 已完成工作
+{{completed_tasks}}
+
+## ⏳ 进行中工作
+{{inprogress_tasks}}
+
+## 📅 明日计划
+{{planned_tasks}}
+
+## ⚠️ 风险与问题
+{{risks_issues}}`
+
+const defaultWeeklyTemplate = `# {{project_name}} 周报
+
+**周期:** {{report_period}}
+
+## 📝 本周小结
+{{summary}}
+
+## ✅ 本周完成工作
+{{completed_tasks}}
+
+## ⏳ 进行中工作
+{{inprogress_tasks}}
+
+## 📅 下周工作计划
+{{planned_tasks}}
+
+## ⚠️ 风险与问题
+{{risks_issues}}`
+
+// 报告模板相关方法
+const updateReportTemplate = async (templateType, value) => {
+  aiConfig.reportTemplates[templateType] = value
+  await saveConfig()
+}
+
+const resetTemplate = async (templateType) => {
+  const defaultTemplate = templateType === 'daily' ? defaultDailyTemplate : defaultWeeklyTemplate
+  aiConfig.reportTemplates[templateType] = defaultTemplate
+  await saveConfig()
+}
+
+const previewTemplate = (templateType) => {
+  const template = aiConfig.reportTemplates[templateType] || 
+    (templateType === 'daily' ? defaultDailyTemplate : defaultWeeklyTemplate)
+  
+  // 创建预览数据
+  const previewData = {
+    project_name: '示例项目',
+    report_period: templateType === 'daily' ? '2025-09-07' : '2025-09-01 ~ 2025-09-07',
+    report_type: templateType === 'daily' ? '日报' : '周报',
+    summary: '本期主要完成了核心功能开发，整体进展顺利。',
+    completed_tasks: '- 完成用户认证模块\n- 优化数据库查询性能',
+    inprogress_tasks: '- 开发报告生成功能\n  - [x] 设计模板系统\n  - [x] 实现基础功能\n  - [ ] 添加自定义选项',
+    planned_tasks: '- 进行系统测试\n- 准备部署文档',
+    risks_issues: '- 第三方API响应时间较长，需要优化'
+  }
+  
+  // 替换占位符
+  let previewContent = template
+  Object.entries(previewData).forEach(([key, value]) => {
+    const placeholder = new RegExp(`{{${key}}}`, 'g')
+    previewContent = previewContent.replace(placeholder, value)
+  })
+  
+  // 显示预览（这里可以后续实现一个预览模态框）
+  alert(`模板预览：\n\n${previewContent}`)
 }
 
 const isProviderConfigured = (providerId) => {
@@ -658,7 +850,17 @@ const loadConfig = async () => {
     const allConfig = await window.electronAPI.config.get()
     console.log("allConfig", allConfig)
     if (allConfig && allConfig.ai) {
-      Object.assign(aiConfig, allConfig.ai)
+      // 合并配置，确保新字段有默认值
+      const loadedConfig = {
+        ...aiConfig,
+        ...allConfig.ai,
+        reportTemplates: {
+          daily: '',
+          weekly: '',
+          ...allConfig.ai.reportTemplates
+        }
+      }
+      Object.assign(aiConfig, loadedConfig)
     }
   } catch (error) {
     console.error('加载 AI 配置失败:', error)

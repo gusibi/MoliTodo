@@ -17,6 +17,7 @@ class IpcHandlers {
     this.setupWindowHandlers();
     this.setupDataHandlers();
     this.setupUtilityHandlers();
+    this.setupAIHandlers();
   }
 
   setupTaskHandlers() {
@@ -36,10 +37,10 @@ class IpcHandlers {
     // 创建任务
     ipcMain.handle('create-task', async (event, taskData) => {
       const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
-      
+
       // 如果有提醒时间，转换为Date对象
       const calculatedReminderTime = reminderTime ? new Date(reminderTime) : null;
-      
+
       // 构建完整的任务数据
       const fullTaskData = {
         content,
@@ -50,12 +51,12 @@ class IpcHandlers {
         dueDate: dueDate || null,
         dueTime: dueTime || null
       };
-      
+
       let task;
       if (recurrence || listId !== undefined || metadata !== undefined || dueDate || dueTime) {
         // 使用扩展的创建方法
         task = await this.taskService.createTaskInList(
-          content, 
+          content,
           listId || 0,
           calculatedReminderTime,
           fullTaskData
@@ -63,7 +64,7 @@ class IpcHandlers {
       } else {
         // 使用原有的创建方法（向后兼容）
         task = await this.taskService.createTask(
-          content, 
+          content,
           calculatedReminderTime
         );
       }
@@ -83,12 +84,12 @@ class IpcHandlers {
       try {
         console.log('[IPC] 收到AI生成任务列表请求:', { content, aiModel, listId });
         const result = await this.taskService.generateTaskList(content, aiModel, listId);
-        
+
         console.log('[IPC] AI生成任务列表结果:', result);
         if (result.success) {
           this.broadcastTaskUpdates();
         }
-        
+
         return result;
       } catch (error) {
         console.error('[IPC] AI生成任务列表失败:', error);
@@ -104,27 +105,27 @@ class IpcHandlers {
     ipcMain.handle('stream-generate-task-list', async (event, content, aiModel, listId, shouldSplitTask = false) => {
       try {
         console.log('[IPC] 收到AI流式生成任务列表请求:', { content, aiModel, listId, shouldSplitTask });
-        
+
         // 流式数据回调函数
         const onChunk = (text) => {
           // console.log('[IPC] 发送chunk到渲染进程:', text);
           // 发送流式数据到渲染进程
           event.sender.send('stream-task-generation-chunk', text);
         };
-        
+
         console.log('[IPC] 调用taskService.streamGenerateTaskList');
         const result = await this.taskService.streamGenerateTaskList(content, aiModel, listId, onChunk, shouldSplitTask);
-        
+
         console.log('[IPC] AI流式生成任务列表结果:', result);
-        
+
         // 发送完成信号
         console.log('[IPC] 发送complete事件到渲染进程');
         event.sender.send('stream-task-generation-complete', result);
-        
+
         return result;
       } catch (error) {
         console.error('[IPC] AI流式生成任务列表失败:', error);
-        
+
         // 发送错误信号
         const errorResult = {
           success: false,
@@ -133,7 +134,7 @@ class IpcHandlers {
         };
         console.log('[IPC] 发送error事件到渲染进程:', errorResult);
         event.sender.send('stream-task-generation-error', errorResult);
-        
+
         return errorResult;
       }
     });
@@ -141,12 +142,12 @@ class IpcHandlers {
     // 更新任务
     ipcMain.handle('update-task', async (event, taskId, updates) => {
       const task = await this.taskService.updateTask(taskId, updates);
-      
+
       // 处理提醒时间的通知调度
       if (updates.reminderTime !== undefined) {
         // 先取消现有的提醒
         this.notificationService.cancelTaskReminder(taskId);
-        
+
         // 如果设置了新的提醒时间，则重新调度
         if (task.reminderTime) {
           this.notificationService.scheduleTaskReminder(task, (task) => {
@@ -154,7 +155,7 @@ class IpcHandlers {
           });
         }
       }
-      
+
       this.broadcastTaskUpdates();
       return { success: true, task };
     });
@@ -328,7 +329,7 @@ class IpcHandlers {
     // 创建重复任务
     ipcMain.handle('task:createRecurring', async (event, taskData) => {
       const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
-      
+
       // 计算提醒时间
       let calculatedReminderTime = null;
       if (reminderTime) {
@@ -340,7 +341,7 @@ class IpcHandlers {
           calculatedReminderTime = new Date(dueDateTime.getTime() - 30 * 60 * 1000); // 提前30分钟
         }
       }
-      
+
       // 构建完整的任务数据
       const fullTaskData = {
         content,
@@ -351,10 +352,10 @@ class IpcHandlers {
         dueDate: dueDate || null,
         dueTime: dueTime || null
       };
-      
+
       try {
         const task = await this.taskService.createTaskInList(
-          content, 
+          content,
           listId || 0,
           calculatedReminderTime,
           fullTaskData
@@ -658,11 +659,11 @@ class IpcHandlers {
           }
         }
       };
-      
+
       Object.entries(defaultConfig).forEach(([key, value]) => {
         this.windowManager.updateConfig(key, value);
       });
-      
+
       return { success: true };
     });
 
@@ -843,9 +844,9 @@ class IpcHandlers {
           if (this.listService) {
             this.broadcastListUpdates();
           }
-          
-          return { 
-            success: true, 
+
+          return {
+            success: true,
             taskCount: importData.tasks.length,
             listCount: importedLists
           };
@@ -895,7 +896,7 @@ class IpcHandlers {
     ipcMain.handle('get-resource-path', (event, resourcePath) => {
       const path = require('path');
       let fullPath;
-      
+
       if (process.env.NODE_ENV === 'development') {
         // 开发环境：相对于项目根目录
         fullPath = path.join(__dirname, '../../', resourcePath);
@@ -903,7 +904,7 @@ class IpcHandlers {
         // 生产环境：使用 process.resourcesPath
         fullPath = path.join(process.resourcesPath, resourcePath);
       }
-      
+
       return fullPath;
     });
 
@@ -946,7 +947,7 @@ class IpcHandlers {
       try {
         // 解析图标路径
         let fullIconPath;
-        
+
         if (path.isAbsolute(iconPath)) {
           fullIconPath = iconPath;
         } else {
@@ -959,38 +960,38 @@ class IpcHandlers {
             fullIconPath = path.join(process.resourcesPath, iconPath);
           }
         }
-        
+
         // 检查文件是否存在
         try {
           await fs.access(fullIconPath);
         } catch (error) {
           throw new Error(`图标文件不存在: ${fullIconPath}`);
         }
-        
+
         // 更新运行时图标
         if (process.platform === 'darwin') {
           app.dock.setIcon(fullIconPath);
         } else {
           app.setIcon(fullIconPath);
         }
-        
+
         // 更新所有窗口的图标
         const { nativeImage } = require('electron');
         const windowIcon = nativeImage.createFromPath(fullIconPath);
-        
+
         const windows = [
           this.windowManager.floatingWindow,
           this.windowManager.taskManagerWindow,
           this.windowManager.settingsWindow,
           this.windowManager.taskPanelWindow
         ];
-        
+
         windows.forEach(window => {
           if (window && !window.isDestroyed()) {
             window.setIcon(windowIcon);
           }
         });
-        
+
         if (this.windowManager.floatingTaskWindows) {
           this.windowManager.floatingTaskWindows.forEach(window => {
             if (window && !window.isDestroyed()) {
@@ -998,7 +999,7 @@ class IpcHandlers {
             }
           });
         }
-        
+
         // macOS 特殊处理：尝试更新应用包图标和清除缓存
         if (process.platform === 'darwin') {
           try {
@@ -1007,7 +1008,7 @@ class IpcHandlers {
             console.warn('刷新 macOS 图标缓存失败:', error.message);
           }
         }
-        
+
         console.log(`应用图标已更新: ${fullIconPath}`);
         return { success: true, iconPath: fullIconPath };
       } catch (error) {
@@ -1031,11 +1032,11 @@ class IpcHandlers {
       // 清除图标缓存
       await execAsync('sudo find /private/var/folders/ -name com.apple.dock.iconcache -delete 2>/dev/null || true');
       await execAsync('sudo find /private/var/folders/ -name com.apple.iconservices -delete 2>/dev/null || true');
-      
+
       // 重启相关服务
       await execAsync('killall Dock 2>/dev/null || true');
       await execAsync('killall Finder 2>/dev/null || true');
-      
+
       console.log('macOS 图标缓存已刷新');
     } catch (error) {
       // 如果没有 sudo 权限，尝试用户级别的缓存清理
@@ -1056,7 +1057,7 @@ class IpcHandlers {
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
-    
+
     // 向主要窗口广播
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
@@ -1086,7 +1087,7 @@ class IpcHandlers {
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
-    
+
     // 向主要窗口广播
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
@@ -1107,32 +1108,140 @@ class IpcHandlers {
   // 处理任务提醒
   handleTaskReminder(task) {
     console.log('IPC处理任务提醒:', task);
-    
+
     // 发送通知音效播放请求到所有窗口
     const windows = [
       this.windowManager.floatingWindow,
       this.windowManager.taskManagerWindow,
       this.windowManager.settingsWindow
     ];
-    
+
     windows.forEach(window => {
       if (window && !window.isDestroyed()) {
         window.webContents.send('play-notification-sound');
       }
     });
-    
+
     // 强提醒：自动创建悬浮任务窗口
     if (task && task.id) {
       console.log('任务提醒触发，自动创建悬浮任务窗口，任务ID:', task.id);
       this.windowManager.createFloatingTask(task.id);
     }
-    
+
     if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
       console.log('发送任务提醒事件到悬浮窗口');
       this.windowManager.floatingWindow.webContents.send('task-reminder', task);
     } else {
       console.log('悬浮窗口不存在或已销毁，无法发送提醒事件');
     }
+  }
+
+  setupAIHandlers() {
+    console.log('[IPC] 正在设置 AI 处理器...');
+
+    // AI 报告生成
+    console.log('[IPC] 注册 ai:generate-report 处理器');
+    ipcMain.handle('ai:generate-report', async (event, { prompt, aiModel }) => {
+      try {
+        console.log('[IPC] 收到AI报告生成请求');
+
+        const { AIService } = require('../infrastructure/ai/ai-service');
+        const result = await AIService.generateReport(prompt, aiModel, this.windowManager);
+
+        console.log('[IPC] AI报告生成成功');
+        return result;
+      } catch (error) {
+        console.error('[IPC] AI报告生成失败:', error);
+        throw error;
+      }
+    });
+
+    // AI 流式报告生成
+    console.log('[IPC] 注册 ai:stream-generate-report 处理器');
+    ipcMain.handle('ai:stream-generate-report', async (event, { prompt, aiModel }) => {
+      try {
+        console.log('[IPC] 收到AI流式报告生成请求');
+
+        const { AIService } = require('../infrastructure/ai/ai-service');
+
+        // 创建流式回调函数
+        const onChunk = (content) => {
+          // 发送流式数据到渲染进程
+          event.sender.send('ai:report-stream-chunk', content);
+        };
+
+        const result = await AIService.streamGenerateReport(prompt, aiModel, this.windowManager, onChunk);
+
+        console.log('[IPC] AI流式报告生成完成');
+        return result;
+      } catch (error) {
+        console.error('[IPC] AI流式报告生成失败:', error);
+        throw error;
+      }
+    });
+
+    // 获取 AI 配置（用于报告生成）
+    console.log('[IPC] 注册 ai:get-config 处理器');
+    ipcMain.handle('ai:get-config', async () => {
+      try {
+        const config = this.windowManager.getConfig();
+        return config.ai || {};
+      } catch (error) {
+        console.error('[IPC] 获取AI配置失败:', error);
+        throw error;
+      }
+    });
+
+    // 获取当前选中的 AI 模型信息
+    console.log('[IPC] 注册 ai:get-selected-model 处理器');
+    ipcMain.handle('ai:get-selected-model', async () => {
+      try {
+        const config = this.windowManager.getConfig();
+        const aiConfig = config.ai || {};
+
+        if (!aiConfig.selectedProvider) {
+          throw new Error('未选择AI提供商');
+        }
+
+        // 构建模型信息
+        let aiModel = null;
+
+        if (aiConfig.selectedProvider.startsWith('custom-')) {
+          const customProvider = aiConfig.customProviders?.find(p => p.id === aiConfig.selectedProvider);
+          if (customProvider) {
+            aiModel = {
+              id: aiConfig.selectedProvider,
+              name: customProvider.name || '自定义配置',
+              provider: 'Custom'
+            };
+          }
+        } else {
+          const providerNames = {
+            'openai': 'OpenAI',
+            'google': 'Google',
+            'anthropic': 'Anthropic',
+            'xai': 'xAI'
+          };
+
+          aiModel = {
+            id: aiConfig.selectedProvider,
+            name: providerNames[aiConfig.selectedProvider] || aiConfig.selectedProvider,
+            provider: providerNames[aiConfig.selectedProvider] || aiConfig.selectedProvider
+          };
+        }
+
+        if (!aiModel) {
+          throw new Error('无法获取AI模型信息');
+        }
+
+        return aiModel;
+      } catch (error) {
+        console.error('[IPC] 获取AI模型信息失败:', error);
+        throw error;
+      }
+    });
+
+    console.log('[IPC] AI 处理器设置完成');
   }
 }
 

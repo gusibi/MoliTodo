@@ -7,8 +7,10 @@
     <div v-if="shouldShowTimeFilter" class="flat-task-list-time-filter-container">
       <TimeFilter 
         v-model="currentTimeFilter" 
-        :tasks="props.tasks"
-        @filter-change="handleTimeFilterChange" 
+        :tasks="filteredTasksByTime"
+        @filter-change="handleTimeFilterChange"
+        @generate-report="handleGenerateReport"
+        ref="timeFilterRef"
       />
     </div>
 
@@ -203,6 +205,30 @@
       @close="closeTaskPreview"
       @created="handleTasksCreated"
     />
+
+    <!-- 任务选择模态框 -->
+    <TaskSelectionModal
+      :visible="showTaskSelectionModal"
+      :tasks="pendingReportData?.tasks || []"
+      :filter-type="pendingReportData?.filterType || 'all'"
+      @close="closeTaskSelectionModal"
+      @confirm="handleTaskSelectionConfirm"
+    />
+
+    <!-- 报告模态框 -->
+    <ReportModal
+      :visible="showReportModal"
+      :report-content="reportContent"
+      :report-type="reportType"
+      :report-period="reportPeriod"
+      :task-count="reportTaskCount"
+      :is-generating="isGeneratingReport"
+      :is-streaming="isStreamingReport"
+      :stream-content="reportStreamContent"
+      :error="reportError"
+      @close="closeReportModal"
+      @retry="retryReportGeneration"
+    />
   </div>
 </template>
 
@@ -212,6 +238,9 @@ import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
 import TimeFilter from './TimeFilter.vue'
+import TaskSelectionModal from './TaskSelectionModal.vue'
+import ReportModal from './ReportModal.vue'
+import ReportService from '../services/reportService.js'
 import { getListIconClass } from '@/utils/icon-utils'
 
 // 定义 props
@@ -245,8 +274,7 @@ const emit = defineEmits([
 ])
 
 // 编辑状态管理
-const editingTask = ref(null)
-const isEditingTask = ref(false)
+
 const hoveredTaskId = ref(null)
 
 // 快速添加相关
@@ -264,6 +292,20 @@ const showTaskPreview = ref(false)
 const previewTasks = ref([])
 const originalTaskInput = ref('')
 const streamContent = ref('')
+
+// AI 报告相关状态
+const timeFilterRef = ref(null)
+const showTaskSelectionModal = ref(false)
+const showReportModal = ref(false)
+const pendingReportData = ref(null)
+const reportContent = ref('')
+const reportType = ref('')
+const reportPeriod = ref('')
+const reportTaskCount = ref(0)
+const isGeneratingReport = ref(false)
+const isStreamingReport = ref(false)
+const reportStreamContent = ref('')
+const reportError = ref('')
 
 // 折叠状态管理
 const collapsedGroups = ref(new Set())
@@ -320,6 +362,155 @@ const currentTimeFilter = ref('all')
 const handleTimeFilterChange = (filterKey) => {
   currentTimeFilter.value = filterKey
   // 不修改 currentCategory，只更新本地筛选状态
+}
+
+// AI 报告生成处理方法
+const handleGenerateReport = (data) => {
+  console.log('🚀 [FlatTaskList] 收到生成报告请求:', data)
+  console.log('[FlatTaskList] 任务数量:', data.tasks.length)
+  console.log('[FlatTaskList] 筛选类型:', data.filterType)
+  
+  // 保存待处理的报告数据
+  pendingReportData.value = data
+  
+  // 显示任务选择模态框
+  showTaskSelectionModal.value = true
+  
+  console.log('[FlatTaskList] 任务选择模态框已显示')
+}
+
+const closeTaskSelectionModal = () => {
+  console.log('[FlatTaskList] 关闭任务选择模态框')
+  showTaskSelectionModal.value = false
+  pendingReportData.value = null
+}
+
+const handleTaskSelectionConfirm = async (selectionData) => {
+  console.log('[FlatTaskList] 用户确认任务选择:', selectionData)
+  console.log('[FlatTaskList] 选中任务数量:', selectionData.tasks.length)
+  console.log('[FlatTaskList] 报告类型:', selectionData.reportType)
+  
+  // 关闭任务选择模态框
+  showTaskSelectionModal.value = false
+  
+  try {
+    // 设置加载状态
+    isGeneratingReport.value = true
+    isStreamingReport.value = true
+    reportError.value = ''
+    reportStreamContent.value = ''
+    reportContent.value = ''
+    showReportModal.value = true
+    
+    console.log('[FlatTaskList] 开始生成报告流程...')
+    
+    // 通知 TimeFilter 组件进入生成状态
+    if (timeFilterRef.value) {
+      timeFilterRef.value.setGeneratingState(true)
+    }
+
+    // 获取 AI 配置
+    console.log('[FlatTaskList] 开始获取 AI 配置...')
+    const aiConfig = await window.electronAPI.ai.getConfig()
+    console.log('[FlatTaskList] AI 配置获取成功:', aiConfig)
+
+    // 使用报告服务生成提示
+    console.log('[FlatTaskList] 开始生成报告数据...')
+    const reportData = await ReportService.generateReport(
+      selectionData.tasks,
+      selectionData.filterType,
+      aiConfig.reportTemplates || {}
+    )
+    
+    // 如果用户手动选择了报告类型，覆盖自动判断的类型
+    if (selectionData.reportType) {
+      reportData.reportType = selectionData.reportType
+    }
+    
+    // 添加AI模型信息
+    if (selectionData.aiModel) {
+      reportData.aiModel = selectionData.aiModel
+    }
+    
+    console.log('[FlatTaskList] 报告数据生成完成:', {
+      reportType: reportData.reportType,
+      taskCount: reportData.taskCount,
+      promptLength: reportData.prompt.length
+    })
+    
+    // 设置报告信息
+    reportType.value = reportData.reportType
+    reportPeriod.value = reportData.reportPeriod
+    reportTaskCount.value = selectionData.tasks.length
+
+    // 使用 taskStore 的流式生成方法
+    console.log('[FlatTaskList] 开始调用 taskStore 流式生成报告...')
+    
+    const result = await taskStore.streamGenerateReport(
+      reportData,
+      // onChunk 回调
+      (chunk) => {
+        console.log('[FlatTaskList] 接收到流式数据块，长度:', chunk.length)
+        reportStreamContent.value = chunk
+      },
+      // onComplete 回调
+      (result) => {
+        console.log('[FlatTaskList] 报告生成完成:', result.success)
+        if (result.success) {
+          reportContent.value = result.report
+          isStreamingReport.value = false
+          console.log('[FlatTaskList] 最终报告长度:', result.report.length)
+        } else {
+          reportError.value = result.error || '生成报告失败'
+          isStreamingReport.value = false
+          console.error('[FlatTaskList] 报告生成失败:', result.error)
+        }
+      },
+      // onError 回调
+      (error) => {
+        console.error('[FlatTaskList] 报告生成错误:', error)
+        reportError.value = error.error || '生成报告时发生未知错误'
+        isStreamingReport.value = false
+      }
+    )
+    
+    console.log('[FlatTaskList] taskStore 调用完成，结果:', result.success)
+    
+  } catch (error) {
+    console.error('[FlatTaskList] 生成报告异常:', error)
+    reportError.value = error.message || '生成报告时发生未知错误'
+    isStreamingReport.value = false
+  } finally {
+    isGeneratingReport.value = false
+    
+    // 通知 TimeFilter 组件退出生成状态
+    if (timeFilterRef.value) {
+      timeFilterRef.value.setGeneratingState(false)
+    }
+    
+    console.log('[FlatTaskList] 报告生成流程结束')
+  }
+}
+
+const closeReportModal = () => {
+  console.log('[FlatTaskList] 关闭报告模态框')
+  showReportModal.value = false
+  reportContent.value = ''
+  reportError.value = ''
+  reportStreamContent.value = ''
+}
+
+const retryReportGeneration = () => {
+  console.log('[FlatTaskList] 重试报告生成')
+  // 重新生成报告，使用上次的数据
+  if (pendingReportData.value) {
+    handleTaskSelectionConfirm({
+      tasks: filteredTasksByTime.value,
+      filterType: currentTimeFilter.value,
+      reportType: reportType.value || 'weekly',
+      taskCount: filteredTasksByTime.value.length
+    })
+  }
 }
 
 // 监听分类变化，当切换到不支持时间筛选的分类时，重置时间筛选器为'all'

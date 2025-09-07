@@ -46,7 +46,18 @@ const electronAPI = {
   // AI 相关 API
   ai: {
     testConnection: (config) => ipcRenderer.invoke('test-ai-connection', config),
-    testConnectionByModel: (aiModel) => ipcRenderer.invoke('test-ai-connection-by-model', aiModel)
+    testConnectionByModel: (aiModel) => ipcRenderer.invoke('test-ai-connection-by-model', aiModel),
+    generateReport: (params) => ipcRenderer.invoke('ai:generate-report', params),
+    streamGenerateReport: (params) => ipcRenderer.invoke('ai:stream-generate-report', params),
+    getConfig: () => ipcRenderer.invoke('ai:get-config'),
+    getSelectedModel: () => ipcRenderer.invoke('ai:get-selected-model'),
+    // 监听流式数据
+    onReportStreamChunk: (callback) => {
+      ipcRenderer.on('ai:report-stream-chunk', (event, content) => callback(content));
+    },
+    removeReportStreamListener: () => {
+      ipcRenderer.removeAllListeners('ai:report-stream-chunk');
+    }
   },
 
   // 窗口相关 API
@@ -86,7 +97,7 @@ const electronAPI = {
     on: (channel, callback) => {
       const validChannels = [
         'tasks-updated',
-        'task-updated', 
+        'task-updated',
         'lists-updated',
         'config-updated',
         'task-reminder',
@@ -94,16 +105,16 @@ const electronAPI = {
         'panel-mouse-leave',
         'play-notification-sound'
       ];
-      
+
       if (validChannels.includes(channel)) {
         ipcRenderer.on(channel, callback);
       }
     },
-    
+
     off: (channel, callback) => {
       ipcRenderer.removeListener(channel, callback);
     },
-    
+
     removeAllListeners: (channel) => {
       ipcRenderer.removeAllListeners(channel);
     }
@@ -150,7 +161,7 @@ const electronAPI = {
     const allowedChannels = [
       // 清单相关
       'list:getAll',
-      'list:getById', 
+      'list:getById',
       'list:create',
       'list:update',
       'list:delete',
@@ -168,7 +179,7 @@ const electronAPI = {
       'task:search',
       'task:getTimeInfo'
     ];
-    
+
     if (allowedChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
     } else {

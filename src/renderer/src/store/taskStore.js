@@ -1763,6 +1763,92 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 流式生成AI报告
+  const streamGenerateReport = async (reportData, onChunk, onComplete, onError) => {
+    console.log('[taskStore] streamGenerateReport 开始', { reportData, onChunk: !!onChunk, onComplete: !!onComplete, onError: !!onError })
+    
+    try {
+      // 检查是否有AI模型，如果reportData中包含aiModel，则使用它
+      if (reportData && reportData.aiModel) {
+        selectAIModel(reportData.aiModel)
+      }
+      
+      if (!selectedAIModel.value || !isAIEnabled.value) {
+        throw new Error('请先选择AI模型')
+      }
+
+      if (!reportData || !reportData.prompt) {
+        throw new Error('报告数据不能为空')
+      }
+
+      const aiModelData = {
+        id: selectedAIModel.value.id,
+        name: selectedAIModel.value.name,
+        provider: selectedAIModel.value.provider
+      }
+
+      console.log('[taskStore] AI模型信息:', aiModelData)
+
+      // 设置流式数据监听器
+      if (onChunk) {
+        console.log('[taskStore] 设置报告流式数据监听器')
+        window.electronAPI.ai.onReportStreamChunk((content) => {
+          console.log('[taskStore] 接收到报告流式数据:', content.substring(0, 100) + '...')
+          onChunk(content)
+        })
+      }
+
+      console.log('[taskStore] 调用AI流式生成报告:', { prompt: reportData.prompt.substring(0, 200) + '...', aiModelData })
+      
+      // 启动流式生成
+      const result = await window.electronAPI.ai.streamGenerateReport({
+        prompt: reportData.prompt,
+        aiModel: aiModelData
+      })
+      
+      console.log('[taskStore] streamGenerateReport IPC返回结果:', result)
+      
+      // 清理监听器
+      window.electronAPI.ai.removeReportStreamListener()
+      
+      if (result.success && onComplete) {
+        onComplete({
+          success: true,
+          report: result.report,
+          reportType: reportData.reportType,
+          reportPeriod: reportData.reportPeriod,
+          taskCount: reportData.taskCount
+        })
+      } else if (!result.success && onError) {
+        onError({
+          success: false,
+          error: result.error || '生成报告失败'
+        })
+      }
+      
+      return result
+    } catch (error) {
+      console.error('[taskStore] AI流式生成报告失败:', error)
+      
+      // 清理监听器
+      if (window.electronAPI.ai.removeReportStreamListener) {
+        window.electronAPI.ai.removeReportStreamListener()
+      }
+      
+      if (onError) {
+        onError({
+          success: false,
+          error: error.message
+        })
+      }
+      
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
   return {
     // 状态
     tasks,
@@ -1885,6 +1971,7 @@ export const useTaskStore = defineStore('task', () => {
     isAIAvailable,
     generateTaskList,
     streamGenerateTaskList,
+    streamGenerateReport,
 
     // AI 相关状态
     availableAIModels,
