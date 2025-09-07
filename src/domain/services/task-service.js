@@ -1,5 +1,6 @@
 const Task = require('../entities/task');
 const { AIService } = require('../../infrastructure/ai/ai-service');
+const { USER_GUIDE_TASKS } = require('../../utils/user-guide-tasks');
 
 /**
  * 任务管理服务 (Task Service)
@@ -1062,6 +1063,44 @@ class TaskService {
         error: error.message,
         tasks: []
       };
+    }
+  }
+
+  /**
+   * 批量创建用户引导任务
+   * @param {number} listId 目标清单ID，默认为0（默认清单）
+   * @returns {Promise<Task[]>} 创建的任务列表
+   */
+  async createUserGuideTasks(listId = 0) {
+    try {
+      console.log('[TaskService] 开始创建用户引导任务，目标清单ID:', listId);
+      
+      const createdTasks = [];
+      
+      for (const guideTask of USER_GUIDE_TASKS) {
+        const taskData = {
+          metadata: guideTask.metadata || {},
+          dueDate: null,
+          dueTime: null,
+          recurrence: null
+        };
+        
+        const task = await this.createTaskInList(
+          guideTask.content,
+          listId,
+          null, // reminderTime
+          taskData
+        );
+        
+        createdTasks.push(task);
+        console.log('[TaskService] 创建引导任务:', guideTask.content);
+      }
+      
+      console.log('[TaskService] 用户引导任务创建完成，共创建', createdTasks.length, '个任务');
+      return createdTasks;
+    } catch (error) {
+      console.error('[TaskService] 创建用户引导任务失败:', error);
+      throw error;
     }
   }
 }

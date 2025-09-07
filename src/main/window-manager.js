@@ -16,6 +16,9 @@ class WindowManager {
     this.configStore = new Store({
       name: 'config',
       defaults: {
+        // 首次启动检测
+        isFirstLaunch: true,
+        userGuideCompleted: false,
         floatingIcon: {
           x: 100,
           y: 100,
@@ -568,6 +571,26 @@ class WindowManager {
     }
 
     return this.configStore.get(key);
+  }
+
+  // 检测是否为首次启动
+  isFirstLaunch() {
+    return this.configStore.get('isFirstLaunch', true);
+  }
+
+  // 标记首次启动完成
+  markFirstLaunchCompleted() {
+    this.configStore.set('isFirstLaunch', false);
+  }
+
+  // 检测用户引导是否完成
+  isUserGuideCompleted() {
+    return this.configStore.get('userGuideCompleted', false);
+  }
+
+  // 标记用户引导完成
+  markUserGuideCompleted() {
+    this.configStore.set('userGuideCompleted', true);
   }
 
   // 获取当前应用图标

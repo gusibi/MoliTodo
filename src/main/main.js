@@ -61,11 +61,19 @@ class MoliTodoApp {
 
       console.log('MoliTodo Vue 应用已启动');
       
-      // 应用完全启动后，更新托盘菜单显示任务数量
-      setTimeout(() => {
-        if (this.windowManager && this.windowManager.tray) {
-          console.log('应用启动完成，更新托盘菜单...');
-          this.windowManager.updateTrayMenu().catch(console.error);
+      // 应用完全启动后的初始化任务
+      setTimeout(async () => {
+        try {
+          // 检测首次启动并创建用户引导任务
+          await this.handleFirstLaunchSetup();
+          
+          // 更新托盘菜单显示任务数量
+          if (this.windowManager && this.windowManager.tray) {
+            console.log('应用启动完成，更新托盘菜单...');
+            await this.windowManager.updateTrayMenu();
+          }
+        } catch (error) {
+          console.error('应用启动后初始化任务失败:', error);
         }
       }, 2000);
     } catch (error) {
@@ -149,6 +157,39 @@ class MoliTodoApp {
         }
       }
     });
+  }
+
+  /**
+   * 处理首次启动设置
+   * 检测是否为首次启动，如果是则创建用户引导任务
+   */
+  async handleFirstLaunchSetup() {
+    try {
+      // 检测是否为首次启动
+      if (!this.windowManager.isFirstLaunch()) {
+        console.log('[FirstLaunch] 非首次启动，跳过用户引导任务创建');
+        return;
+      }
+
+      console.log('[FirstLaunch] 检测到首次启动，开始创建用户引导任务');
+
+      // 确保有默认清单存在
+       if (this.listService) {
+         await this.listService.getAllLists();
+       }
+
+      // 创建用户引导任务（无论默认清单是否有任务）
+      const guideTasks = await this.taskService.createUserGuideTasks(0);
+      console.log('[FirstLaunch] 用户引导任务创建完成，共创建', guideTasks.length, '个任务');
+
+      // 标记首次启动完成
+      this.windowManager.markFirstLaunchCompleted();
+      
+    } catch (error) {
+      console.error('[FirstLaunch] 首次启动设置失败:', error);
+      // 即使失败也要标记首次启动完成，避免重复尝试
+      this.windowManager.markFirstLaunchCompleted();
+    }
   }
 
   // 添加方法供 WindowManager 调用来退出应用

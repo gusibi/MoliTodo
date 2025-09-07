@@ -536,7 +536,7 @@ const filteredTasksByTime = computed(() => {
 // 按 list 分组任务
 const groupedTasks = computed(() => {
   const allTasks = filteredTasksByTime.value
-  // console.log("allTasks:", JSON.stringify(allTasks)) 
+  console.log("allTasks:", JSON.stringify(allTasks)) 
   if (!allTasks || allTasks.length === 0) {
     return []
   }
