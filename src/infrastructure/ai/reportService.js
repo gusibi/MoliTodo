@@ -198,29 +198,27 @@ class ReportService {
   static generateReportPeriod(reportType) {
     const now = new Date()
     
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
     if (reportType === 'daily') {
-      return now.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\//g, '-')
+      return formatDate(now)
     } else {
-      // 周报：计算本周的开始和结束日期
-      const startOfWeek = new Date(now)
-      const day = now.getDay()
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1) // 调整为周一开始
-      startOfWeek.setDate(diff)
+      // 周报：计算本周一到本周日的日期
+      const currentDay = now.getDay() // 0=周日, 1=周一, ..., 6=周六
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay // 计算到周一的偏移
       
-      const endOfWeek = new Date(startOfWeek)
-      endOfWeek.setDate(startOfWeek.getDate() + 6)
+      const monday = new Date(now)
+      monday.setDate(now.getDate() + mondayOffset)
       
-      const formatDate = (date) => date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\//g, '-')
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
       
-      return `${formatDate(startOfWeek)} ~ ${formatDate(endOfWeek)}`
+      return `${formatDate(monday)}~${formatDate(sunday)}`
     }
   }
 

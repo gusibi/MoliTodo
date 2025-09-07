@@ -817,7 +817,7 @@ class AIService {
       const modelConfig = this.getModelConfig(aiModel, windowManager);
       const modelInstance = this.getModelInstance(modelConfig);
       
-      console.log('[AIService] 开始流式生成报告，模型:', aiModel.name, prompt);
+      console.log('[AIService] 开始流式生成报告，模型:', aiModel.name);
 
       let fullText = '';
       

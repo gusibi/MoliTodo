@@ -5,7 +5,7 @@
   
   **AI 智能驱动的悬浮式待办事项应用**
   
-  [![Version](https://img.shields.io/badge/version-0.9.1-blue.svg)](package.json)
+  [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](#支持平台)
   [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D.svg)](https://vuejs.org/)
@@ -19,6 +19,7 @@ MoliTodo is a modern AI-powered desktop task management application that provide
 ### Core Features
 
 - 🤖 **AI Task Generation** - Natural language task creation with multi-provider AI support (OpenAI, Google, Anthropic, xAI)
+- 📊 **AI Report Generation** - Intelligent daily and weekly report generation with customizable templates  
 - 🎯 **Seamless Integration** - Floating icon stays on desktop without interrupting workflow
 - ⚡ **Instant Operations** - Hover to view, quick add, one-click complete
 - 🔄 **Recurring Tasks** - Comprehensive recurring task system supporting daily, weekly, monthly, yearly patterns
@@ -175,12 +176,13 @@ AI Generated:
 
 ## 🛠️ Technology Architecture
 
-### v0.9.1 AI-Powered Architecture
+### v1.0.0 AI-Powered Architecture with Report Generation
 
 - **Frontend**: Vue 3 + Composition API + Pinia + Vue Router
 - **Build System**: Vite + Electron Builder + Hot Reload
 - **Main Process**: Electron 28.x + SQLite + Domain-Driven Design
 - **AI Integration**: Multi-provider AI SDK (@ai-sdk/openai, @ai-sdk/google, @ai-sdk/anthropic)
+- **AI Features**: Task Generation + Report Generation + Custom Templates
 - **Styling**: Modular CSS + Tailwind CSS + Theme System
 - **Data Layer**: Auto-migration System + Data Integrity + AI Configuration Storage
 
@@ -197,7 +199,7 @@ src/
 │   ├── entities/            # Task, List, Recurrence entities
 │   └── services/            # Task, List, Recurring, Statistics services
 ├── infrastructure/          # Infrastructure Layer
-│   ├── ai/                  # AI service integration
+│   ├── ai/                  # AI service integration + Report Generation
 │   ├── persistence/         # SQLite repositories + migrations
 │   └── notification/        # Notification service
 └── renderer/                # Renderer Process - Vue 3 Application
@@ -215,13 +217,22 @@ src/
 
 ## ✨ Main Features
 
-### 🤖 AI Task Generation System (v0.9.1 Latest)
+### 🤖 AI Task Generation System (v0.9.1+)
 - ✅ **Multi-Provider AI Support** - OpenAI, Google, Anthropic, xAI, and custom providers
 - ✅ **Natural Language Processing** - Convert descriptions into structured task lists
 - ✅ **Intelligent Task Preview** - Preview and batch edit AI-generated tasks
 - ✅ **Smart Configuration Management** - Visual AI provider setup with connection testing
 - ✅ **Real-time Model Selection** - Switch between different AI models during creation
 - ✅ **Intelligent Suggestions** - AI provides task optimization and improvement suggestions
+
+### 📊 AI Report Generation System (v1.0.0+)
+- ✅ **One-Click Report Generation** - Generate daily and weekly reports instantly
+- ✅ **Multi-Provider AI Support** - Leverage existing AI infrastructure for report generation
+- ✅ **Custom Report Templates** - Configurable daily and weekly report templates
+- ✅ **Smart Content Analysis** - AI analyzes task status, time distribution, and completion patterns
+- ✅ **Time Filter Integration** - Seamlessly integrated into time filter component
+- ✅ **Markdown Output** - Structured Markdown format for easy sharing and archival
+- ✅ **Copy to Clipboard** - One-click copy functionality for immediate use
 
 ### 🔄 Comprehensive Recurring Tasks System (v0.9.0)
 - ✅ **Four Recurrence Types** - Daily, weekly, monthly, yearly patterns
