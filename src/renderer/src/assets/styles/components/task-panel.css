@@ -261,12 +261,29 @@
 }
 
 .task-panel-modal-content {
-  @apply w-64 max-w-[85%] max-h-[80%] overflow-y-auto bg-card border border-border rounded-xl shadow-xl p-4;
+  @apply w-80 max-w-[90%] max-h-[80%] overflow-y-auto bg-card border border-border rounded-xl shadow-xl;
+}
+
+/* 优化模态框滚动条 */
+.task-panel-modal-content::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.task-panel-modal-content::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.task-panel-modal-content::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+}
+
+.task-panel-modal-content::-webkit-scrollbar-thumb:active {
+  @apply bg-muted-foreground/60;
 }
 
 /* Modal Header */
 .modal-header {
-  @apply flex items-center justify-between mb-4 pb-3 border-b border-border;
+  @apply flex items-center justify-between mb-2 pb-2 border-b border-border px-4 pt-4;
 }
 
 .modal-header h3 {
@@ -279,8 +296,23 @@
 
 /* Modal Body */
 .modal-body {
-  @apply mb-4;
+  @apply mb-4 px-2;
 }
+
+/* Reminder Options */
+
+.reminder-option {
+  @apply w-full flex items-center text-sm gap-2 py-2.5 pl-4 text-left border-0 rounded-lg bg-background text-foreground cursor-pointer transition-all duration-200 hover:bg-accent hover:text-accent-foreground;
+}
+
+.reminder-option:last-child {
+  @apply mb-0;
+}
+
+.reminder-option-icon {
+  @apply text-primary w-4 h-4;
+}
+
 
 .form-group {
   @apply mb-4;
@@ -300,7 +332,7 @@
 
 /* Modal Footer */
 .modal-footer {
-  @apply flex gap-2 justify-end pt-3 border-t border-border;
+  @apply flex gap-2 justify-end pt-2 border-t border-border px-2 pb-2;
 }
 
 .btn {
@@ -342,7 +374,11 @@
 }
 
 .task-panel-list-container::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-sm hover:bg-border/80;
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+}
+
+.task-panel-list-container::-webkit-scrollbar-thumb:active {
+  @apply bg-muted-foreground/60;
 }
 
 /* Animations */
@@ -371,4 +407,460 @@
 
 .context-menu-overlay {
   @apply fixed inset-0 z-40;
+}
+
+/* Task Panel VueDatePicker Styles - 强制覆盖所有主题样式 */
+.task-panel .vue-datepicker {
+  @apply w-full text-xs;
+}
+
+/* 强制覆盖所有可能的背景和文本颜色 */
+.task-panel .dp__main {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__menu_content_wrapper {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__calendar_wrap {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__calendar_header {
+  @apply bg-popover text-popover-foreground border-b border-border;
+}
+
+.task-panel .dp__calendar_header_item {
+  @apply text-muted-foreground;
+}
+
+.task-panel .dp__calendar_item {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__calendar_row {
+  @apply bg-popover text-popover-foreground;
+}
+
+/* 强制覆盖时间选择器背景 */
+.task-panel .dp__time_picker {
+  @apply bg-popover text-popover-foreground border-l border-border;
+}
+
+.task-panel .dp__time_col {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__time_display {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__time_picker_inline_container {
+  @apply bg-popover text-popover-foreground;
+}
+
+/* 输入框样式 */
+.task-panel .dp__input {
+  @apply py-1.5 border border-border rounded-md text-xs text-foreground bg-background outline-none transition-all duration-200;
+}
+
+.task-panel .dp__input:focus {
+  @apply border-primary ring-1 ring-primary/20;
+}
+
+.task-panel .dp__input:hover {
+  @apply border-border/80;
+}
+
+/* 弹窗菜单样式 */
+.task-panel .dp__menu {
+  @apply bg-popover border border-border rounded-lg shadow-lg text-xs text-popover-foreground;
+}
+
+.task-panel .dp__menu_inner {
+  @apply bg-popover text-popover-foreground;
+}
+
+/* 优化滚动条样式 */
+.task-panel .dp__scroll_bar {
+  @apply bg-transparent;
+}
+
+.task-panel .dp__scroll_bar::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.task-panel .dp__scroll_bar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.task-panel .dp__scroll_bar::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+}
+
+.task-panel .dp__scroll_bar::-webkit-scrollbar-thumb:active {
+  @apply bg-muted-foreground/60;
+}
+
+/* 日历头部样式 */
+.task-panel .dp__calendar_header {
+  @apply bg-muted/30 border-b border-border text-xs;
+}
+
+.task-panel .dp__calendar_header_item {
+  @apply text-muted-foreground text-xs font-medium;
+}
+
+/* 日期单元格样式 */
+.task-panel .dp__cell_inner {
+  @apply text-foreground hover:bg-accent hover:text-accent-foreground text-xs rounded-md transition-all duration-200;
+}
+
+.task-panel .dp__cell_inner.dp__today {
+  @apply bg-primary/10 text-primary text-xs font-medium border border-primary/20;
+}
+
+.task-panel .dp__cell_inner.dp__active_date {
+  @apply bg-primary text-primary-foreground text-xs font-medium;
+}
+
+.task-panel .dp__cell_offset {
+  @apply text-muted-foreground/50;
+}
+
+.task-panel .dp__cell_disabled {
+  @apply text-muted-foreground cursor-not-allowed opacity-50;
+}
+
+/* 时间输入样式 */
+.task-panel .dp__time_input {
+  @apply bg-background border border-border text-foreground text-xs rounded-md px-2 py-1;
+}
+
+.task-panel .dp__time_input:focus {
+  @apply border-primary ring-1 ring-primary/20;
+}
+
+.task-panel .dp__time_col {
+  @apply text-xs bg-background;
+}
+
+.task-panel .dp__time_col_reg {
+  @apply text-xs hover:bg-accent hover:text-accent-foreground rounded-md transition-all duration-200;
+}
+
+/* 按钮样式 */
+.task-panel .dp__btn {
+  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-2 py-1 transition-all duration-200;
+}
+
+.task-panel .dp__button {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 border-none rounded-md text-xs px-3 py-1.5 font-medium transition-all duration-200;
+}
+
+.task-panel .dp__button_bottom {
+  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-3 py-1.5 transition-all duration-200;
+}
+
+/* 导航按钮样式 */
+.task-panel .dp--arrow-btn-nav {
+  @apply text-muted-foreground hover:text-foreground hover:bg-accent rounded-md p-1 transition-all duration-200;
+}
+
+/* 月年选择器样式 */
+.task-panel .dp__month_year_select {
+  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-2 py-1 font-medium transition-all duration-200;
+}
+
+/* 操作按钮样式 */
+.task-panel .dp__action_buttons {
+  @apply border-t border-border bg-muted/30;
+}
+
+.task-panel .dp__action_button {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3 py-1.5 rounded-md transition-all duration-200;
+}
+
+.task-panel .dp__action_cancel {
+  @apply bg-muted/50 text-foreground hover:bg-muted/70 text-xs px-3 py-1.5 rounded-md transition-all duration-200;
+}
+
+/* 图标样式 */
+.task-panel .dp__icon {
+  @apply text-muted-foreground w-4 h-4;
+}
+
+.task-panel .dp__clear_icon {
+  @apply text-muted-foreground hover:text-foreground w-4 h-4 cursor-pointer transition-colors duration-200;
+}
+
+.task-panel .dp__input_icon {
+  @apply text-muted-foreground w-4 h-4;
+}
+
+/* 时间选择器更多样式 */
+.task-panel .dp__time_display {
+  @apply text-xs text-foreground bg-background;
+}
+
+.task-panel .dp__time_picker {
+  @apply text-xs bg-popover border border-border rounded-lg;
+}
+
+.task-panel .dp__time_picker_inline_container {
+  @apply bg-popover;
+}
+
+.task-panel .dp__overlay {
+  @apply text-xs bg-popover text-popover-foreground border border-border rounded-lg;
+}
+
+.task-panel .dp__overlay_row {
+  @apply flex items-center justify-center gap-2 text-xs;
+}
+
+.task-panel .dp__overlay_cell {
+  @apply text-xs hover:bg-accent hover:text-accent-foreground rounded-md transition-all duration-200 px-2 py-1;
+}
+
+.task-panel .dp__overlay_cell_active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.task-panel .dp__overlay_cell_disabled {
+  @apply text-muted-foreground cursor-not-allowed opacity-50;
+}
+
+/* 日历容器样式 */
+.task-panel .dp__calendar {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__calendar_wrap {
+  @apply bg-popover;
+}
+
+.task-panel .dp__instance_calendar {
+  @apply bg-popover;
+}
+
+.task-panel .dp__calendar_header_separator {
+  @apply border-border;
+}
+
+/* 月年选择器覆盖层 */
+.task-panel .dp__year_mode_picker {
+  @apply bg-popover text-popover-foreground;
+}
+
+.task-panel .dp__month_picker {
+  @apply bg-popover text-popover-foreground;
+}
+
+/* 输入相关样式 */
+.task-panel .dp__input_wrap {
+  @apply relative bg-background;
+}
+
+.task-panel .dp__input_reg {
+  @apply w-full bg-background text-foreground;
+}
+
+.task-panel .dp__input_focus {
+  @apply border-primary ring-1 ring-primary/20;
+}
+
+.task-panel .dp__input_valid {
+  @apply border-green-500;
+}
+
+.task-panel .dp__input_invalid {
+  @apply border-destructive;
+}
+
+/* 禁用状态样式 */
+.task-panel .dp__disabled {
+  @apply text-muted-foreground cursor-not-allowed opacity-50;
+}
+
+/* 箭头和边框样式 */
+.task-panel .dp__arrow_top,
+.task-panel .dp__arrow_bottom {
+  @apply border-border;
+}
+
+/* 选择预览样式 */
+.task-panel .dp__selection_preview {
+  @apply text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-md;
+}
+
+.task-panel .dp__selection_grid {
+  @apply bg-popover;
+}
+
+.task-panel .dp__selection_grid_header {
+  @apply bg-muted/30 border-b border-border text-xs font-medium text-muted-foreground;
+}
+
+/* 工具提示样式 */
+.task-panel .dp__tooltip {
+  @apply bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-lg border border-border;
+}
+
+/* 成功/危险状态样式 */
+.task-panel .dp__success {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.task-panel .dp__danger {
+  @apply text-destructive;
+}
+
+/* 高亮和标记样式 */
+.task-panel .dp__marker {
+  @apply bg-destructive w-2 h-2 rounded-full;
+}
+
+.task-panel .dp__marker_line {
+  @apply bg-destructive h-0.5 w-full;
+}
+
+.task-panel .dp__marker_dot {
+  @apply bg-destructive w-1 h-1 rounded-full;
+}
+
+.task-panel .dp__highlight {
+  @apply bg-primary/10 text-primary;
+}
+
+/* 范围选择样式 */
+.task-panel .dp__range_start,
+.task-panel .dp__range_end {
+  @apply bg-primary text-primary-foreground;
+}
+
+.task-panel .dp__range_between {
+  @apply bg-primary/20 text-foreground;
+}
+
+/* 布局样式 */
+.task-panel .dp__flex_row {
+  @apply flex items-center gap-2 text-xs;
+}
+
+.task-panel .dp__calendar_item {
+  @apply text-xs;
+}
+
+.task-panel .dp__calendar_row {
+  @apply text-xs;
+}
+
+.task-panel .dp__month_year_row {
+  @apply text-xs;
+}
+
+.task-panel .dp__year_row {
+  @apply text-xs;
+}
+
+/* 周选择样式 */
+.task-panel .dp__week_num {
+  @apply text-xs text-muted-foreground font-medium;
+}
+
+/* 季度选择样式 */
+.task-panel .dp__quarter_item {
+  @apply text-xs text-foreground hover:bg-accent hover:text-accent-foreground px-2 py-1 rounded-md cursor-pointer transition-all duration-200;
+}
+
+/* 预设范围样式 */
+.task-panel .dp__preset_ranges {
+  @apply bg-popover border-r border-border;
+}
+
+.task-panel .dp__preset_range {
+  @apply text-xs text-foreground hover:bg-accent hover:text-accent-foreground px-3 py-2 cursor-pointer transition-all duration-200;
+}
+
+.task-panel .dp__preset_range_active {
+  @apply bg-primary text-primary-foreground;
+}
+
+
+
+/* 强制主题一致性 - 使用!important覆盖默认样式 */
+.task-panel .dp__menu,
+.task-panel .dp__menu_inner,
+.task-panel .dp__main,
+.task-panel .dp__menu_content_wrapper,
+.task-panel .dp__calendar,
+.task-panel .dp__calendar_wrap,
+.task-panel .dp__instance_calendar,
+.task-panel .dp__time_picker,
+.task-panel .dp__time_picker_inline_container,
+.task-panel .dp__overlay {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.task-panel .dp__calendar_header {
+  background-color: hsl(var(--muted) / 0.3) !important;
+  border-bottom-color: hsl(var(--border)) !important;
+}
+
+.task-panel .dp__calendar_header_item {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.task-panel .dp__cell_inner {
+  color: hsl(var(--foreground)) !important;
+}
+
+.task-panel .dp__cell_inner:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.task-panel .dp__cell_inner.dp__active_date {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.task-panel .dp__cell_inner.dp__today {
+  background-color: hsl(var(--primary) / 0.1) !important;
+  color: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary) / 0.2) !important;
+}
+
+.task-panel .dp__time_col_reg {
+  color: hsl(var(--foreground)) !important;
+}
+
+.task-panel .dp__time_col_reg:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.task-panel .dp__button {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.task-panel .dp__button:hover {
+  background-color: hsl(var(--primary) / 0.9) !important;
+}
+
+.task-panel .dp__action_cancel,
+.task-panel .dp__button_bottom {
+  background-color: hsl(var(--muted) / 0.5) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.task-panel .dp__action_cancel:hover,
+.task-panel .dp__button_bottom:hover {
+  background-color: hsl(var(--muted) / 0.7) !important;
 }

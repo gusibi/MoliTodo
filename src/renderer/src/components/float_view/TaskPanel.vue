@@ -27,15 +27,12 @@
     <!-- 任务列表 -->
     <div class="task-panel-list-container">
       <div v-if="tasks.length > 0" class="task-panel-list">
-        <div v-for="task in sortedTasks" :key="task.id"
-          :class="[
-            'task-panel-item', 
-            (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime) 
-              ? 'overtime' 
-              : task.status || (task.completed ? 'done' : 'todo')
-          ]" 
-          :data-task-id="task.id"
-          :data-status="task.status || (task.completed ? 'done' : 'todo')"
+        <div v-for="task in sortedTasks" :key="task.id" :class="[
+          'task-panel-item',
+          (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
+            ? 'overtime'
+            : task.status || (task.completed ? 'done' : 'todo')
+        ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
           <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
             <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
@@ -135,21 +132,14 @@
             </svg>
           </button>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="reminderDate">日期</label>
-            <input v-model="reminderDate" type="date" id="reminderDate" class="form-input">
+        <!-- 快速提醒选项 -->
+          <div class="reminder-options">
+            <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option"
+              @click="selectCustomReminder(reminder)">
+              <i class="fas fa-clock reminder-option-icon"></i>
+              <span>{{ reminder.label }}</span>
+            </button>
           </div>
-          <div class="form-group">
-            <label for="reminderTime">时间</label>
-            <input v-model="reminderTime" type="time" id="reminderTime" class="form-input">
-          </div>
-          <div class="task-panel-quick-time-buttons">
-            <button class="task-panel-quick-time-btn" @click="setQuickTime(15)">15分钟后</button>
-            <button class="task-panel-quick-time-btn" @click="setQuickTime(60)">1小时后</button>
-            <button class="task-panel-quick-time-btn" @click="setQuickTime(24 * 60)">明天</button>
-          </div>
-        </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="hideReminderModal">取消</button>
           <button class="btn btn-primary" @click="saveTaskReminder">保存</button>
@@ -181,8 +171,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
+import { storeToRefs } from 'pinia'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const taskStore = useTaskStore()
+const { customReminderOptions } = storeToRefs(taskStore)
 
 // 响应式数据
 const tasks = ref([])
@@ -193,6 +186,7 @@ const showReminder = ref(false)
 const currentReminderTask = ref(null)
 const reminderDate = ref('')
 const reminderTime = ref('')
+const dateTimeValue = ref(null)
 const completedTasksCount = ref(0)
 
 // 右键菜单相关
@@ -225,14 +219,14 @@ const loadTasks = async () => {
   try {
     // 确保任务数据已加载
     await taskStore.getAllTasks()
-    
+
     // 使用 taskStore 的统一过滤方法
     const currentCategory = taskStore.currentCategory
     const currentListId = taskStore.currentListId
-    
+
     // 获取过滤后的任务（不包含已完成任务）
     tasks.value = taskStore.getSortedTasks(currentCategory, currentListId, false)
-    
+
     // 获取已完成任务的计数
     const stats = taskStore.getCategoryStats(currentCategory, currentListId)
     completedTasksCount.value = stats.completed
@@ -366,6 +360,7 @@ const showReminderModal = (taskId) => {
 
     reminderDate.value = `${year}-${month}-${day}`
     reminderTime.value = `${hours}:${mins}`
+    dateTimeValue.value = reminderDateTime
   } else {
     const defaultTime = new Date(Date.now() + 60 * 60 * 1000)
     // 使用本地时区格式化默认时间
@@ -377,6 +372,7 @@ const showReminderModal = (taskId) => {
 
     reminderDate.value = `${year}-${month}-${day}`
     reminderTime.value = `${hours}:${mins}`
+    dateTimeValue.value = defaultTime
   }
 
   showReminder.value = true
@@ -385,49 +381,83 @@ const showReminderModal = (taskId) => {
 const hideReminderModal = () => {
   showReminder.value = false
   currentReminderTask.value = null
+  dateTimeValue.value = null
+  reminderDate.value = ''
+  reminderTime.value = ''
 }
 
-const setQuickTime = (minutes) => {
+const selectCustomReminder = async (reminderOption) => {
   const now = new Date()
-  let targetTime
+  let reminderTime = null
 
-  if (minutes === 24 * 60) {
-    // 明天9点提醒
-    const tomorrow = new Date(now)
-    tomorrow.setDate(now.getDate() + 1)
-    tomorrow.setHours(9, 0, 0, 0)
-    targetTime = tomorrow
-  } else {
-    // 从当前时间开始计算提醒时间（15分钟后、1小时后）
-    targetTime = new Date(now.getTime() + minutes * 60 * 1000)
+  if (reminderOption.type === 'relative') {
+    // 相对时间计算
+    let milliseconds = 0
+    switch (reminderOption.unit) {
+      case 'minutes':
+        milliseconds = reminderOption.value * 60 * 1000
+        break
+      case 'hours':
+        milliseconds = reminderOption.value * 60 * 60 * 1000
+        break
+      case 'days':
+        milliseconds = reminderOption.value * 24 * 60 * 60 * 1000
+        break
+    }
+    reminderTime = new Date(now.getTime() + milliseconds)
+  } else if (reminderOption.type === 'absolute') {
+    // 绝对时间计算
+    const targetDate = new Date(now)
+    targetDate.setDate(now.getDate() + reminderOption.dayOffset)
+
+    const [hours, minutes] = reminderOption.time.split(':').map(Number)
+    targetDate.setHours(hours, minutes, 0, 0)
+
+    // 如果计算出的时间已经过去，则设置为明天的同一时间
+    if (targetDate <= now) {
+      targetDate.setDate(targetDate.getDate() + 1)
+    }
+
+    reminderTime = targetDate
   }
 
-  // 使用本地时区格式化日期和时间
-  const year = targetTime.getFullYear()
-  const month = String(targetTime.getMonth() + 1).padStart(2, '0')
-  const day = String(targetTime.getDate()).padStart(2, '0')
-  const hours = String(targetTime.getHours()).padStart(2, '0')
-  const mins = String(targetTime.getMinutes()).padStart(2, '0')
-
-  reminderDate.value = `${year}-${month}-${day}`
-  reminderTime.value = `${hours}:${mins}`
+  if (reminderTime && currentReminderTask.value) {
+    try {
+      await window.electronAPI.tasks.setReminder(currentReminderTask.value, reminderTime.toISOString())
+      hideReminderModal()
+      await loadTasks()
+    } catch (error) {
+      console.error('设置提醒失败:', error)
+      alert('设置提醒失败')
+    }
+  }
 }
+
+
 
 const saveTaskReminder = async () => {
   if (!currentReminderTask.value) return
 
-  const date = reminderDate.value
-  const time = reminderTime.value
+  let reminderDateTime = null
 
-  if (!date || !time) {
-    alert('请选择提醒时间')
-    return
+  // 优先使用 VueDatePicker 的值
+  if (dateTimeValue.value) {
+    reminderDateTime = new Date(dateTimeValue.value)
+  } else {
+    // 回退到手动输入的日期时间
+    const date = reminderDate.value
+    const time = reminderTime.value
+
+    if (!date || !time) {
+      alert('请选择提醒时间')
+      return
+    }
+
+    // 使用本地时区创建日期对象
+    const [year, month, day] = date.split('-').map(Number)
+    const [hours, minutes] = time.split(':').map(Number)
+    reminderDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
   }
-
-  // 使用本地时区创建日期对象
-  const [year, month, day] = date.split('-').map(Number)
-  const [hours, minutes] = time.split(':').map(Number)
-  const reminderDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
 
   console.log("本地时区提醒时间:", reminderDateTime)
   if (reminderDateTime <= new Date()) {
@@ -444,6 +474,21 @@ const saveTaskReminder = async () => {
     alert('设置提醒失败')
   }
 }
+
+// 获取本地日期字符串（避免时区问题）
+const getLocalDateString = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 获取最小日期
+const getMinDate = () => {
+  const today = new Date()
+  return getLocalDateString(today)
+}
+
 
 const getStatusText = (status) => {
   return taskStore.getStatusText(status)
@@ -639,6 +684,11 @@ const stopUpdateTimer = () => {
 onMounted(async () => {
   await loadTasks()
 
+  // 加载自定义提醒选项
+  if (!customReminderOptions.value || customReminderOptions.value.length === 0) {
+    await taskStore.loadCustomReminderOptions()
+  }
+
   if (quickAddInput.value) {
     quickAddInput.value.focus()
   }
@@ -663,4 +713,5 @@ watch(() => [taskStore.currentCategory, taskStore.currentListId], () => {
 
 <style scoped>
 @import '@/assets/styles/components/task-panel.css';
+@import '@/assets/styles/components/VueDatePicker.css';
 </style>
