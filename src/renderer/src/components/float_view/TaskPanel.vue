@@ -132,7 +132,8 @@
             </svg>
           </button>
         </div>
-        <!-- 快速提醒选项 -->
+        <div class="modal-body">
+          <!-- 快速提醒选项 -->
           <div class="reminder-options">
             <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option"
               @click="selectCustomReminder(reminder)">
@@ -140,6 +141,8 @@
               <span>{{ reminder.label }}</span>
             </button>
           </div>
+
+        </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="hideReminderModal">取消</button>
           <button class="btn btn-primary" @click="saveTaskReminder">保存</button>
@@ -475,19 +478,7 @@ const saveTaskReminder = async () => {
   }
 }
 
-// 获取本地日期字符串（避免时区问题）
-const getLocalDateString = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
-// 获取最小日期
-const getMinDate = () => {
-  const today = new Date()
-  return getLocalDateString(today)
-}
 
 
 const getStatusText = (status) => {
@@ -606,7 +597,7 @@ const createFloatingTask = async () => {
   if (!selectedTask.value) return
 
   try {
-    await window.electronAPI.windows.createFloatingTask(selectedTask.value.id)
+    await window.Electron.windows.createFloatingTask(selectedTask.value.id)
     hideContextMenu()
   } catch (error) {
     console.error('创建悬浮任务失败:', error)

@@ -1,26 +1,17 @@
 <template>
   <div class="floating-icon-container">
-    <button
-      ref="floatingIconRef"
-      :class="[
-        'floating-icon',
-        isAlert ? 'floating-icon--alert' : 'floating-icon--normal',
-        isDragging ? 'floating-icon--dragging' : '',
-        isPending ? 'floating-icon--pending' : ''
-      ]"
-      @mousedown="handleMouseDown"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
-      @click="handleClick"
-      :disabled="isPending"
-    >
+    <button ref="floatingIconRef" :class="[
+      'floating-icon',
+      isAlert ? 'floating-icon--alert' : 'floating-icon--normal',
+      isDragging ? 'floating-icon--dragging' : '',
+      isPending ? 'floating-icon--pending' : ''
+    ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @click="handleClick"
+      :disabled="isPending">
       <!-- 默认图标 -->
-      <div
-        :class="[
-          'floating-icon-content floating-icon-content--default',
-          hasInProgressTasks ? 'floating-icon-content--in-progress' : ''
-        ]"
-      >
+      <div :class="[
+        'floating-icon-content floating-icon-content--default',
+        hasInProgressTasks ? 'floating-icon-content--in-progress' : ''
+      ]">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
@@ -36,13 +27,10 @@
       </div>
 
       <!-- 任务数量角标 -->
-      <div
-        v-if="taskCount > 0"
-        :class="[
-          'floating-icon-badge',
-          taskCount > 0 ? 'floating-icon-badge--show' : ''
-        ]"
-      >
+      <div v-if="taskCount > 0" :class="[
+        'floating-icon-badge',
+        taskCount > 0 ? 'floating-icon-badge--show' : ''
+      ]">
         <span class="floating-icon-badge-text">{{ taskCount > 99 ? '99+' : taskCount }}</span>
       </div>
     </button>
@@ -356,6 +344,16 @@ const updateTaskCount = async () => {
 
 const handleTaskReminder = (event, task) => {
   isAlert.value = true
+
+  // 强提醒：自动创建悬浮任务窗口
+  console.log('收到任务提醒，自动创建悬浮任务窗口:', task)
+  if (task && task.id) {
+    try {
+      window.electronAPI.windows.createFloatingTask(task.id)
+    } catch (error) {
+      console.error('自动创建悬浮任务失败:', error)
+    }
+  }
 
   // 不自动清除提醒状态，只有用户悬浮到图标上时才清除
   // 提醒状态将持续显示直到用户交互

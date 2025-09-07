@@ -1121,6 +1121,12 @@ class IpcHandlers {
       }
     });
     
+    // 强提醒：自动创建悬浮任务窗口
+    if (task && task.id) {
+      console.log('任务提醒触发，自动创建悬浮任务窗口，任务ID:', task.id);
+      this.windowManager.createFloatingTask(task.id);
+    }
+    
     if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
       console.log('发送任务提醒事件到悬浮窗口');
       this.windowManager.floatingWindow.webContents.send('task-reminder', task);

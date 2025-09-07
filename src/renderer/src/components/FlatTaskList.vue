@@ -3,8 +3,8 @@
     <!-- 添加任务区域 -->
     <!-- <TaskEdit ref="taskEditRef" :task="null" :is-editing="false" @add-task="handleAddTask" /> -->
 
-    <!-- 时间筛选器 - 只在计划中视图显示 -->
-    <div v-if="currentCategory === 'planned'" class="flat-task-list-time-filter-container">
+    <!-- 时间筛选器 - 在计划中、全部任务和清单视图中显示 -->
+    <div v-if="shouldShowTimeFilter" class="flat-task-list-time-filter-container">
       <TimeFilter 
         v-model="currentTimeFilter" 
         :tasks="props.tasks"
@@ -301,6 +301,18 @@ const taskStore = useTaskStore()
 // 获取当前分类
 const currentCategory = computed(() => taskStore.currentCategory)
 
+// 计算属性：是否应该显示时间过滤器
+const shouldShowTimeFilter = computed(() => {
+  const category = currentCategory.value
+  const isInList = taskStore.currentListId !== null
+  
+  // 在以下情况显示时间过滤器：
+  // 1. 计划中分类
+  // 2. 全部任务分类
+  // 3. 在任何清单中
+  return category === 'planned' || category === 'all' || isInList
+})
+
 // 时间筛选相关
 const currentTimeFilter = ref('all')
 
@@ -310,9 +322,10 @@ const handleTimeFilterChange = (filterKey) => {
   // 不修改 currentCategory，只更新本地筛选状态
 }
 
-// 监听分类变化，当切换到非planned分类时，重置时间筛选器为'all'
-watch(() => currentCategory.value, (newCategory) => {
-  if (newCategory !== 'planned') {
+// 监听分类变化，当切换到不支持时间筛选的分类时，重置时间筛选器为'all'
+watch(() => [currentCategory.value, taskStore.currentListId], ([newCategory, newListId]) => {
+  // 如果切换到不支持时间筛选的分类，重置筛选器
+  if (!shouldShowTimeFilter.value) {
     currentTimeFilter.value = 'all'
   }
 })
