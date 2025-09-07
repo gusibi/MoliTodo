@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import ReportService from '../../../infrastructure/ai/reportService.js'
 // 搜索功能通过 IPC 调用主进程
 
 export const useTaskStore = defineStore('task', () => {
@@ -1849,6 +1850,16 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 生成报告（通过 ReportService）
+  const generateReport = async (tasks, filterType, userTemplates = {}) => {
+    try {
+      return await ReportService.generateReport(tasks, filterType, userTemplates)
+    } catch (error) {
+      console.error('[taskStore] generateReport 失败:', error)
+      throw error
+    }
+  }
+
   return {
     // 状态
     tasks,
@@ -1972,6 +1983,7 @@ export const useTaskStore = defineStore('task', () => {
     generateTaskList,
     streamGenerateTaskList,
     streamGenerateReport,
+    generateReport,
 
     // AI 相关状态
     availableAIModels,

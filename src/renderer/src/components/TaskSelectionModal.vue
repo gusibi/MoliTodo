@@ -81,72 +81,68 @@
       <!-- 模态框底部操作 -->
       <div class="task-selection-modal-actions">
         <div class="selection-options">
-          <div class="report-type-selector">
-            <label>报告类型：</label>
-            <select v-model="selectedReportType" class="report-type-select">
-              <option value="daily">日报</option>
-              <option value="weekly">周报</option>
-            </select>
-          </div>
-          
-          <div class="ai-model-selector">
-            <label>AI 模型：</label>
-            <div class="ai-model-dropdown" :class="{ 'open': showAIModelDropdown }">
-              <button 
-                class="ai-model-button"
-                @click="toggleAIModelDropdown"
-                :disabled="!hasAvailableModels"
-              >
-                <div v-if="selectedAIModel" class="selected-model">
-                  <span class="model-name">{{ selectedAIModel.name }}</span>
-                  <span class="model-provider">{{ selectedAIModel.provider }}</span>
-                </div>
-                <div v-else class="no-model">
-                  {{ hasAvailableModels ? '选择 AI 模型' : '未配置 AI 模型' }}
-                </div>
-                <i class="fas fa-chevron-down dropdown-icon"></i>
-              </button>
-              
-              <div v-if="showAIModelDropdown" class="ai-model-list">
-                <div 
-                  v-for="model in availableAIModels" 
-                  :key="model.id"
-                  class="ai-model-item"
-                  :class="{ 'selected': selectedAIModel?.id === model.id }"
-                  @click="selectAIModel(model)"
+          <div class="left-controls">
+            <div class="ai-model-selector">
+              <div class="ai-model-dropdown" :class="{ 'open': showAIModelDropdown }">
+                <button 
+                  class="ai-model-button"
+                  @click="toggleAIModelDropdown"
+                  :disabled="!hasAvailableModels"
                 >
-                  <div class="ai-model-info">
-                    <div class="ai-model-name">{{ model.name }}</div>
-                    <div class="ai-model-provider">{{ model.provider }}</div>
+                  <div v-if="selectedAIModel" class="selected-model">
+                    <span class="model-name">{{ selectedAIModel.name }}</span>
+                    <span class="model-provider">{{ selectedAIModel.provider }}</span>
                   </div>
-                  <div v-if="selectedAIModel?.id === model.id" class="ai-model-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                  <div v-else class="no-model">
+                    {{ hasAvailableModels ? '选择 AI 模型' : '未配置 AI 模型' }}
                   </div>
-                </div>
+                  <i class="fas fa-chevron-down dropdown-icon"></i>
+                </button>
                 
-                <div v-if="!hasAvailableModels" class="no-models-message">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <span>请先在设置中配置 AI 模型</span>
+                <div v-if="showAIModelDropdown" class="ai-model-list">
+                  <div 
+                    v-for="model in availableAIModels" 
+                    :key="model.id"
+                    class="ai-model-item"
+                    :class="{ 'selected': selectedAIModel?.id === model.id }"
+                    @click="selectAIModel(model)"
+                  >
+                    <div class="ai-model-info">
+                      <div class="ai-model-name">{{ model.name }}</div>
+                      <div class="ai-model-provider">{{ model.provider }}</div>
+                    </div>
+                    <div v-if="selectedAIModel?.id === model.id" class="ai-model-check">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div v-if="!hasAvailableModels" class="no-models-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>请先在设置中配置 AI 模型</span>
+                  </div>
                 </div>
               </div>
             </div>
+             <div class="report-type-selector">
+              <select v-model="selectedReportType" class="report-type-select">
+                <option value="daily">日报</option>
+                <option value="weekly">周报</option>
+              </select>
+            </div>
           </div>
-        </div>
-        
-        <div class="action-buttons">
-          <button @click="closeModal" class="cancel-btn">
-            取消
-          </button>
-          <button 
-            @click="confirmGeneration" 
-            class="confirm-btn"
-            :disabled="selectedTasks.length === 0 || !selectedAIModel"
-          >
-            <i class="fas fa-robot"></i>
-            生成报告 ({{ selectedTasks.length }} 个任务)
-          </button>
+          
+          <div class="right-controls">
+            <button 
+              @click="confirmGeneration" 
+              class="confirm-btn"
+              :disabled="selectedTasks.length === 0 || !selectedAIModel"
+            >
+              <i class="fas fa-robot"></i>
+              生成报告
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -535,7 +531,15 @@ onMounted(() => {
 }
 
 .selection-options {
-  @apply flex items-center gap-6;
+  @apply flex items-center justify-between;
+}
+
+.left-controls {
+  @apply flex items-center gap-4;
+}
+
+.right-controls {
+  @apply flex items-center;
 }
 
 .report-type-selector {
@@ -543,7 +547,8 @@ onMounted(() => {
 }
 
 .report-type-select {
-  @apply px-2 py-1 border border-border rounded bg-background text-foreground;
+  @apply px-3 py-2 border border-border rounded bg-background text-foreground;
+  @apply h-10 min-w-[120px];
 }
 
 .ai-model-selector {
@@ -558,6 +563,7 @@ onMounted(() => {
   @apply flex items-center justify-between gap-2 px-3 py-2 border border-border rounded bg-background text-foreground;
   @apply hover:bg-muted transition-colors duration-200 min-w-[200px];
   @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply h-10;
 }
 
 .selected-model {
@@ -565,11 +571,11 @@ onMounted(() => {
 }
 
 .model-name {
-  @apply font-medium text-foreground;
+  @apply text-xs font-medium text-foreground;
 }
 
 .model-provider {
-  @apply text-xs text-muted-foreground;
+  @apply text-2xs text-muted-foreground;
 }
 
 .no-model {
@@ -622,10 +628,6 @@ onMounted(() => {
   @apply text-yellow-500;
 }
 
-.action-buttons {
-  @apply flex items-center gap-3;
-}
-
 .cancel-btn {
   @apply px-4 py-2 bg-muted text-foreground rounded-md;
   @apply hover:bg-muted/80 transition-colors duration-200;
@@ -636,6 +638,7 @@ onMounted(() => {
   @apply hover:bg-primary/90 transition-colors duration-200;
   @apply flex items-center gap-2;
   @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply h-10;
 }
 
 /* 自定义复选框样式 */

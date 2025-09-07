@@ -240,7 +240,7 @@ import TaskPreviewModal from './TaskPreviewModal.vue'
 import TimeFilter from './TimeFilter.vue'
 import TaskSelectionModal from './TaskSelectionModal.vue'
 import ReportModal from './ReportModal.vue'
-import ReportService from '../services/reportService.js'
+// ReportService 现在通过 taskStore 调用
 import { getListIconClass } from '@/utils/icon-utils'
 
 // 定义 props
@@ -416,7 +416,7 @@ const handleTaskSelectionConfirm = async (selectionData) => {
 
     // 使用报告服务生成提示
     console.log('[FlatTaskList] 开始生成报告数据...')
-    const reportData = await ReportService.generateReport(
+    const reportData = await taskStore.generateReport(
       selectionData.tasks,
       selectionData.filterType,
       aiConfig.reportTemplates || {}

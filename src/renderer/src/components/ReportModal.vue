@@ -21,28 +21,6 @@
       
       <!-- 报告内容区域 -->
       <div class="report-modal-content">
-        <!-- 加载状态 -->
-        <div v-if="isGenerating" class="report-loading">
-          <div class="loading-spinner"></div>
-          <div class="loading-text">
-            <p>AI正在分析任务并生成报告...</p>
-            <p class="loading-detail">{{ loadingMessage }}</p>
-          </div>
-        </div>
-        
-        <!-- 错误状态 -->
-        <div v-else-if="error" class="report-error">
-          <i class="fas fa-exclamation-circle"></i>
-          <div class="error-content">
-            <h4>生成失败</h4>
-            <p>{{ error }}</p>
-            <button @click="retryGeneration" class="retry-btn">
-              <i class="fas fa-redo"></i>
-              重试
-            </button>
-          </div>
-        </div>
-        
         <!-- AI生成过程展示区域 - 支持折叠 -->
         <div v-if="isGenerating || streamContent" class="report-stream-content">
           <div class="report-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
@@ -58,6 +36,19 @@
               等待AI响应中...
             </div>
             <div v-else class="report-stream-display" v-html="formattedStreamContent"></div>
+          </div>
+        </div>
+        
+        <!-- 错误状态 -->
+        <div v-else-if="error" class="report-error">
+          <i class="fas fa-exclamation-circle"></i>
+          <div class="error-content">
+            <h4>生成失败</h4>
+            <p>{{ error }}</p>
+            <button @click="retryGeneration" class="retry-btn">
+              <i class="fas fa-redo"></i>
+              重试
+            </button>
           </div>
         </div>
         
