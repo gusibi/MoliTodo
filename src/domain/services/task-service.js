@@ -111,10 +111,19 @@ class TaskService {
     }
 
     // 如果是重复任务，创建下一个实例
+    let nextInstanceCreated = false;
     if (task.isRecurring()) {
-      await this.createNextRecurringInstance(task);
+      const nextInstance = await this.createNextRecurringInstance(task);
+      nextInstanceCreated = nextInstance !== null;
+      
+      // 如果成功创建了新实例，清理当前任务的重复数据
+      if (nextInstanceCreated) {
+        task.clearRecurrence();
+      }
     }
 
+    // 设置完成时间并标记为完成
+    task.completedAt = new Date();
     task.markAsCompleted();
     return await this.taskRepository.save(task);
   }

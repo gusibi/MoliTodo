@@ -184,15 +184,15 @@ const closeFieldModal = () => {
 }
 
 .task-details-modal-container {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-7xl w-full mx-4 max-h-[90vh] flex flex-col;
+  @apply bg-card rounded-lg shadow-xl max-w-7xl w-full mx-4 max-h-[90vh] flex flex-col;
 }
 
 .task-details-modal-header {
-  @apply flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700;
+  @apply flex items-center justify-between p-6 border-b border-border;
 }
 
 .task-details-modal-title {
-  @apply text-xl font-semibold text-gray-900 dark:text-white;
+  @apply text-xl font-semibold text-card-foreground;
 }
 
 .task-details-modal-close-btn {
@@ -209,23 +209,23 @@ const closeFieldModal = () => {
 }
 
 .task-details-table-header {
-  @apply bg-gray-50 dark:bg-gray-700 sticky top-0;
+  @apply bg-muted sticky top-0;
 }
 
 .task-details-table-th {
-  @apply px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600;
+  @apply px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border;
 }
 
 .task-details-table-body {
-  @apply bg-white dark:bg-gray-800;
+  @apply bg-card;
 }
 
 .task-details-table-row {
-  @apply hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors;
+  @apply hover:bg-muted/50 transition-colors;
 }
 
 .task-details-table-td {
-  @apply px-4 py-3 border-b border-gray-200 dark:border-gray-600;
+  @apply px-4 py-3 border-b border-border;
 }
 
 .task-details-cell-content {
@@ -233,7 +233,7 @@ const closeFieldModal = () => {
 }
 
 .task-details-simple-value {
-  @apply text-sm text-gray-900 dark:text-gray-100 truncate block;
+  @apply text-sm text-card-foreground truncate block;
 }
 
 .task-details-complex-btn {
@@ -242,15 +242,15 @@ const closeFieldModal = () => {
 
 /* 分页样式 */
 .task-details-pagination {
-  @apply flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700;
+  @apply flex items-center justify-between p-6 border-t border-border;
 }
 
 .task-details-pagination-btn {
-  @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-md hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
 }
 
 .task-details-pagination-info {
-  @apply text-sm text-gray-700 dark:text-gray-300;
+  @apply text-sm text-muted-foreground;
 }
 
 /* 字段详情模态框样式 */
@@ -260,15 +260,15 @@ const closeFieldModal = () => {
 }
 
 .task-details-field-modal-container {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col;
+  @apply bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col;
 }
 
 .task-details-field-modal-header {
-  @apply flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700;
+  @apply flex items-center justify-between p-4 border-b border-border;
 }
 
 .task-details-field-modal-title {
-  @apply text-lg font-medium text-gray-900 dark:text-white;
+  @apply text-lg font-medium text-card-foreground;
 }
 
 .task-details-field-modal-content {
@@ -276,7 +276,7 @@ const closeFieldModal = () => {
 }
 
 .task-details-field-value {
-  @apply text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded border;
+  @apply text-sm text-card-foreground whitespace-pre-wrap font-mono bg-muted p-4 rounded border;
 }
 
 /* 滚动条样式适配主题 */
@@ -287,25 +287,17 @@ const closeFieldModal = () => {
 
 .task-details-table-container::-webkit-scrollbar-track,
 .task-details-field-modal-content::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-700 rounded;
+  @apply bg-muted rounded;
 }
 
 .task-details-table-container::-webkit-scrollbar-thumb,
 .task-details-field-modal-content::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-500 rounded hover:bg-gray-400 dark:hover:bg-gray-400;
+  @apply bg-border rounded hover:bg-muted-foreground;
 }
 
 /* Firefox 滚动条样式 */
 .task-details-table-container,
 .task-details-field-modal-content {
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f3f4f6;
-}
-
-@media (prefers-color-scheme: dark) {
-  .task-details-table-container,
-  .task-details-field-modal-content {
-    scrollbar-color: #6b7280 #374151;
-  }
 }
 </style>

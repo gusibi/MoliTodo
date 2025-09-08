@@ -145,7 +145,7 @@
     <!-- 任务详情模态框 -->
     <TaskDetailsModal 
       v-if="showTaskDetailsModal" 
-      :tasks="taskStore.tasks" 
+      :tasks="displayTasks" 
       @close="showTaskDetailsModal = false" 
     />
 
