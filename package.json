@@ -73,6 +73,7 @@
       "src/application/**/*",
       "src/renderer/dist/**/*",
       "resources/**/*",
+      "src/utils/**/*",
       "node_modules/**/*"
     ],
     "extraResources": [
