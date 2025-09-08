@@ -384,14 +384,16 @@ onMounted(() => {
 
 <style scoped>
 .task-selection-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
-  backdrop-filter: blur(4px);
+  @apply fixed inset-0 bg-black/50 flex items-start justify-center z-50;
+  overflow-y: auto;
 }
 
 .task-selection-modal {
   @apply bg-background border border-border rounded-lg shadow-2xl;
-  @apply w-full max-w-2xl max-h-[80vh] flex flex-col;
-  @apply mx-4;
+  @apply w-full max-w-2xl max-h-[calc(100vh-4rem)] flex flex-col;
+  @apply mx-4 my-auto;
+  position: sticky;
+  top: 2rem;
 }
 
 .task-selection-modal-header {
@@ -674,6 +676,15 @@ input[type="checkbox"]:indeterminate + .checkmark::after {
 }
 
 /* 滚动条样式 */
+.task-selection-modal-overlay::-webkit-scrollbar {
+  display: none;
+}
+
+.task-selection-modal-overlay {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .task-list::-webkit-scrollbar {
   @apply w-2;
 }

@@ -9,7 +9,7 @@
     <main class="task-manager-main-content pt-4 flex flex-col">
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
-        <div class="task-manager-category-title">
+        <div class="task-manager-category-title" @click="handleEasterEggClick">
           <i :class="getCurrentIcon()" class="task-manager-category-icon" :style="getCurrentIconStyle()"></i>
           <h1 class="task-manager-category-name">{{ getCurrentTitle() }}</h1>
           <span class="task-manager-category-count">{{ getCurrentCount() }} 个任务</span>
@@ -142,6 +142,13 @@
       {{ tooltip.text }}
     </div>
 
+    <!-- 任务详情模态框 -->
+    <TaskDetailsModal 
+      v-if="showTaskDetailsModal" 
+      :tasks="taskStore.tasks" 
+      @close="showTaskDetailsModal = false" 
+    />
+
   </div>
 </template>
 
@@ -153,6 +160,7 @@ import MonthlyView from './calender_view/MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
 import KanbanBoard from './kanban_view/KanbanBoard.vue'
+import TaskDetailsModal from './TaskDetailsModal.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 
@@ -199,6 +207,11 @@ const tooltip = ref({
   text: '',
   style: {}
 })
+
+// 彩蛋功能相关
+const easterEggClickCount = ref(0)
+const easterEggTimer = ref(null)
+const showTaskDetailsModal = ref(false)
 
 // 计算属性
 const loading = computed(() => taskStore.loading)
@@ -443,6 +456,28 @@ const getCurrentIconStyle = () => {
     return { color: currentList.value.color }
   }
   return {}
+}
+
+// 彩蛋功能：连续点击5次显示任务详情表格
+const handleEasterEggClick = () => {
+  easterEggClickCount.value++
+  
+  // 清除之前的定时器
+  if (easterEggTimer.value) {
+    clearTimeout(easterEggTimer.value)
+  }
+  
+  // 如果达到5次点击，显示模态框
+  if (easterEggClickCount.value >= 5) {
+    showTaskDetailsModal.value = true
+    easterEggClickCount.value = 0
+    return
+  }
+  
+  // 2秒后重置点击计数
+  easterEggTimer.value = setTimeout(() => {
+    easterEggClickCount.value = 0
+  }, 2000)
 }
 
 const getCurrentCount = () => {
