@@ -5,7 +5,7 @@
   
   **AI 智能驱动的悬浮式待办事项应用**
   
-  [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
+  [![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](package.json)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](#支持平台)
   [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D.svg)](https://vuejs.org/)
@@ -19,7 +19,8 @@ MoliTodo is a modern AI-powered desktop task management application that provide
 ### Core Features
 
 - 🤖 **AI Task Generation** - Natural language task creation with multi-provider AI support (OpenAI, Google, Anthropic, xAI)
-- 📊 **AI Report Generation** - Intelligent daily and weekly report generation with customizable templates  
+- 📊 **AI Report Generation** - Intelligent daily and weekly report generation with customizable templates
+- 🥚 **Database View Easter Egg** - Hidden developer-friendly database view (click 5 times to activate)
 - 🎯 **Seamless Integration** - Floating icon stays on desktop without interrupting workflow
 - ⚡ **Instant Operations** - Hover to view, quick add, one-click complete
 - 🔄 **Recurring Tasks** - Comprehensive recurring task system supporting daily, weekly, monthly, yearly patterns
@@ -38,6 +39,25 @@ MoliTodo is a modern AI-powered desktop task management application that provide
 
 - **macOS**: `MoliTodo-{version}-x64.dmg` (Intel) / `MoliTodo-{version}-arm64.dmg` (Apple Silicon)
 - **Windows**: `MoliTodo Setup {version}.exe`
+
+#### 🍎 macOS 用户重要提示
+
+由于应用未经过 Apple 开发者认证，macOS 用户在首次运行或每次更新后需要执行以下命令来移除系统隔离限制：
+
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
+```
+
+**何时需要执行**:
+- 首次安装后
+- 每次应用更新后  
+- 遇到"无法打开应用程序"提示时
+
+**操作步骤**:
+1. 打开终端（Terminal）
+2. 复制粘贴上述命令
+3. 输入管理员密码确认
+4. 重新启动 MoliTodo
 
 #### 从源码运行
 
@@ -163,6 +183,40 @@ AI Generated:
   <img src="screenshots/settings-demo.png" alt="Settings" width="600">
   <p><em>Comprehensive settings with custom reminder configuration</em></p>
 </div>
+
+## 🥚 Hidden Database View (Easter Egg)
+
+### Developer-Friendly Data Transparency
+
+MoliTodo includes a special hidden feature for developers and advanced users who want to peek under the hood. This easter egg provides complete transparency into the application's data storage layer.
+
+### How to Activate
+- **Trigger Method**: Click 5 times rapidly anywhere in the application
+- **Hidden Feature**: A comprehensive database view modal will appear
+- **Read-Only Access**: Safely view all task data without risk of accidental modifications
+
+### Database View Features
+- **Complete Field Display**: Shows all database fields including `id`, `content`, `status`, `metadata`, `recurrence`, etc.
+- **Professional Table Layout**: Clean, responsive table design with pagination support
+- **Intelligent Field Recognition**: Automatically distinguishes between simple and complex data fields
+- **Detailed Field Viewer**: Click "View Details" for complex JSON fields and long text content
+- **Bilingual Field Labels**: Chinese-English field name mapping for better understanding
+- **Theme Adaptive**: Perfect support for light/dark theme switching
+
+### Why This Matters
+- **Data Transparency**: Users can see exactly how their data is stored and structured
+- **Educational Value**: Helps developers understand modern task management data models
+- **Debugging Tool**: Provides valuable insights for troubleshooting issues
+- **Trust Building**: Demonstrates commitment to transparency and user empowerment
+
+### For Developers
+This feature serves as an excellent learning resource for understanding:
+- Database schema design in modern web applications
+- Task entity relationships and data modeling
+- SQLite implementation patterns
+- Vue.js component architecture for data visualization
+
+---
 
 ## 📚 文档
 

@@ -5,7 +5,7 @@
   
   **AI 智能驱动的悬浮式待办事项应用**
   
-  [![Version](https://img.shields.io/badge/version-0.9.1-blue.svg)](package.json)
+  [![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](package.json)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](#支持平台)
   [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D.svg)](https://vuejs.org/)
@@ -19,6 +19,8 @@ MoliTodo 是一款采用 AI 智能技术驱动的现代桌面待办事项应用�
 ### 核心特性
 
 - 🤖 **AI 智能任务生成** - 多提供商 AI 支持自然语言任务创建（OpenAI、Google、Anthropic、xAI）
+- 📊 **AI 智能报告生成** - 智能日报和周报生成，支持自定义模板
+- 🥚 **数据库视图彩蛋** - 隐藏的开发者友好型数据库视图（连续点击 5 次激活）
 - 🎯 **无缝集成** - 悬浮图标常驻桌面，不打断工作流
 - ⚡ **即时操作** - 悬停查看，快速添加，一键完成
 - 🔄 **重复任务** - 支持日、周、月、年全面重复任务模式
@@ -37,6 +39,25 @@ MoliTodo 是一款采用 AI 智能技术驱动的现代桌面待办事项应用�
 
 - **macOS**: `MoliTodo-{version}-x64.dmg` (Intel) / `MoliTodo-{version}-arm64.dmg` (Apple Silicon)
 - **Windows**: `MoliTodo Setup {version}.exe`
+
+#### 🍎 macOS 用户重要提示
+
+由于应用未经过 Apple 开发者认证，macOS 用户在首次运行或每次更新后需要执行以下命令来移除系统隔离限制：
+
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
+```
+
+**何时需要执行**:
+- 首次安装后
+- 每次应用更新后  
+- 遇到"无法打开应用程序"提示时
+
+**操作步骤**:
+1. 打开终端（Terminal）
+2. 复制粘贴上述命令
+3. 输入管理员密码确认
+4. 重新启动 MoliTodo
 
 #### 从源码运行
 
@@ -162,6 +183,40 @@ AI 生成:
   <img src="screenshots/settings-interface.png" alt="设置" width="600">
   <p><em>全面设置界面，支持自定义提醒配置</em></p>
 </div>
+
+## 🥚 隐藏数据库视图（彩蛋功能）
+
+### 开发者友好的数据透明度
+
+MoliTodo 包含了一个为开发者和高级用户设计的特殊隐藏功能，让您能够深入了解应用的底层数据存储结构。这个彩蛋功能提供了对应用数据存储层的完整透明访问。
+
+### 如何激活
+- **触发方式**: 在应用中的任何位置快速连续点击 5 次
+- **隐藏功能**: 会出现一个全面的数据库视图模态框
+- **只读访问**: 安全地查看所有任务数据，无意外修改风险
+
+### 数据库视图特性
+- **完整字段显示**: 展示所有数据库字段，包括 `id`、`content`、`status`、`metadata`、`recurrence` 等
+- **专业表格布局**: 清晰、响应式的表格设计，支持分页显示
+- **智能字段识别**: 自动区分简单和复杂数据字段
+- **详细字段查看器**: 点击“查看详情”查看复杂 JSON 字段和长文本内容
+- **双语字段标签**: 中英文字段名称映射，便于理解
+- **主题自适应**: 完美支持明暗主题切换
+
+### 为什么重要
+- **数据透明度**: 用户可以准确了解数据的存储和结构方式
+- **教育价值**: 帮助开发者理解现代任务管理数据模型
+- **调试工具**: 为问题排查提供宝贵的内部视图
+- **信任建立**: 展示对透明度和用户授权的承诺
+
+### 对于开发者
+这个功能是了解以下内容的优秀学习资源：
+- 现代 Web 应用中的数据库模式设计
+- 任务实体关系和数据建模
+- SQLite 实现模式
+- 数据可视化的 Vue.js 组件架构
+
+---
 
 ## 📚 文档
 
