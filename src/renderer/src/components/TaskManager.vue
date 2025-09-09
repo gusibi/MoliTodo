@@ -12,7 +12,7 @@
         <div class="task-manager-category-title" @click="handleEasterEggClick">
           <i :class="getCurrentIcon()" class="task-manager-category-icon" :style="getCurrentIconStyle()"></i>
           <h1 class="task-manager-category-name">{{ getCurrentTitle() }}</h1>
-          <span class="task-manager-category-count">{{ getCurrentCount() }} 个任务</span>
+          <span class="task-manager-category-count">{{ $t('tasks.totalTasks', { count: getCurrentCount() }) }}</span>
         </div>
 
         <!-- 右侧按钮组 -->
@@ -22,7 +22,7 @@
             <!-- 搜索框 -->
             <div v-if="showSearchBox" class="task-manager-inline-search">
               <i class="fas fa-search task-manager-inline-search-icon"></i>
-              <input v-model="searchQuery" type="text" placeholder="搜索任务..." @keyup.escape="toggleSearch"
+              <input v-model="searchQuery" type="text" :placeholder="$t('common.search')" @keyup.escape="toggleSearch"
                 @keydown.enter="performSearch" @input="handleSearchInput" @blur="handleSearchBlur" ref="searchInput"
                 class="task-manager-inline-search-input" />
               <button v-if="searchQuery" class="task-manager-inline-clear" @click="clearSearch">
@@ -31,20 +31,20 @@
             </div>
 
             <!-- 搜索按钮 -->
-            <button v-else @click="toggleSearch" class="task-manager-action-btn" title="搜索">
+            <button v-else @click="toggleSearch" class="task-manager-action-btn" :title="$t('common.search')">
               <i class="fas fa-search"></i>
             </button>
           </div>
 
           <!-- 列表视图按钮 -->
           <button v-if="supportsMultipleViews" @click="setViewMode('list')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]" title="列表视图">
+            :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]" :title="$t('views.listView')">
             <i class="fas fa-list"></i>
           </button>
 
           <!-- 看板视图按钮 -->
           <button v-if="supportsMultipleViews" @click="setViewMode('kanban')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]" title="看板视图">
+            :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]" :title="$t('views.kanbanView')">
             <i class="fas fa-columns"></i>
           </button>
 
@@ -52,14 +52,14 @@
 
           <!-- 月视图按钮 -->
           <button v-if="supportsMonthlyView" @click="setViewMode('monthly')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'monthly' }]" title="月视图">
+            :class="['task-manager-action-btn', { 'active': viewMode === 'monthly' }]" :title="$t('views.monthlyView')">
             <i class="fas fa-calendar-alt"></i>
           </button>
 
           <!-- 显示/隐藏已完成任务按钮 -->
           <button v-if="showCompletedTasksButton" @click="toggleCompletedTasks"
             :class="['task-manager-action-btn', { 'active': showCompletedTasks }]"
-            :title="showCompletedTasks ? '隐藏已完成任务' : '显示已完成任务'">
+            :title="showCompletedTasks ? $t('tasks.hideCompleted') : $t('tasks.showCompleted')">
             <i class="fas fa-check-circle"></i>
           </button>
         </div>
@@ -154,6 +154,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './calender_view/MonthlyView.vue'
@@ -164,6 +165,7 @@ import TaskDetailsModal from './TaskDetailsModal.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 
+const { t, locale } = useI18n()
 const taskStore = useTaskStore()
 const isEditMode = ref(false)
 const editingTask = ref(null)
@@ -294,7 +296,7 @@ const handleAddTask = async (taskData) => {
 
 
 const handleDeleteTask = async (task) => {
-  if (confirm('确定要删除这个任务吗？')) {
+  if (confirm(t('tasks.confirmDelete'))) {
     try {
       await taskStore.deleteTask(task.id)
       
@@ -408,15 +410,15 @@ const handleHideEditPanel = () => {
 // 分类信息方法
 const getCategoryName = (category) => {
   const categoryNames = {
-    inbox: '收件箱',
-    today: '今天',
-    doing: '进行中',
-    paused: '暂停中',
-    planned: '计划中',
-    all: '所有任务',
-    completed: '已完成'
+    inbox: t('categories.inbox'),
+    today: t('categories.today'),
+    doing: t('categories.doing'),
+    paused: t('categories.paused'),
+    planned: t('categories.planned'),
+    all: t('categories.all'),
+    completed: t('categories.completed')
   }
-  return categoryNames[category] || '未知分类'
+  return categoryNames[category] || t('categories.unknown')
 }
 
 const getCategoryIcon = (category) => {
@@ -651,6 +653,13 @@ watch(() => taskStore.searchQuery, (newQuery) => {
 // 监听列表切换，关闭编辑面板
 watch(() => taskStore.currentListId, () => {
   handleHideEditPanel()
+})
+
+// 监听语言变化，确保组件正确响应
+watch(() => locale.value, (newLocale) => {
+  console.log('TaskManager: 语言已切换到', newLocale)
+  // Vue 的响应式系统会自动更新使用 t() 函数的文本
+  // 这里可以添加其他需要在语言切换时执行的逻辑
 })
 
 // 不需要监听分类变化来重置状态，因为每个分类都有独立的状态

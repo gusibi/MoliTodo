@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import i18n, { loadStoredLanguage } from './i18n'
 
 // Import global styles
 import './assets/styles/index.css'
@@ -16,6 +17,7 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(i18n)
 
 // 全局错误处理
 app.config.errorHandler = (err, instance, info) => {
@@ -40,4 +42,10 @@ window.addEventListener('unhandledrejection', (event) => {
 // 设置全局通知音效监听器
 setupGlobalNotificationListener()
 
-app.mount('#app')
+// 异步加载存储的语言设置，然后挂载应用
+loadStoredLanguage().then(() => {
+  app.mount('#app')
+}).catch((error) => {
+  console.warn('Failed to load stored language, using default:', error)
+  app.mount('#app')
+})

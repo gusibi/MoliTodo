@@ -1,11 +1,11 @@
 <template>
   <div class="ai-settings-container">
-    <h1 class="setting-page-title">AI 配置</h1>
-    <p class="setting-page-description">配置 AI 助手功能，支持多种 AI 提供商</p>
+    <h1 class="setting-page-title">{{ t('settings.ai') }}</h1>
+    <p class="setting-page-description">{{ t('settings.aiDescription') }}</p>
 
     <!-- AI 提供商列表 -->
     <div class="setting-group">
-      <h3 class="setting-group-title">AI 提供商</h3>
+      <h3 class="setting-group-title">{{ t('settings.aiProviders') }}</h3>
       <div class="ai-provider-list">
         <!-- 内置提供商 -->
         <div 
@@ -480,6 +480,10 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, h } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+// 使用 i18n
+const { t } = useI18n()
 
 // AI 配置数据
 const aiConfig = reactive({

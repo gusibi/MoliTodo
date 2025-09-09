@@ -1,14 +1,14 @@
 <template>
   <div>
-    <h1 class="setting-page-title">外观</h1>
-    <p class="setting-page-description">自定义应用的外观和主题</p>
+    <h1 class="setting-page-title">{{ $t('settings.appearance') }}</h1>
+    <p class="setting-page-description">{{ $t('settings.appearanceDescription') }}</p>
 
     <div class="setting-group">
-      <h3 class="setting-group-title">主题设置</h3>
+      <h3 class="setting-group-title">{{ $t('settings.themeSettings') }}</h3>
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">主题模式</div>
-          <div class="setting-item-description">选择浅色或深色模式</div>
+          <div class="setting-item-label">{{ $t('settings.themeMode') }}</div>
+          <div class="setting-item-description">{{ $t('settings.themeModeDescription') }}</div>
         </div>
         <div class="setting-item-control">
           <ThemeSwitcher />
@@ -34,10 +34,13 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import LogoSelector from './LogoSelector.vue'
 import FloatingIconSettings from './FloatingIconSettings.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   config: {
@@ -60,8 +63,8 @@ const handleLogoConfigUpdate = async (updatedConfig) => {
     }
     emit('update:config', 'selectedLogo', updatedConfig.selectedLogo)
   } catch (error) {
-    console.error('更新Logo配置失败:', error)
-    emit('show-message', '更新Logo配置失败', 'error')
+    console.error('Failed to update logo config:', error)
+    emit('show-message', t('settings.logoUpdateFailed'), 'error')
   }
 }
 
@@ -72,7 +75,7 @@ const updateConfig = async (key, value) => {
     }
     emit('update:config', key, value)
   } catch (error) {
-    console.error('更新配置失败:', error)
+    console.error('Failed to update config:', error)
     throw error
   }
 }

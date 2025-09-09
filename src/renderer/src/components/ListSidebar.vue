@@ -1,6 +1,6 @@
 <template>
   <!-- 清单分组标题 -->
-  <div class="nav-section-title">我的清单</div>
+  <div class="nav-section-title">{{ $t('lists.myLists') }}</div>
 
   <!-- 清单项直接输出，不包装额外容器 -->
   <template v-for="list in sortedLists" :key="list.id">
@@ -24,17 +24,17 @@
     <div v-if="showContextMenu" class="nav-context-menu" :style="contextMenuStyle" @click.stop>
       <div class="nav-context-item" @click="editList(contextMenuList)">
         <i class="fas fa-edit"></i>
-        <span>重命名</span>
+        <span>{{ $t('lists.rename') }}</span>
       </div>
       <div class="nav-context-item" @click="duplicateList(contextMenuList)">
         <i class="fas fa-copy"></i>
-        <span>复制清单</span>
+        <span>{{ $t('lists.duplicate') }}</span>
       </div>
       <div class="nav-context-divider"></div>
       <div class="nav-context-item danger" @click="deleteList(contextMenuList)"
         :class="{ disabled: contextMenuList?.isDefault }">
         <i class="fas fa-trash"></i>
-        <span>删除清单</span>
+        <span>{{ $t('lists.delete') }}</span>
       </div>
     </div>
 
@@ -42,28 +42,28 @@
     <div v-if="showDeleteDialog" class="nav-modal-overlay" @click="closeDeleteDialog">
       <div class="nav-delete-dialog" @click.stop>
         <div class="nav-dialog-header">
-          <h3>删除清单</h3>
+          <h3>{{ $t('lists.deleteTitle') }}</h3>
         </div>
         <div class="nav-dialog-body">
-          <p>确定要删除清单 "{{ deletingList?.name }}" 吗？</p>
+          <p>{{ $t('lists.confirmDelete', { name: deletingList?.name }) }}</p>
           <p v-if="getListTaskCount(deletingList?.id) > 0" class="nav-warning-text">
-            该清单中有 {{ getListTaskCount(deletingList?.id) }} 个任务，请选择处理方式：
+            {{ $t('lists.hasTasksWarning', { count: getListTaskCount(deletingList?.id) }) }}
           </p>
           <div v-if="getListTaskCount(deletingList?.id) > 0" class="nav-task-handling-options">
             <label class="nav-radio-option">
               <input type="radio" v-model="taskHandling" value="move" />
-              <span>移动到默认清单</span>
+              <span>{{ $t('lists.moveToDefault') }}</span>
             </label>
             <label class="nav-radio-option">
               <input type="radio" v-model="taskHandling" value="delete" />
-              <span class="nav-danger-text">同时删除所有任务</span>
+              <span class="nav-danger-text">{{ $t('lists.deleteAllTasks') }}</span>
             </label>
           </div>
         </div>
         <div class="nav-dialog-footer">
-          <button class="nav-btn-cancel" @click="closeDeleteDialog">取消</button>
+          <button class="nav-btn-cancel" @click="closeDeleteDialog">{{ $t('common.cancel') }}</button>
           <button class="nav-btn-danger" @click="confirmDeleteList"
-            :disabled="getListTaskCount(deletingList?.id) > 0 && !taskHandling">删除</button>
+            :disabled="getListTaskCount(deletingList?.id) > 0 && !taskHandling">{{ $t('lists.delete') }}</button>
         </div>
       </div>
     </div>
@@ -72,6 +72,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
 import { getListIconClass } from '@/utils/icon-utils'
@@ -82,6 +83,7 @@ export default {
     ListCreateDialog
   },
   setup() {
+    const { t } = useI18n()
     const taskStore = useTaskStore()
 
     // 响应式数据
@@ -147,11 +149,11 @@ export default {
 
     const duplicateList = async (list) => {
       try {
-        const newName = `${list.name} 副本`
+        const newName = `${list.name} ${t('lists.copy')}`
         await taskStore.createList(newName, list.color, list.icon)
         closeContextMenu()
       } catch (error) {
-        console.error('复制清单失败:', error)
+        console.error('Failed to duplicate list:', error)
       }
     }
 
@@ -177,7 +179,7 @@ export default {
         await taskStore.deleteList(deletingList.value.id, taskHandling.value)
         closeDeleteDialog()
       } catch (error) {
-        console.error('删除清单失败:', error)
+        console.error('Failed to delete list:', error)
       }
     }
 
@@ -197,7 +199,7 @@ export default {
         }
         closeCreateDialog()
       } catch (error) {
-        console.error('操作清单失败:', error)
+        console.error('Failed to operate list:', error)
       }
     }
 

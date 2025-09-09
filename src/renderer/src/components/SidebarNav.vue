@@ -5,39 +5,39 @@
       <div class="nav-section">
         <div class="nav-item" :class="{ active: currentCategory === 'today' }" @click="switchCategory('today')">
           <i class="fas fa-calendar-day"></i>
-          <span>今天</span>
+          <span>{{ $t('categories.today') }}</span>
           <span class="nav-count">{{ getCategoryCount('today') }}</span>
         </div>
         <div class="nav-item" :class="{ active: currentCategory === 'planned' }" @click="switchCategory('planned')">
           <i class="fas fa-calendar-week"></i>
-          <span>计划中</span>
+          <span>{{ $t('categories.planned') }}</span>
           <span class="nav-count">{{ getCategoryCount('planned') }}</span>
         </div>
 
         <div class="nav-item" :class="{ active: currentCategory === 'doing' }" @click="switchCategory('doing')">
           <i class="fas fa-play-circle"></i>
-          <span>进行中</span>
+          <span>{{ $t('categories.doing') }}</span>
           <span class="nav-count">{{ getCategoryCount('doing') }}</span>
         </div>
         <div class="nav-item" :class="{ active: currentCategory === 'paused' }" @click="switchCategory('paused')">
           <i class="fas fa-pause-circle"></i>
-          <span>暂停中</span>
+          <span>{{ $t('categories.paused') }}</span>
           <span class="nav-count">{{ getCategoryCount('paused') }}</span>
         </div>
 
         <div class="nav-item" :class="{ active: currentCategory === 'all' }" @click="switchCategory('all')">
           <i class="fas fa-list"></i>
-          <span>所有任务</span>
+          <span>{{ $t('categories.all') }}</span>
           <span class="nav-count">{{ getCategoryCount('all') }}</span>
         </div>
         <div class="nav-item" :class="{ active: currentCategory === 'inbox' }" @click="switchCategory('inbox')">
           <i class="fas fa-inbox"></i>
-          <span>收件箱</span>
+          <span>{{ $t('categories.inbox') }}</span>
           <span class="nav-count">{{ getCategoryCount('inbox') }}</span>
         </div>
         <div class="nav-item" :class="{ active: currentCategory === 'completed' }" @click="switchCategory('completed')">
           <i class="fas fa-check-circle"></i>
-          <span>已完成</span>
+          <span>{{ $t('categories.completed') }}</span>
           <span class="nav-count">{{ getCategoryCount('completed') }}</span>
         </div>
       </div>
@@ -50,10 +50,10 @@
 
     <!-- 底部按钮区 -->
     <div class="nav-section-bottom nav-icon-buttons">
-      <div class="nav-icon-btn" @click="openSettings" title="设置">
+      <div class="nav-icon-btn" @click="openSettings" :title="$t('settings.title')">
         <i class="fas fa-cog"></i>
       </div>
-      <div class="nav-icon-btn" @click="createNewList" title="新建清单">
+      <div class="nav-icon-btn" @click="createNewList" :title="$t('lists.newList')">
         <i class="fas fa-plus"></i>
       </div>
     </div>
@@ -62,6 +62,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import ListSidebar from './ListSidebar.vue'
 
@@ -76,7 +77,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['category-change', 'open-settings', 'create-list'])
 
-// Store
+// I18n and Store
+const { t } = useI18n()
 const taskStore = useTaskStore()
 
 // Refs

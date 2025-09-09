@@ -2,14 +2,14 @@
   <div v-if="visible" class="task-preview-modal-overlay">
     <div class="task-preview-dialog" @click.stop>
        <div class="task-preview-dialog-header">
-        <h3>AI 生成的任务列表</h3>
-        <button class="task-preview-close-btn" @click="close" title="关闭">
+        <h3>{{ $t('ai.generatedTaskList') }}</h3>
+        <button class="task-preview-close-btn" @click="close" :title="$t('common.close')">
           <i class="fas fa-times"></i>
         </button>
       </div>
       <!-- 原始输入内容展示 -->
       <div v-if="originalInput" class="task-preview-original-input">
-        <div class="task-preview-original-label">原始输入：</div>
+        <div class="task-preview-original-label">{{ $t('ai.originalInput') }}：</div>
         <div class="task-preview-original-content">{{ originalInput }}</div>
         <button 
           class="task-preview-copy-btn" 
@@ -19,7 +19,7 @@
             'copy-copying': copyStatus === 'copying'
           }"
           @click="copyOriginalInput"
-          :title="copyStatus === 'success' ? '复制成功!' : copyStatus === 'error' ? '复制失败' : '复制原始输入'"
+          :title="copyStatus === 'success' ? $t('ai.copySuccess') : copyStatus === 'error' ? $t('ai.copyFailed') : $t('ai.copyOriginalInput')"
           :disabled="copyStatus === 'copying'"
         >
           <div v-if="copyStatus === 'success'" class="copy-icon-success"></div>
@@ -36,13 +36,13 @@
             <i class="fas fa-robot"></i>
             <span class="flex items-center gap-2">
               <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-              {{ isLoading ? 'AI正在生成任务列表...' : 'AI生成详情' }}
+              {{ isLoading ? $t('ai.generatingTasks') : $t('ai.generationDetails') }}
             </span>
             <i :class="['fas', 'fa-chevron-down', 'task-preview-stream-toggle', { 'collapsed': isStreamCollapsed }]"></i>
           </div>
           <div v-show="!isStreamCollapsed" class="task-preview-stream-text">
             <div v-if="isLoading && !streamContent" class="task-preview-waiting-text">
-              等待AI响应中...
+              {{ $t('ai.waitingForResponse') }}
             </div>
             <div v-else>{{ streamContent }}</div>
           </div>
@@ -63,7 +63,7 @@
                   v-model="task.content"
                   type="text"
                   class="task-preview-input-main"
-                  placeholder="输入任务内容"
+                  :placeholder="$t('tasks.taskName')"
                   maxlength="200"
                 />
               </div>
@@ -71,7 +71,7 @@
                 <button 
                   class="task-preview-delete-btn"
                   @click="removeTask(index)"
-                  title="删除任务"
+                  :title="$t('tasks.deleteTask')"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
@@ -81,7 +81,7 @@
             <!-- 第二行：提醒时间 + 所属清单 -->
             <div class="task-preview-row task-preview-row-meta">
               <div class="task-preview-meta-item">
-                <label class="task-preview-meta-label">提醒时间</label>
+                <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
                 <input 
                   v-model="task.reminderTime"
                   type="datetime-local"
@@ -89,7 +89,7 @@
                 />
               </div>
               <div class="task-preview-meta-item">
-                <label class="task-preview-meta-label">所属清单</label>
+                <label class="task-preview-meta-label">{{ $t('tasks.belongToList') }}</label>
                 <select 
                   v-model="task.listId"
                   class="task-preview-select-meta"
@@ -107,11 +107,11 @@
             
             <!-- 第三行：备注 -->
             <div class="task-preview-row task-preview-row-note">
-              <label class="task-preview-note-label">备注</label>
+              <label class="task-preview-note-label">{{ $t('tasks.note') }}</label>
               <textarea 
                 v-model="task.metadata.note"
                 class="task-preview-input-note task-preview-textarea-note"
-                placeholder="添加备注"
+                :placeholder="$t('tasks.addNote')"
                 maxlength="1000"
                 rows="3"
                 @input="autoResizeTextarea"
@@ -123,7 +123,7 @@
             <div v-if="task.metadata.steps && task.metadata.steps.length > 0" class="task-preview-steps-header" @click="toggleSteps(index)">
               <label class="task-preview-steps-label">
                 <i class="fas fa-list-ol"></i>
-                执行步骤 ({{ task.metadata.steps.length }})
+                {{ $t('tasks.executionSteps') }} ({{ task.metadata.steps.length }})
               </label>
               <i :class="['fas', 'fa-chevron-down', 'task-preview-steps-toggle', { 'collapsed': task.stepsCollapsed }]"></i>
             </div>
@@ -141,7 +141,7 @@
                       v-model="step.content"
                       type="text"
                       class="task-preview-step-input"
-                      placeholder="步骤内容"
+                      :placeholder="$t('tasks.stepContent')"
                       maxlength="200"
                     />
                   </div>
@@ -150,16 +150,16 @@
                       v-model="step.status"
                       class="task-preview-step-status"
                     >
-                      <option value="todo">待办</option>
-                      <option value="doing">进行中</option>
-                      <option value="done">已完成</option>
+                      <option value="todo">{{ $t('tasks.pending') }}</option>
+                      <option value="doing">{{ $t('tasks.inProgress') }}</option>
+                      <option value="done">{{ $t('tasks.completed') }}</option>
                     </select>
                   </div>
                   <div class="task-preview-step-actions-wrapper">
                     <button 
                       class="task-preview-step-delete-btn"
                       @click="removeStep(index, stepIndex)"
-                      title="删除步骤"
+                      :title="$t('tasks.deleteStep')"
                     >
                       <i class="fas fa-times"></i>
                     </button>
@@ -171,14 +171,14 @@
         
         <div class="task-preview-footer">
           <div class="task-preview-stats">
-            <span class="task-preview-count">共 {{ taskList.length }} 个任务</span>
+            <span class="task-preview-count">{{ $t('tasks.totalTasks', { count: taskList.length }) }}</span>
           </div>
           <div class="task-preview-actions">
-            <button class="task-preview-btn task-preview-btn-secondary" @click="close">取消</button>
+            <button class="task-preview-btn task-preview-btn-secondary" @click="close">{{ $t('common.cancel') }}</button>
             <button class="task-preview-btn task-preview-btn-primary" @click="createAllTasks" :disabled="!canCreate || isCreating">
               <i v-if="isCreating" class="icon-loading"></i>
-              <span v-if="isCreating">创建中...</span>
-              <span v-else>创建所有任务</span>
+              <span v-if="isCreating">{{ $t('tasks.creating') }}</span>
+              <span v-else>{{ $t('tasks.createAllTasks') }}</span>
             </button>
           </div>
         </div>
@@ -189,6 +189,7 @@
 
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 
 export default {
@@ -213,6 +214,7 @@ export default {
   },
   emits: ['close', 'created'],
   setup(props, { emit }) {
+    const { t } = useI18n()
     const taskStore = useTaskStore()
     const isCreating = ref(false)
     const copyStatus = ref('idle') // 'idle', 'copying', 'success', 'error'

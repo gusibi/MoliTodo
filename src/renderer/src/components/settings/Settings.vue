@@ -2,7 +2,7 @@
   <div class="setting-main-container">
     <!-- 左侧导航栏 -->
     <div class="setting-sidebar">
-      <h2 class="setting-sidebar-title">设置</h2>
+      <h2 class="setting-sidebar-title">{{ $t('settings.title') }}</h2>
       <nav class="setting-nav-list">
         <div v-for="category in settingsCategories" :key="category.id" class="setting-nav-item"
           :class="{ 'setting-nav-item-active': activeCategory === category.id }" @click="activeCategory = category.id">
@@ -57,13 +57,15 @@
           <div v-if="activeCategory === 'statistics'">
             <StatisticsSettings />
           </div>
+
+
         </div>
       </div>
 
       <!-- 底部操作区 -->
       <div class="setting-actions">
-        <button class="setting-btn setting-btn-secondary" @click="resetToDefaults">恢复默认</button>
-        <button class="setting-btn setting-btn-primary" @click="saveAllSettings">保存设置</button>
+        <button class="setting-btn setting-btn-secondary" @click="resetToDefaults">{{ $t('settings.resetDefaults') }}</button>
+        <button class="setting-btn setting-btn-primary" @click="saveAllSettings">{{ $t('settings.saveSettings') }}</button>
       </div>
     </div>
 
@@ -79,7 +81,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import AISettings from './AISettings.vue'
@@ -90,11 +93,13 @@ import AppearanceSettings from './AppearanceSettings.vue'
 import DataSettings from './DataSettings.vue'
 import ReminderSettings from './ReminderSettings.vue'
 import StatisticsSettings from './StatisticsSettings.vue'
+
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '@/utils/task-utils.js'
 
-// 使用 taskStore
+// 使用 i18n 和 taskStore
+const { t } = useI18n()
 const taskStore = useTaskStore()
 
 // 响应式数据
@@ -135,39 +140,41 @@ const message = reactive({
   type: 'info'
 })
 
+
+
 // 设置分类
-const settingsCategories = [
+const settingsCategories = computed(() => [
   {
     id: 'general',
-    name: '通用',
+    name: t('settings.general'),
     icon: h('i', { class: 'fas fa-cog' })
   },
   {
     id: 'appearance',
-    name: '外观',
+    name: t('settings.appearance'),
     icon: h('i', { class: 'fas fa-palette' })
   },
   {
     id: 'data',
-    name: '数据管理',
+    name: t('settings.data'),
     icon: h('i', { class: 'fas fa-database' })
   },
   {
     id: 'reminders',
-    name: '提醒设置',
+    name: t('settings.reminders'),
     icon: h('i', { class: 'fas fa-bell' })
   },
   {
     id: 'ai',
-    name: 'AI 配置',
+    name: t('settings.ai'),
     icon: h('i', { class: 'fas fa-robot' })
   },
   {
     id: 'statistics',
-    name: '统计信息',
+    name: t('settings.statistics'),
     icon: h('i', { class: 'fas fa-chart-bar' })
   }
-]
+])
 
 // 方法
 const showMessage = (text, type = 'info') => {
@@ -188,7 +195,7 @@ const updateConfig = async (key, value) => {
       await window.electronAPI.config.set(key, value)
     }
   } catch (error) {
-    console.error('更新配置失败:', error)
+    console.error('Failed to update config:', error)
     throw error
   }
 }
@@ -200,7 +207,7 @@ const loadConfig = async () => {
       Object.assign(config, loadedConfig)
     }
   } catch (error) {
-    console.error('加载配置失败:', error)
+    console.error('Failed to load config:', error)
   }
 }
 
@@ -210,7 +217,7 @@ const loadDatabaseStats = async () => {
       databaseStats.value = await window.electronAPI.data.getStats()
     }
   } catch (error) {
-    console.error('加载数据库统计失败:', error)
+    console.error('Failed to load database stats:', error)
   }
 }
 
@@ -220,23 +227,23 @@ const loadTaskStats = async () => {
       taskStats.value = await window.electronAPI.tasks.getStats()
     }
   } catch (error) {
-    console.error('加载任务统计失败:', error)
+    console.error('Failed to load task stats:', error)
   }
 }
 
 
 
 const resetToDefaults = async () => {
-  if (confirm('确定要恢复默认设置吗？')) {
+  if (confirm(t('settings.confirmReset'))) {
     try {
       if (window.electronAPI && window.electronAPI.config) {
         await window.electronAPI.config.reset()
         await loadConfig()
-        showMessage('已恢复默认设置', 'success')
+        showMessage(t('settings.resetSuccess'), 'success')
       }
     } catch (error) {
-      console.error('恢复默认设置失败:', error)
-      showMessage('恢复失败', 'error')
+      console.error('Failed to reset settings:', error)
+      showMessage(t('settings.resetFailed'), 'error')
     }
   }
 }
@@ -245,11 +252,11 @@ const saveAllSettings = async () => {
   try {
     if (window.electronAPI && window.electronAPI.config) {
       await window.electronAPI.config.save()
-      showMessage('设置已保存', 'success')
+      showMessage(t('settings.saveSuccess'), 'success')
     }
   } catch (error) {
-    console.error('保存设置失败:', error)
-    showMessage('保存失败', 'error')
+    console.error('Failed to save settings:', error)
+    showMessage(t('settings.saveFailed'), 'error')
   }
 }
 
