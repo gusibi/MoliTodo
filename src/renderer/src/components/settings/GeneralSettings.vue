@@ -92,8 +92,8 @@
         </div>
         <div class="setting-item-control">
           <select 
-            v-model="currentLanguage" 
-            @change="changeLanguage(currentLanguage)"
+            :value="currentLanguage" 
+            @change="changeLanguage($event.target.value)"
             class="setting-select language-select"
           >
             <option 
@@ -114,9 +114,10 @@
 import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
-import { changeLanguage as changeI18nLanguage } from '@/i18n'
+import { useLanguage } from '@/composables/useLanguage'
 
 const { t, locale } = useI18n()
+const { switchLanguage } = useLanguage()
 
 const props = defineProps({
   config: {
@@ -144,7 +145,7 @@ const languages = [
   }
 ]
 
-const currentLanguage = computed(() => locale.value)
+const currentLanguage = computed(() => props.config.language || locale.value)
 
 // 方法
 const toggleAutoStart = async () => {
@@ -194,12 +195,16 @@ const changeLanguage = async (langCode) => {
   if (langCode === currentLanguage.value) return
   
   try {
-    // changeI18nLanguage 函数已经包含了保存配置的逻辑
-    await changeI18nLanguage(langCode)
+    // 使用全局语言管理切换语言
+    await switchLanguage(langCode)
+    
+    // 更新本地配置状态，确保与持久化配置同步
+    await updateConfig('language', langCode)
+    
     emit('show-message', locale.value === 'zh' ? '语言切换成功' : 'Language changed successfully', 'success')
   } catch (error) {
     console.error('Failed to change language:', error)
-    emit('show-message', locale.value === 'zh' ? '语言切换失败' : 'Failed to change language', 'error')
+    emit('show-message', locale.value === 'zh' ? '语言切换失败' : 'Language change failed', 'error')
   }
 }
 

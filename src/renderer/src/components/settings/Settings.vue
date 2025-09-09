@@ -99,7 +99,7 @@ import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '@/utils/task-utils.js'
 
 // 使用 i18n 和 taskStore
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const taskStore = useTaskStore()
 
 // 响应式数据
@@ -107,6 +107,7 @@ const activeCategory = ref('general')
 const config = reactive({
   autoStart: false,
   showNotifications: true,
+  language: 'zh', // 默认语言
   notificationSound: {
     enabled: true,
     soundFile: 'ding-126626.mp3',
@@ -193,6 +194,20 @@ const updateConfig = async (key, value) => {
   try {
     if (window.electronAPI && window.electronAPI.config) {
       await window.electronAPI.config.set(key, value)
+    }
+    
+    // 同步更新本地配置状态
+    if (key.includes('.')) {
+      // 处理嵌套属性，如 'notificationSound.volume'
+      const keys = key.split('.')
+      let target = config
+      for (let i = 0; i < keys.length - 1; i++) {
+        target = target[keys[i]]
+      }
+      target[keys[keys.length - 1]] = value
+    } else {
+      // 处理顶级属性
+      config[key] = value
     }
   } catch (error) {
     console.error('Failed to update config:', error)
