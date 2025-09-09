@@ -292,6 +292,13 @@
   @apply outline-none;
 }
 
+.task-preview-textarea-note {
+  @apply resize-none overflow-hidden;
+  min-height: 72px; /* 3行的最小高度 */
+  max-height: 240px; /* 10行的最大高度 */
+  line-height: 1.5;
+}
+
 /* 删除按钮样式 */
 .task-preview-delete-btn {
   @apply flex items-center justify-center w-8 h-8 p-0 border-0 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 cursor-pointer transition-all duration-200 text-sm;

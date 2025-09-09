@@ -108,13 +108,15 @@
             <!-- 第三行：备注 -->
             <div class="task-preview-row task-preview-row-note">
               <label class="task-preview-note-label">备注</label>
-              <input 
+              <textarea 
                 v-model="task.metadata.note"
-                type="text"
-                class="task-preview-input-note"
+                class="task-preview-input-note task-preview-textarea-note"
                 placeholder="添加备注"
-                maxlength="100"
-              />
+                maxlength="1000"
+                rows="3"
+                @input="autoResizeTextarea"
+                ref="noteTextarea"
+              ></textarea>
             </div>
             
             <!-- 第四行：步骤标题 -->
@@ -214,6 +216,7 @@ export default {
     const taskStore = useTaskStore()
     const isCreating = ref(false)
     const copyStatus = ref('idle') // 'idle', 'copying', 'success', 'error'
+    const noteTextarea = ref(null)
     
     // 本地任务列表副本，用于编辑
     const taskList = ref([])
@@ -412,6 +415,17 @@ export default {
       }
     }, { deep: true })
     
+    // 自动调整textarea高度的方法
+    const autoResizeTextarea = (event) => {
+      const textarea = event.target
+      textarea.style.height = 'auto'
+      const scrollHeight = textarea.scrollHeight
+      const minHeight = 3 * 24 // 3行的最小高度 (假设行高24px)
+      const maxHeight = 10 * 24 // 10行的最大高度
+      const newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight))
+      textarea.style.height = newHeight + 'px'
+    }
+    
     return {
       taskList,
       availableLists,
@@ -426,7 +440,9 @@ export default {
       copyOriginalInput,
       copyStatus,
       isStreamGenerating,
-      isStreamCollapsed
+      isStreamCollapsed,
+      noteTextarea,
+      autoResizeTextarea
     }
   }
 }
