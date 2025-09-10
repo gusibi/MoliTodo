@@ -5,23 +5,23 @@
       <div class="p-4 border-b border-border bg-muted/50">
         <h3 class="flex items-center gap-2 mb-2 text-base font-semibold text-foreground">
           <i class="fas fa-tasks text-primary"></i>
-          {{ currentMonthTitle }} 任务
+{{ currentMonthTitle }} {{ t('calendar.tasks') }}
         </h3>
         <div class="flex gap-4 text-xs text-muted-foreground">
-          <span class="flex items-center">{{ allMonthTasks.length }} 个任务</span>
-          <span class="flex items-center text-green-600">{{ completedTasksCount }} 已完成</span>
+          <span class="flex items-center">{{ allMonthTasks.length }} {{ t('calendar.tasksCount') }}</span>
+          <span class="flex items-center text-green-600">{{ completedTasksCount }} {{ t('calendar.completed') }}</span>
         </div>
       </div>
       
       <div class="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         <div v-if="allMonthTasks.length === 0" class="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
           <i class="fas fa-calendar-check text-5xl mb-4 opacity-50"></i>
-          <p class="text-sm">本月暂无任务</p>
+          <p class="text-sm">{{ t('calendar.noTasksThisMonth') }}</p>
         </div>
         
         <!-- 未完成任务 -->
         <div v-if="pendingTasks.length > 0" class="mb-4">
-          <h4 class="text-xs font-medium text-muted-foreground mb-2 px-2">待办任务 ({{ pendingTasks.length }})</h4>
+          <h4 class="text-xs font-medium text-muted-foreground mb-2 px-2">{{ t('calendar.pendingTasks') }} ({{ pendingTasks.length }})</h4>
           <FlatTaskItem
             v-for="task in pendingTasks"
             :key="task.id"
@@ -35,7 +35,7 @@
         
         <!-- 已完成任务 -->
         <div v-if="completedTasks.length > 0">
-          <h4 class="text-xs font-medium text-muted-foreground mb-2 px-2">已完成任务 ({{ completedTasks.length }})</h4>
+          <h4 class="text-xs font-medium text-muted-foreground mb-2 px-2">{{ t('calendar.completedTasks') }} ({{ completedTasks.length }})</h4>
           <FlatTaskItem
             v-for="task in completedTasks"
             :key="task.id"
@@ -71,6 +71,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import UnifiedCalendar from './UnifiedCalendar.vue'
 import FlatTaskItem from '../FlatTaskItem.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   tasks: {
@@ -94,6 +95,8 @@ const emit = defineEmits([
   'hide-tooltip'
 ])
 
+const { t } = useI18n()
+
 // Task store
 const taskStore = useTaskStore()
 
@@ -111,7 +114,7 @@ const currentMonth = currentDate.getMonth()
 
 // 当前月份标题
 const currentMonthTitle = computed(() => {
-  return `${currentYear}年${currentMonth + 1}月`
+  return t('calendar.monthFormat', { year: currentYear, month: currentMonth + 1 })
 })
 
 // 工具函数：判断两个日期是否是同一天

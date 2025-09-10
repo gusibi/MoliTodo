@@ -25,10 +25,10 @@
     <div v-else-if="error" class="kanban-error">
       <div class="kanban-error-content">
         <i class="fas fa-exclamation-triangle kanban-error-icon"></i>
-        <h3 class="kanban-error-title">出现错误</h3>
+        <h3 class="kanban-error-title">{{ t('common.error') }}</h3>
         <p class="kanban-error-message">{{ error }}</p>
         <button @click="error = null" class="kanban-error-button">
-          重试
+          {{ t('common.retry') }}
         </button>
       </div>
     </div>
@@ -97,6 +97,7 @@
 <script setup>
 import { computed, ref, onUnmounted, onMounted } from 'vue'
 import KanbanColumn from './KanbanColumn.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   tasks: {
@@ -122,6 +123,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add-task', 'update-task', 'edit-task', 'show-edit-panel'])
+
+const { t } = useI18n()
 
 const error = ref(null)
 const isUpdating = ref(false)

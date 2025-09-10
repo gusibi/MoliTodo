@@ -29,7 +29,7 @@
       <div v-else class="kanban-column-empty">
         <div class="text-center">
           <i :class="columnConfig.icon" class="text-2xl mb-2 opacity-50"></i>
-          <p>{{ getEmptyMessage() }}</p>
+          <p>{{ t('kanban.noTasks') }}</p>
         </div>
       </div>
     </div>
@@ -43,6 +43,7 @@
 import { ref, computed } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import KanbanAddTask from './KanbanAddTask.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   status: {
@@ -74,28 +75,30 @@ const props = defineProps({
 
 const emit = defineEmits(['task-dropped', 'add-task', 'card-click', 'card-edit'])
 
+const { t } = useI18n()
+
 const isDragOver = ref(false)
 const draggedTask = ref(null)
 
 // 列配置
 const columnConfigs = {
   todo: {
-    title: '待办',
+    title: t('kanban.todo'),
     icon: 'fas fa-inbox',
     color: 'blue'
   },
   doing: {
-    title: '进行中',
+    title: t('kanban.doing'),
     icon: 'fas fa-play-circle',
     color: 'orange'
   },
   paused: {
-    title: '暂停中',
+    title: t('kanban.paused'),
     icon: 'fas fa-pause-circle',
     color: 'yellow'
   },
   done: {
-    title: '已完成',
+    title: t('kanban.done'),
     icon: 'fas fa-check-circle',
     color: 'green'
   }
@@ -162,16 +165,7 @@ const handleAddTask = (taskData) => {
   emit('add-task', taskData)
 }
 
-// 获取空状态消息
-const getEmptyMessage = () => {
-  const messages = {
-    todo: '暂无待办任务',
-    doing: '暂无进行中任务',
-    paused: '暂无暂停任务',
-    done: '暂无已完成任务'
-  }
-  return messages[props.status] || '暂无任务'
-}
+
 </script>
 
 <style>

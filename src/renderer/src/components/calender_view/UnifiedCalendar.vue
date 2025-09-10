@@ -3,7 +3,7 @@
     <!-- Loading state -->
     <div v-if="isLoading" class="calendar-loading">
       <div class="calendar-loading-spinner"></div>
-      <p class="calendar-loading-text">加载中...</p>
+      <p class="calendar-loading-text">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Error state -->
@@ -11,7 +11,7 @@
       <div class="calendar-error-icon">⚠️</div>
       <div class="calendar-error-text">{{ error }}</div>
       <button v-if="canRetry" @click="retryOperation" class="calendar-retry-btn">
-        重试 ({{ retryCount }}/{{ maxRetries }})
+        {{ t('calendar.retry') }} ({{ retryCount }}/{{ maxRetries }})
       </button>
     </div>
 
@@ -27,7 +27,7 @@
             </svg>
           </button>
           <button @click="goToToday" class="calendar-today-btn">
-            今天
+            {{ t('calendar.today') }}
           </button>
           <button @click="navigateNext" class="calendar-nav-btn">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,19 +45,19 @@
             'calendar-view-btn',
             { 'active': currentView === 'day' }
           ]">
-            日
+            {{ t('calendar.day') }}
           </button>
           <button @click="changeView('week')" :class="[
             'calendar-view-btn',
             { 'active': currentView === 'week' }
           ]">
-            周
+            {{ t('calendar.week') }}
           </button>
           <button @click="changeView('month')" :class="[
             'calendar-view-btn',
             { 'active': currentView === 'month' }
           ]">
-            月
+            {{ t('calendar.month') }}
           </button>
           
           <!-- 重复任务实例显示控制 -->
@@ -65,7 +65,8 @@
             'calendar-view-btn',
             'calendar-recurring-toggle',
             { 'active': taskStore.showRecurringInstances }
-          ]" :title="taskStore.showRecurringInstances ? '隐藏重复实例' : '显示重复实例'">
+          ]"
+           :title="taskStore.showRecurringInstances ? t('calendar.hideRecurringInstances') : t('calendar.showRecurringInstances')">
             <i class="fas fa-repeat"></i>
           </button>
         </div>
@@ -199,7 +200,7 @@
                   <!-- More tasks indicator -->
                   <div v-if="day.tasks.length > 3" class="month-day-more"
                     @click.stop="showDayTasksModal(day.date, day.tasks)">
-                    +{{ day.tasks.length - 3 }} 更多
+                    +{{ day.tasks.length - 3 }} {{ t('calendar.more') }}
                   </div>
                 </div>
               </div>
@@ -248,7 +249,7 @@
           </div>
 
           <div v-if="dayTasksModal.tasks.length === 0" class="day-tasks-modal-empty">
-            暂无任务
+            {{ t('calendar.noTasks') }}
           </div>
         </div>
       </div>
@@ -259,6 +260,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   tasks: {
@@ -289,6 +291,8 @@ const emit = defineEmits([
   'show-tooltip',
   'hide-tooltip'
 ])
+
+const { t } = useI18n()
 
 // State
 const currentView = ref(props.initialView)
@@ -365,25 +369,25 @@ const formatTaskDetails = (task) => {
   const details = []
 
   // Task content
-  details.push(`任务: ${task.content}`)
+  details.push(t('calendar.taskLabel', { content: task.content }))
 
   // Status
   const statusMap = {
-    'todo': '待办',
-    'in-progress': '进行中',
-    'paused': '暂停',
-    'completed': '已完成'
+    'todo': t('task.status.todo'),
+    'in-progress': t('task.status.inProgress'),
+    'paused': t('task.status.paused'),
+    'completed': t('task.status.completed')
   }
-  details.push(`状态: ${statusMap[task.status] || task.status}`)
+  details.push(t('calendar.statusLabel', { status: statusMap[task.status] || task.status }))
 
   // Priority
   if (task.priority) {
     const priorityMap = {
-      'low': '低',
-      'normal': '普通',
-      'high': '高'
+      'low': t('task.priority.low'),
+      'normal': t('task.priority.normal'),
+      'high': t('task.priority.high')
     }
-    details.push(`优先级: ${priorityMap[task.priority] || task.priority}`)
+    details.push(t('calendar.priorityLabel', { priority: priorityMap[task.priority] || task.priority }))
   }
 
   // Reminder time
@@ -394,14 +398,14 @@ const formatTaskDetails = (task) => {
       hour: '2-digit',
       minute: '2-digit'
     })
-    details.push(`提醒时间: ${dateStr} ${timeStr}`)
+    details.push(t('calendar.reminderTimeLabel', { date: dateStr, time: timeStr }))
   }
 
   // Created time
   if (task.createdAt) {
     const createdDate = new Date(task.createdAt)
     const dateStr = createdDate.toLocaleDateString('zh-CN')
-    details.push(`创建时间: ${dateStr}`)
+    details.push(t('calendar.createdTimeLabel', { date: dateStr }))
   }
 
   return details.join('\n')
@@ -409,10 +413,10 @@ const formatTaskDetails = (task) => {
 
 // Define time slots (4 periods like WeeklyColumn)
 const timeSlots = [
-  { id: 'morning', label: '上午 (06:00-12:00)', start: 6, end: 12 },
-  { id: 'afternoon', label: '下午 (12:00-18:00)', start: 12, end: 18 },
-  { id: 'evening', label: '晚上 (18:00-24:00)', start: 18, end: 24 },
-  { id: 'night', label: '凌晨 (00:00-06:00)', start: 0, end: 6 }
+  { id: 'morning', label: t('calendar.morning'), start: 6, end: 12 },
+  { id: 'afternoon', label: t('calendar.afternoon'), start: 12, end: 18 },
+  { id: 'evening', label: t('calendar.evening'), start: 18, end: 24 },
+  { id: 'night', label: t('calendar.night'), start: 0, end: 6 }
 ]
 
 // Initialize current period
@@ -423,7 +427,7 @@ const initializeCurrentPeriod = () => {
     retryCount.value = 0
   } catch (err) {
     console.error('Error initializing current period:', err)
-    error.value = '初始化日历失败'
+    error.value = t('calendar.initializationFailed')
   }
 }
 
@@ -434,9 +438,9 @@ const currentTitle = computed(() => {
 
   if (currentView.value === 'day') {
     const day = currentDate.value.getDate()
-    return `${year}年${month}月${day}日`
+    return t('calendar.dateFormat', { year, month, day })
   } else if (currentView.value === 'month') {
-    return `${year}年${month}月`
+    return t('calendar.monthFormat', { year, month })
   } else {
     const weekStart = getWeekStart(currentDate.value)
     const weekEnd = getWeekEnd(weekStart)
@@ -447,9 +451,9 @@ const currentTitle = computed(() => {
     const endDay = weekEnd.getDate()
 
     if (startMonth === endMonth) {
-      return `${year}年${startMonth}月${startDay}日 - ${endDay}日`
+      return t('calendar.dateRangeSameMonth', { year, startMonth, startDay, endDay })
     } else {
-      return `${year}年${startMonth}月${startDay}日 - ${endMonth}月${endDay}日`
+      return t('calendar.dateRangeDifferentMonth', { year, startMonth, startDay, endMonth, endDay })
     }
   }
 })
@@ -458,7 +462,7 @@ const currentTitle = computed(() => {
 const weekDays = computed(() => {
   const weekStart = getWeekStart(currentDate.value)
   const days = []
-  const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+  const dayNames = [t('calendar.monday'), t('calendar.tuesday'), t('calendar.wednesday'), t('calendar.thursday'), t('calendar.friday'), t('calendar.saturday'), t('calendar.sunday')]
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(weekStart)
@@ -480,7 +484,7 @@ const weekDays = computed(() => {
 })
 
 // Month data
-const monthDayNames = ['周一', '周二', '周三', '周四', '周五', '周六','周日']
+const monthDayNames = [t('calendar.monday'), t('calendar.tuesday'), t('calendar.wednesday'), t('calendar.thursday'), t('calendar.friday'), t('calendar.saturday'), t('calendar.sunday')]
 
 const monthDays = computed(() => {
   const monthStart = getMonthStart(currentDate.value)
@@ -772,7 +776,7 @@ const showDayTasksModal = (date, tasks) => {
     show: true,
     date: new Date(date),
     tasks: [...tasks],
-    title: `${dateStr} 的任务`
+    title: t('calendar.tasksForDate', { date: dateStr })
   }
 }
 
@@ -804,7 +808,7 @@ const getTaskStatusClasses = (task) => {
 // Day view data
 const currentDayInfo = computed(() => {
   const date = currentDate.value
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  const weekdays = [t('calendar.sunday'), t('calendar.monday'), t('calendar.tuesday'), t('calendar.wednesday'), t('calendar.thursday'), t('calendar.friday'), t('calendar.saturday')]
 
   return {
     dateStr: `${date.getMonth() + 1}月${date.getDate()}日`,

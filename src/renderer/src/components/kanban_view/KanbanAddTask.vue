@@ -10,7 +10,7 @@
       @keydown.space.prevent="showAddForm"
     >
       <i class="fas fa-plus"></i>
-      <span>添加任务</span>
+      <span>{{ t('kanban.addTask') }}</span>
     </div>
 
     <!-- 添加表单 -->
@@ -19,7 +19,7 @@
         ref="taskInput"
         v-model="taskContent"
         type="text"
-        placeholder="输入任务内容..."
+        :placeholder="t('kanban.taskContentPlaceholder')"
         class="kanban-add-task-input"
         @keydown.enter="handleSubmit"
         @keydown.escape="handleCancel"
@@ -31,13 +31,13 @@
           @click="handleSubmit"
           :disabled="!taskContent.trim()"
         >
-          添加
+          {{ t('kanban.add') }}
         </button>
         <button
           class="kanban-add-task-cancel"
           @click="handleCancel"
         >
-          取消
+          {{ t('kanban.cancel') }}
         </button>
       </div>
     </div>
@@ -46,6 +46,7 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   status: {
@@ -60,6 +61,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add-task'])
+
+const { t } = useI18n()
 
 const showForm = ref(false)
 const taskContent = ref('')
