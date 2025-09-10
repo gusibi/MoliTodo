@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ReportService from '../../../infrastructure/ai/reportService.js'
 // 搜索功能通过 IPC 调用主进程
 
 export const useTaskStore = defineStore('task', () => {
+  const { t } = useI18n()
+  
   const tasks = ref([])
   const lists = ref([])
   const loading = ref(false)
@@ -110,10 +113,10 @@ export const useTaskStore = defineStore('task', () => {
   // 辅助函数：获取状态显示文本
   const getStatusText = (status) => {
     const statusMap = {
-      'todo': '待办',
-      'doing': '进行中',
-      'paused': '暂停中',
-      'done': '已完成'
+      'todo': t('common.status.todo'),
+      'doing': t('common.status.doing'),
+      'paused': t('common.status.paused'),
+      'done': t('common.status.done')
     }
     return statusMap[status] || status
   }
@@ -304,9 +307,9 @@ export const useTaskStore = defineStore('task', () => {
       const taskDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
       if (taskDate.getTime() === today.getTime()) {
-        return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+        return t('common.time.todayAt', { time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) })
       } else if (taskDate.getTime() === tomorrow.getTime()) {
-        return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+        return t('common.time.tomorrowAt', { time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) })
       } else {
         return date.toLocaleString('zh-CN', {
           month: 'short',
@@ -320,11 +323,11 @@ export const useTaskStore = defineStore('task', () => {
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
       if (diffDays === 0) {
-        return '今天'
+        return t('common.time.today')
       } else if (diffDays === 1) {
-        return '昨天'
+        return t('common.time.yesterday')
       } else if (diffDays < 7) {
-        return `${diffDays}天前`
+        return t('common.time.daysAgo', { days: diffDays })
       } else {
         return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
       }

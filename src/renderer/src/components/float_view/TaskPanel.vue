@@ -6,17 +6,17 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
         </svg>
-        今日任务
-        <span class="task-panel-count">{{ taskCount }} 个任务</span>
+        {{ $t('floatView.todayTasks') }}
+        <span class="task-panel-count">{{ taskCount }} {{ $t('floatView.tasksCount') }}</span>
       </h2>
     </div>
 
     <!-- 快速添加框 -->
     <div class="task-panel-quick-add">
       <div class="task-panel-input-container">
-        <input v-model="newTaskContent" type="text" class="task-panel-input" placeholder="添加新任务..." maxlength="200"
+        <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')" maxlength="200"
           @keypress.enter="addTask" ref="quickAddInput">
-        <button class="task-panel-add-btn" @click="addTask" title="添加任务">
+        <button class="task-panel-add-btn" @click="addTask" :title="$t('floatView.addTask')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
@@ -34,7 +34,7 @@
             : task.status || (task.completed ? 'done' : 'todo')
         ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
-          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="'点击切换状态'">
+          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="$t('floatView.clickToToggleStatus')">
             <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
           </div>
 
@@ -42,7 +42,7 @@
             <div class="task-panel-main-row">
               <div class="task-panel-text-container">
                 <div v-if="!isEditing(task.id)" class="task-panel-text" @dblclick="startEditTask(task.id)"
-                  :title="'双击编辑'">
+                  :title="$t('floatView.doubleClickToEdit')">
                   {{ task.content }}
                 </div>
                 <input v-else v-model="editingContent" class="task-panel-edit-input"
@@ -52,19 +52,19 @@
 
               <div class="task-panel-actions">
                 <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
-                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)" title="暂停任务">
+                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
                   </svg>
                 </button>
-                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)" title="设置提醒">
+                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)" :title="$t('floatView.setReminder')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
                       fill="currentColor" />
                   </svg>
                 </button>
-                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)" title="删除任务">
+                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)" :title="$t('floatView.deleteTask')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
@@ -97,7 +97,7 @@
                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
                   <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" />
                 </svg>
-                进行中 {{ formatDurationCompact(getTaskTotalDuration(task)) }}
+                {{ $t('floatView.inProgress') }} {{ formatDurationCompact(getTaskTotalDuration(task)) }}
               </div>
 
               <!-- 占位元素，推动内容向右对齐 -->
@@ -116,8 +116,8 @@
               fill="currentColor" />
           </svg>
         </div>
-        <h3>太棒了！</h3>
-        <p>所有任务都已完成</p>
+        <h3>{{ $t('floatView.excellent') }}</h3>
+        <p>{{ $t('floatView.allTasksCompleted') }}</p>
       </div>
     </div>
 
@@ -125,7 +125,7 @@
     <div v-if="showReminder" class="task-panel-reminder-modal show">
       <div class="task-panel-modal-content" @click.stop>
         <div class="modal-header">
-          <h3>设置提醒</h3>
+          <h3>{{ $t('floatView.setReminder') }}</h3>
           <button class="modal-close-button" @click="hideReminderModal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -144,8 +144,8 @@
 
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="hideReminderModal">取消</button>
-          <button class="btn btn-primary" @click="saveTaskReminder">保存</button>
+          <button class="btn btn-secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</button>
+          <button class="btn btn-primary" @click="saveTaskReminder">{{ $t('floatView.save') }}</button>
         </div>
       </div>
     </div>
@@ -162,7 +162,7 @@
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
             fill="currentColor" />
         </svg>
-        创建悬浮任务
+        {{ $t('floatView.createFloatingTask') }}
       </div>
     </div>
 
@@ -175,10 +175,12 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import '@vuepic/vue-datepicker/dist/main.css'
 
 const taskStore = useTaskStore()
 const { customReminderOptions } = storeToRefs(taskStore)
+const { t: $t } = useI18n()
 
 // 响应式数据
 const tasks = ref([])
@@ -212,9 +214,9 @@ const sortedTasks = computed(() => {
 const footerStats = computed(() => {
   const totalCount = taskCount.value + completedTasksCount.value
   if (totalCount === 0) {
-    return '暂无任务'
+    return $t('floatView.noTasks')
   }
-  return `共 ${totalCount} 个任务，已完成 ${completedTasksCount.value} 个`
+  return $t('floatView.taskStats', { total: totalCount, completed: completedTasksCount.value })
 })
 
 // 方法

@@ -21,7 +21,7 @@
 
       <!-- 任务信息 -->
       <div class="task-info">
-        <div class="task-title">{{ task?.content || '任务' }}</div>
+        <div class="task-title">{{ task?.content || $t('floatView.defaultTaskName') }}</div>
         <div class="task-tags">
           <!-- 提醒时间标签 -->
           <span v-if="task?.reminderTime" :class="['task-tag', 'task-tag-reminder', {
@@ -47,7 +47,7 @@
           </span>
           <span v-else-if="currentStatus === 'done'" class="task-tag task-tag-status task-tag-completed">
             <i class="fas fa-check"></i>
-            用时 {{ formatDuration(task?.totalDuration || 0) }}
+            {{ $t('floatView.timeSpent') }} {{ formatDuration(task?.totalDuration || 0) }}
           </span>
 
 
@@ -142,18 +142,7 @@ const loadTask = async () => {
   }
 }
 
-const toggleComplete = async () => {
-  try {
-    if (currentStatus.value === 'done') {
-      await taskStore.updateTask(props.taskId, { status: 'todo', completedAt: null })
-    } else {
-      await taskStore.completeTask(props.taskId)
-    }
-    await loadTask()
-  } catch (error) {
-    console.error('切换完成状态失败:', error)
-  }
-}
+
 
 const startTask = async () => {
   try {
@@ -200,32 +189,7 @@ const closeFloatingTask = () => {
   window.electronAPI.windows.closeFloatingTask(props.taskId)
 }
 
-// 状态相关方法
-const getStatusText = (status) => {
-  const statusMap = {
-    'todo': '待办',
-    'doing': '进行中',
-    'done': '已完成'
-  }
-  return statusMap[status] || '待办'
-}
 
-const getStatusIcon = (status) => {
-  const iconComponents = {
-    'todo': () => h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, stroke: 'currentColor', 'stroke-width': 2 })
-    ]),
-    'doing': () => h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, fill: 'currentColor' }),
-      h('circle', { cx: 12, cy: 12, r: 4, fill: 'white' })
-    ]),
-    'done': () => h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, fill: 'currentColor' }),
-      h('path', { d: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z', fill: 'white' })
-    ])
-  }
-  return iconComponents[status] || iconComponents['todo']
-}
 
 const updateDuration = () => {
   if (!task.value) return

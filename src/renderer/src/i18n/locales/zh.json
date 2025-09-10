@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "MoliTodo - 任务管理",
-    "settingsTitle": "MoliTodo - 设置"
+    "title": "MoliTodo",
+    "settingsTitle": "MoliTodo"
   },
   "common": {
     "save": "保存",
@@ -16,7 +16,20 @@
     "error": "错误",
     "warning": "警告",
     "info": "信息",
-    "search": "搜索任务..."
+    "search": "搜索任务...",
+    "status": {
+      "todo": "待办",
+      "doing": "进行中",
+      "paused": "暂停中",
+      "done": "已完成"
+    },
+    "time": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "todayAt": "今天 {time}",
+      "tomorrowAt": "明天 {time}",
+      "daysAgo": "{days}天前"
+    }
   },
   "views": {
     "listView": "列表视图",
@@ -195,5 +208,26 @@
     "showNotifications": "显示通知",
     "notificationSound": "通知声音",
     "floatingIcon": "悬浮图标"
+  },
+  "floatView": {
+    "defaultTaskName": "任务",
+    "timeSpent": "用时",
+    "todayTasks": "今日任务",
+    "tasksCount": "个任务",
+    "addNewTask": "添加新任务...",
+    "excellent": "太棒了！",
+    "allTasksCompleted": "所有任务都已完成",
+    "addTask": "添加任务",
+    "clickToToggleStatus": "点击切换状态",
+    "doubleClickToEdit": "双击编辑",
+    "pauseTask": "暂停任务",
+    "setReminder": "设置提醒",
+    "deleteTask": "删除任务",
+    "inProgress": "进行中",
+    "cancel": "取消",
+    "save": "保存",
+    "createFloatingTask": "创建悬浮任务",
+    "noTasks": "暂无任务",
+    "taskStats": "共 {total} 个任务，已完成 {completed} 个"
   }
 }

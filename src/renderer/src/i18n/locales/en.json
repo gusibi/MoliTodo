@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "MoliTodo - Task Manager",
-    "settingsTitle": "MoliTodo - Settings"
+    "title": "MoliTodo",
+    "settingsTitle": "MoliTodo"
   },
   "common": {
     "save": "Save",
@@ -16,7 +16,20 @@
     "error": "Error",
     "warning": "Warning",
     "info": "Info",
-    "search": "Search tasks..."
+    "search": "Search tasks...",
+    "status": {
+      "todo": "To Do",
+      "doing": "In Progress",
+      "paused": "Paused",
+      "done": "Completed"
+    },
+    "time": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "todayAt": "Today {time}",
+      "tomorrowAt": "Tomorrow {time}",
+      "daysAgo": "{days} days ago"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -195,5 +208,26 @@
     "all": "All Tasks",
     "completed": "Completed",
     "unknown": "Unknown Category"
+  },
+  "floatView": {
+    "defaultTaskName": "Task",
+    "timeSpent": "Time spent",
+    "todayTasks": "Today's Tasks",
+    "tasksCount": "tasks",
+    "addNewTask": "Add new task...",
+    "excellent": "Excellent!",
+    "allTasksCompleted": "All tasks completed",
+    "addTask": "Add Task",
+    "clickToToggleStatus": "Click to toggle status",
+    "doubleClickToEdit": "Double click to edit",
+    "pauseTask": "Pause Task",
+    "setReminder": "Set Reminder",
+    "deleteTask": "Delete Task",
+    "inProgress": "In Progress",
+    "cancel": "Cancel",
+    "save": "Save",
+    "createFloatingTask": "Create Floating Task",
+    "noTasks": "No tasks",
+    "taskStats": "{total} tasks total, {completed} completed"
   }
 }
