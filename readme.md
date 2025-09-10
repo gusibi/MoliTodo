@@ -5,7 +5,7 @@
   
   **AI 智能驱动的悬浮式待办事项应用**
   
-  [![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](package.json)
+  [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](package.json)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](#支持平台)
   [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D.svg)](https://vuejs.org/)
@@ -18,6 +18,8 @@ MoliTodo is a modern AI-powered desktop task management application that provide
 
 ### Core Features
 
+- 🌍 **Language Switching**: Complete internationalization support with real-time language switching
+- 📅 **Enhanced Calendar**: Integrated task list panel in calendar views for unified task management
 - 🤖 **AI Task Generation** - Natural language task creation with multi-provider AI support (OpenAI, Google, Anthropic, xAI)
 - 📊 **AI Report Generation** - Intelligent daily and weekly report generation with customizable templates
 - 🥚 **Database View Easter Egg** - Hidden developer-friendly database view (click 5 times to activate)
@@ -270,6 +272,22 @@ src/
 ```
 
 ## ✨ Main Features
+
+### 🌍 Internationalization System (v1.1.0+)
+- ✅ **Multi-language Support** - Complete internationalization with Vue I18n framework
+- ✅ **Real-time Language Switching** - Instant UI updates when changing language in settings
+- ✅ **Supported Languages** - English and Chinese with infrastructure for additional languages
+- ✅ **Persistent Settings** - Language preference saved and restored across application sessions
+- ✅ **Cultural Adaptation** - Interface elements adapt to different language contexts
+- ✅ **Professional Environment** - Multi-language support enables global business use
+
+### 📅 Enhanced Calendar System (v1.1.0+)
+- ✅ **Integrated Task List Panel** - Task list added to left side of calendar views
+- ✅ **Calendar-Task Synchronization** - Task list automatically filters based on calendar selection
+- ✅ **Unified Workflow** - Seamless task management directly from calendar interface
+- ✅ **Side-by-side Layout** - Enhanced productivity with calendar and tasks in single view
+- ✅ **Responsive Design** - Task panel adapts to different screen sizes and orientations
+- ✅ **Quick Task Operations** - Create, edit, and complete tasks without leaving calendar view
 
 ### 🤖 AI Task Generation System (v0.9.1+)
 - ✅ **Multi-Provider AI Support** - OpenAI, Google, Anthropic, xAI, and custom providers

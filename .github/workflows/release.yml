@@ -72,88 +72,48 @@ jobs:
           cat > RELEASE_NOTES.md << 'EOF'
           # MoliTodo v${{ steps.get_version.outputs.VERSION }} ✨
           
-          ## 🥚 隐藏功能彩蛋发布 - 数据库任务详情视图
+          ## 🌍 Language Support & Enhanced Calendar
           
-          MoliTodo v1.0.2 带来了一个特殊的隐藏功能，专为开发者和高级用户设计。这个彩蛋功能提供了对应用数据存储层的完整透明访问，让您能够深入了解任务数据的内部结构。
+          ### New Features
+          - **Language Switching**: Complete internationalization with real-time language switching (English/Chinese)
+          - **Enhanced Calendar**: Integrated task list panel in calendar views for unified task management
           
-          ### 🍎 macOS 用户重要提示
+          ### 🍎 macOS Installation
           
-          由于应用未经过 Apple 开发者认证，macOS 用户在首次运行或每次更新后可能需要执行以下命令来移除系统隔离限制：
+          Due to unsigned code, macOS users need to run this command after installation:
           
           ```bash
           sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
           ```
           
-          **执行时机**:
-          - 首次安装后
-          - 每次应用更新后
-          - 遇到"无法打开应用程序"提示时
+          Run this command:
+          - After first installation
+          - After each update
+          - If you see "cannot open application" error
           
-          **操作步骤**:
-          1. 打开终端（Terminal）
-          2. 复制粘贴上述命令
-          3. 输入管理员密码确认
-          4. 重新启动 MoliTodo
+          ### 📥 Download
           
-          ### 📥 下载和安装
+          - **macOS**: Choose the appropriate version for your Mac (Intel/Apple Silicon)
+          - **Windows**: Universal installer for Windows 10+
           
-          ### 🎯 彩蛋激活方式
+          ### Key Improvements
           
-          **连续点击 5 次鼠标**即可激活隐藏的数据库视图功能！这个特殊的触发机制为应用增添了探索的乐趣。
+          - **Multi-language Interface**: Switch between English and Chinese in settings
+          - **Calendar Integration**: Task list panel added to calendar views
+          - **Real-time Updates**: Language changes apply immediately
+          - **Unified Workflow**: Manage tasks directly from calendar interface
           
-          ### 📊 数据库详情视图核心特性
+          ### Upgrade Notes
           
-          #### 完整数据展示
-          - **原始数据库字段**: 展示所有任务的原始数据库字段，包括内部元数据和系统字段
-          - **表格化布局**: 专业的表格设计，数据层次清楚，支持分页浏览
-          - **字段完整性**: 显示包括 `id`、`content`、`status`、`metadata`、`recurrence` 等所有数据库字段
-          - **复杂字段查看**: JSON 字段和长文本提供专门的详情弹窗查看
-         
-          
-          ### 🔍 使用指南
-          
-          #### 激活方法
-          1. **找到触发区域**: 在应用的任何位置都可以激活彩蛋
-          2. **连续点击**: 用鼠标快速连续点击 5 次
-          3. **功能激活**: 成功激活后会自动显示数据库视图模态框
-          4. **浏览数据**: 使用分页控件浏览所有任务数据库记录
-          5. **查看详情**: 复杂字段点击"查看详情"按钮查看完整内容
-          
-          #### 功能特色
-          - **只读访问**: 提供只读的数据访问，确保不会意外修改数据
-          - **完整展示**: 展示任务在数据库中的真实存储格式
-          - **开发友好**: 为开发者和技术用户提供有价值的内部视图
-          - **教育意义**: 帮助理解现代 Web 应用的数据架构设计
-          
-          ## 🔄 升级说明
-          
-          ### 无缝集成
-          - **零影响升级**: 彩蛋功能对现有功能无任何影响
-          - **可选发现**: 功能完全可选，不干扰正常使用流程
-          - **数据安全**: 只提供只读访问，确保数据安全
-          - **性能中性**: 不使用时对主应用无性能影响
-          
-          ### 兼容性保证
-          - **完全向后兼容**: 所有现有数据和配置完全保留
-          - **功能增强**: 在现有功能基础上新增调试功能
-          - **即时可用**: 升级后立即可以尝试彩蛋功能
-          
-          
-          
-          ## 🙏 社区感谢
-          
-          感谢所有好奇和探索的用户！正是因为有您们的支持和探索精神，我们才能不断创新，为应用添加这样有趣且有价值的功能。
-          
-          这个彩蛋功能不仅是一个技术展示，更是我们与用户建立更深层连接的方式。我们相信透明度和开放性是构建优秀软件的基础。
+          - All existing data preserved
+          - New features available immediately
+          - Language auto-detected from system settings
+          - No configuration required
           
           ---
           
-          **立即体验**: [下载 MoliTodo v${{ steps.get_version.outputs.VERSION }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.get_version.outputs.VERSION }})  
-          **功能文档**: [数据库视图使用指南](https://github.com/${{ github.repository }}/blob/main/docs/releases/v${{ steps.get_version.outputs.VERSION }}.md)  
-          **问题反馈**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)  
-          **社区讨论**: [开发者论坛](https://github.com/${{ github.repository }}/discussions)
-          
-          **MoliTodo v${{ steps.get_version.outputs.VERSION }} - 探索数据的奥秘，发现隐藏的惊喜！🥚**
+          **Full Documentation**: [Release Notes](https://github.com/${{ github.repository }}/blob/main/docs/releases/v${{ steps.get_version.outputs.VERSION }}.md)
+          **Issues & Support**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
           EOF
       - uses: softprops/action-gh-release@v2
         with:

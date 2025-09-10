@@ -5,6 +5,53 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-09-10
+
+### 🌍 New Features
+
+#### Language Switching Support
+- **Multi-language Interface**: Complete internationalization with Vue I18n
+- **Language Settings**: New language selection in settings page with real-time switching
+- **Supported Languages**: English and Chinese with framework for additional languages
+- **Persistent Preferences**: Language selection saved and restored across sessions
+- **Dynamic UI Updates**: All interface text updates immediately when language changes
+
+#### Enhanced Calendar View
+- **Integrated Task List**: Added task list panel to left side of calendar views
+- **Calendar-Task Sync**: Task list automatically syncs with calendar date selection
+- **Unified Workflow**: Seamless task management directly from calendar interface
+- **Side-by-side Layout**: Improved productivity with calendar and task list in single view
+
+### ✨ Technical Improvements
+
+#### Internationalization Infrastructure
+- **Vue I18n Integration**: Complete i18n framework with structured locale files
+- **useLanguage Composable**: Consistent language handling across components
+- **Locale Management**: Scalable translation system for future language additions
+- **Component Localization**: All UI components support dynamic language switching
+
+#### Calendar Component Enhancement
+- **UnifiedCalendar Updates**: Enhanced calendar component with integrated task list panel
+- **Responsive Layout**: Task list panel adapts to different screen sizes and orientations
+- **State Synchronization**: Improved coordination between calendar dates and task filtering
+- **Component Architecture**: Clean separation of concerns for better maintainability
+
+### 🎯 User Experience Improvements
+
+#### Accessibility and Localization
+- **Global Accessibility**: Application now accessible to international users
+- **Cultural Adaptation**: Interface elements adapt to different language contexts
+- **Professional Environment**: Multi-language support enables business use cases
+- **User Onboarding**: Localized welcome messages and setup guidance
+
+#### Workflow Enhancement
+- **Unified Interface**: Single view combining calendar navigation and task management
+- **Quick Task Operations**: Easy task creation, editing, and completion from calendar
+- **Visual Task Distribution**: Better understanding of workload across dates
+- **Improved Navigation**: Smoother transitions between calendar and task operations
+
+---
+
 ## [1.0.2] - 2025-09-09
 
 ### 🥚 隐藏功能 (Easter Egg)
