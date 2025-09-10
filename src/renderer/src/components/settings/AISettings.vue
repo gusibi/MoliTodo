@@ -1,6 +1,6 @@
 <template>
   <div class="ai-settings-container">
-    <h1 class="setting-page-title">{{ t('settings.ai') }}</h1>
+    <h1 class="setting-page-title">{{ t('settings.aiTitle') }}</h1>
     <p class="setting-page-description">{{ t('settings.aiDescription') }}</p>
 
     <!-- AI 提供商列表 -->
@@ -52,7 +52,7 @@
           <div v-if="expandedProvider === provider.id" class="ai-provider-config">
             <div v-if="provider.id === 'openai'" class="ai-config-form">
               <div class="setting-form-item">
-                <label class="setting-form-label">API Key</label>
+                <label class="setting-form-label">{{ t('settings.ai.apiKey') }}</label>
                 <input 
                   v-model="aiConfig.providers.openai.apiKey"
                   type="password"
@@ -62,7 +62,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">Base URL (可选)</label>
+                <label class="setting-form-label">{{ t('settings.ai.baseUrl') }} ({{ t('common.optional') }})</label>
                 <input 
                   v-model="aiConfig.providers.openai.baseURL"
                   type="text"
@@ -72,7 +72,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">模型</label>
+                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
                 <select 
                   v-model="aiConfig.providers.openai.model"
                   class="setting-form-select"
@@ -98,7 +98,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">模型</label>
+                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
                 <select 
                   v-model="aiConfig.providers.google.model"
                   class="setting-form-select"
@@ -123,7 +123,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">模型</label>
+                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
                 <select 
                   v-model="aiConfig.providers.anthropic.model"
                   class="setting-form-select"
@@ -148,7 +148,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">Base URL</label>
+                <label class="setting-form-label">{{ t('settings.ai.baseUrl') }}</label>
                 <input 
                   v-model="aiConfig.providers.xai.baseURL"
                   type="text"
@@ -177,8 +177,8 @@
                 :disabled="testingConnection || !isProviderConfigured(provider.id)"
                 @click="testConnection"
               >
-                <span v-if="testingConnection" class="ai-test-loading">测试中...</span>
-                <span v-else>测试连接</span>
+                <span v-if="testingConnection" class="ai-test-loading">{{ t('settings.ai.testing') }}</span>
+                <span v-else>{{ t('settings.ai.testConnection') }}</span>
               </button>
               <div v-if="customTestResults[provider.id]" class="ai-test-result" :class="customTestResults[provider.id].type">
                 {{ customTestResults[provider.id].message }}
@@ -205,8 +205,8 @@
               </svg>
             </div>
             <div class="ai-provider-info">
-              <div class="ai-provider-name">{{ provider.name || `自定义配置 ${index + 1}` }}</div>
-              <div class="ai-provider-description">自定义 AI 提供商配置</div>
+              <div class="ai-provider-name">{{ provider.name || `${t('settings.ai.customConfig')} ${index + 1}` }}</div>
+              <div class="ai-provider-description">{{ t('settings.ai.customConfigDesc') }}</div>
             </div>
             <div class="ai-provider-status">
               <div 
@@ -221,7 +221,7 @@
               <button 
                 class="custom-provider-delete-btn"
                 @click.stop="deleteCustomProvider(index)"
-                title="删除配置"
+                :title="t('settings.ai.deleteConfig')"
               >
                 <svg class="w-4 h-4 dark:text-destructive dark:stroke-[2.5px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -246,12 +246,12 @@
           <div v-if="expandedProvider === provider.id" class="ai-provider-config">
             <div class="ai-config-form">
               <div class="setting-form-item">
-                <label class="setting-form-label">配置名称</label>
+                <label class="setting-form-label">{{ t('settings.ai.configName') }}</label>
                 <input 
                   v-model="provider.name"
                   type="text"
                   class="setting-form-input"
-                  placeholder="自定义配置名称"
+                  :placeholder="t('settings.ai.customConfigName')"
                   @input="updateCustomProviderConfig(provider.id, 'name', $event.target.value)"
                 />
               </div>
@@ -276,7 +276,7 @@
                 />
               </div>
               <div class="setting-form-item">
-                <label class="setting-form-label">模型名称</label>
+                <label class="setting-form-label">{{ t('settings.ai.modelName') }}</label>
                 <input 
                   v-model="provider.model"
                   type="text"
@@ -294,8 +294,8 @@
                 :disabled="testingConnection || !isCustomProviderConfigured(provider)"
                 @click="testCustomConnection(provider)"
               >
-                <span v-if="testingConnection" class="ai-test-loading">测试中...</span>
-                <span v-else>测试连接</span>
+                <span v-if="testingConnection" class="ai-test-loading">{{ t('settings.ai.testing') }}</span>
+                <span v-else>{{ t('settings.ai.testConnection') }}</span>
               </button>
               <div v-if="customTestResults[provider.id]" class="ai-test-result" :class="customTestResults[provider.id].type">
                 {{ customTestResults[provider.id].message }}
@@ -307,7 +307,7 @@
         <div class="add-custom-provider">
           <button class="add-custom-provider-btn" @click="addCustomProvider">
             <span class="add-icon">+</span>
-            添加自定义配置
+            {{ t('settings.ai.addCustomProvider') }}
           </button>
         </div>
       </div>
@@ -315,12 +315,12 @@
     
     <!-- AI 功能设置 -->
     <div v-if="isProviderConfigured(aiConfig.selectedProvider)" class="setting-group">
-      <h3 class="setting-group-title">AI 功能设置</h3>
+      <h3 class="setting-group-title">{{ t('settings.ai.featureSettings') }}</h3>
       
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">智能任务建议</div>
-          <div class="setting-item-description">AI 根据任务内容提供优化建议</div>
+          <div class="setting-item-label">{{ t('settings.ai.smartSuggestions') }}</div>
+          <div class="setting-item-description">{{ t('settings.ai.smartSuggestionsDesc') }}</div>
         </div>
         <div class="setting-item-control">
           <button 
@@ -335,8 +335,8 @@
 
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">自动分类</div>
-          <div class="setting-item-description">AI 自动为任务分配合适的分类</div>
+          <div class="setting-item-label">{{ t('settings.ai.autoCategory') }}</div>
+          <div class="setting-item-description">{{ t('settings.ai.autoCategoryDesc') }}</div>
         </div>
         <div class="setting-item-control">
           <button 
@@ -351,8 +351,8 @@
 
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">智能提醒</div>
-          <div class="setting-item-description">AI 根据任务重要性智能设置提醒时间</div>
+          <div class="setting-item-label">{{ t('settings.ai.smartReminder') }}</div>
+          <div class="setting-item-description">{{ t('settings.ai.smartReminderDesc') }}</div>
         </div>
         <div class="setting-item-control">
           <button 
@@ -368,14 +368,14 @@
 
     <!-- 报告模板配置 -->
     <div v-if="isProviderConfigured(aiConfig.selectedProvider)" class="setting-group">
-      <h3 class="setting-group-title">报告模板配置</h3>
-      <p class="setting-group-description">自定义 AI 生成的日报和周报模板，支持 Markdown 格式和占位符</p>
+      <h3 class="setting-group-title">{{ t('settings.ai.reportTemplates') }}</h3>
+      <p class="setting-group-description">{{ t('settings.ai.reportTemplatesDesc') }}</p>
       
       <div class="setting-item template-setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">日报模板</div>
+          <div class="setting-item-label">{{ t('settings.ai.dailyTemplate') }}</div>
           <div class="setting-item-description">
-            自定义日报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}
+            {{ t('settings.ai.dailyTemplateDesc') }}
           </div>
         </div>
         <div class="setting-item-control template-control">
@@ -390,18 +390,18 @@
             <button 
               class="template-action-btn reset-btn"
               @click="resetTemplate('daily')"
-              title="重置为默认模板"
+              :title="t('settings.ai.resetToDefault')"
             >
               <i class="fas fa-undo"></i>
-              重置默认
+              {{ t('settings.ai.resetDefault') }}
             </button>
             <button 
               class="template-action-btn preview-btn"
               @click="previewTemplate('daily')"
-              title="预览模板效果"
+              :title="t('settings.ai.previewTemplate')"
             >
               <i class="fas fa-eye"></i>
-              预览
+              {{ t('settings.ai.preview') }}
             </button>
           </div>
         </div>
@@ -409,9 +409,9 @@
       
       <div class="setting-item template-setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-label">周报模板</div>
+          <div class="setting-item-label">{{ t('settings.ai.weeklyTemplate') }}</div>
           <div class="setting-item-description">
-            自定义周报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}
+            {{ t('settings.ai.weeklyTemplateDesc') }}
           </div>
         </div>
         <div class="setting-item-control template-control">
@@ -426,18 +426,18 @@
             <button 
               class="template-action-btn reset-btn"
               @click="resetTemplate('weekly')"
-              title="重置为默认模板"
+              :title="t('settings.ai.resetToDefault')"
             >
               <i class="fas fa-undo"></i>
-              重置默认
+              {{ t('settings.ai.resetDefault') }}
             </button>
             <button 
               class="template-action-btn preview-btn"
               @click="previewTemplate('weekly')"
-              title="预览模板效果"
+              :title="t('settings.ai.previewTemplate')"
             >
               <i class="fas fa-eye"></i>
-              预览
+              {{ t('settings.ai.preview') }}
             </button>
           </div>
         </div>
@@ -447,29 +447,29 @@
       <div class="template-help">
         <div class="template-help-header">
           <i class="fas fa-info-circle"></i>
-          <span>模板使用说明</span>
+          <span>{{ t('settings.ai.templateUsage') }}</span>
         </div>
         <div class="template-help-content">
           <div class="help-section">
-            <h4>可用占位符：</h4>
+            <h4>{{ t('settings.ai.availablePlaceholders') }}</h4>
             <ul>
-              <li><code>{{project_name}}</code> - 项目名称</li>
-              <li><code>{{report_period}}</code> - 报告时间周期</li>
-              <li><code>{{report_type}}</code> - 报告类型（日报/周报）</li>
-              <li><code>{{summary}}</code> - AI 生成的工作总结</li>
-              <li><code>{{completed_tasks}}</code> - 已完成任务列表</li>
-              <li><code>{{inprogress_tasks}}</code> - 进行中任务列表（包含子任务进度）</li>
-              <li><code>{{planned_tasks}}</code> - 计划中任务列表</li>
-              <li><code>{{risks_issues}}</code> - 风险和问题列表</li>
+              <li><code>{{project_name}}</code> - {{ t('settings.ai.placeholders.projectName') }}</li>
+              <li><code>{{report_period}}</code> - {{ t('settings.ai.placeholders.reportPeriod') }}</li>
+              <li><code>{{report_type}}</code> - {{ t('settings.ai.placeholders.reportType') }}</li>
+              <li><code>{{summary}}</code> - {{ t('settings.ai.placeholders.summary') }}</li>
+              <li><code>{{completed_tasks}}</code> - {{ t('settings.ai.placeholders.completedTasks') }}</li>
+              <li><code>{{inprogress_tasks}}</code> - {{ t('settings.ai.placeholders.inprogressTasks') }}</li>
+              <li><code>{{planned_tasks}}</code> - {{ t('settings.ai.placeholders.plannedTasks') }}</li>
+              <li><code>{{risks_issues}}</code> - {{ t('settings.ai.placeholders.risksIssues') }}</li>
             </ul>
           </div>
           <div class="help-section">
-            <h4>模板格式：</h4>
+            <h4>{{ t('settings.ai.templateFormat') }}</h4>
             <ul>
-              <li>支持标准 Markdown 语法</li>
-              <li>占位符会被 AI 自动替换为实际内容</li>
-              <li>如果某个占位符没有对应内容，会显示"无"或"暂无"</li>
-              <li>留空使用默认模板</li>
+              <li>{{ t('settings.ai.formatTips.markdown') }}</li>
+              <li>{{ t('settings.ai.formatTips.replacement') }}</li>
+              <li>{{ t('settings.ai.formatTips.emptyContent') }}</li>
+              <li>{{ t('settings.ai.formatTips.defaultTemplate') }}</li>
             </ul>
           </div>
         </div>
@@ -615,43 +615,43 @@ const toggleFeature = async (featureName) => {
 }
 
 // 默认模板
-const defaultDailyTemplate = `# {{project_name}} 日报
+const defaultDailyTemplate = computed(() => `# {{project_name}} ${t('reports.daily')}
 
-**日期:** {{report_period}}
+**${t('common.date')}:** {{report_period}}
 
-## 📝 今日小结
+## 📝 ${t('reports.todaySummary')}
 {{summary}}
 
-## ✅ 已完成工作
+## ✅ ${t('reports.completedWork')}
 {{completed_tasks}}
 
-## ⏳ 进行中工作
+## ⏳ ${t('reports.inProgressWork')}
 {{inprogress_tasks}}
 
-## 📅 明日计划
+## 📅 ${t('reports.tomorrowPlan')}
 {{planned_tasks}}
 
-## ⚠️ 风险与问题
-{{risks_issues}}`
+## ⚠️ ${t('reports.risksIssues')}
+{{risks_issues}}`)
 
-const defaultWeeklyTemplate = `# {{project_name}} 周报
+const defaultWeeklyTemplate = computed(() => `# {{project_name}} ${t('reports.weekly')}
 
-**周期:** {{report_period}}
+**${t('reports.period')}:** {{report_period}}
 
-## 📝 本周小结
+## 📝 ${t('reports.thisWeekSummary')}
 {{summary}}
 
-## ✅ 本周完成工作
+## ✅ ${t('reports.thisWeekCompleted')}
 {{completed_tasks}}
 
-## ⏳ 进行中工作
+## ⏳ ${t('reports.inProgressWork')}
 {{inprogress_tasks}}
 
-## 📅 下周工作计划
+## 📅 ${t('reports.nextWeekPlan')}
 {{planned_tasks}}
 
-## ⚠️ 风险与问题
-{{risks_issues}}`
+## ⚠️ ${t('reports.risksIssues')}
+{{risks_issues}}`)
 
 // 报告模板相关方法
 const updateReportTemplate = async (templateType, value) => {
@@ -660,25 +660,25 @@ const updateReportTemplate = async (templateType, value) => {
 }
 
 const resetTemplate = async (templateType) => {
-  const defaultTemplate = templateType === 'daily' ? defaultDailyTemplate : defaultWeeklyTemplate
+  const defaultTemplate = templateType === 'daily' ? defaultDailyTemplate.value : defaultWeeklyTemplate.value
   aiConfig.reportTemplates[templateType] = defaultTemplate
   await saveConfig()
 }
 
 const previewTemplate = (templateType) => {
   const template = aiConfig.reportTemplates[templateType] || 
-    (templateType === 'daily' ? defaultDailyTemplate : defaultWeeklyTemplate)
+    (templateType === 'daily' ? defaultDailyTemplate.value : defaultWeeklyTemplate.value)
   
   // 创建预览数据
   const previewData = {
-    project_name: '示例项目',
+    project_name: t('settings.ai.exampleProject'),
     report_period: templateType === 'daily' ? '2025-09-07' : '2025-09-01 ~ 2025-09-07',
-    report_type: templateType === 'daily' ? '日报' : '周报',
-    summary: '本期主要完成了核心功能开发，整体进展顺利。',
-    completed_tasks: '- 完成用户认证模块\n- 优化数据库查询性能',
-    inprogress_tasks: '- 开发报告生成功能\n  - [x] 设计模板系统\n  - [x] 实现基础功能\n  - [ ] 添加自定义选项',
-    planned_tasks: '- 进行系统测试\n- 准备部署文档',
-    risks_issues: '- 第三方API响应时间较长，需要优化'
+    report_type: templateType === 'daily' ? t('reports.daily') : t('reports.weekly'),
+    summary: t('settings.ai.previewSummary'),
+    completed_tasks: t('settings.ai.previewCompletedTasks'),
+    inprogress_tasks: t('settings.ai.previewInProgressTasks'),
+    planned_tasks: t('settings.ai.previewPlannedTasks'),
+    risks_issues: t('settings.ai.previewRisksIssues')
   }
   
   // 替换占位符
@@ -689,7 +689,7 @@ const previewTemplate = (templateType) => {
   })
   
   // 显示预览（这里可以后续实现一个预览模态框）
-  alert(`模板预览：\n\n${previewContent}`)
+  alert(`${t('settings.ai.templatePreview')}：\n\n${previewContent}`)
 }
 
 const isProviderConfigured = (providerId) => {
@@ -751,7 +751,7 @@ const deleteCustomProvider = async (index) => {
 const getSelectedProviderName = () => {
   if (aiConfig.selectedProvider.startsWith('custom-')) {
     const customProvider = aiConfig.customProviders.find(p => p.id === aiConfig.selectedProvider)
-    return customProvider ? (customProvider.name || '自定义配置') : '自定义配置'
+    return customProvider ? (customProvider.name || t('settings.ai.customConfig')) : t('settings.ai.customConfig')
   }
   const provider = aiProviders.find(p => p.id === aiConfig.selectedProvider)
   return provider ? provider.name : ''
@@ -805,7 +805,7 @@ const testConnection = async () => {
   } catch (error) {
     testResult.value = {
       type: 'error',
-      message: `连接失败：${error.message || '未知错误'}`
+      message: `${t('settings.ai.connectionFailed')}：${error.message || t('common.unknownError')}`
     }
   } finally {
     testingConnection.value = false
@@ -841,7 +841,7 @@ const testCustomConnection = async (provider) => {
   } catch (error) {
     customTestResults.value[provider.id] = {
       type: 'error',
-      message: `连接失败：${error.message || '未知错误'}`
+      message: `${t('settings.ai.connectionFailed')}：${error.message || t('common.unknownError')}`
     }
   } finally {
     testingConnection.value = false

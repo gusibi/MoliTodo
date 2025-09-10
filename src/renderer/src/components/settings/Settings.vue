@@ -167,7 +167,7 @@ const settingsCategories = computed(() => [
   },
   {
     id: 'ai',
-    name: t('settings.ai'),
+    name: t('settings.aiTitle'),
     icon: h('i', { class: 'fas fa-robot' })
   },
   {

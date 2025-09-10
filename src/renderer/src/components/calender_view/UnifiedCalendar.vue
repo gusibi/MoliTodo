@@ -45,19 +45,19 @@
             'calendar-view-btn',
             { 'active': currentView === 'day' }
           ]">
-            日视图
+            日
           </button>
           <button @click="changeView('week')" :class="[
             'calendar-view-btn',
             { 'active': currentView === 'week' }
           ]">
-            周视图
+            周
           </button>
           <button @click="changeView('month')" :class="[
             'calendar-view-btn',
             { 'active': currentView === 'month' }
           ]">
-            月视图
+            月
           </button>
           
           <!-- 重复任务实例显示控制 -->
