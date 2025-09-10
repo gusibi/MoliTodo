@@ -289,7 +289,8 @@ const emit = defineEmits([
   'edit-task',
   'create-task',
   'show-tooltip',
-  'hide-tooltip'
+  'hide-tooltip',
+  'date-range-change'
 ])
 
 const { t } = useI18n()
@@ -449,12 +450,12 @@ const currentTitle = computed(() => {
     const startDay = weekStart.getDate()
     const endMonth = weekEnd.getMonth() + 1
     const endDay = weekEnd.getDate()
-
-    if (startMonth === endMonth) {
-      return t('calendar.dateRangeSameMonth', { year, startMonth, startDay, endDay })
-    } else {
-      return t('calendar.dateRangeDifferentMonth', { year, startMonth, startDay, endMonth, endDay })
-    }
+    return t('calendar.dateRangeDifferentMonth', { year, startMonth, startDay, endMonth, endDay })
+    // if (startMonth === month) {
+    //   return t('calendar.dateRangeSameMonth', { year, startMonth, startDay, endDay })
+    // } else {
+    //   return t('calendar.dateRangeDifferentMonth', { year, startMonth, startDay, endMonth, endDay })
+    // }
   }
 })
 
@@ -879,6 +880,19 @@ watch(() => props.initialView, (newView) => {
     changeView(newView)
   }
 })
+
+// Watch for date/view changes and emit date range
+watch([currentDate, currentView], () => {
+  const dateRange = {
+    currentDate: new Date(currentDate.value),
+    view: currentView.value,
+    monthStart: getMonthStart(currentDate.value),
+    monthEnd: getMonthEnd(currentDate.value),
+    weekStart: getWeekStart(currentDate.value),
+    weekEnd: getWeekEnd(getWeekStart(currentDate.value))
+  }
+  emit('date-range-change', dateRange)
+}, { immediate: true })
 
 // Watch for task changes
 watch(() => props.tasks, () => {

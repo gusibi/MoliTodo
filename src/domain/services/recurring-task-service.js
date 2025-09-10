@@ -156,7 +156,7 @@ class RecurringTaskService {
       }
       
       if (current >= startDate) {
-        const instanceId = `${recurringTask.id}_${current.toISOString().split('T')[0]}`;
+        const instanceId = `recurringTask_${recurringTask.id}_${current.toISOString().split('T')[0]}`;
         const instance = recurringTask.createInstance(new Date(current), instanceId);
         instances.push(instance);
         instanceCount++;
@@ -204,7 +204,7 @@ class RecurringTaskService {
             break;
           }
           
-          const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+          const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
           instanceCount++;
@@ -255,7 +255,7 @@ class RecurringTaskService {
             break;
           }
           
-          const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+          const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
           instanceCount++;
@@ -314,7 +314,7 @@ class RecurringTaskService {
               return instances;
             }
             
-            const instanceId = `${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+            const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
             const instance = recurringTask.createInstance(new Date(instanceDate), instanceId);
             instances.push(instance);
             instanceCount++;

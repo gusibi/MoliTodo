@@ -1172,7 +1172,7 @@ export const useTaskStore = defineStore('task', () => {
         endDate: endDate.toISOString(),
         listId: listId
       })
-      console.log("expandRecurringTasks result: ", result)
+      // console.log("expandRecurringTasks result: ", result)
       if (result.success) {
         expandedTasks.value = result.tasks
         return result.tasks

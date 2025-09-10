@@ -2,17 +2,6 @@
   <div class="flex h-screen bg-background text-foreground">
     <!-- 左侧任务列表 -->
     <div class="w-80 min-w-80 bg-card border-r border-border flex flex-col overflow-hidden">
-      <div class="p-4 border-b border-border bg-muted/50">
-        <h3 class="flex items-center gap-2 mb-2 text-base font-semibold text-foreground">
-          <i class="fas fa-tasks text-primary"></i>
-{{ currentMonthTitle }} {{ t('calendar.tasks') }}
-        </h3>
-        <div class="flex gap-4 text-xs text-muted-foreground">
-          <span class="flex items-center">{{ allMonthTasks.length }} {{ t('calendar.tasksCount') }}</span>
-          <span class="flex items-center text-green-600">{{ completedTasksCount }} {{ t('calendar.completed') }}</span>
-        </div>
-      </div>
-      
       <div class="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         <div v-if="allMonthTasks.length === 0" class="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
           <i class="fas fa-calendar-check text-5xl mb-4 opacity-50"></i>
@@ -61,6 +50,7 @@
         @create-task="handleCreateTask"
         @show-tooltip="handleShowTooltip"
         @hide-tooltip="handleHideTooltip"
+        @date-range-change="handleDateRangeChange"
       />
     </div>
   </div>
@@ -107,15 +97,16 @@ let timeUpdateInterval = null
 // 日历组件引用
 const calendarRef = ref(null)
 
-// 获取当前月份信息
-const currentDate = new Date()
-const currentYear = currentDate.getFullYear()
-const currentMonth = currentDate.getMonth()
-
-// 当前月份标题
-const currentMonthTitle = computed(() => {
-  return t('calendar.monthFormat', { year: currentYear, month: currentMonth + 1 })
+// 日历时间范围状态
+const calendarDateRange = ref({
+  currentDate: new Date(),
+  view: 'month',
+  monthStart: null,
+  monthEnd: null,
+  weekStart: null,
+  weekEnd: null
 })
+
 
 // 工具函数：判断两个日期是否是同一天
 const isSameDay = (date1, date2) => {
@@ -124,14 +115,7 @@ const isSameDay = (date1, date2) => {
     date1.getDate() === date2.getDate()
 }
 
-// 工具函数：获取月份开始和结束日期
-const getMonthStart = (date) => {
-  return new Date(date.getFullYear(), date.getMonth(), 1)
-}
 
-const getMonthEnd = (date) => {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0)
-}
 
 // 获取指定日期的任务（复制UnifiedCalendar的逻辑）
 const getTasksForDate = (date) => {
@@ -179,8 +163,11 @@ const getTasksForDate = (date) => {
 
 // 获取月视图中所有日期的任务（与右侧日历联动）
 const allMonthTasks = computed(() => {
-  const monthStart = getMonthStart(currentDate)
-  const monthEnd = getMonthEnd(currentDate)
+  const { monthStart, monthEnd } = calendarDateRange.value
+  
+  if (!monthStart || !monthEnd) {
+    return []
+  }
   
   // 获取日历显示范围（包括前后月份的日期）
   const calendarStart = new Date(monthStart)
@@ -198,7 +185,9 @@ const allMonthTasks = computed(() => {
   for (let date = new Date(calendarStart); date <= calendarEnd; date.setDate(date.getDate() + 1)) {
     const dayTasks = getTasksForDate(date)
     dayTasks.forEach(task => {
-      if (!taskIds.has(task.id)) {
+      // 过滤掉重复任务实例（只显示真正的任务，不显示预览）
+      const isRecurringInstance = task.id && task.id.startsWith('recurringTask_')
+      if (!taskIds.has(task.id) && !isRecurringInstance) {
         taskIds.add(task.id)
         allTasks.push(task)
       }
@@ -206,13 +195,9 @@ const allMonthTasks = computed(() => {
   }
   
   return allTasks.sort((a, b) => {
-    // 按提醒时间排序
-    const timeA = (a.occurrence_date || a.occurrenceDate) ? 
-      new Date(a.occurrence_date || a.occurrenceDate).getTime() : 
-      new Date(a.reminderTime || a.createdAt || 0).getTime()
-    const timeB = (b.occurrence_date || b.occurrenceDate) ? 
-      new Date(b.occurrence_date || b.occurrenceDate).getTime() : 
-      new Date(b.reminderTime || b.createdAt || 0).getTime()
+    // 按提醒时间排序（只处理真正的任务）
+    const timeA = new Date(a.reminderTime || a.createdAt || 0).getTime()
+    const timeB = new Date(b.reminderTime || b.createdAt || 0).getTime()
     return timeA - timeB
   })
 })
@@ -227,10 +212,6 @@ const completedTasks = computed(() => {
   return allMonthTasks.value.filter(task => task.status === 'done')
 })
 
-// 已完成任务数量
-const completedTasksCount = computed(() => {
-  return completedTasks.value.length
-})
 
 // Handle task edit
 const handleEditTask = (task) => {
@@ -250,6 +231,11 @@ const handleShowTooltip = (data) => {
 // Handle tooltip hide
 const handleHideTooltip = () => {
   emit('hide-tooltip')
+}
+
+// Handle calendar date range change
+const handleDateRangeChange = (dateRange) => {
+  calendarDateRange.value = dateRange
 }
 
 // 启动时间更新定时器
