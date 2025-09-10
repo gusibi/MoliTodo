@@ -1,7 +1,7 @@
 <template>
   <div class="settings-view-container">
     <CustomTitleBar 
-      title="MoliTodo - 设置" 
+      :title="$t('app.settingsTitle')" 
       window-type="settings"
       :show-maximize="false"
       class="absolute top-0 left-0 right-0 z-50 "

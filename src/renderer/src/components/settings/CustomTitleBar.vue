@@ -10,7 +10,7 @@
         <img src="/tray-icon-v2.png" alt="MoliTodo" class="w-5 h-5 object-contain" />
       </div>
       <span class="text-sm font-medium text-foreground whitespace-nowrap">
-        MoliTodo
+        {{ title }}
       </span>
     </div>
 

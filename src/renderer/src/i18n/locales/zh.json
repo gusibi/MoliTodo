@@ -1,4 +1,8 @@
 {
+  "app": {
+    "title": "MoliTodo - 任务管理",
+    "settingsTitle": "MoliTodo - 设置"
+  },
   "common": {
     "save": "保存",
     "cancel": "取消",

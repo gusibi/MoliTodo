@@ -41,6 +41,16 @@ export const loadStoredLanguage = async () => {
 export const changeLanguage = async (locale) => {
   if (messages[locale]) {
     i18n.global.locale.value = locale
+    
+    // 保存到 localStorage 用于跨窗口同步
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('language', locale)
+      } catch (error) {
+        console.warn('Failed to save language to localStorage:', error)
+      }
+    }
+    
     if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.config) {
       try {
         await window.electronAPI.config.set('language', locale)
