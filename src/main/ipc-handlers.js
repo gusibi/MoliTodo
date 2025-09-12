@@ -3,11 +3,61 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class IpcHandlers {
-  constructor({ taskService, listService, notificationService, windowManager }) {
+  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService }) {
     this.taskService = taskService;
     this.listService = listService;
     this.notificationService = notificationService;
     this.windowManager = windowManager;
+    this.taskStatusLogService = taskStatusLogService;
+  }
+
+  // 基于任务数据生成活跃度数据的降级方法
+  async generateActivityDataFromTasks(days = 365) {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - days + 1);
+      
+      // 获取所有任务
+      const allTasks = await this.taskService.getAllTasks();
+      
+      // 初始化活跃度数据
+      const activityData = {};
+      
+      // 遍历每一天
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        activityData[dateStr] = 0;
+      }
+      
+      // 统计任务活动 - 简化为纯计数
+      allTasks.forEach(task => {
+        // 任务创建日期
+        if (task.createdAt) {
+          const createdDate = new Date(task.createdAt).toISOString().split('T')[0];
+          if (activityData.hasOwnProperty(createdDate)) {
+            activityData[createdDate] += 1;
+          }
+        }
+        
+        // 任务完成日期
+        if (task.completedAt) {
+          const completedDate = new Date(task.completedAt).toISOString().split('T')[0];
+          if (activityData.hasOwnProperty(completedDate)) {
+            activityData[completedDate] += 1;
+          }
+        }
+      });
+      
+      // 转换为数组格式
+      return Object.entries(activityData).map(([date, count]) => ({
+        date,
+        count
+      }));
+    } catch (error) {
+      console.error('生成任务活跃度数据失败:', error);
+      throw error;
+    }
   }
 
   initialize() {
@@ -18,6 +68,7 @@ class IpcHandlers {
     this.setupDataHandlers();
     this.setupUtilityHandlers();
     this.setupAIHandlers();
+    this.setupTaskStatusLogHandlers();
   }
 
   setupTaskHandlers() {
@@ -1242,6 +1293,136 @@ class IpcHandlers {
     });
 
     console.log('[IPC] AI 处理器设置完成');
+  }
+
+  setupTaskStatusLogHandlers() {
+    // 获取任务状态历史
+    ipcMain.handle('get-task-status-history', async (event, taskId) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const history = await this.taskStatusLogService.getTaskStatusHistory(taskId);
+        return { success: true, history };
+      } catch (error) {
+        console.error('获取任务状态历史失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取状态变化统计
+    ipcMain.handle('get-status-change-statistics', async (event, dateRange = null) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const statistics = await this.taskStatusLogService.getStatusChangeStatistics(dateRange);
+        return { success: true, statistics };
+      } catch (error) {
+        console.error('获取状态变化统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取任务效率统计
+    ipcMain.handle('get-task-efficiency-stats', async (event, dateRange = null) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const stats = await this.taskStatusLogService.getTaskEfficiencyStats(dateRange);
+        return { success: true, stats };
+      } catch (error) {
+        console.error('获取任务效率统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 清理过期日志
+    ipcMain.handle('cleanup-old-task-logs', async (event, daysToKeep = 90) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const result = await this.taskStatusLogService.cleanupOldLogs(daysToKeep);
+        return { success: true, result };
+      } catch (error) {
+        console.error('清理过期日志失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取完成统计
+    ipcMain.handle('get-completion-statistics', async (event, dateRange = null) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const statistics = await this.taskStatusLogService.getCompletionStatistics(dateRange);
+        return { success: true, statistics };
+      } catch (error) {
+        console.error('获取完成统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取日志统计
+    ipcMain.handle('get-log-statistics', async (event) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const statistics = await this.taskStatusLogService.getLogStatistics();
+        return { success: true, statistics };
+      } catch (error) {
+        console.error('获取日志统计失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 初始化现有任务日志
+    ipcMain.handle('initialize-existing-task-logs', async (event, force = false) => {
+      try {
+        if (!this.taskStatusLogService) {
+          return { success: false, error: '任务状态日志服务未初始化' };
+        }
+        
+        const result = await this.taskStatusLogService.initializeExistingTasksLogs(force);
+        return { success: true, result };
+      } catch (error) {
+        console.error('初始化现有任务日志失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 获取每日活跃度数据（用于GitHub风格图表）
+    ipcMain.handle('get-daily-activity-data', async (event, { days = 365 } = {}) => {
+      try {
+        if (!this.taskStatusLogService) {
+          // 如果任务状态日志服务未初始化，返回基于任务创建和完成时间的数据
+          return await this.generateActivityDataFromTasks(days);
+        }
+        
+        const data = await this.taskStatusLogService.getDailyActivityData(days);
+        return { success: true, data };
+      } catch (error) {
+        console.error('获取每日活跃度数据失败:', error);
+        // 降级到基于任务数据生成
+        try {
+          const fallbackData = await this.generateActivityDataFromTasks(days);
+          return { success: true, data: fallbackData };
+        } catch (fallbackError) {
+          console.error('生成降级活跃度数据失败:', fallbackError);
+          return { success: false, error: error.message };
+        }
+      }
+    });
   }
 }
 

@@ -7,9 +7,10 @@ const { USER_GUIDE_TASKS } = require('../../utils/user-guide-tasks');
  * 包含任务相关的业务逻辑和用例协调
  */
 class TaskService {
-  constructor(taskRepository, windowManager = null) {
+  constructor(taskRepository, windowManager = null, taskStatusLogService = null) {
     this.taskRepository = taskRepository;
     this.windowManager = windowManager;
+    this.taskStatusLogService = taskStatusLogService;
   }
 
   /**
@@ -32,7 +33,14 @@ class TaskService {
       reminderTime
     );
 
-    return await this.taskRepository.save(task);
+    const savedTask = await this.taskRepository.save(task);
+    
+    // 记录任务创建的状态日志
+    if (this.taskStatusLogService) {
+      await this.taskStatusLogService.logStatusChange(savedTask.id, null, savedTask.status, savedTask.createdAt);
+    }
+    
+    return savedTask;
   }
 
   /**
@@ -91,7 +99,14 @@ class TaskService {
     }
 
     console.log("createTaskInList: save task ", task)
-    return await this.taskRepository.save(task);
+    const savedTask = await this.taskRepository.save(task);
+    
+    // 记录任务创建的状态日志
+    if (this.taskStatusLogService) {
+      await this.taskStatusLogService.logStatusChange(savedTask.id, null, savedTask.status, savedTask.createdAt);
+    }
+    
+    return savedTask;
   }
 
   /**
@@ -110,6 +125,8 @@ class TaskService {
       return task;
     }
 
+    const oldStatus = task.status;
+    
     // 如果是重复任务，创建下一个实例
     let nextInstanceCreated = false;
     if (task.isRecurring()) {
@@ -125,7 +142,14 @@ class TaskService {
     // 设置完成时间并标记为完成
     task.completedAt = new Date();
     task.markAsCompleted();
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -186,7 +210,7 @@ class TaskService {
         id: Task.generateId(),
         content: recurringTask.content,
         status: 'todo',
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         reminderTime: nextReminderTime,
         timeTracking: {},
         listId: recurringTask.listId,
@@ -199,8 +223,14 @@ class TaskService {
       });
 
       console.log("nextInstance: ------", nextInstance)
-      await this.taskRepository.save(nextInstance);
-      return nextInstance;
+      const savedInstance = await this.taskRepository.save(nextInstance);
+      
+      // 记录任务创建的状态日志
+      if (this.taskStatusLogService) {
+        await this.taskStatusLogService.logStatusChange(savedInstance.id, null, savedInstance.status, savedInstance.createdAt);
+      }
+      
+      return savedInstance;
     } catch (error) {
       console.error('创建下一个重复任务实例失败:', error);
       return null;
@@ -218,8 +248,16 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    const oldStatus = task.status;
     task.markAsIncomplete();
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -262,7 +300,14 @@ class TaskService {
  
     // 更新状态
     if (updates.status !== undefined) {
+      const oldStatus = task.status;
       task.updateStatus(updates.status);
+      
+      // 记录状态变化日志
+      if (this.taskStatusLogService && oldStatus !== updates.status) {
+        // 延迟记录，等任务保存成功后再记录
+        this._pendingStatusLog = { taskId, oldStatus, newStatus: updates.status };
+      }
     }
 
     // 更新提醒时间
@@ -299,7 +344,19 @@ class TaskService {
     }
 
     // console.log("task service task: ------ final", task)
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 处理延迟的状态日志记录
+    if (this._pendingStatusLog) {
+      await this.taskStatusLogService.logStatusChange(
+        this._pendingStatusLog.taskId,
+        this._pendingStatusLog.oldStatus,
+        this._pendingStatusLog.newStatus
+      );
+      this._pendingStatusLog = null;
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -330,8 +387,16 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    const oldStatus = task.status;
     task.updateStatus(status);
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, status);
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -394,8 +459,16 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    const oldStatus = task.status;
     task.startTask();
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -409,8 +482,16 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
+    const oldStatus = task.status;
     task.pauseTask();
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
+    }
+    
+    return updatedTask;
   }
 
   /**
@@ -429,8 +510,16 @@ class TaskService {
       return task;
     }
 
+    const oldStatus = task.status;
     task.completeTask();
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+    
+    // 记录状态变化日志
+    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
+      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
+    }
+    
+    return updatedTask;
   }
 
   /**

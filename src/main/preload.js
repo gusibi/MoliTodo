@@ -87,6 +87,18 @@ const electronAPI = {
     getStats: () => ipcRenderer.invoke('get-database-stats')
   },
 
+  // 任务状态日志 API
+  taskStatusLog: {
+    getTaskStatusHistory: (taskId) => ipcRenderer.invoke('get-task-status-history', taskId),
+    getStatusChangeStatistics: (dateRange = null) => ipcRenderer.invoke('get-status-change-statistics', dateRange),
+    getCompletionStatistics: (dateRange = null) => ipcRenderer.invoke('get-completion-statistics', dateRange),
+    getTaskEfficiencyStats: (dateRange = null) => ipcRenderer.invoke('get-task-efficiency-stats', dateRange),
+    cleanupOldLogs: (daysToKeep = 90) => ipcRenderer.invoke('cleanup-old-task-logs', daysToKeep),
+    initializeExistingTasksLogs: (force = false) => ipcRenderer.invoke('initialize-existing-task-logs', force),
+    getLogStatistics: () => ipcRenderer.invoke('get-log-statistics'),
+    getDailyActivityData: (days = 365) => ipcRenderer.invoke('get-daily-activity-data', { days })
+  },
+
   // 应用相关 API
   app: {
     updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath)
@@ -177,7 +189,13 @@ const electronAPI = {
       'task:setComment',
       'task:getByCategory',
       'task:search',
-      'task:getTimeInfo'
+      'task:getTimeInfo',
+      // 任务状态日志统计相关
+      'get-status-change-statistics',
+      'get-completion-statistics',
+      'get-task-efficiency-stats',
+      'get-log-statistics',
+      'cleanup-old-logs'
     ];
 
     if (allowedChannels.includes(channel)) {

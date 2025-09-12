@@ -1863,6 +1863,70 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 任务状态日志统计方法
+  const getStatusChangeStatistics = async () => {
+    try {
+      const result = await window.electronAPI.invoke('get-status-change-statistics')
+      console.log('获取状态变化统计结果:', result)
+      return result.success ? result.statistics : []
+    } catch (error) {
+      console.error('获取状态变化统计失败:', error)
+      return []
+    }
+  }
+
+  const getCompletionStatistics = async () => {
+    try {
+      const result = await window.electronAPI.invoke('get-completion-statistics')
+      return result.success ? result.statistics : {}
+    } catch (error) {
+      console.error('获取完成统计失败:', error)
+      return {}
+    }
+  }
+
+  const getTaskEfficiencyStats = async () => {
+    try {
+      const result = await window.electronAPI.invoke('get-task-efficiency-stats')
+      return result.success ? result.stats : []
+    } catch (error) {
+      console.error('获取效率统计失败:', error)
+      return []
+    }
+  }
+
+  const getLogStatistics = async () => {
+    try {
+      const result = await window.electronAPI.invoke('get-log-statistics')
+      return result.success ? result.statistics : {}
+    } catch (error) {
+      console.error('获取日志统计失败:', error)
+      return {}
+    }
+  }
+
+  const cleanupOldLogs = async (daysToKeep = 90) => {
+    try {
+      const result = await window.electronAPI.invoke('cleanup-old-logs', { daysToKeep })
+      return result.success ? result.deletedCount : 0
+    } catch (error) {
+      console.error('清理过期日志失败:', error)
+      throw error
+    }
+  }
+
+  // 获取每日活跃度数据（用于GitHub风格图表）
+  const getDailyActivityData = async (days = 365) => {
+    try {
+      const result = await window.electronAPI.taskStatusLog.getDailyActivityData(days)
+      console.log("getDailyActivityData result", result)
+      return result.success ? result.data : []
+    } catch (error) {
+      console.error('获取每日活跃度数据失败:', error)
+      return []
+    }
+  }
+
   return {
     // 状态
     tasks,
@@ -1988,9 +2052,18 @@ export const useTaskStore = defineStore('task', () => {
     streamGenerateReport,
     generateReport,
 
+    // 任务状态日志统计方法
+    getStatusChangeStatistics,
+    getCompletionStatistics,
+    getTaskEfficiencyStats,
+    getLogStatistics,
+    cleanupOldLogs,
+
     // AI 相关状态
     availableAIModels,
     selectedAIModel,
-    isAIEnabled
+    isAIEnabled,
+
+    getDailyActivityData
   }
 })

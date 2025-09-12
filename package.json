@@ -50,6 +50,7 @@
     "@fullcalendar/vue3": "^6.1.19",
     "@vuepic/vue-datepicker": "^11.0.2",
     "ai": "^5.0.22",
+    "chart.js": "^4.5.0",
     "electron-store": "^8.1.0",
     "marked": "^16.2.1",
     "node-schedule": "^2.1.1",
@@ -57,6 +58,7 @@
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "vue": "^3.3.8",
+    "vue-chartjs": "^5.3.2",
     "vue-i18n": "^9.14.5",
     "vue-router": "^4.2.5",
     "zod": "^4.1.1"

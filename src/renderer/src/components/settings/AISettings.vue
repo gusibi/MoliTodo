@@ -529,6 +529,11 @@ const customTestResults = ref({}) // 为每个自定义配置存储独立的测�
 // 展开状态管理
 const expandedProvider = ref('')
 
+// 占位符示例变量（用于模板帮助显示）
+const project_name = ref('{{project_name}}')
+const report_period = ref('{{report_period}}')
+const report_type = ref('{{report_type}}')
+
 // 内置提供商计算属性
 const builtInProviders = computed(() => aiProviders)
 

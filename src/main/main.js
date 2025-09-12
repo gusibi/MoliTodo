@@ -6,8 +6,10 @@ const IpcHandlers = require('./ipc-handlers');
 const FileTaskRepository = require('../infrastructure/persistence/file-task-repository');
 const SqliteTaskRepository = require('../infrastructure/persistence/sqlite-task-repository');
 const SqliteListRepository = require('../infrastructure/persistence/sqlite-list-repository');
+const SqliteTaskStatusLogRepository = require('../infrastructure/persistence/sqlite-task-status-log-repository');
 const TaskService = require('../domain/services/task-service');
 const ListService = require('../domain/services/list-service');
+const TaskStatusLogService = require('../domain/services/task-status-log-service');
 const NotificationService = require('../infrastructure/notification/notification-service');
 
 class MoliTodoApp {
@@ -52,7 +54,8 @@ class MoliTodoApp {
         taskService: this.taskService,
         listService: this.listService,
         notificationService: this.notificationService,
-        windowManager: this.windowManager
+        windowManager: this.windowManager,
+        taskStatusLogService: this.taskStatusLogService
       });
       this.ipcHandlers.initialize();
 
@@ -66,6 +69,18 @@ class MoliTodoApp {
         try {
           // 检测首次启动并创建用户引导任务
           await this.handleFirstLaunchSetup();
+          
+          // 初始化任务状态日志
+          if (this.taskStatusLogService) {
+            console.log('开始初始化任务状态日志...');
+            const initResult = await this.taskStatusLogService.initializeExistingTasksLogs(false); // 强制重新初始化
+            
+            if (initResult.initialized > 0 || initResult.skipped > 0) {
+              console.log(`任务状态日志初始化完成: 初始化了 ${initResult.initialized} 个任务，跳过了 ${initResult.skipped} 个任务，错误 ${initResult.errors} 个`);
+            } else {
+              console.log('任务状态日志无需初始化');
+            }
+          }
           
           // 更新托盘菜单显示任务数量
           if (this.windowManager && this.windowManager.tray) {
@@ -91,8 +106,14 @@ class MoliTodoApp {
       // 初始化清单仓储（使用相同的数据库连接）
       this.listRepository = new SqliteListRepository(this.taskRepository.db);
       
-      // 初始化服务
-      this.taskService = new TaskService(this.taskRepository);
+      // 初始化任务状态日志仓储（使用相同的数据库连接）
+      this.taskStatusLogRepository = new SqliteTaskStatusLogRepository(this.taskRepository.db);
+      
+      // 初始化任务状态日志服务
+      this.taskStatusLogService = new TaskStatusLogService(this.taskStatusLogRepository, this.taskRepository);
+      
+      // 初始化服务（注入状态日志服务）
+      this.taskService = new TaskService(this.taskRepository, null, this.taskStatusLogService);
       this.listService = new ListService(this.listRepository, this.taskRepository);
       
       console.log('业务服务初始化完成 - 使用 SQLite');

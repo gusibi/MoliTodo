@@ -9,7 +9,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 3; // 支持重复任务功能的版本
+    this.targetVersion = 4; // 支持重复任务功能的版本
   }
 
   /**
@@ -109,6 +109,11 @@ class DatabaseMigration {
         version: 3,
         description: '添加重复任务支持',
         migrate: () => this.migration_003_add_recurring_tasks()
+      },
+      {
+        version: 4,
+        description: '添加任务状态日志表',
+        migrate: () => this.migration_004_add_task_status_logs()
       }
     ];
 
@@ -241,6 +246,35 @@ class DatabaseMigration {
     await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_occurrence_date ON tasks(occurrence_date)');
 
     console.log('重复任务字段添加完成，索引已创建');
+  }
+
+  /**
+   * 迁移 004: 添加任务状态日志表
+   */
+  async migration_004_add_task_status_logs() {
+    console.log('执行迁移: 添加任务状态日志表');
+    
+    // 创建任务状态日志表
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS task_status_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id TEXT NOT NULL,
+        from_status TEXT,
+        to_status TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        metadata TEXT DEFAULT '{}',
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    `);
+
+    // 创建索引以优化查询性能
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_task_id ON task_status_logs(task_id)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_created_at ON task_status_logs(created_at)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_to_status ON task_status_logs(to_status)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_task_status ON task_status_logs(task_id, to_status)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_transition ON task_status_logs(from_status, to_status)');
+
+    console.log('任务状态日志表创建完成，索引已创建');
   }
 
   /**
