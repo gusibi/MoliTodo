@@ -335,3 +335,33 @@
 [data-theme="dark"] .help-section code {
   @apply bg-muted/50 text-primary;
 }
+
+/* Markdown 内容样式 */
+.markdown-content {
+  @apply text-sm text-muted-foreground;
+}
+
+.markdown-content h4 {
+  @apply text-base font-medium text-foreground mb-3 mt-0;
+}
+
+.markdown-content ul {
+  @apply list-none space-y-2 mb-4;
+}
+
+.markdown-content li {
+  @apply flex items-start;
+}
+
+.markdown-content code {
+  @apply bg-muted px-2 py-1 rounded text-xs font-mono text-primary mr-2;
+}
+
+.markdown-content p {
+  @apply mb-2 leading-relaxed;
+}
+
+/* 深色模式下的 markdown 样式 */
+[data-theme="dark"] .markdown-content code {
+  @apply bg-muted/50 text-primary;
+}

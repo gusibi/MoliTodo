@@ -95,7 +95,7 @@ const tooltip = ref({
 
 // 生成最近一年的日期数据
 const generateYearData = () => {
-  console.log('ActivityHeatmap - 生成年度数据，props.data:', props.data)
+  // console.log('ActivityHeatmap - 生成年度数据，props.data:', props.data)
   
   const today = new Date()
   const oneYearAgo = new Date(today)
@@ -112,7 +112,7 @@ const generateYearData = () => {
     })
   }
   
-  console.log('ActivityHeatmap - dataMap:', dataMap)
+  // console.log('ActivityHeatmap - dataMap:', dataMap)
   
   const weeks = []
   let currentWeek = []

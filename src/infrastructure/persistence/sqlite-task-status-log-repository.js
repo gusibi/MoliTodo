@@ -166,12 +166,23 @@ class SqliteTaskStatusLogRepository {
    * @returns {Promise<Object[]>} 统计结果
    */
   async getStatusChangeStatistics(startDate = null, endDate = null) {
+    // console.log("getStatusChangeStatistics startDate", startDate)
+    // console.log("getStatusChangeStatistics endDate", endDate)
+    
+    // 如果没有提供日期范围，默认使用最近30天
+    if (!startDate && !endDate) {
+      const now = new Date();
+      endDate = now.toISOString();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString();
+    }
+    
     let sql = `
       SELECT 
         from_status,
         to_status,
         COUNT(*) as count,
-        DATE(datetime(created_at/1000, 'unixepoch')) as date
+        DATE(created_at) as date
       FROM task_status_logs
     `;
     
@@ -180,20 +191,21 @@ class SqliteTaskStatusLogRepository {
     
     if (startDate) {
       conditions.push('created_at >= ?');
-      params.push(new Date(startDate).getTime());
+      params.push(typeof startDate === 'string' ? startDate : new Date(startDate).toISOString());
     }
     
     if (endDate) {
       conditions.push('created_at <= ?');
-      params.push(new Date(endDate).getTime());
+      params.push(typeof endDate === 'string' ? endDate : new Date(endDate).toISOString());
     }
     
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
     
-    sql += ' GROUP BY from_status, to_status, DATE(datetime(created_at/1000, \'unixepoch\')) ORDER BY created_at DESC';
+    sql += ' GROUP BY from_status, to_status, DATE(created_at) ORDER BY created_at DESC';
     
+    // console.log("getStatusChangeStatistics sql", sql)
     try {
       return await this.db.all(sql, params);
     } catch (error) {
@@ -211,7 +223,7 @@ class SqliteTaskStatusLogRepository {
   async getCompletionStatistics(startDate = null, endDate = null) {
     let sql = `
       SELECT 
-        DATE(datetime(created_at/1000, 'unixepoch')) as date,
+        DATE(created_at) as date,
         COUNT(*) as completed_count
       FROM task_status_logs
       WHERE to_status = 'done'
@@ -221,15 +233,15 @@ class SqliteTaskStatusLogRepository {
     
     if (startDate) {
       sql += ' AND created_at >= ?';
-      params.push(new Date(startDate).getTime());
+      params.push(new Date(startDate).toISOString());
     }
     
     if (endDate) {
       sql += ' AND created_at <= ?';
-      params.push(new Date(endDate).getTime());
+      params.push(new Date(endDate).toISOString());
     }
     
-    sql += ' GROUP BY DATE(datetime(created_at/1000, \'unixepoch\')) ORDER BY date DESC';
+    sql += ' GROUP BY DATE(created_at) ORDER BY date DESC';
     
     try {
       return await this.db.all(sql, params);

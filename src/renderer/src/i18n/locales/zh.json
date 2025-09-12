@@ -86,6 +86,16 @@
     "saveFailed": "保存失败",
     "aiDescription": "配置 AI 助手功能，支持多种 AI 提供商",
     "aiProviders": "AI 提供商",
+    "statisticsDescription": "查看任务统计和数据分析",
+    "dailyStatusTrend": "每日状态趋势",
+    "last7Days": "最近7天",
+    "last30Days": "最近30天",
+    "last90Days": "最近90天",
+    "lastYear": "最近一年",
+    "allTypes": "全部类型",
+    "created": "创建",
+    "started": "开始",
+    "completed": "完成",
     "ai": {
       "apiKey": "API Key",
       "baseUrl": "Base URL",
@@ -145,7 +155,8 @@
         "replacement": "占位符会在生成报告时自动替换为实际内容",
         "emptyContent": "如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"",
         "defaultTemplate": "留空使用默认模板"
-      }
+      },
+      "templateHelp": "#### 可用占位符：\n\n- `{{project_name}}` - 项目名称\n- `{{report_period}}` - 报告时间周期\n- `{{report_type}}` - 报告类型（日报/周报）\n- `{{summary}}` - AI 生成的工作总结\n- `{{completed_tasks}}` - 已完成任务列表\n- `{{inprogress_tasks}}` - 进行中任务列表（包含子任务进度）\n- `{{planned_tasks}}` - 计划中任务列表\n- `{{risks_issues}}` - 风险和问题列表\n\n#### 模板格式：\n\n支持标准 Markdown 语法  \n占位符会在生成报告时自动替换为实际内容  \n如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"  \n留空使用默认模板"
     },
      "languageSettings": {
     "title": "语言设置",
@@ -215,15 +226,6 @@
     "deleteAllTasks": "同时删除所有任务",
     "copy": "副本"
   },
-  "calendar": {
-    "title": "日历",
-    "month": "月",
-    "week": "周",
-    "day": "日",
-    "today": "今天",
-    "previous": "上一个",
-    "next": "下一个"
-  },
   "notifications": {
     "taskReminder": "任务提醒",
     "taskDue": "任务即将到期",
@@ -263,6 +265,9 @@
     "improvements": "改进建议"
   },
   "calendar": {
+    "title": "日历",
+    "previous": "上一个",
+    "next": "下一个",
     "retry": "重试",
     "today": "今天",
     "day": "日",
@@ -340,6 +345,17 @@
     "showNotifications": "显示通知",
     "notificationSound": "通知声音",
     "floatingIcon": "悬浮图标"
+  },
+  "statistics": {
+    "dailyStatusTrend": "每日状态趋势",
+    "last7Days": "最近7天",
+    "last30Days": "最近30天",
+    "last90Days": "最近90天",
+    "lastYear": "最近一年",
+    "allTypes": "全部类型",
+    "created": "创建",
+    "started": "开始",
+    "completed": "完成"
   },
   "floatView": {
     "defaultTaskName": "任务",

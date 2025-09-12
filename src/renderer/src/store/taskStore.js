@@ -1867,7 +1867,7 @@ export const useTaskStore = defineStore('task', () => {
   const getStatusChangeStatistics = async () => {
     try {
       const result = await window.electronAPI.invoke('get-status-change-statistics')
-      console.log('获取状态变化统计结果:', result)
+      // console.log('获取状态变化统计结果:', result)
       return result.success ? result.statistics : []
     } catch (error) {
       console.error('获取状态变化统计失败:', error)
@@ -1919,11 +1919,106 @@ export const useTaskStore = defineStore('task', () => {
   const getDailyActivityData = async (days = 365) => {
     try {
       const result = await window.electronAPI.taskStatusLog.getDailyActivityData(days)
-      console.log("getDailyActivityData result", result)
+      // console.log("getDailyActivityData result", result)
       return result.success ? result.data : []
     } catch (error) {
       console.error('获取每日活跃度数据失败:', error)
       return []
+    }
+  }
+
+  // 获取折线图数据（创建、开始、完成三个状态的每日统计）
+  const getDailyStatusTrendData = async (dateRange = null) => {
+    try {
+      // confirm("store getDailyStatusTrendData dateRange", dateRange)
+      const result = await window.electronAPI.invoke('get-status-change-statistics', dateRange)
+      console.log("getDailyStatusTrendData result", result)
+      if (!result.success) {
+        return { labels: [], datasets: [] }
+      }
+
+      const statistics = result.statistics
+      
+      // 处理数据，按日期分组
+      const dailyData = {}
+      
+      statistics.forEach(stat => {
+        const date = stat.date
+        if (!dailyData[date]) {
+          dailyData[date] = {
+            created: 0,    // 新建任务 (null -> todo)
+            started: 0,    // 开始任务 (todo -> doing)
+            completed: 0   // 完成任务 (doing -> done)
+          }
+        }
+        
+        // 根据状态转换类型统计
+        if (!stat.from_status && stat.to_status === 'todo') {
+          dailyData[date].created += stat.count
+        } else if (stat.from_status === 'todo' && stat.to_status === 'doing') {
+          dailyData[date].started += stat.count
+        } else if (stat.to_status === 'done') {
+          dailyData[date].completed += stat.count
+        }
+      })
+      
+      // 生成日期范围（根据传入参数或默认最近30天）
+      let endDate, startDate
+      if (dateRange && dateRange.startDate && dateRange.endDate) {
+        startDate = new Date(dateRange.startDate)
+        endDate = new Date(dateRange.endDate)
+      } else {
+        endDate = new Date()
+        startDate = new Date()
+        startDate.setDate(endDate.getDate() - 29) // 默认30天数据
+      }
+      
+      const labels = []
+      const createdData = []
+      const startedData = []
+      const completedData = []
+      
+      // 填充数据
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0]
+        labels.push(dateStr)
+        
+        const dayData = dailyData[dateStr] || { created: 0, started: 0, completed: 0 }
+        createdData.push(dayData.created)
+        startedData.push(dayData.started)
+        completedData.push(dayData.completed)
+      }
+      
+      // 返回完全去响应式化的纯对象，避免Chart.js递归调用问题
+      return JSON.parse(JSON.stringify({
+        labels,
+        datasets: [
+          {
+            label: '创建',
+            data: createdData,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.1
+          },
+          {
+            label: '开始',
+            data: startedData,
+            borderColor: 'rgb(245, 158, 11)',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.1
+          },
+          {
+            label: '完成',
+            data: completedData,
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.1
+          }
+        ]
+      }))
+    } catch (error) {
+      console.error('获取折线图数据失败:', error)
+      return { labels: [], datasets: [] }
     }
   }
 
@@ -2064,6 +2159,7 @@ export const useTaskStore = defineStore('task', () => {
     selectedAIModel,
     isAIEnabled,
 
-    getDailyActivityData
+    getDailyActivityData,
+    getDailyStatusTrendData
   }
 })

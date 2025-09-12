@@ -450,28 +450,7 @@
           <span>{{ t('settings.ai.templateUsage') }}</span>
         </div>
         <div class="template-help-content">
-          <div class="help-section">
-            <h4>{{ t('settings.ai.availablePlaceholders') }}</h4>
-            <ul>
-              <li><code v-text="'{{project_name}}'" /> - {{ t('settings.ai.placeholders.projectName') }}</li>
-              <li><code v-text="'{{report_period}}'" /> - {{ t('settings.ai.placeholders.reportPeriod') }}</li>
-              <li><code v-text="'{{report_type}}'" /> - {{ t('settings.ai.placeholders.reportType') }}</li>
-              <li><code v-text="'{{summary}}'" /> - {{ t('settings.ai.placeholders.summary') }}</li>
-              <li><code v-text="'{{completed_tasks}}'" /> - {{ t('settings.ai.placeholders.completedTasks') }}</li>
-              <li><code v-text="'{{inprogress_tasks}}'" /> - {{ t('settings.ai.placeholders.inprogressTasks') }}</li>
-              <li><code v-text="'{{planned_tasks}}'" /> - {{ t('settings.ai.placeholders.plannedTasks') }}</li>
-              <li><code v-text="'{{risks_issues}}'" /> - {{ t('settings.ai.placeholders.risksIssues') }}</li>
-            </ul>
-          </div>
-          <div class="help-section">
-            <h4>{{ t('settings.ai.templateFormat') }}</h4>
-            <ul>
-              <li>{{ t('settings.ai.formatTips.markdown') }}</li>
-              <li>{{ t('settings.ai.formatTips.replacement') }}</li>
-              <li>{{ t('settings.ai.formatTips.emptyContent') }}</li>
-              <li>{{ t('settings.ai.formatTips.defaultTemplate') }}</li>
-            </ul>
-          </div>
+          <div v-html="templateHelpMarkdown" class="markdown-content"></div>
         </div>
       </div>
     </div>
@@ -479,8 +458,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, h } from 'vue'
+import { ref, computed, onMounted, h, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { marked } from 'marked'
 
 // 使用 i18n
 const { t } = useI18n()
@@ -529,10 +509,15 @@ const customTestResults = ref({}) // 为每个自定义配置存储独立的测�
 // 展开状态管理
 const expandedProvider = ref('')
 
-// 占位符示例变量（用于模板帮助显示）
-const project_name = ref('{{project_name}}')
-const report_period = ref('{{report_period}}')
-const report_type = ref('{{report_type}}')
+// 模板帮助内容的 markdown 字符串（支持多语言）
+const templateHelpMarkdownText = computed(() => {
+  return t('settings.ai.templateHelp')
+})
+
+// 渲染 markdown 为 HTML
+const templateHelpMarkdown = computed(() => {
+  return marked(templateHelpMarkdownText.value)
+})
 
 // 内置提供商计算属性
 const builtInProviders = computed(() => aiProviders)

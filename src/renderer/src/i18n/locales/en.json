@@ -41,6 +41,16 @@
     "reminders": "Reminders",
     "aiTitle": "AI Configuration",
     "statistics": "Statistics",
+    "statisticsDescription": "View task statistics and data analysis",
+    "dailyStatusTrend": "Daily Status Trend",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "lastYear": "Last Year",
+    "allTypes": "All Types",
+    "created": "Created",
+    "started": "Started",
+    "completed": "Completed",
     "language": "Language Settings",
     "resetDefaults": "Reset to Defaults",
     "saveSettings": "Save Settings",
@@ -130,7 +140,8 @@
          "replacement": "Placeholders will be automatically replaced with actual content when generating reports",
          "emptyContent": "If a placeholder has no corresponding content, it will display \"None\" or \"N/A\"",
          "defaultTemplate": "Leave empty to use default template"
-       }
+       },
+       "templateHelp": "#### Available Placeholders:\n\n- `{{project_name}}` - Project name\n- `{{report_period}}` - Report time period\n- `{{report_type}}` - Report type (daily/weekly)\n- `{{summary}}` - AI-generated work summary\n- `{{completed_tasks}}` - Completed tasks list\n- `{{inprogress_tasks}}` - In-progress tasks list (including subtask progress)\n- `{{planned_tasks}}` - Planned tasks list\n- `{{risks_issues}}` - Risks and issues list\n\n#### Template Format:\n\nSupports standard Markdown syntax  \nPlaceholders will be automatically replaced with actual content when generating reports  \nIf a placeholder has no corresponding content, it will display \"None\" or \"N/A\"  \nLeave empty to use default template"
      },
      "languageSettings": {
     "title": "Language Settings",
@@ -200,15 +211,6 @@
     "deleteAllTasks": "Delete All Tasks",
     "copy": "Copy"
   },
-  "calendar": {
-    "title": "Calendar",
-    "month": "Month",
-    "week": "Week",
-    "day": "Day",
-    "today": "Today",
-    "previous": "Previous",
-    "next": "Next"
-  },
   "notifications": {
     "taskReminder": "Task Reminder",
     "taskDue": "Task Due Soon",
@@ -248,6 +250,9 @@
     "improvements": "Improvement Suggestions"
   },
   "calendar": {
+     "title": "Calendar",
+    "previous": "Previous",
+    "next": "Next",
     "retry": "Retry",
     "today": "Today",
     "day": "Day",
@@ -325,6 +330,17 @@
     "showNotifications": "Show Notifications",
     "notificationSound": "Notification Sound",
     "floatingIcon": "Floating Icon"
+  },
+  "statistics": {
+    "dailyStatusTrend": "Daily Status Trend",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "lastYear": "Last Year",
+    "allTypes": "All Types",
+    "created": "Created",
+    "started": "Started",
+    "completed": "Completed"
   },
   "views": {
     "listView": "List View",

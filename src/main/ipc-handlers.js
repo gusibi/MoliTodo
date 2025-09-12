@@ -1318,6 +1318,7 @@ class IpcHandlers {
           return { success: false, error: '任务状态日志服务未初始化' };
         }
         
+        console.log("ipc handler get-status-change-statistics dateRange", dateRange)
         const statistics = await this.taskStatusLogService.getStatusChangeStatistics(dateRange);
         return { success: true, statistics };
       } catch (error) {

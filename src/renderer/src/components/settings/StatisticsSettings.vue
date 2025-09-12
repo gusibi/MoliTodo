@@ -10,6 +10,9 @@
       class="mb-6"
     />
 
+    <!-- 每日状态趋势图表 -->
+    <DailyStatusTrendChart class="mb-6" />
+
     <!-- 基础任务统计 -->
     <div v-if="taskStats" class="setting-stats-container">
       <h3 class="setting-stats-title">任务统计</h3>
@@ -131,6 +134,7 @@ import { ref, onMounted } from 'vue'
 import { formatDuration } from '@/utils/task-utils.js'
 import { useTaskStore } from '@/store/taskStore.js'
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap.vue'
+import DailyStatusTrendChart from '@/components/charts/DailyStatusTrendChart.vue'
 
 // 使用 store
 const taskStore = useTaskStore()
@@ -193,9 +197,9 @@ const loadLogStats = async () => {
 
 const loadActivityData = async () => {
   try {
-    console.log('StatisticsSettings - 开始加载活跃度数据')
+    // console.log('StatisticsSettings - 开始加载活跃度数据')
     const result = await taskStore.getDailyActivityData(365)
-    console.log('StatisticsSettings - 获取到的活跃度数据:', result)
+    // console.log('StatisticsSettings - 获取到的活跃度数据:', result)
     activityData.value = result
   } catch (error) {
     console.error('加载活跃度数据失败:', error)
