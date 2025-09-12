@@ -29,7 +29,8 @@
       "todayAt": "今天 {time}",
       "tomorrowAt": "明天 {time}",
       "daysAgo": "{days}天前"
-    }
+    },
+    "date": "日期"
   },
   "views": {
     "listView": "列表视图",
@@ -122,9 +123,9 @@
       "reportTemplates": "报告模板配置",
       "reportTemplatesDesc": "自定义 AI 生成的日报和周报模板，支持 Markdown 格式和占位符",
       "dailyTemplate": "日报模板",
-      "dailyTemplateDesc": "自定义日报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}",
+      "dailyTemplateDesc": "自定义日报生成模板，支持占位符：`{'{{'}project_name{'}}'}`, `{'{{'}report_period{'}}'}`, `{'{{'}summary{'}}'}`, `{'{{'}completed_tasks{'}}'}`, `{'{{'}inprogress_tasks{'}}'}`, `{'{{'}planned_tasks{'}}'}`, `{'{{'}risks_issues{'}}'}`",
       "weeklyTemplate": "周报模板",
-      "weeklyTemplateDesc": "自定义周报生成模板，支持占位符：{{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}",
+      "weeklyTemplateDesc": "自定义周报生成模板，支持占位符： `{'{{'}project_name{'}}'}`, `{'{{'}report_period{'}}'}`, `{'{{'}summary{'}}'}`, `{'{{'}completed_tasks{'}}'}`, `{'{{'}inprogress_tasks{'}}'}`, `{'{{'}planned_tasks{'}}'}`, `{'{{'}risks_issues{'}}'}`",
       "templateUsage": "模板使用说明",
       "availablePlaceholders": "可用占位符：",
       "templateFormat": "模板格式：",
@@ -150,13 +151,13 @@
       },
       "formatTips": {
         "markdown": "支持标准 Markdown 语法",
-        "placeholders": "使用双大括号包围占位符，如 {{project_name}}",
+        "placeholders": "使用双大括号包围占位符，如 `{'{{'}project_name{'}}'}}`",
         "formatting": "可以使用 Markdown 的标题、列表、粗体等格式",
         "replacement": "占位符会在生成报告时自动替换为实际内容",
         "emptyContent": "如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"",
         "defaultTemplate": "留空使用默认模板"
       },
-      "templateHelp": "#### 可用占位符：\n\n- `{{project_name}}` - 项目名称\n- `{{report_period}}` - 报告时间周期\n- `{{report_type}}` - 报告类型（日报/周报）\n- `{{summary}}` - AI 生成的工作总结\n- `{{completed_tasks}}` - 已完成任务列表\n- `{{inprogress_tasks}}` - 进行中任务列表（包含子任务进度）\n- `{{planned_tasks}}` - 计划中任务列表\n- `{{risks_issues}}` - 风险和问题列表\n\n#### 模板格式：\n\n支持标准 Markdown 语法  \n占位符会在生成报告时自动替换为实际内容  \n如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"  \n留空使用默认模板"
+      "templateHelp": "#### 可用占位符：\n\n- `{'{{'}project_name{'}}'}`  - 项目名称\n- `{'{{'}report_period{'}}'}`  - 报告时间周期\n- `{'{{'}report_type{'}}'}`  - 报告类型（日报/周报）\n- `{'{{'}summary{'}}'}`  - AI 生成的工作总结\n- `{'{{'}completed_tasks{'}}'}`  - 已完成任务列表\n- `{'{{'}inprogress_tasks{'}}'}`  - 进行中任务列表（包含子任务进度）\n- `{'{{'}planned_tasks{'}}'}`  - 计划中任务列表\n- `{'{{'}risks_issues{'}}'}`  - 风险和问题列表\n\n#### 模板格式：\n\n支持标准 Markdown 语法  \n占位符会在生成报告时自动替换为实际内容  \n如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"  \n留空使用默认模板"
     },
      "languageSettings": {
     "title": "语言设置",
@@ -253,13 +254,19 @@
   "reports": {
     "daily": "每日",
     "weekly": "每周",
+    "period": "时间周期",
     "todaySummary": "今日总结",
     "completedWork": "已完成工作",
     "inProgressWork": "进行中工作",
     "plannedWork": "计划工作",
+    "tomorrowPlan": "明日计划",
     "challenges": "遇到的挑战",
     "nextSteps": "下一步计划",
     "weekSummary": "本周总结",
+    "thisWeekSummary": "本周总结",
+    "thisWeekCompleted": "本周已完成",
+    "nextWeekPlan": "下周计划",
+    "risksIssues": "风险和问题",
     "achievements": "主要成就",
     "learnings": "学习收获",
     "improvements": "改进建议"

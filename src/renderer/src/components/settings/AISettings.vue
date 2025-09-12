@@ -842,7 +842,7 @@ const loadConfig = async () => {
   try {
     // 从 electron-store 加载配置
     const allConfig = await window.electronAPI.config.get()
-    console.log("allConfig", allConfig)
+    // console.log("allConfig", allConfig)
     if (allConfig && allConfig.ai) {
       // 合并配置，确保新字段有默认值
       const loadedConfig = {

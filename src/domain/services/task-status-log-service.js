@@ -154,7 +154,7 @@ class TaskStatusLogService {
       const startDate = dateRange?.startDate;
       const endDate = dateRange?.endDate;
       
-      console.log('domain getStatusChangeStatistics dateRange', dateRange, startDate, endDate)
+      // console.log('domain getStatusChangeStatistics dateRange', dateRange, startDate, endDate)
       return await this.taskStatusLogRepository.getStatusChangeStatistics(startDate, endDate);
     } catch (error) {
       console.error('获取状态变化统计失败:', error);

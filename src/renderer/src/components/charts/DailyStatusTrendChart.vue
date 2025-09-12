@@ -188,10 +188,10 @@ const loadChartData = async () => {
       endDate: endDate.toISOString().split('T')[0]
     }
     
-    console.log('DailyStatusTrendChart - 加载图表数据:', dateRange)
+    // console.log('DailyStatusTrendChart - 加载图表数据:', dateRange)
     const data = await taskStore.getDailyStatusTrendData(dateRange)
     chartData.value = data
-    console.log('DailyStatusTrendChart - 加载图表数据成功:', data)
+    // console.log('DailyStatusTrendChart - 加载图表数据成功:', data)
     
     if (chart.value) {
       // 使用纯数据，避免响应式代理

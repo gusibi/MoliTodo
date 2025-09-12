@@ -29,7 +29,8 @@
       "todayAt": "Today {time}",
       "tomorrowAt": "Tomorrow {time}",
       "daysAgo": "{days} days ago"
-    }
+    },
+    "date": "Date"
   },
   "settings": {
     "title": "Settings",
@@ -107,9 +108,9 @@
        "reportTemplates": "Report Template Configuration",
        "reportTemplatesDesc": "Customize AI-generated daily and weekly report templates with Markdown format and placeholders",
        "dailyTemplate": "Daily Report Template",
-       "dailyTemplateDesc": "Customize daily report generation template with placeholders: {{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}",
+       "dailyTemplateDesc": "Customize daily report generation template with placeholders: `{'{{'}project_name{'}}'}`, `{'{{'}report_period{'}}'}`, `{'{{'}summary{'}}'}`, `{'{{'}completed_tasks{'}}'}`, `{'{{'}inprogress_tasks{'}}'}`, `{'{{'}planned_tasks{'}}'}`, `{'{{'}risks_issues{'}}'}`",
        "weeklyTemplate": "Weekly Report Template",
-       "weeklyTemplateDesc": "Customize weekly report generation template with placeholders: {{project_name}}, {{report_period}}, {{summary}}, {{completed_tasks}}, {{inprogress_tasks}}, {{planned_tasks}}, {{risks_issues}}",
+       "weeklyTemplateDesc": "Customize weekly report generation template with placeholders: `{'{{'}project_name{'}}'}`, `{'{{'}report_period{'}}'}`, `{'{{'}summary{'}}'}`, `{'{{'}completed_tasks{'}}'}`, `{'{{'}inprogress_tasks{'}}'}`, `{'{{'}planned_tasks{'}}'}`, `{'{{'}risks_issues{'}}'}`",
        "templateUsage": "Template Usage Instructions",
        "availablePlaceholders": "Available Placeholders:",
        "templateFormat": "Template Format:",
@@ -135,13 +136,13 @@
        },
        "formatTips": {
          "markdown": "Supports standard Markdown syntax",
-         "placeholders": "Use double curly braces around placeholders, e.g. {{project_name}}",
+         "placeholders": "Use double curly braces around placeholders, e.g. `{'{{'}project_name{'}}'}`",
          "formatting": "You can use Markdown headings, lists, bold and other formats",
          "replacement": "Placeholders will be automatically replaced with actual content when generating reports",
          "emptyContent": "If a placeholder has no corresponding content, it will display \"None\" or \"N/A\"",
          "defaultTemplate": "Leave empty to use default template"
        },
-       "templateHelp": "#### Available Placeholders:\n\n- `{{project_name}}` - Project name\n- `{{report_period}}` - Report time period\n- `{{report_type}}` - Report type (daily/weekly)\n- `{{summary}}` - AI-generated work summary\n- `{{completed_tasks}}` - Completed tasks list\n- `{{inprogress_tasks}}` - In-progress tasks list (including subtask progress)\n- `{{planned_tasks}}` - Planned tasks list\n- `{{risks_issues}}` - Risks and issues list\n\n#### Template Format:\n\nSupports standard Markdown syntax  \nPlaceholders will be automatically replaced with actual content when generating reports  \nIf a placeholder has no corresponding content, it will display \"None\" or \"N/A\"  \nLeave empty to use default template"
+       "templateHelp": "#### Available Placeholders:\n\n- `{'{{'}project_name{'}}'}`  - Project name\n- `{'{{'}report_period{'}}'}`  - Report time period\n- `{'{{'}report_type{'}}'}`  - Report type (daily/weekly)\n- `{'{{'}summary{'}}'}`  - AI-generated work summary\n- `{'{{'}completed_tasks{'}}'}`  - Completed tasks list\n- `{'{{'}inprogress_tasks{'}}'}`  - In-progress tasks list (including subtask progress)\n- `{'{{'}planned_tasks{'}}'}`  - Planned tasks list\n- `{'{{'}risks_issues{'}}'}`  - Risks and issues list\n\n#### Template Format:\n\nSupports standard Markdown syntax  \nPlaceholders will be automatically replaced with actual content when generating reports  \nIf a placeholder has no corresponding content, it will display \"None\" or \"N/A\"  \nLeave empty to use default template"
      },
      "languageSettings": {
     "title": "Language Settings",
@@ -238,13 +239,19 @@
   "reports": {
     "daily": "Daily",
     "weekly": "Weekly",
+    "period": "Period",
     "todaySummary": "Today's Summary",
     "completedWork": "Completed Work",
     "inProgressWork": "Work in Progress",
     "plannedWork": "Planned Work",
+    "tomorrowPlan": "Tomorrow's Plan",
     "challenges": "Challenges Encountered",
     "nextSteps": "Next Steps",
     "weekSummary": "Weekly Summary",
+    "thisWeekSummary": "This Week's Summary",
+    "thisWeekCompleted": "This Week's Completed",
+    "nextWeekPlan": "Next Week's Plan",
+    "risksIssues": "Risks & Issues",
     "achievements": "Key Achievements",
     "learnings": "Learnings",
     "improvements": "Improvement Suggestions"
