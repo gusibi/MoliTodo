@@ -92,6 +92,34 @@ const getFilteredDatasets = (datasets) => {
   )
 }
 
+// 获取CSS变量颜色值的辅助函数
+const getCSSVariableColor = (variable) => {
+  if (typeof window !== 'undefined') {
+    const style = getComputedStyle(document.documentElement)
+    const hslValue = style.getPropertyValue(variable).trim()
+    return hslValue ? `hsl(${hslValue})` : '#3b82f6' // 默认蓝色
+  }
+  return '#3b82f6'
+}
+
+// 更新数据集颜色以使用主题系统
+const updateDatasetColors = (datasets) => {
+  const themeColors = [
+    getCSSVariableColor('--chart-1'), // 创建 - 蓝色
+    getCSSVariableColor('--chart-2'), // 开始 - 深蓝色
+    getCSSVariableColor('--chart-3')  // 完成 - 更深蓝色
+  ]
+  
+  return datasets.map((dataset, index) => {
+    const color = themeColors[index] || getCSSVariableColor('--chart-1')
+    return {
+      ...dataset,
+      borderColor: color,
+      backgroundColor: color.replace('hsl(', 'hsla(').replace(')', ', 0.1)')
+    }
+  })
+}
+
 // 图表配置 - 避免响应式循环依赖
 const getChartOptions = () => ({
   responsive: true,
@@ -104,12 +132,18 @@ const getChartOptions = () => ({
       position: 'top',
       labels: {
         usePointStyle: true,
-        padding: 20
+        padding: 20,
+        color: getCSSVariableColor('--foreground')
       }
     },
     tooltip: {
       mode: 'index',
       intersect: false,
+      backgroundColor: getCSSVariableColor('--popover'),
+      titleColor: getCSSVariableColor('--popover-foreground'),
+      bodyColor: getCSSVariableColor('--popover-foreground'),
+      borderColor: getCSSVariableColor('--border'),
+      borderWidth: 1,
       callbacks: {
         title: function(context) {
           const date = new Date(context[0].label)
@@ -128,11 +162,16 @@ const getChartOptions = () => ({
   scales: {
     x: {
       display: true,
+      grid: {
+        color: getCSSVariableColor('--border')
+      },
       title: {
         display: true,
-        text: '日期'
+        text: '日期',
+        color: getCSSVariableColor('--muted-foreground')
       },
       ticks: {
+        color: getCSSVariableColor('--muted-foreground'),
         callback: function(value/* index */, index, ticks) {
           // 通过scale提供的API获取标签，避免直接访问this.chart，减少解析器递归
           const rawLabel = this.getLabelForValue(value)
@@ -154,13 +193,18 @@ const getChartOptions = () => ({
     },
     y: {
       display: true,
+      grid: {
+        color: getCSSVariableColor('--border')
+      },
       title: {
         display: true,
-        text: '任务数量'
+        text: '任务数量',
+        color: getCSSVariableColor('--muted-foreground')
       },
       beginAtZero: true,
       ticks: {
-        stepSize: 1
+        maxTicksLimit: 10,
+        color: getCSSVariableColor('--muted-foreground')
       }
     }
   },
@@ -190,6 +234,8 @@ const loadChartData = async () => {
     
     // console.log('DailyStatusTrendChart - 加载图表数据:', dateRange)
     const data = await taskStore.getDailyStatusTrendData(dateRange)
+    // 更新数据集颜色以使用主题系统
+    data.datasets = updateDatasetColors(data.datasets)
     chartData.value = data
     // console.log('DailyStatusTrendChart - 加载图表数据成功:', data)
     
@@ -224,10 +270,13 @@ const updateChart = async () => {
 const initChart = () => {
   if (!chartCanvas.value) return
   
+  // 确保数据集使用主题颜色
+  const datasetsWithColors = updateDatasetColors(chartData.value.datasets || [])
+  
   // 初始化时传入深拷贝的纯数据，避免把Vue的响应式对象交给Chart.js
   const initialData = {
     labels: JSON.parse(JSON.stringify(chartData.value.labels || [])),
-    datasets: JSON.parse(JSON.stringify(getFilteredDatasets(chartData.value.datasets || [])))
+    datasets: JSON.parse(JSON.stringify(getFilteredDatasets(datasetsWithColors)))
   }
   
   chart.value = new Chart(chartCanvas.value, {
@@ -267,7 +316,7 @@ onUnmounted(() => {
 
 <style scoped>
 .daily-status-trend-chart {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm p-6;
 }
 
 .chart-header {
@@ -275,7 +324,7 @@ onUnmounted(() => {
 }
 
 .chart-title {
-  @apply text-lg font-semibold text-gray-800;
+  @apply text-lg font-semibold text-foreground;
 }
 
 .chart-controls {
@@ -284,20 +333,20 @@ onUnmounted(() => {
 
 .time-range-select,
 .type-filter-select {
-  @apply px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white;
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply px-3 py-1.5 border border-border rounded text-sm bg-background text-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
 }
 
 .chart-container {
   @apply relative;
-  height: 400px;
+  height: 280px;
 }
 
 .chart-loading {
-  @apply flex items-center justify-center py-8 text-gray-500;
+  @apply flex items-center justify-center py-8 text-muted-foreground;
 }
 
 .chart-error {
-  @apply flex items-center justify-center py-8 text-red-500;
+  @apply flex items-center justify-center py-8 text-destructive;
 }
 </style>
