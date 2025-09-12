@@ -453,14 +453,14 @@
           <div class="help-section">
             <h4>{{ t('settings.ai.availablePlaceholders') }}</h4>
             <ul>
-              <li><code>{{project_name}}</code> - {{ t('settings.ai.placeholders.projectName') }}</li>
-              <li><code>{{report_period}}</code> - {{ t('settings.ai.placeholders.reportPeriod') }}</li>
-              <li><code>{{report_type}}</code> - {{ t('settings.ai.placeholders.reportType') }}</li>
-              <li><code>{{summary}}</code> - {{ t('settings.ai.placeholders.summary') }}</li>
-              <li><code>{{completed_tasks}}</code> - {{ t('settings.ai.placeholders.completedTasks') }}</li>
-              <li><code>{{inprogress_tasks}}</code> - {{ t('settings.ai.placeholders.inprogressTasks') }}</li>
-              <li><code>{{planned_tasks}}</code> - {{ t('settings.ai.placeholders.plannedTasks') }}</li>
-              <li><code>{{risks_issues}}</code> - {{ t('settings.ai.placeholders.risksIssues') }}</li>
+              <li><code v-text="'{{project_name}}'" /> - {{ t('settings.ai.placeholders.projectName') }}</li>
+              <li><code v-text="'{{report_period}}'" /> - {{ t('settings.ai.placeholders.reportPeriod') }}</li>
+              <li><code v-text="'{{report_type}}'" /> - {{ t('settings.ai.placeholders.reportType') }}</li>
+              <li><code v-text="'{{summary}}'" /> - {{ t('settings.ai.placeholders.summary') }}</li>
+              <li><code v-text="'{{completed_tasks}}'" /> - {{ t('settings.ai.placeholders.completedTasks') }}</li>
+              <li><code v-text="'{{inprogress_tasks}}'" /> - {{ t('settings.ai.placeholders.inprogressTasks') }}</li>
+              <li><code v-text="'{{planned_tasks}}'" /> - {{ t('settings.ai.placeholders.plannedTasks') }}</li>
+              <li><code v-text="'{{risks_issues}}'" /> - {{ t('settings.ai.placeholders.risksIssues') }}</li>
             </ul>
           </div>
           <div class="help-section">
