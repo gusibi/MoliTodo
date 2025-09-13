@@ -77,11 +77,16 @@ jobs:
           cat > RELEASE_NOTES.md << 'EOF'
           # MoliTodo v${{ steps.get_version.outputs.VERSION }} ✨
           
-          ## 🌍 Language Support & Enhanced Calendar
+          ## 📄 About Page & Auto-Start Fix
           
           ### New Features
-          - **Language Switching**: Complete internationalization with real-time language switching (English/Chinese)
-          - **Enhanced Calendar**: Integrated task list panel in calendar views for unified task management
+          - **About Page**: Comprehensive about page with version info, project links, and update checking
+          - **Version Management**: Built-in update checker and GitHub integration
+          - **Project Information**: Easy access to license, author, and project details
+          
+          ### Bug Fixes
+          - **Auto-Start Setting**: Fixed error when enabling auto-start configuration
+          - **Settings Reliability**: Improved startup settings handling and error prevention
           
           ### 🍎 macOS Installation
           
@@ -103,16 +108,16 @@ jobs:
           
           ### Key Improvements
           
-          - **Multi-language Interface**: Switch between English and Chinese in settings
-          - **Calendar Integration**: Task list panel added to calendar views
-          - **Real-time Updates**: Language changes apply immediately
-          - **Unified Workflow**: Manage tasks directly from calendar interface
+          - **About Page**: Access app info through Settings > About
+          - **Update Checking**: Built-in update checker with GitHub integration
+          - **Auto-Start Fix**: Startup settings now work reliably without errors
+          - **Settings Stability**: Enhanced overall settings configuration management
           
           ### Upgrade Notes
           
-          - All existing data preserved
-          - New features available immediately
-          - Language auto-detected from system settings
+          - All existing data and settings preserved
+          - Auto-start setting now works correctly
+          - New about page available immediately
           - No configuration required
           
           ---

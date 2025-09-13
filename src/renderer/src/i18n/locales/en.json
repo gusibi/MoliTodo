@@ -53,6 +53,10 @@
     "started": "Started",
     "completed": "Completed",
     "language": "Language Settings",
+    "aboutName": "About",
+    "aboutDescription": "Application version information and update management",
+    "newVersionAvailable": "New version {version} available",
+    "clickToCheck": "Click to check for updates",
     "resetDefaults": "Reset to Defaults",
     "saveSettings": "Save Settings",
     "startupSettings": "Startup Settings",
@@ -150,7 +154,36 @@
     "chinese": "中文",
     "english": "English",
     "changeSuccess": "Language changed successfully"
-  }
+  },
+    "about": {
+      "appInfo": "Application Information",
+      "appDescription": "A modern task management application with AI assistant, multi-language interface, and rich task management features.",
+      "version": "Version",
+      "updateAvailable": "Update available",
+      "updateCheck": "Update Check",
+      "checkForUpdates": "Check for Updates",
+      "checkingUpdates": "Checking for updates...",
+      "upToDate": "Up to date",
+      "updateCheckError": "Failed to check for updates",
+      "updateFound": "New version {version} available",
+      "upToDateMessage": "You are using the latest version",
+      "updateCheckFailed": "Failed to check for updates, please try again later",
+      "checking": "Checking...",
+      "checkNow": "Check Now",
+      "downloadUpdate": "Download Update",
+      "downloadUpdateDescription": "Download and install the latest version",
+      "download": "Download",
+      "changelog": "Changelog",
+      "viewChangelog": "View Changelog",
+      "changelogDescription": "View application version history and new feature introductions",
+      "viewOnGitHub": "View on GitHub",
+      "projectInfo": "Project Information",
+      "githubRepo": "GitHub Repository",
+      "reportIssue": "Report Issue",
+      "releases": "Releases",
+      "license": "License",
+      "author": "Author"
+    }
   },
   
   "tasks": {

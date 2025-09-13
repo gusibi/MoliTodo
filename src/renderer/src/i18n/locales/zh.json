@@ -58,6 +58,10 @@
     "aiTitle": "AI 配置",
     "statistics": "统计信息",
     "language": "语言设置",
+    "aboutName": "关于",
+    "aboutDescription": "应用版本信息和更新管理",
+    "newVersionAvailable": "发现新版本 {version}",
+    "clickToCheck": "点击检查更新",
     "resetDefaults": "恢复默认设置",
     "saveSettings": "保存设置",
     "startupSettings": "启动设置",
@@ -165,7 +169,36 @@
     "chinese": "中文",
     "english": "English",
     "changeSuccess": "语言切换成功"
-  }
+  },
+    "about": {
+      "appInfo": "应用信息",
+      "appDescription": "一个现代化的任务管理应用，支持 AI 智能助手、多语言界面和丰富的任务管理功能。",
+      "version": "版本",
+      "updateAvailable": "发现新版本",
+      "updateCheck": "更新检查",
+      "checkForUpdates": "检查更新",
+      "checkingUpdates": "正在检查更新...",
+      "upToDate": "已是最新版本",
+      "updateCheckError": "检查更新失败",
+      "updateFound": "发现新版本 {version}",
+      "upToDateMessage": "您使用的已是最新版本",
+      "updateCheckFailed": "检查更新失败，请稍后重试",
+      "checking": "检查中...",
+      "checkNow": "立即检查",
+      "downloadUpdate": "下载更新",
+      "downloadUpdateDescription": "下载并安装最新版本",
+      "download": "下载",
+      "changelog": "更新日志",
+      "viewChangelog": "查看变更日志",
+      "changelogDescription": "查看应用的版本更新历史和新功能介绍",
+      "viewOnGitHub": "在 GitHub 上查看",
+      "projectInfo": "项目信息",
+      "githubRepo": "GitHub 仓库",
+      "reportIssue": "报告问题",
+      "releases": "版本发布",
+      "license": "开源协议",
+      "author": "作者"
+    }
   },
  
   "tasks": {

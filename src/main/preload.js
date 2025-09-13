@@ -101,7 +101,13 @@ const electronAPI = {
 
   // 应用相关 API
   app: {
-    updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath)
+    updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath),
+    quit: () => ipcRenderer.invoke('app-quit'),
+    getVersion: () => ipcRenderer.invoke('app-get-version'),
+    getChangelog: () => ipcRenderer.invoke('app-get-changelog'),
+    getInfo: () => ipcRenderer.invoke('app-get-info'),
+    openExternal: (url) => ipcRenderer.invoke('app-open-external', url),
+    setAutoStart: (enabled) => ipcRenderer.invoke('app-set-auto-start', enabled)
   },
 
   // 事件监听 API

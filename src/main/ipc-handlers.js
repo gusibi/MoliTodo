@@ -1,4 +1,4 @@
-const { ipcMain, dialog, app } = require('electron');
+const { ipcMain, dialog, app, shell } = require('electron');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -69,6 +69,7 @@ class IpcHandlers {
     this.setupUtilityHandlers();
     this.setupAIHandlers();
     this.setupTaskStatusLogHandlers();
+    this.setupAppHandlers();
   }
 
   setupTaskHandlers() {
@@ -1422,6 +1423,63 @@ class IpcHandlers {
           console.error('生成降级活跃度数据失败:', fallbackError);
           return { success: false, error: error.message };
         }
+      }
+    });
+  }
+
+  setupAppHandlers() {
+    // 获取应用版本
+    ipcMain.handle('app-get-version', () => {
+      return app.getVersion();
+    });
+
+    // 获取变更日志
+    ipcMain.handle('app-get-changelog', async () => {
+      try {
+        const changelogPath = path.join(__dirname, '../../CHANGELOG.md');
+        const changelog = await fs.readFile(changelogPath, 'utf-8');
+        return changelog;
+      } catch (error) {
+        console.error('Failed to read changelog:', error);
+        throw new Error('无法读取变更日志文件');
+      }
+    });
+
+    // 获取应用信息
+    ipcMain.handle('app-get-info', () => {
+      return {
+        name: app.getName(),
+        version: app.getVersion(),
+        platform: process.platform,
+        arch: process.arch,
+        electronVersion: process.versions.electron,
+        nodeVersion: process.versions.node,
+        chromeVersion: process.versions.chrome
+      };
+    });
+
+    // 在系统默认浏览器中打开链接
+    ipcMain.handle('app-open-external', async (event, url) => {
+      try {
+        await shell.openExternal(url);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to open external URL:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 设置应用自动启动
+    ipcMain.handle('app-set-auto-start', async (event, enabled) => {
+      try {
+        app.setLoginItemSettings({
+          openAtLogin: enabled,
+          openAsHidden: false
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to set auto start:', error);
+        return { success: false, error: error.message };
       }
     });
   }

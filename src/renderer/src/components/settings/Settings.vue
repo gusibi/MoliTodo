@@ -58,6 +58,10 @@
             <StatisticsSettings />
           </div>
 
+          <!-- 关于 -->
+          <div v-if="activeCategory === 'about'">
+            <AboutSettings @show-message="showMessage" />
+          </div>
 
         </div>
       </div>
@@ -93,6 +97,7 @@ import AppearanceSettings from './AppearanceSettings.vue'
 import DataSettings from './DataSettings.vue'
 import ReminderSettings from './ReminderSettings.vue'
 import StatisticsSettings from './StatisticsSettings.vue'
+import AboutSettings from './AboutSettings.vue'
 
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
@@ -174,6 +179,11 @@ const settingsCategories = computed(() => [
     id: 'statistics',
     name: t('settings.statistics'),
     icon: h('i', { class: 'fas fa-chart-bar' })
+  },
+  {
+    id: 'about',
+    name: t('settings.aboutName'),
+    icon: h('i', { class: 'fas fa-info-circle' })
   }
 ])
 

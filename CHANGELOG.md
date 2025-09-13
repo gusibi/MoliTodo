@@ -5,6 +5,56 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-09-13
+
+### ✨ New Features
+
+#### 📄 About Page
+- **AboutSettings Component**: Added comprehensive about page in settings with application information
+- **Version Information**: Display current version and update check functionality
+- **Project Links**: Quick access to GitHub repository, issues, and releases
+- **Application Details**: Show license, author, and other project information
+
+### 🐛 Bug Fixes
+
+#### Startup Settings
+- **Fixed Auto-Start Configuration**: Resolved error when enabling auto-start setting
+- **Settings Reliability**: Improved startup settings configuration handling
+- **Error Handling**: Enhanced error handling for app launch configuration
+
+### 🛠️ Technical Improvements
+
+#### Settings Framework
+- **About Integration**: Seamlessly integrated about page into settings navigation
+- **Configuration Stability**: Improved settings configuration management
+- **IPC Communication**: Enhanced app-level IPC handlers for better settings support
+
+---
+
+## [1.1.2] - 2025-09-12
+
+### ✨ New Features
+
+#### 📊 Data Statistics Feature
+- **Statistics Settings**: Added comprehensive data statistics functionality in settings page
+- **Usage Analytics**: Track task completion patterns and productivity metrics
+- **Performance Insights**: View detailed statistics about task management efficiency
+
+### 🐛 Bug Fixes
+
+#### AI Settings Interface
+- **Fixed AI Settings Display**: Resolved issue where AI settings page was not showing properly
+- **Configuration Access**: Improved AI configuration interface reliability
+
+### 🛠️ Technical Improvements
+
+#### Statistics Implementation
+- **StatisticsSettings Component**: New dedicated component for data visualization and statistics configuration
+- **Data Processing**: Enhanced data analysis capabilities for task performance tracking
+- **Settings Integration**: Seamlessly integrated statistics into the existing settings framework
+
+---
+
 ## [1.1.0] - 2025-09-10
 
 ### 🌍 New Features
