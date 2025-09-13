@@ -599,7 +599,7 @@ const createFloatingTask = async () => {
   if (!selectedTask.value) return
 
   try {
-    await window.Electron.windows.createFloatingTask(selectedTask.value.id)
+    await window.electronAPI.windows.createFloatingTask(selectedTask.value.id)
     hideContextMenu()
   } catch (error) {
     console.error('创建悬浮任务失败:', error)

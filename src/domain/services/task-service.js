@@ -210,7 +210,7 @@ class TaskService {
         id: Task.generateId(),
         content: recurringTask.content,
         status: 'todo',
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         reminderTime: nextReminderTime,
         timeTracking: {},
         listId: recurringTask.listId,
