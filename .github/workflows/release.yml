@@ -40,6 +40,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+      - name: Setup Visual Studio Build Tools
+        run: |
+          choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive"
       - run: npm install
       - run: npm run build:win
         env:
