@@ -366,9 +366,9 @@ const handleTimeFilterChange = (filterKey) => {
 
 // AI 报告生成处理方法
 const handleGenerateReport = (data) => {
-  console.log('🚀 [FlatTaskList] 收到生成报告请求:', data)
-  console.log('[FlatTaskList] 任务数量:', data.tasks.length)
-  console.log('[FlatTaskList] 筛选类型:', data.filterType)
+  // console.log('🚀 [FlatTaskList] 收到生成报告请求:', data)
+  // console.log('[FlatTaskList] 任务数量:', data.tasks.length)
+  // console.log('[FlatTaskList] 筛选类型:', data.filterType)
   
   // 保存待处理的报告数据
   pendingReportData.value = data
@@ -386,9 +386,9 @@ const closeTaskSelectionModal = () => {
 }
 
 const handleTaskSelectionConfirm = async (selectionData) => {
-  console.log('[FlatTaskList] 用户确认任务选择:', selectionData)
-  console.log('[FlatTaskList] 选中任务数量:', selectionData.tasks.length)
-  console.log('[FlatTaskList] 报告类型:', selectionData.reportType)
+  // console.log('[FlatTaskList] 用户确认任务选择:', selectionData)
+  // console.log('[FlatTaskList] 选中任务数量:', selectionData.tasks.length)
+  // console.log('[FlatTaskList] 报告类型:', selectionData.reportType)
   
   // 关闭任务选择模态框
   showTaskSelectionModal.value = false

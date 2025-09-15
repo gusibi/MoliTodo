@@ -223,7 +223,16 @@
 
 /* 时间信息行 - 将提醒时间和状态时间放在同一行 */
 .kanban-card-time-row {
-  @apply flex items-center justify-between gap-2 text-2xs;
+  @apply flex items-center gap-2 text-2xs;
+}
+
+/* 重复任务图标 */
+.kanban-card-recurring-icon {
+  @apply flex items-center  text-primary text-2xs;
+}
+
+.kanban-card-recurring-icon i {
+  @apply w-3 h-3 ;
 }
 
 /* 提醒时间 */

@@ -191,12 +191,12 @@
 }
 
 .task-list-container.with-panel {
-  flex: 0 0 calc(100% - 280px);
+  flex: 0 0 calc(100% - 384px);
 }
 
 .edit-panel-container {
   @apply bg-muted-foreground overflow-y-auto shadow-lg border-l border-border;
-  flex: 0 0 280px;
+  @apply w-full max-w-md max-h-full overflow-hidden;
 }
 
 /* 任务视图容器的 flex 布局（仅用于列表视图） */

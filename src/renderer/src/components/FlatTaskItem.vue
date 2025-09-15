@@ -32,6 +32,11 @@
 
           <!-- 时间信息 -->
           <div class="flat-task-time-info">
+            <!-- 重复任务图标 -->
+            <div v-if="task.recurrence" class="flat-task-recurring-icon">
+              <i class="fas fa-repeat"></i>
+            </div>
+            
             <!-- 提醒时间 -->
             <div class="flat-task-reminder-time" v-if="task.reminderTime" :class="{
               'flat-task-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'

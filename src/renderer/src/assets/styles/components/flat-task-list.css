@@ -399,6 +399,15 @@
   @apply flex items-center gap-2 mt-1 flex-wrap;
 }
 
+/* Recurring Task Icon */
+.flat-task-recurring-icon {
+  @apply text-2xs flex items-center flex-shrink-0 text-primary py-1 bg-primary/10 rounded-md;
+}
+
+.flat-task-recurring-icon i {
+  @apply text-primary;
+}
+
 .flat-task-reminder-time {
   @apply text-2xs flex items-center gap-1 flex-shrink-0 text-status-todo px-2 py-1 bg-status-todo/10 rounded-md;
 }

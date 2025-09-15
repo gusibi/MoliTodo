@@ -28,6 +28,11 @@
     <div v-if="hasTimeInfo" class="kanban-card-time-info">
       <!-- 提醒时间和任务状态时间在同一行 -->
       <div class="kanban-card-time-row">
+        <!-- 重复任务图标 -->
+        <div v-if="task.recurrence" class="kanban-card-recurring-icon">
+          <i class="fas fa-repeat"></i>
+        </div>
+        
         <!-- 提醒时间 -->
         <div v-if="task.reminderTime" class="kanban-card-reminder-time" :class="{
           'kanban-card-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'
