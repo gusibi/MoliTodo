@@ -1915,6 +1915,17 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 初始化现有任务日志
+  const initializeExistingTaskLogs = async (force = false) => {
+    try {
+      const result = await window.electronAPI.taskStatusLog.initializeExistingTasksLogs(force)
+      return result.success ? result.result : { initialized: 0, skipped: 0, errors: 0 }
+    } catch (error) {
+      console.error('初始化现有任务日志失败:', error)
+      throw error
+    }
+  }
+
   // 获取每日活跃度数据（用于GitHub风格图表）
   const getDailyActivityData = async (days = 365) => {
     try {
@@ -2153,6 +2164,7 @@ export const useTaskStore = defineStore('task', () => {
     getTaskEfficiencyStats,
     getLogStatistics,
     cleanupOldLogs,
+    initializeExistingTaskLogs,
 
     // AI 相关状态
     availableAIModels,

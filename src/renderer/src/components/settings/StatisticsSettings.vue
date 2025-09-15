@@ -17,18 +17,15 @@
     <!-- 刷新按钮 -->
     <div class="setting-stats-actions">
       <button class="setting-btn setting-btn-primary" @click="refreshAllStats" :disabled="loading">
-        {{ loading ? '刷新中...' : '刷新统计' }}
+        {{ loading ? '重置中...' : '重置数据' }}
       </button>
-      <button class="setting-btn setting-btn-secondary" @click="cleanupOldLogs">
-        清理过期日志
-      </button>
+
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { formatDuration } from '@/utils/task-utils.js'
 import { useTaskStore } from '@/store/taskStore.js'
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap.vue'
 import DailyStatusTrendChart from '@/components/charts/DailyStatusTrendChart.vue'
@@ -107,6 +104,10 @@ const loadActivityData = async () => {
 const refreshAllStats = async () => {
   loading.value = true
   try {
+    // 先初始化现有任务日志（强制重置）
+    await taskStore.initializeExistingTaskLogs(true)
+    
+    // 然后重新加载所有统计数据
     await Promise.all([
       loadTaskStats(),
       loadStatusChangeStats(),
