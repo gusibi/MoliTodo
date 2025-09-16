@@ -154,12 +154,19 @@ const hasTimeInfo = computed(() => {
 
 // 方法
 const handleDragStart = (event) => {
-  isDragging.value = true
-  event.dataTransfer.setData('application/json', JSON.stringify({
-    id: props.task.id,
+  console.log('🔍 [KanbanCard] 拖拽开始 - 任务ID:', props.task.id, '类型:', typeof props.task.id)
+  console.log('🔍 [KanbanCard] 完整任务对象:', props.task)
+  
+  const dragData = {
+    taskId: props.task.id,  // 修正：使用 taskId 而不是 id
     status: props.task.status
-  }))
+  }
+  
+  console.log('🔍 [KanbanCard] 拖拽数据:', dragData)
+  
+  event.dataTransfer.setData('application/json', JSON.stringify(dragData))
   event.dataTransfer.effectAllowed = 'move'
+  
   emit('drag-start', props.task)
 }
 

@@ -5,8 +5,17 @@
   <!-- 清单项直接输出，不包装额外容器 -->
   <template v-for="list in sortedLists" :key="list.id">
     <div class="nav-item"
-      :class="{ active: currentListId === list.id, 'is-default': list.isDefault, 'has-tasks': getListTaskCount(list.id) > 0 }"
-      @click="selectList(list.id)" @contextmenu.prevent="showListContextMenu(list, $event)">
+      :class="{ 
+        active: currentListId === list.id, 
+        'is-default': list.isDefault, 
+        'has-tasks': getListTaskCount(list.id) > 0,
+        'drag-over': dragOverListId === list.id
+      }"
+      @click="selectList(list.id)" 
+      @contextmenu.prevent="showListContextMenu(list, $event)"
+      @dragover.prevent="handleDragOver($event, list.id)"
+      @dragleave="handleDragLeave"
+      @drop="handleDrop($event, list.id)">
       <i :class="getListIconClass(list.icon)" :style="{ color: list.color }"></i>
       <span>{{ list.name }}</span>
       <span v-if="getListTaskCount(list.id) > 0" class="nav-count" :class="{ 'has-active': hasActiveTasks(list.id) }">{{
@@ -95,6 +104,9 @@ export default {
     const showDeleteDialog = ref(false)
     const deletingList = ref(null)
     const taskHandling = ref('move')
+    
+    // 拖拽相关响应式数据
+    const dragOverListId = ref(null)
 
     // 计算属性
     const currentCategory = computed(() => taskStore.currentCategory)
@@ -119,7 +131,42 @@ export default {
       return counts && (counts.doing > 0 || counts.paused > 0)
     }
 
+    // 拖拽事件处理
+    const handleDragOver = (event, listId) => {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      dragOverListId.value = listId
+    }
 
+    const handleDragLeave = () => {
+      dragOverListId.value = null
+    }
+
+    const handleDrop = async (event, targetListId) => {
+      event.preventDefault()
+      dragOverListId.value = null
+      
+      try {
+        // 获取拖拽数据
+        const dragData = JSON.parse(event.dataTransfer.getData('application/json'))
+        const { taskId, currentListId } = dragData
+        
+        // 如果目标清单与当前清单相同，不执行操作
+        if (targetListId === currentListId) {
+          return
+        }
+        
+        // 移动任务到目标清单
+        const result = await taskStore.moveTaskToList(taskId, targetListId)
+        if (result.success) {
+          console.log(`任务 ${taskId} 已移动到清单 ${targetListId}`)
+        } else {
+          console.error('移动任务失败:', result.error)
+        }
+      } catch (error) {
+        console.error('处理拖拽数据失败:', error)
+      }
+    }
 
     const showListContextMenu = (list, event) => {
       if (list.isDefault) return // 默认清单不显示上下文菜单
@@ -247,6 +294,7 @@ export default {
       showDeleteDialog,
       deletingList,
       taskHandling,
+      dragOverListId,
 
       // 计算属性
       currentCategory,
@@ -266,6 +314,9 @@ export default {
       confirmDeleteList,
       closeCreateDialog,
       handleListCreate,
+      handleDragOver,
+      handleDragLeave,
+      handleDrop,
       openCreateDialog
     }
   }

@@ -34,6 +34,13 @@
   /* 悬停效果已在nav-item中定义 */
 }
 
+/* 拖拽目标样式 */
+.nav-item.drag-over {
+  @apply bg-primary/20 border-2 border-primary border-dashed;
+  @apply shadow-md;
+  transform: scale(1.02);
+}
+
 /* 激活状态的导航项 */
 .nav-item.active {
   @apply bg-sidebar-accent text-sidebar-primary;

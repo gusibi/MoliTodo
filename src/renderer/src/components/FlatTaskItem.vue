@@ -3,8 +3,15 @@
     <li class="flat-task-item" :class="{
       'flat-task-item-completed': task.status === 'done',
       'flat-task-item-editing': isEditing,
-      'flat-task-item-hovered': isHovered
-    }" @click="handleTaskClick" @mouseenter="$emit('mouseenter')" @mouseleave="$emit('mouseleave')">
+      'flat-task-item-hovered': isHovered,
+      'flat-task-item-dragging': isDragging
+    }" 
+    @click="handleTaskClick" 
+    @mouseenter="$emit('mouseenter')" 
+    @mouseleave="$emit('mouseleave')"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd">
 
       <!-- 状态指示小红点 -->
       <div class="flat-task-status-indicator" :class="{
@@ -101,6 +108,7 @@
 
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
+import { ref } from 'vue'
 
 // 定义 props
 const props = defineProps({
@@ -130,11 +138,37 @@ const props = defineProps({
 const emit = defineEmits([
   'task-click',
   'mouseenter',
-  'mouseleave'
+  'mouseleave',
+  'drag-start',
+  'drag-end'
 ])
 
 // 使用 taskStore
 const taskStore = useTaskStore()
+
+// 拖拽相关响应式数据
+const isDragging = ref(false)
+
+// 拖拽事件处理
+const handleDragStart = (event) => {
+  isDragging.value = true
+  // 设置拖拽数据
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    taskId: props.task.id,
+    taskContent: props.task.content,
+    currentListId: props.task.listId
+  }))
+  event.dataTransfer.effectAllowed = 'move'
+  
+  // 发送拖拽开始事件
+  emit('drag-start', props.task)
+}
+
+const handleDragEnd = (event) => {
+  isDragging.value = false
+  // 发送拖拽结束事件
+  emit('drag-end', props.task)
+}
 
 // 获取任务当前持续时间（包含响应式更新触发器）
 const getCurrentDurationWithTrigger = (task) => {

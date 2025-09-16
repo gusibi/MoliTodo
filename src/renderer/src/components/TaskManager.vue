@@ -325,13 +325,18 @@ const handleUpdateTask = async (taskData) => {
 }
 
 const handleUpdateTaskWithStatusTracking = async (taskData) => {
+  console.log('🔍 [TaskManager] 处理任务状态更新:', taskData)
+  console.log('🔍 [TaskManager] 任务ID:', taskData.id, '类型:', typeof taskData.id)
+  
   try {
     // 如果包含状态变化信息，使用状态追踪更新
     if (taskData._statusChange) {
       const { from, to } = taskData._statusChange
+      console.log('🔍 [TaskManager] 状态变化:', from, '->', to)
       await taskStore.updateTaskStatusWithTracking(taskData.id, to, from)
     } else {
       // 否则使用普通更新
+      console.log('🔍 [TaskManager] 普通更新')
       await taskStore.updateTask(taskData.id, taskData)
     }
   } catch (error) {

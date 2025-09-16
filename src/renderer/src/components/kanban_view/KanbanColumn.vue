@@ -128,17 +128,23 @@ const handleDrop = (event) => {
 
   try {
     const taskData = JSON.parse(event.dataTransfer.getData('application/json'))
+    console.log('🔍 [KanbanColumn] 接收到拖拽数据:', taskData)
+    console.log('🔍 [KanbanColumn] 任务ID:', taskData.taskId, '类型:', typeof taskData.taskId)
 
     // 如果任务已经在当前列，不需要移动
     if (taskData.status === props.status) {
+      console.log('🔍 [KanbanColumn] 任务已在当前列，跳过移动')
       return
     }
 
-    emit('task-dropped', {
-      taskId: taskData.id,
+    const dropData = {
+      taskId: taskData.taskId,  // 修正：使用 taskId 字段
       fromStatus: taskData.status,
       toStatus: props.status
-    })
+    }
+    
+    console.log('🔍 [KanbanColumn] 发送拖拽事件:', dropData)
+    emit('task-dropped', dropData)
   } catch (error) {
     console.error('处理拖拽数据失败:', error)
   }

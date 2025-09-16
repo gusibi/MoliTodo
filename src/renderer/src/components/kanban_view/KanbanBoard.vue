@@ -172,6 +172,8 @@ const doneTasks = computed(() => taskGroups.value.done)
 // 事件处理
 const handleTaskDropped = async (dropData) => {
   const { taskId, fromStatus, toStatus } = dropData
+  console.log('🔍 [KanbanBoard] 处理拖拽事件:', dropData)
+  console.log('🔍 [KanbanBoard] 任务ID:', taskId, '类型:', typeof taskId)
   
   if (isUpdating.value) return // 防止重复操作
   
@@ -180,20 +182,30 @@ const handleTaskDropped = async (dropData) => {
     error.value = null
     
     // 找到要移动的任务
+    console.log('🔍 [KanbanBoard] 在任务列表中查找任务...')
+    console.log('🔍 [KanbanBoard] 任务列表长度:', props.tasks.length)
+    console.log('🔍 [KanbanBoard] 前3个任务的ID:', props.tasks.slice(0, 3).map(t => ({ id: t.id, type: typeof t.id })))
+    
     const task = props.tasks.find(t => t.id === taskId)
+    console.log('🔍 [KanbanBoard] 找到的任务:', task)
+    
     if (!task) {
+      console.error('🔍 [KanbanBoard] 未找到任务，所有任务ID:', props.tasks.map(t => t.id))
       throw new Error('未找到要移动的任务')
     }
 
     // 发出更新事件，让父组件处理具体的状态管理逻辑
-    emit('update-task', {
+    const updateData = {
       id: taskId,
       status: toStatus,
       _statusChange: {
         from: fromStatus,
         to: toStatus
       }
-    })
+    }
+    
+    console.log('🔍 [KanbanBoard] 发送更新事件:', updateData)
+    emit('update-task', updateData)
   } catch (err) {
     console.error('移动任务失败:', err)
     error.value = err.message || '移动任务失败，请重试'

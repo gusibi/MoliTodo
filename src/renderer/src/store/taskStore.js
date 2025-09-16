@@ -938,13 +938,28 @@ export const useTaskStore = defineStore('task', () => {
 
   // 更新任务状态并处理时间追踪
   const updateTaskStatusWithTracking = async (taskId, newStatus, fromStatus = null) => {
+    console.log('🔍 [taskStore] updateTaskStatusWithTracking 开始')
+    console.log('🔍 [taskStore] 参数 - taskId:', taskId, '类型:', typeof taskId)
+    console.log('🔍 [taskStore] 参数 - newStatus:', newStatus)
+    console.log('🔍 [taskStore] 参数 - fromStatus:', fromStatus)
+    console.log('🔍 [taskStore] 当前任务总数:', tasks.value.length)
+    
     try {
+      console.log('🔍 [taskStore] 查找任务...')
+      console.log('🔍 [taskStore] 前5个任务ID:', tasks.value.slice(0, 5).map(t => ({ id: t.id, type: typeof t.id })))
+      
       const task = tasks.value.find(t => t.id === taskId)
+      console.log('🔍 [taskStore] 找到的任务:', task ? '找到' : '未找到')
+      
       if (!task) {
+        console.error('🔍 [taskStore] 任务查找失败!')
+        console.error('🔍 [taskStore] 查找的ID:', taskId, '类型:', typeof taskId)
+        console.error('🔍 [taskStore] 所有任务ID:', tasks.value.map(t => ({ id: t.id, type: typeof t.id })))
         throw new Error('任务不存在')
       }
 
       const currentStatus = fromStatus || task.status
+      console.log('🔍 [taskStore] 当前状态:', currentStatus, '-> 新状态:', newStatus)
       
       // 根据状态变化调用相应的方法
       if (newStatus === 'doing' && (currentStatus === 'todo' || currentStatus === 'paused')) {
