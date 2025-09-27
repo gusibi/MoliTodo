@@ -34,6 +34,77 @@ export const useTaskStore = defineStore('task', () => {
   const selectedAIModel = ref(null) // 当前选中的AI模型
   const isAIEnabled = ref(false) // AI功能是否启用
 
+  // 数据管理方法
+  const exportData = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.data) {
+        const result = await window.electronAPI.data.export()
+        // 检查是否是用户取消操作
+        if (!result.success && result.canceled) {
+          return { success: false, canceled: true, error: '用户取消了导出操作' }
+        }
+        return result
+      }
+      throw new Error('electronAPI.data not available')
+    } catch (error) {
+      console.error('导出数据失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  const importData = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.data) {
+        const result = await window.electronAPI.data.import()
+        // 检查是否是用户取消操作
+        if (!result.success && result.canceled) {
+          return { success: false, canceled: true, error: '用户取消了导入操作' }
+        }
+        if (result.success) {
+          // 导入成功后重新加载数据
+          await loadTasks()
+          await loadLists()
+        }
+        return result
+      }
+      throw new Error('electronAPI.data not available')
+    } catch (error) {
+      console.error('导入数据失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  const clearAllData = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.data) {
+        const result = await window.electronAPI.data.clear()
+        if (result.success) {
+          // 清除成功后清空本地状态
+          tasks.value = []
+          lists.value = []
+        }
+        return result
+      }
+      throw new Error('electronAPI.data not available')
+    } catch (error) {
+      console.error('清除数据失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  const getDatabaseStats = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.data) {
+        const stats = await window.electronAPI.data.getStats()
+        return stats
+      }
+      throw new Error('electronAPI.data not available')
+    } catch (error) {
+      console.error('获取数据库统计信息失败:', error)
+      return { taskCount: 0, fileSize: 0, path: '' }
+    }
+  }
+
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
     if (!date) return false
@@ -2187,6 +2258,12 @@ export const useTaskStore = defineStore('task', () => {
     isAIEnabled,
 
     getDailyActivityData,
-    getDailyStatusTrendData
+    getDailyStatusTrendData,
+
+    // 数据管理方法
+    exportData,
+    importData,
+    clearAllData,
+    getDatabaseStats
   }
 })

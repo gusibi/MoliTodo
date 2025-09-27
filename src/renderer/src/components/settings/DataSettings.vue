@@ -50,13 +50,13 @@ const emit = defineEmits(['show-message'])
 // 方法
 const exportData = async () => {
   try {
-    if (window.electronAPI && window.electronAPI.data) {
-      const result = await window.electronAPI.data.exportData()
-      if (result.success) {
-        emit('show-message', `数据已导出到: ${result.path}`, 'success')
-      } else {
-        emit('show-message', '导出失败: ' + result.error, 'error')
-      }
+    const result = await taskStore.exportData()
+    if (result.success) {
+      emit('show-message', `数据已导出到: ${result.path}`, 'success')
+    } else if (result.canceled) {
+      emit('show-message', '导出已取消', 'info')
+    } else {
+      emit('show-message', '导出失败: ' + result.error, 'error')
     }
   } catch (error) {
     console.error('导出数据失败:', error)
@@ -66,19 +66,19 @@ const exportData = async () => {
 
 const importData = async () => {
   try {
-    if (window.electronAPI && window.electronAPI.data) {
-      const result = await window.electronAPI.data.importData()
-      if (result.success) {
-        emit('show-message', '数据导入成功，应用将重启以应用更改', 'success')
-        // 重启应用
-        setTimeout(() => {
-          if (window.electronAPI && window.electronAPI.app) {
-            window.electronAPI.app.restart()
-          }
-        }, 2000)
-      } else {
-        emit('show-message', '导入失败: ' + result.error, 'error')
-      }
+    const result = await taskStore.importData()
+    if (result.success) {
+      emit('show-message', '数据导入成功，应用将重启以应用更改', 'success')
+      // 重启应用
+      setTimeout(() => {
+        if (window.electronAPI && window.electronAPI.app) {
+          window.electronAPI.app.restart()
+        }
+      }, 2000)
+    } else if (result.canceled) {
+      emit('show-message', '导入已取消', 'info')
+    } else {
+      emit('show-message', '导入失败: ' + result.error, 'error')
     }
   } catch (error) {
     console.error('导入数据失败:', error)
@@ -88,20 +88,18 @@ const importData = async () => {
 
 const clearAllData = async () => {
   try {
-    if (window.electronAPI && window.electronAPI.data) {
-      if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
-        const result = await window.electronAPI.data.clearAllData()
-        if (result.success) {
-          emit('show-message', '所有数据已清除，应用将重启', 'success')
-          // 重启应用
-          setTimeout(() => {
-            if (window.electronAPI && window.electronAPI.app) {
-              window.electronAPI.app.restart()
-            }
-          }, 2000)
-        } else {
-          emit('show-message', '清除失败: ' + result.error, 'error')
-        }
+    if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
+      const result = await taskStore.clearAllData()
+      if (result.success) {
+        emit('show-message', '所有数据已清除，应用将重启', 'success')
+        // 重启应用
+        setTimeout(() => {
+          if (window.electronAPI && window.electronAPI.app) {
+            window.electronAPI.app.restart()
+          }
+        }, 2000)
+      } else {
+        emit('show-message', '清除失败: ' + result.error, 'error')
       }
     }
   } catch (error) {
@@ -112,9 +110,7 @@ const clearAllData = async () => {
 
 const loadDatabaseStats = async () => {
   try {
-    if (window.electronAPI && window.electronAPI.data) {
-      databaseStats.value = await window.electronAPI.data.getStats()
-    }
+    databaseStats.value = await taskStore.getDatabaseStats()
   } catch (error) {
     console.error('加载数据库统计信息失败:', error)
   }
