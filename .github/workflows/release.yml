@@ -77,53 +77,84 @@ jobs:
           cat > RELEASE_NOTES.md << 'EOF'
           # MoliTodo v${{ steps.get_version.outputs.VERSION }} ✨
           
-          ## 📄 About Page & Auto-Start Fix
+          ## ⚠️ 重要升级提醒
           
-          ### New Features
-          - **About Page**: Comprehensive about page with version info, project links, and update checking
-          - **Version Management**: Built-in update checker and GitHub integration
-          - **Project Information**: Easy access to license, author, and project details
+          **升级前请务必备份数据！**
           
-          ### Bug Fixes
-          - **Auto-Start Setting**: Fixed error when enabling auto-start configuration
-          - **Settings Reliability**: Improved startup settings handling and error prevention
+          1. **升级前备份**: 建议在升级前先导出您的任务数据
+             - 打开应用 → 设置 → 数据管理 → 导出任务
+             - 保存导出的文件到安全位置
           
-          ### 🍎 macOS Installation
+          2. **升级后验证**: 升级完成后请检查应用是否正常工作
+             - 确认任务数据完整
+             - 测试基本功能（创建、编辑、删除任务）
           
-          Due to unsigned code, macOS users need to run this command after installation:
+          3. **问题恢复**: 如果升级后遇到问题
+             - 使用之前导出的任务文件进行恢复
+             - 设置 → 数据管理 → 导入任务
+             - 或联系技术支持获取帮助: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+          
+          ---
+          
+          ## 🔧 Windows SQLite 兼容性与性能优化
+          
+          ### 关键错误修复
+          - **Windows SQLite 兼容性**: 修复了 Windows 系统上的 `getLastUpdatedTime is not a function` 错误
+          - **数据库初始化**: 增强了 SQLite 初始化，支持 Windows 特定的文件锁定和权限检查
+          - **跨平台路径处理**: 改进了路径标准化，提升 Windows 兼容性
+          - **迁移顺序**: 修复了数据库迁移序列，防止表创建错误
+          
+          ### 性能改进
+          - **SQLite 优化**: 添加了 Windows 特定的 SQLite 参数以提升性能
+          - **错误处理**: 增强了数据库错误诊断和日志记录
+          - **文件系统**: 改进了文件系统操作，支持正确的 Windows 路径处理
+          - **数据完整性**: 加强了数据验证和一致性检查
+          
+          ### 🍎 macOS 安装说明
+          
+          由于代码未签名，macOS 用户需要在安装后运行以下命令：
           
           ```bash
           sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
           ```
           
-          Run this command:
-          - After first installation
-          - After each update
-          - If you see "cannot open application" error
+          请在以下情况运行此命令：
+          - 首次安装后
+          - 每次更新后
+          - 如果看到"无法打开应用程序"错误
           
-          ### 📥 Download
+          ### 📥 下载
           
-          - **macOS**: Choose the appropriate version for your Mac (Intel/Apple Silicon)
-          - **Windows**: Universal installer for Windows 10+
+          - **macOS**: 选择适合您 Mac 的版本（Intel/Apple Silicon）
+          - **Windows**: Windows 10+ 通用安装程序
           
-          ### Key Improvements
+          ### 主要改进
           
-          - **About Page**: Access app info through Settings > About
-          - **Update Checking**: Built-in update checker with GitHub integration
-          - **Auto-Start Fix**: Startup settings now work reliably without errors
-          - **Settings Stability**: Enhanced overall settings configuration management
+          - **Windows 兼容性**: 解决了 Windows 系统上的关键 SQLite 数据库错误
+          - **数据库性能**: 增强了所有平台的 SQLite 初始化和优化
+          - **错误诊断**: 改进了错误处理，提供详细的日志和诊断信息
+          - **跨平台支持**: 更好的文件系统操作，支持 Windows、macOS 和 Linux
+          - **数据完整性**: 加强了数据库验证和一致性检查
           
-          ### Upgrade Notes
+          ### 技术细节
           
-          - All existing data and settings preserved
-          - Auto-start setting now works correctly
-          - New about page available immediately
-          - No configuration required
+          此版本解决了 Windows 用户遇到的 `getLastUpdatedTime is not a function` 错误，该错误是由于 SQLite 初始化不完整导致的。修复包括：
+          
+          - 增强数据库初始化顺序
+          - Windows 特定的 SQLite 配置
+          - 改进的跨平台路径处理
+          - 更好的错误处理和诊断
+          
+          ### 升级说明
+          
+          - 所有现有数据和设置都会保留
+          - Windows 用户将不再遇到 SQLite 数据库错误
+          - 所有平台的数据库性能都有提升
+          - 无需配置 - 修复会自动生效
           
           ---
           
-          **Full Documentation**: [Release Notes](https://github.com/${{ github.repository }}/blob/main/docs/releases/v${{ steps.get_version.outputs.VERSION }}.md)
-          **Issues & Support**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+          **完整文档**: [发布说明](https://github.com/${{ github.repository }}/blob/main/docs/releases/v${{ steps.get_version.outputs.VERSION }}.md)
           EOF
       - uses: softprops/action-gh-release@v2
         with:
