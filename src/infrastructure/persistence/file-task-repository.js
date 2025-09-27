@@ -194,6 +194,27 @@ class FileTaskRepository {
       fileSize: fileSize
     };
   }
+
+  /**
+   * 获取最后更新时间（兼容性实现）
+   * @returns {Promise<Date|null>}
+   */
+  async getLastUpdatedTime() {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    
+    // File-based repository doesn't track individual update times
+    // Return the file modification time as a reasonable approximation
+    try {
+      const fs = require('fs').promises;
+      const stats = await fs.stat(this.filePath);
+      return stats.mtime;
+    } catch (error) {
+      console.warn('无法获取文件修改时间，返回当前时间:', error.message);
+      return new Date();
+    }
+  }
 }
 
 module.exports = FileTaskRepository;

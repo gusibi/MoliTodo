@@ -1167,7 +1167,7 @@ export const useTaskStore = defineStore('task', () => {
   const getRecurringTasks = async () => {
     try {
       const result = await window.electronAPI.tasks.getRecurring()
-      console.log("getRecurringTasks result: ", result)
+      // console.log("getRecurringTasks result: ", result)
       if (result.success) {
         recurringTasks.value = result.tasks
         return result.tasks

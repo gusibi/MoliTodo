@@ -353,7 +353,19 @@ class IpcHandlers {
     ipcMain.handle('task:getLastUpdatedTime', async (event) => {
       try {
         const lastUpdatedTime = await this.taskService.getLastUpdatedTime();
-        return { success: true, lastUpdatedTime };
+        
+        // 确保跨平台兼容性：将Date对象转换为ISO字符串
+        let lastUpdatedTimeString = null;
+        if (lastUpdatedTime) {
+          // 验证Date对象有效性
+          if (lastUpdatedTime instanceof Date && !isNaN(lastUpdatedTime.getTime())) {
+            lastUpdatedTimeString = lastUpdatedTime.toISOString();
+          } else {
+            console.warn('获取到无效的时间对象:', lastUpdatedTime);
+          }
+        }
+        
+        return { success: true, lastUpdatedTime: lastUpdatedTimeString };
       } catch (error) {
         console.error('获取任务最新更新时间失败:', error);
         return { success: false, error: error.message };

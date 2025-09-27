@@ -119,16 +119,24 @@ class MoliTodoApp {
       console.log('业务服务初始化完成 - 使用 SQLite');
     } catch (error) {
       console.error('SQLite 初始化失败，回退到文件存储:', error);
+      console.error('错误详情:', error.stack);
+      
       try {
-        // 回退到文件存储（暂时不支持清单功能）
+        // 回退到文件存储
         this.taskRepository = new FileTaskRepository();
         await this.taskRepository.initialize();
+        
+        // 文件存储模式下的服务初始化
         this.taskService = new TaskService(this.taskRepository);
         this.listService = null; // 文件存储暂不支持清单
-        console.log('业务服务初始化完成 - 使用文件存储（不支持清单功能）');
+        this.taskStatusLogService = null; // 文件存储暂不支持状态日志
+        
+        console.log('业务服务初始化完成 - 使用文件存储（功能受限：不支持清单和状态日志）');
+        console.warn('注意：当前使用文件存储模式，部分功能可能不可用');
       } catch (fallbackError) {
         console.error('文件存储初始化也失败:', fallbackError);
-        throw fallbackError;
+        console.error('文件存储错误详情:', fallbackError.stack);
+        throw new Error(`数据存储初始化失败: SQLite错误(${error.message}) 和 文件存储错误(${fallbackError.message})`);
       }
     }
   }

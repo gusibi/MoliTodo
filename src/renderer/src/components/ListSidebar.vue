@@ -243,6 +243,7 @@ export default {
         } else {
           // 创建模式
           await taskStore.createList(listData.name, listData.color, listData.icon)
+          console.log("handleListCreate result: ", listData)
         }
         closeCreateDialog()
       } catch (error) {
@@ -274,9 +275,9 @@ export default {
 
     // 暴露给父组件的方法
     const openCreateDialog = () => {
-      console.log("Opening create dialog from ListSidebar")
+      // console.log("Opening create dialog from ListSidebar")
       showCreateDialog.value = true
-      console.log("Opening create dialog from ListSidebar", showCreateDialog.value)
+      // console.log("Opening create dialog from ListSidebar", showCreateDialog.value)
     }
 
     // 使用 defineExpose 暴露方法给父组件

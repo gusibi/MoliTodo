@@ -583,6 +583,7 @@ const smartLoadTasks = async () => {
       return
     }
     
+    // 处理跨平台兼容性：将ISO字符串转换为Date对象
     const newLastUpdatedTime = timeResult.lastUpdatedTime ? new Date(timeResult.lastUpdatedTime) : null
     
     // 比较更新时间，只有数据真正变化时才更新

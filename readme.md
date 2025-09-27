@@ -37,7 +37,7 @@ MoliTodo is a modern AI-powered desktop task management application that provide
 
 #### 下载安装包（推荐）
 
-访问 [Releases 页面](https://github.com/your-username/moli-todo/releases) 下载最新版本：
+访问 [Releases 页面](https://github.com/gusibi/MoliTodo/releases) 下载最新版本：
 
 - **macOS**: `MoliTodo-{version}-x64.dmg` (Intel) / `MoliTodo-{version}-arm64.dmg` (Apple Silicon)
 - **Windows**: `MoliTodo Setup {version}.exe`
