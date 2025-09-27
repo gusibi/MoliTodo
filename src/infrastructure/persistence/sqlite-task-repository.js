@@ -19,28 +19,182 @@ class SqliteTaskRepository {
    * 初始化数据库连接
    */
   async initialize() {
-    // 确保数据库目录存在
-    const dbDir = path.dirname(this.dbPath);
     try {
-      await fs.access(dbDir);
+      // 规范化数据库路径，确保跨平台兼容性
+      this.dbPath = this.normalizePath(this.dbPath);
+      console.log(`正在初始化 SQLite 数据库: ${this.dbPath}`);
+      
+      // 确保数据库目录存在
+      const dbDir = path.dirname(this.dbPath);
+      try {
+        await fs.access(dbDir);
+        console.log(`数据库目录已存在: ${dbDir}`);
+      } catch (error) {
+        console.log(`创建数据库目录: ${dbDir}`);
+        await fs.mkdir(dbDir, { recursive: true });
+      }
+
+      // Windows 特定处理：检查文件权限和锁定状态
+      if (process.platform === 'win32') {
+        await this.handleWindowsSpecificIssues();
+      }
+
+      // 打开数据库连接，添加更多配置选项
+      this.db = await open({
+        filename: this.dbPath,
+        driver: sqlite3.Database,
+        mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
+        // Windows 特定配置
+        ...(process.platform === 'win32' && {
+          timeout: 10000, // 10秒超时
+          busyTimeout: 5000 // 5秒忙等待
+        })
+      });
+
+      // 设置 SQLite 配置，优化 Windows 性能
+      await this.configureSQLite();
+
+      // 先创建基础表结构（向后兼容）
+      await this.createTables();
+
+      // 然后执行数据库迁移
+      const migration = new DatabaseMigration(this.db, this.dbPath);
+      await migration.checkAndMigrate();
+
+      console.log(`✅ SQLite 数据库初始化成功: ${this.dbPath}`);
     } catch (error) {
-      await fs.mkdir(dbDir, { recursive: true });
+      console.error(`❌ SQLite 数据库初始化失败:`, error);
+      console.error(`数据库路径: ${this.dbPath}`);
+      console.error(`平台: ${process.platform}`);
+      console.error(`错误详情:`, error.stack);
+      throw error;
     }
+  }
 
-    // 打开数据库连接
-    this.db = await open({
-      filename: this.dbPath,
-      driver: sqlite3.Database
-    });
+  /**
+   * 规范化路径处理，确保跨平台兼容性
+   */
+  normalizePath(dbPath) {
+    try {
+      // 解析相对路径为绝对路径
+      let normalizedPath = path.resolve(dbPath);
+      
+      // Windows 特定处理
+      if (process.platform === 'win32') {
+        // 处理 Windows 路径分隔符
+        normalizedPath = normalizedPath.replace(/\//g, path.sep);
+        
+        // 确保路径不包含非法字符
+        const invalidChars = /[<>:"|?*]/g;
+        if (invalidChars.test(normalizedPath)) {
+          console.warn('路径包含非法字符，进行清理:', normalizedPath);
+          normalizedPath = normalizedPath.replace(invalidChars, '_');
+        }
+        
+        // 处理长路径问题（Windows 路径长度限制）
+        if (normalizedPath.length > 260) {
+          console.warn('路径过长，可能在 Windows 上出现问题:', normalizedPath.length);
+          // 可以考虑使用短路径或移动到更短的目录
+        }
+        
+        // 确保使用正确的盘符格式
+        if (!/^[A-Za-z]:/.test(normalizedPath)) {
+          // 如果没有盘符，使用当前工作目录的盘符
+          const cwd = process.cwd();
+          const drive = cwd.substring(0, 2);
+          normalizedPath = path.join(drive, normalizedPath);
+        }
+      }
+      
+      console.log(`路径规范化: ${dbPath} -> ${normalizedPath}`);
+      return normalizedPath;
+      
+    } catch (error) {
+      console.error('路径规范化失败:', error);
+      // 回退到原始路径
+      return path.resolve(dbPath);
+    }
+  }
 
-    // 执行数据库迁移
-    const migration = new DatabaseMigration(this.db, this.dbPath);
-    await migration.checkAndMigrate();
+  /**
+   * Windows 特定问题处理
+   */
+  async handleWindowsSpecificIssues() {
+    try {
+      // 检查数据库文件是否被锁定
+      if (await this.isFileExists(this.dbPath)) {
+        console.log('检查数据库文件锁定状态...');
+        
+        // 尝试以独占模式打开文件来检查是否被锁定
+        try {
+          const testHandle = await fs.open(this.dbPath, 'r+');
+          await testHandle.close();
+          console.log('数据库文件未被锁定');
+        } catch (lockError) {
+          console.warn('数据库文件可能被锁定:', lockError.message);
+          
+          // 等待一段时间后重试
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          try {
+            const retryHandle = await fs.open(this.dbPath, 'r+');
+            await retryHandle.close();
+            console.log('重试后数据库文件可访问');
+          } catch (retryError) {
+            throw new Error(`数据库文件被锁定且重试失败: ${retryError.message}`);
+          }
+        }
+      }
+      
+      // 检查目录权限
+      const dbDir = path.dirname(this.dbPath);
+      try {
+        await fs.access(dbDir, fs.constants.W_OK);
+        console.log('数据库目录具有写权限');
+      } catch (permError) {
+        throw new Error(`数据库目录缺少写权限: ${dbDir}`);
+      }
+      
+    } catch (error) {
+      console.error('Windows 特定处理失败:', error);
+      throw error;
+    }
+  }
 
-    // 创建基础表结构（向后兼容）
-    await this.createTables();
+  /**
+   * 配置 SQLite 设置
+   */
+  async configureSQLite() {
+    try {
+      // 基础性能配置
+      await this.db.exec('PRAGMA journal_mode = WAL');
+      await this.db.exec('PRAGMA synchronous = NORMAL');
+      await this.db.exec('PRAGMA cache_size = 10000');
+      await this.db.exec('PRAGMA temp_store = MEMORY');
+      
+      // Windows 特定优化
+      if (process.platform === 'win32') {
+        await this.db.exec('PRAGMA busy_timeout = 5000');
+        await this.db.exec('PRAGMA wal_autocheckpoint = 1000');
+        console.log('已应用 Windows 特定的 SQLite 配置');
+      }
+      
+      console.log('SQLite 配置完成');
+    } catch (error) {
+      console.warn('SQLite 配置失败，使用默认设置:', error.message);
+    }
+  }
 
-    console.log(`SQLite 数据库已初始化: ${this.dbPath}`);
+  /**
+   * 检查文件是否存在
+   */
+  async isFileExists(filePath) {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
