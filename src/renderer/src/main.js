@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n, { loadStoredLanguage } from './i18n'
+import VCalendar from 'v-calendar'
 
 // Import global styles
 import './assets/styles/index.css'
@@ -18,6 +19,11 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+
+// Use the calendar plugin
+app.use(VCalendar, {
+  componentPrefix: 'v', // Use 'v' as component prefix (v-calendar, v-date-picker, etc.)
+})
 
 // 全局错误处理
 app.config.errorHandler = (err, instance, info) => {

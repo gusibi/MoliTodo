@@ -10,6 +10,7 @@
 @import './components/flat-task-list.css';
 @import './components/custom-titlebar.css';
 @import './components/ai-settings.css';
+@import './components/VCalendar.css';
 
 /* Main CSS Entry Point */
 

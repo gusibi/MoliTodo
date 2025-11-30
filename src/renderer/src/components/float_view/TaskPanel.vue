@@ -706,5 +706,4 @@ watch(() => [taskStore.currentCategory, taskStore.currentListId], () => {
 
 <style scoped>
 @import '@/assets/styles/components/task-panel.css';
-@import '@/assets/styles/components/VueDatePicker.css';
 </style>

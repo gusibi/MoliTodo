@@ -156,22 +156,30 @@
           <!-- 截止日期 -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': selectedDate }">
-              <VueDatePicker v-model="dateTimeValue" :enable-time-picker="true" :min-date="getMinDate()"
-                :min-time="getMinTimeForDatePicker()" :format="'yyyy-MM-dd HH:mm'" :preview-format="'yyyy-MM-dd HH:mm'"
-                :text-input="false" :auto-apply="true" :close-on-scroll="true" :close-on-click-outside="true"
-                placeholder="选择日期和时间" class="vue-datepicker" @update:model-value="handleDateTimeChange">
-                <template #trigger>
-                  <button class="task-option-btn">
-                    <div class="task-option-icon">
-                      <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="task-option-content">
-                      <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}
-                      </div>
-                    </div>
-                  </button>
-                </template>
-              </VueDatePicker>
+              <button class="task-option-btn" @click="showDatePicker = !showDatePicker">
+                <div class="task-option-icon">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}
+                  </div>
+                </div>
+              </button>
+              
+           
+              <div v-if="showDatePicker" class="date-picker-popup">
+                <v-date-picker
+                  v-model="dateTimeValue"
+                  mode="dateTime"
+                  is24hr
+                  :minute-increment="5"
+                  :is-dark="isDark"
+                  :min-date="new Date()"
+                  @update:modelValue="handleDateTimeChange"
+                  class="v-calendar"
+                ></v-date-picker>
+              </div>
+              
               <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
                 <i class="fas fa-times"></i>
               </button>
@@ -246,9 +254,11 @@
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '@/store/taskStore'
+import { useTheme } from '@/composables/useTheme'
 import RepeatSelector from './RepeatSelector.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+
+// 导入 V-Calendar 样式文件
+import 'v-calendar/style.css'
 
 // 定义 props
 const props = defineProps({
@@ -268,6 +278,9 @@ const emit = defineEmits(['add-task', 'update-task', 'cancel-edit', 'delete-task
 // 使用 taskStore
 const taskStore = useTaskStore()
 const { customReminderOptions: storeCustomReminderOptions, lists } = storeToRefs(taskStore)
+
+// 使用主题
+const { isDark } = useTheme()
 
 // 组件根元素引用
 const taskEditContainer = ref(null)
@@ -292,8 +305,8 @@ const editingStepContent = ref('')
 // 日期时间相关状态
 const selectedDate = ref('')
 const selectedTime = ref('')
-
 const dateTimeValue = ref(null)
+const showDatePicker = ref(false)
 
 // 提醒相关状态
 const selectedReminder = ref(null)
@@ -349,6 +362,7 @@ const resetAllStates = () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  showDatePicker.value = false
   selectedReminder.value = null
   selectedRecurrence.value = null
   showReminderPicker.value = false
@@ -386,6 +400,11 @@ const handleClickOutside = (event) => {
     if (!newTaskContent.value.trim() && !props.isEditing) {
       resetAllStates()
     }
+    // 点击外部关闭所有选择器
+    showDatePicker.value = false
+    showReminderPicker.value = false
+    showListPicker.value = false
+    showRepeatPicker.value = false
   }
 }
 
@@ -631,6 +650,7 @@ const clearDateTime = () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  showDatePicker.value = false
 }
 
 // 清除提醒
@@ -820,11 +840,14 @@ const getMinTimeForDatePicker = () => {
 // 处理日期时间变化
 const handleDateTimeChange = async (newValue) => {
   if (newValue) {
-    const date = new Date(newValue)
+    const date = newValue instanceof Date ? newValue : new Date(newValue)
     selectedDate.value = getLocalDateString(date)
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     selectedTime.value = `${hours}:${minutes}`
+    
+    // 选择后不自动关闭日期选择器，方便用户调整时间
+    // showDatePicker.value = false
 
     // 如果是编辑模式，自动保存提醒时间
     if (props.isEditing && props.task) {
@@ -1202,5 +1225,5 @@ defineExpose({
 
 <style>
 @import '@/assets/styles/components/task-edit-vertical.css';
-@import '@/assets/styles/components/VueDatePicker.css';
+@import '@/assets/styles/components/VCalendar.css';
 </style>

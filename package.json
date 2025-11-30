@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -57,6 +57,7 @@
     "pinia": "^2.1.7",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
+    "v-calendar": "^3.1.2",
     "vue": "^3.3.8",
     "vue-chartjs": "^5.3.2",
     "vue-i18n": "^9.14.5",
