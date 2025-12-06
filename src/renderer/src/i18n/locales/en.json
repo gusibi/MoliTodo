@@ -419,6 +419,7 @@
     "noTasks": "No tasks",
     "taskStats": "{total} tasks total, {completed} completed",
     "pinPanel": "Pin Panel",
-    "unpinPanel": "Unpin Panel"
+    "unpinPanel": "Unpin Panel",
+    "allLists": "All Lists"
   }
 }

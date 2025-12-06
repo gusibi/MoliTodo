@@ -24,6 +24,32 @@
           </div>
         </div>
       </div>
+      <!-- 清单过滤下拉 -->
+      <div class="task-panel-list-dropdown" @click="toggleListDropdown" ref="listDropdownRef">
+        <div class="task-panel-list-trigger">
+          <i :class="getListIconClass(selectedListIcon)" :style="getListColorStyle(selectedListColor)"></i>
+          <svg class="dropdown-arrow" :class="{ 'open': showListDropdown }" width="12" height="12" viewBox="0 0 24 24"
+            fill="none">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div v-if="showListDropdown" class="task-panel-dropdown-menu list-dropdown-menu">
+          <div class="dropdown-item" :class="{ 'active': selectedListId === null }" @click.stop="selectList(null)">
+            <i class="fas fa-layer-group dropdown-item-icon"></i>
+            <span>{{ $t('floatView.allLists') }}</span>
+            <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
+          </div>
+          <div v-for="list in sortedLists" :key="list.id" class="dropdown-item"
+            :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list.id)">
+            <i :class="getListIconClass(list.icon)" class="dropdown-item-icon"
+              :style="getListColorStyle(list.color)"></i>
+            <span>{{ list.name }}</span>
+            <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 固定按钮 -->
       <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
         :title="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
@@ -236,6 +262,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { getListIconClass } from '@/utils/icon-utils'
 import '@vuepic/vue-datepicker/dist/main.css'
 
 const taskStore = useTaskStore()
@@ -261,6 +288,11 @@ const dragStartPos = ref({ x: 0, y: 0 })
 const showDropdown = ref(false)
 const selectedCategory = ref('today')
 const dropdownRef = ref(null)
+
+// 清单下拉选择器相关
+const showListDropdown = ref(false)
+const selectedListId = ref(null)
+const listDropdownRef = ref(null)
 
 // 右键菜单相关
 const showContextMenu = ref(false)
@@ -330,20 +362,21 @@ const footerStats = computed(() => {
 // 方法
 const loadTasks = async () => {
   try {
-    // 确保任务数据已加载
+    // 确保任务数据和清单数据已加载
     await taskStore.getAllTasks()
+    await taskStore.getAllLists()
 
-    // 使用选中的分类过滤任务
-    const currentListId = taskStore.currentListId
+    // 使用选中的清单过滤任务
+    const listId = selectedListId.value
 
     // 对于 completed 分类，显示已完成任务；其他分类不显示已完成任务
     const includeCompleted = selectedCategory.value === 'completed'
 
     // 获取过滤后的任务
-    tasks.value = taskStore.getSortedTasks(selectedCategory.value, currentListId, includeCompleted)
+    tasks.value = taskStore.getSortedTasks(selectedCategory.value, listId, includeCompleted)
 
     // 获取已完成任务的计数
-    const stats = taskStore.getCategoryStats(selectedCategory.value, currentListId)
+    const stats = taskStore.getCategoryStats(selectedCategory.value, listId)
     completedTasksCount.value = stats.completed
   } catch (error) {
     console.error('加载任务失败:', error)
@@ -694,6 +727,8 @@ const toggleStepStatus = async (taskId, step) => {
 // 下拉选择器方法
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
+  // 关闭清单下拉
+  showListDropdown.value = false
 }
 
 const selectCategory = (category) => {
@@ -713,7 +748,7 @@ const getCategoryIcon = (category) => {
 }
 
 const getCategoryCount = (category) => {
-  const stats = taskStore.getCategoryStats(category, null)
+  const stats = taskStore.getCategoryStats(category, selectedListId.value)
   if (category === 'completed') {
     return stats.completed
   }
@@ -725,6 +760,71 @@ const handleClickOutside = (event) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     showDropdown.value = false
   }
+  if (listDropdownRef.value && !listDropdownRef.value.contains(event.target)) {
+    showListDropdown.value = false
+  }
+}
+
+// 清单下拉选择器方法
+const toggleListDropdown = () => {
+  showListDropdown.value = !showListDropdown.value
+  // 关闭分类下拉
+  showDropdown.value = false
+}
+
+const selectList = (listId) => {
+  selectedListId.value = listId
+  showListDropdown.value = false
+  loadTasks()
+}
+
+// 获取排序后的清单列表
+const sortedLists = computed(() => {
+  return taskStore.sortedLists
+})
+
+// 获取选中清单的图标
+const selectedListIcon = computed(() => {
+  if (selectedListId.value === null) {
+    return 'fas fa-layer-group'
+  }
+  const list = sortedLists.value.find(l => l.id === selectedListId.value)
+  return list?.icon || 'fas fa-list'
+})
+
+// 获取选中清单的颜色
+const selectedListColor = computed(() => {
+  if (selectedListId.value === null) {
+    return null // 使用 CSS 默认颜色
+  }
+  const list = sortedLists.value.find(l => l.id === selectedListId.value)
+  return list?.color || null // 使用 CSS 默认颜色
+})
+
+// 获取清单颜色样式（处理暗色模式兼容）
+const getListColorStyle = (color) => {
+  if (!color) return {}
+  return { color }
+}
+
+
+
+// 获取清单任务数量
+const getListTaskCount = (listId) => {
+  const stats = taskStore.getCategoryStats(selectedCategory.value, listId)
+  if (selectedCategory.value === 'completed') {
+    return stats.completed
+  }
+  return stats.total - stats.completed
+}
+
+// 获取所有清单的任务数量
+const getAllListsTaskCount = () => {
+  const stats = taskStore.getCategoryStats(selectedCategory.value, null)
+  if (selectedCategory.value === 'completed') {
+    return stats.completed
+  }
+  return stats.total - stats.completed
 }
 
 // 打开任务管理页面

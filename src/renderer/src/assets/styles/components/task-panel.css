@@ -103,6 +103,48 @@
   @apply bg-primary/20 text-primary;
 }
 
+/* ===== List Dropdown ===== */
+.task-panel-list-dropdown {
+  @apply relative z-[100] ml-1;
+}
+
+.task-panel-list-trigger {
+  @apply flex items-center gap-1 px-1.5 py-1 rounded-md;
+  @apply hover:bg-accent/50;
+  @apply transition-colors cursor-pointer;
+}
+
+.task-panel-list-trigger i {
+  @apply text-xs text-foreground;
+}
+
+.task-panel-list-trigger .dropdown-arrow {
+  @apply w-2.5 h-2.5 text-muted-foreground transition-transform duration-200;
+}
+
+.task-panel-list-trigger .dropdown-arrow.open {
+  @apply rotate-180;
+}
+
+.list-dropdown-menu {
+  @apply right-0 left-auto w-36;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.list-dropdown-menu .dropdown-item i {
+  @apply text-xs flex-shrink-0 text-foreground;
+}
+
+/* 全部清单图标使用主题前景色 */
+.list-dropdown-menu .dropdown-item i.fa-layer-group {
+  @apply text-muted-foreground;
+}
+
+.list-dropdown-menu .dropdown-item.active i.fa-layer-group {
+  @apply text-primary;
+}
+
 /* ===== Pin Button ===== */
 .task-panel-pin-btn {
   @apply p-1 rounded-md transition-all duration-200 flex-shrink-0;
