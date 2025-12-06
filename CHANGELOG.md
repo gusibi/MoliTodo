@@ -5,6 +5,51 @@ All notable changes to MoliTodo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-06
+
+### ✨ New Features
+
+#### 🖥️ Desktop Widget (桌面待办小部件)
+- **Desktop Task Widget**: Added a new desktop widget that can be pinned to the desktop for quick task viewing
+- **List Switching**: Widget header includes a list selector to switch between different task lists
+- **Task Expansion**: Click on tasks to expand and view preset detailed steps
+- **Persistent Display**: Widget stays visible on desktop for constant task awareness
+- **Floating Ball Integration**: Similar task list experience as the floating ball hover panel
+
+#### 📋 Batch Task Operations (批量任务操作)
+- **Multi-select Delete**: Support for selecting multiple completed tasks and deleting them in batch
+- **Checkbox Selection**: Added checkboxes for task selection in completed task views
+- **Bulk Actions Toolbar**: New toolbar appears when tasks are selected, providing batch operation options
+- **Confirmation Dialog**: Safety confirmation before batch deletion to prevent accidental data loss
+
+#### 🔄 List Switching in Floating Ball (悬浮球清单切换)
+- **List Selector**: Added list switching functionality at the top of floating ball task panel
+- **Quick Navigation**: Easily switch between Inbox, Today, In Progress, and custom lists
+- **Persistent Selection**: Last selected list is remembered across sessions
+- **Visual Indicators**: Clear visual feedback showing current active list
+
+### 🐛 Bug Fixes
+
+#### Calendar Date Picker (日历选择器优化)
+- **Click Outside to Close**: Fixed date picker to close when clicking anywhere outside the calendar area
+- **Improved UX**: No longer requires clicking specific close button to dismiss the calendar
+- **Event Handling**: Enhanced click event detection for better user interaction
+
+### 🛠️ Technical Improvements
+
+#### Component Architecture
+- **DesktopWidget Component**: New standalone widget component for desktop display
+- **TaskBatchActions Component**: Reusable component for batch task operations
+- **ListSelector Component**: Shared list switching component for floating ball and widget
+- **Event System Enhancement**: Improved click-outside detection across components
+
+#### State Management
+- **Selection State**: Added multi-selection state management in taskStore
+- **Widget State**: New state management for desktop widget visibility and position
+- **List Context**: Enhanced list context handling for floating components
+
+---
+
 ## [1.1.3] - 2025-09-13
 
 ### ✨ New Features
