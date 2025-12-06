@@ -136,6 +136,22 @@
               <!-- 占位元素，推动内容向右对齐 -->
               <div class="task-panel-meta-spacer"></div>
             </div>
+
+            <!-- 子任务/步骤列表（仅显示未完成的） -->
+            <div v-if="getIncompleteSteps(task).length > 0" class="task-panel-subtasks">
+              <div 
+                v-for="step in getIncompleteSteps(task)" 
+                :key="step.id" 
+                class="task-panel-subtask-item"
+              >
+                <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                </div>
+                <span class="subtask-content">{{ step.content }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -646,6 +662,22 @@ const shouldUseCompactMode = (task) => {
 
   // 如果有3个或更多项目，或者任务内容很长，使用紧凑模式
   return itemCount >= 3 || (task.content && task.content.length > 30)
+}
+
+// 获取任务的未完成步骤
+const getIncompleteSteps = (task) => {
+  const steps = task.metadata?.steps || []
+  return steps.filter(step => step.status !== 'done')
+}
+
+// 切换步骤状态
+const toggleStepStatus = async (taskId, step) => {
+  try {
+    await taskStore.toggleTaskStepStatus(taskId, step.id)
+    await loadTasks()
+  } catch (error) {
+    console.error('切换步骤状态失败:', error)
+  }
 }
 
 // 下拉选择器方法

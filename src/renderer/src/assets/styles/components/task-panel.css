@@ -505,6 +505,27 @@
   @apply fixed inset-0 z-40;
 }
 
+/* Subtask/Steps Styles */
+.task-panel-subtasks {
+  @apply mt-2 pl-1 border-l-2 border-border/50;
+}
+
+.task-panel-subtask-item {
+  @apply flex items-center gap-2 py-1 px-2 text-xs text-muted-foreground hover:bg-accent/30 rounded-r transition-all duration-150;
+}
+
+.task-panel-subtask-item .subtask-checkbox {
+  @apply w-4 h-4 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary transition-colors duration-150 flex-shrink-0;
+}
+
+.task-panel-subtask-item .subtask-checkbox:hover {
+  @apply scale-110;
+}
+
+.task-panel-subtask-item .subtask-content {
+  @apply flex-1 min-w-0 truncate;
+}
+
 /* Task Panel VueDatePicker Styles - 强制覆盖所有主题样式 */
 .task-panel .vue-datepicker {
   @apply w-full text-xs;
