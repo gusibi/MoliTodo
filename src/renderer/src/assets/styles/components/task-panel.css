@@ -1,115 +1,21 @@
-/* Task Panel Component Styles with Tailwind CSS */
+/* Task Panel Component Styles - Theme-aware Design */
 
-/* Task Panel Container */
-.task-panel {
-  @apply w-80 min-h-[200px] h-full bg-card/90 backdrop-blur-xl rounded-2xl shadow-lg border border-border/20 flex flex-col overflow-hidden relative select-none;
+/* ===== Container ===== */
+.task-panel-container {
+  @apply relative flex flex-col w-[320px] h-full max-h-[500px];
+  @apply bg-background/95 backdrop-blur-xl;
+  @apply rounded-xl shadow-2xl overflow-hidden;
+  @apply border border-border/50;
+  @apply transition-all duration-300 ease-in-out select-none;
 }
 
-/* Panel Header */
+/* ===== Header ===== */
 .task-panel-header {
-  @apply px-6 py-4 pb-3 border-b border-border/50 bg-muted/50 flex items-center;
+  @apply flex items-center justify-between px-3 py-2;
+  @apply bg-card/60 border-b border-border/50 backdrop-blur-sm;
+  @apply flex-shrink-0 relative z-[100];
 }
 
-.task-panel-title {
-  @apply text-lg font-semibold text-card-foreground flex items-center gap-2 flex-1;
-}
-
-.task-panel-title svg {
-  @apply text-primary;
-}
-
-.task-panel-count {
-  @apply text-sm text-muted-foreground font-normal ml-2;
-}
-
-/* Dropdown Title Wrapper */
-.task-panel-title-wrapper {
-  @apply flex-1;
-}
-
-/* Dropdown Styles */
-.task-panel-dropdown {
-  @apply relative;
-}
-
-.task-panel-dropdown-trigger {
-  @apply flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-lg transition-all duration-200 hover:bg-accent/50;
-}
-
-.task-panel-dropdown-trigger .category-icon {
-  @apply text-primary w-5 h-5;
-}
-
-.task-panel-dropdown-trigger .category-label {
-  @apply text-base font-semibold text-card-foreground;
-}
-
-.task-panel-dropdown-trigger .task-panel-count {
-  @apply text-sm text-muted-foreground font-normal ml-1;
-}
-
-.task-panel-dropdown-trigger .dropdown-arrow {
-  @apply text-muted-foreground transition-transform duration-200 ml-1;
-}
-
-.task-panel-dropdown-trigger .dropdown-arrow.open {
-  @apply rotate-180;
-}
-
-.task-panel-dropdown-menu {
-  @apply absolute top-full left-0 mt-1 w-48 bg-popover border border-border rounded-lg shadow-lg py-1 z-50;
-  animation: dropdown-fade-in 0.15s ease-out;
-}
-
-@keyframes dropdown-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-item {
-  @apply flex items-center gap-2 px-3 py-2 cursor-pointer transition-all duration-150 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground;
-}
-
-.dropdown-item.active {
-  @apply bg-primary/10 text-primary;
-}
-
-.dropdown-item-icon {
-  @apply w-4 h-4 text-muted-foreground;
-}
-
-.dropdown-item.active .dropdown-item-icon {
-  @apply text-primary;
-}
-
-.dropdown-item-count {
-  @apply ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full;
-}
-
-.dropdown-item.active .dropdown-item-count {
-  @apply bg-primary/20 text-primary;
-}
-
-/* Pin Button */
-.task-panel-pin-btn {
-  @apply w-7 h-7 ml-auto border-0 rounded-lg bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground;
-}
-
-.task-panel-pin-btn.pinned {
-  @apply text-primary bg-primary/10;
-}
-
-.task-panel-pin-btn.pinned:hover {
-  @apply bg-primary/20 text-primary;
-}
-
-/* Draggable Header */
 .task-panel-header.draggable {
   @apply cursor-move;
 }
@@ -118,351 +24,142 @@
   @apply cursor-grabbing;
 }
 
-/* Quick Add Section */
-.task-panel-quick-add {
-  @apply px-6 py-4 border-b border-border/50;
-}
-
-.task-panel-input-container {
-  @apply flex gap-2 items-center;
-}
-
-.task-panel-input {
-  @apply flex-1 px-3 py-2.5 border border-input rounded-lg text-base bg-background text-foreground transition-all duration-200 outline-none placeholder-muted-foreground;
-}
-
-.task-panel-input:focus {
-  @apply border-ring ring-2 ring-ring/20;
-}
-
-.task-panel-add-btn {
-  @apply w-9 h-9 border-0 rounded-lg bg-primary text-primary-foreground cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-primary/90 hover:scale-105 active:scale-95;
-}
-
-/* Task List Container */
-.task-panel-list-container {
-  @apply flex-1 min-h-[100px]  overflow-y-auto relative;
-}
-
-.task-panel-list {
-  @apply py-2;
-}
-
-/* Task Items */
-.task-panel-item {
-  @apply px-6 py-3 border-b border-border/30 flex items-start gap-3 transition-all duration-200 cursor-pointer relative;
-  animation: task-panel-slide-in 0.3s ease-out;
-}
-
-.task-panel-item:hover {
-  @apply bg-accent/50;
-}
-
-.task-panel-item:last-child {
-  @apply border-b-0;
-}
-
-.task-panel-item.todo {
-  @apply border-l-4 border-l-status-todo;
-}
-
-.task-panel-item.doing {
-  @apply border-l-4 border-l-status-doing bg-status-doing/10;
-}
-
-.task-panel-item.done {
-  @apply border-l-4 border-l-status-done bg-success/10;
-}
-
-.task-panel-item.overtime {
-  @apply border-l-4 border-l-status-overtime bg-status-overtime/10;
-}
-
-/* Task Status Indicator */
-.task-panel-status-indicator {
-  @apply w-5 h-5 cursor-pointer flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 rounded-full hover:scale-110 hover:bg-primary/10;
-}
-
-.task-panel-item.todo .task-panel-status-indicator {
-  @apply text-status-todo;
-}
-
-.task-panel-item.doing .task-panel-status-indicator {
-  @apply text-status-doing;
-}
-
-.task-panel-item.done .task-panel-status-indicator {
-  @apply text-status-done;
-}
-
-/* Task Content */
-.task-panel-content {
-  @apply flex-1 min-w-0 flex flex-col gap-2;
-}
-
-/* 主行：包含任务文本和操作按钮 */
-.task-panel-main-row {
-  @apply flex items-start justify-between gap-2;
-}
-
-.task-panel-text-container {
-  @apply flex-1 min-w-0;
-}
-
-.task-panel-text {
-  @apply text-sm text-card-foreground leading-relaxed break-words cursor-pointer;
-}
-
-.task-panel-text:hover {
-  @apply bg-accent rounded px-1 -mx-1;
-}
-
-.task-panel-item.done .task-panel-text {
-  @apply line-through text-muted-foreground;
-}
-
-.task-panel-edit-input {
-  @apply text-sm text-foreground leading-relaxed border border-ring rounded px-1 bg-background outline-none w-full;
-}
-
-.task-panel-edit-input:focus {
-  @apply border-ring ring-2 ring-ring/20;
-}
-
-/* Task Meta - 占满整行 */
-.task-panel-meta {
-  @apply flex items-center gap-2 w-full;
-  min-width: 0; /* 允许子元素收缩 */
-}
-
-/* 占位元素，推动内容分布 */
-.task-panel-meta-spacer {
+.task-panel-title-wrapper {
   @apply flex-1;
 }
 
-/* 紧凑模式样式 - 当内容过多时自动应用 */
-.task-panel-meta.compact {
-  @apply gap-1.5;
+/* ===== Dropdown ===== */
+.task-panel-dropdown {
+  @apply relative z-[100];
 }
 
-.task-panel-meta.compact .task-panel-status {
-  @apply text-[10px] px-1.5 py-0.5;
+.task-panel-dropdown-trigger {
+  @apply flex items-center gap-1.5 px-1.5 py-1 rounded-md;
+  @apply hover:bg-accent/50;
+  @apply transition-colors cursor-pointer;
 }
 
-.task-panel-meta.compact .task-panel-reminder {
-  @apply text-xs;
+.task-panel-dropdown-trigger .category-icon {
+  @apply w-3.5 h-3.5 text-muted-foreground;
 }
 
-.task-panel-meta.compact .task-panel-duration {
-  @apply text-xs;
+.task-panel-dropdown-trigger .category-label {
+  @apply font-semibold text-xs text-foreground;
 }
 
-.task-panel-status {
-  @apply text-xs font-medium px-2 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0;
+.task-panel-dropdown-trigger .task-panel-count {
+  @apply text-[10px] px-1 py-0.5 bg-muted text-muted-foreground rounded-full font-medium;
 }
 
-.task-panel-status.status-todo {
-  @apply bg-muted text-muted-foreground;
+.task-panel-dropdown-trigger .dropdown-arrow {
+  @apply w-2.5 h-2.5 text-muted-foreground transition-transform duration-200;
 }
 
-.task-panel-status.status-doing {
-  @apply bg-warning/20 text-warning-foreground;
+.task-panel-dropdown-trigger .dropdown-arrow.open {
+  @apply rotate-180;
 }
 
-.task-panel-status.status-paused {
-  @apply bg-warning/30 text-warning-foreground;
+.task-panel-dropdown-menu {
+  @apply absolute top-full left-0 mt-1 w-40;
+  @apply bg-popover rounded-lg shadow-xl;
+  @apply border border-border py-1 z-[100];
+  animation: dropdown-slide-in 0.2s ease-out;
 }
 
-.task-panel-status.status-done {
-  @apply bg-success/20 text-success-foreground;
+@keyframes dropdown-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.task-panel-status.status-overtime {
-  @apply bg-status-overtime text-white;
+.dropdown-item {
+  @apply flex items-center gap-2 px-2.5 py-1.5 mx-1 text-xs rounded-md;
+  @apply text-popover-foreground hover:bg-accent;
+  @apply transition-colors cursor-pointer;
 }
 
-.task-panel-duration {
-  @apply text-sm text-warning flex items-center gap-1 flex-shrink min-w-0;
+.dropdown-item.active {
+  @apply bg-primary/10 text-primary font-medium;
 }
 
-.task-panel-duration svg {
-  @apply w-3 h-3;
+.dropdown-item-icon {
+  @apply w-3.5 h-3.5 text-muted-foreground;
 }
 
-.task-panel-reminder {
-  @apply text-xs text-primary flex items-center gap-1 flex-shrink min-w-0;
-}
-
-.task-panel-reminder.overdue {
-  @apply text-destructive;
-}
-
-.task-panel-reminder svg {
-  @apply w-3 h-3;
-}
-
-/* Task Actions - 现在在主行中 */
-.task-panel-actions {
-  @apply flex gap-1 opacity-0 transition-opacity duration-200 flex-shrink-0;
-}
-
-.task-panel-item:hover .task-panel-actions {
-  @apply opacity-100;
-}
-
-.task-panel-action-btn {
-  @apply w-6 h-6 border-0 rounded bg-muted/50 cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-muted;
-}
-
-.task-panel-action-btn.reminder-btn {
+.dropdown-item.active .dropdown-item-icon {
   @apply text-primary;
 }
 
-.task-panel-action-btn.pause-btn {
-  @apply text-warning;
+.dropdown-item-count {
+  @apply ml-auto text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded-full;
 }
 
-.task-panel-action-btn.delete-btn {
-  @apply text-destructive;
+.dropdown-item.active .dropdown-item-count {
+  @apply bg-primary/20 text-primary;
 }
 
-/* Empty State */
-.task-panel-empty {
-  @apply hidden flex-col items-center justify-center px-6 py-10 text-center text-muted-foreground;
+/* ===== Pin Button ===== */
+.task-panel-pin-btn {
+  @apply p-1 rounded-md transition-all duration-200 flex-shrink-0;
+  @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
 }
 
-.task-panel-empty.show {
-  @apply flex;
+.task-panel-pin-btn svg {
+  @apply w-3.5 h-3.5;
 }
 
-.task-panel-empty-icon {
-  @apply mb-4 text-primary opacity-60;
+.task-panel-pin-btn.pinned {
+  @apply bg-primary/20 text-primary;
 }
 
-.task-panel-empty h3 {
-  @apply text-lg mb-2 text-card-foreground;
+/* ===== Quick Add ===== */
+.task-panel-quick-add {
+  @apply px-3 py-2 bg-card/40 flex-shrink-0;
 }
 
-.task-panel-empty p {
-  @apply text-base text-muted-foreground;
+.task-panel-input-wrapper {
+  @apply relative;
 }
 
-/* Reminder Modal */
-.task-panel-reminder-modal {
-  @apply absolute inset-0 bg-black/50 hidden items-center justify-center z-50 rounded-2xl;
+.task-panel-input {
+  @apply w-full pl-3 pr-8 py-2;
+  @apply bg-input border border-border rounded-lg;
+  @apply text-xs text-foreground placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary;
+  @apply shadow-sm transition-all;
 }
 
-.task-panel-reminder-modal.show {
-  @apply flex;
+.task-panel-add-btn {
+  @apply absolute right-1.5 top-1/2 -translate-y-1/2;
+  @apply p-1 rounded-md transition-all duration-200;
+  @apply text-muted-foreground/50 hover:bg-accent hover:text-accent-foreground;
 }
 
-.task-panel-modal-content {
-  @apply w-80 max-w-[90%] max-h-[80%] overflow-y-auto bg-card border border-border rounded-xl shadow-xl;
+.task-panel-add-btn.active {
+  @apply bg-primary text-primary-foreground shadow-md hover:bg-primary/90;
 }
 
-/* 优化模态框滚动条 */
-.task-panel-modal-content::-webkit-scrollbar {
-  @apply w-1;
+.task-panel-add-btn svg {
+  @apply w-3.5 h-3.5;
 }
 
-.task-panel-modal-content::-webkit-scrollbar-track {
-  @apply bg-transparent;
+/* ===== Task List Container ===== */
+.task-panel-list-container {
+  @apply flex-1 overflow-y-auto px-3 pb-2 min-h-0;
 }
 
-.task-panel-modal-content::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+.task-panel-list {
+  @apply space-y-1.5 pt-1;
 }
 
-.task-panel-modal-content::-webkit-scrollbar-thumb:active {
-  @apply bg-muted-foreground/60;
-}
-
-/* Modal Header */
-.modal-header {
-  @apply flex items-center justify-between mb-2 pb-2 border-b border-border px-4 pt-4;
-}
-
-.modal-header h3 {
-  @apply text-lg font-semibold text-card-foreground;
-}
-
-.modal-close-button {
-  @apply w-6 h-6 border-0 rounded bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent;
-}
-
-/* Modal Body */
-.modal-body {
-  @apply mb-4 px-2;
-}
-
-/* Reminder Options */
-
-.reminder-option {
-  @apply w-full flex items-center text-sm gap-2 py-2.5 pl-4 text-left border-0 rounded-lg bg-background text-foreground cursor-pointer transition-all duration-200 hover:bg-accent hover:text-accent-foreground;
-}
-
-.reminder-option:last-child {
-  @apply mb-0;
-}
-
-.reminder-option-icon {
-  @apply text-primary w-4 h-4;
-}
-
-
-.form-group {
-  @apply mb-4;
-}
-
-.form-group label {
-  @apply block text-sm font-medium text-card-foreground mb-2;
-}
-
-.form-input {
-  @apply w-full px-3 py-2 border border-input rounded-lg text-sm bg-background text-foreground transition-all duration-200 outline-none placeholder-muted-foreground;
-}
-
-.form-input:focus {
-  @apply border-ring ring-2 ring-ring/20;
-}
-
-/* Modal Footer */
-.modal-footer {
-  @apply flex gap-2 justify-end pt-2 border-t border-border px-2 pb-2;
-}
-
-.btn {
-  @apply px-4 py-2 text-sm font-medium rounded-lg cursor-pointer transition-all duration-200 outline-none;
-}
-
-.btn-primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-}
-
-.btn-secondary {
-  @apply bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground;
-}
-
-.task-panel-quick-time-buttons {
-  @apply flex gap-2 flex-wrap mt-3;
-}
-
-.task-panel-quick-time-btn {
-  @apply px-3 py-2 border border-border rounded-full bg-background text-sm cursor-pointer transition-all duration-200 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary;
-}
-
-/* Panel Footer */
-.task-panel-footer {
-  @apply px-6 py-3 border-t border-border/50 bg-muted/50;
-}
-
-.task-panel-footer-stats {
-  @apply text-sm text-muted-foreground text-center cursor-pointer transition-all duration-200 rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground;
-}
-
-/* Scrollbar Styles */
+/* Custom Scrollbar */
 .task-panel-list-container::-webkit-scrollbar {
-  @apply w-1;
+  @apply w-1.5;
 }
 
 .task-panel-list-container::-webkit-scrollbar-track {
@@ -470,15 +167,23 @@
 }
 
 .task-panel-list-container::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+  @apply bg-muted-foreground/30 rounded-full;
 }
 
-.task-panel-list-container::-webkit-scrollbar-thumb:active {
-  @apply bg-muted-foreground/60;
+.task-panel-list-container::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
 }
 
-/* Animations */
-@keyframes task-panel-slide-in {
+/* ===== Task Card ===== */
+.task-panel-card {
+  @apply relative flex flex-col p-2;
+  @apply bg-card rounded-lg border transition-all duration-200;
+  @apply border-border shadow-sm;
+  @apply hover:border-border/80 hover:shadow-md;
+  animation: card-slide-in 0.3s ease-out;
+}
+
+@keyframes card-slide-in {
   from {
     opacity: 0;
     transform: translateY(-10px);
@@ -487,497 +192,297 @@
     opacity: 1;
     transform: translateY(0);
   }
-}/*
- 右键菜单样式 */
+}
+
+.task-panel-card.status-doing {
+  @apply border-status-doing/50 shadow-md;
+  box-shadow: 0 4px 6px -1px hsl(var(--status-doing) / 0.1);
+}
+
+.task-panel-card.status-done {
+  @apply opacity-70 bg-muted/50;
+}
+
+.task-panel-card.overtime {
+  @apply border-status-overtime/50 bg-status-overtime/5;
+}
+
+/* ===== Task Card Main Row ===== */
+.task-card-main {
+  @apply flex items-start gap-2;
+}
+
+/* ===== Status Checkbox ===== */
+.task-status-checkbox {
+  @apply mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
+  @apply transition-all duration-200 cursor-pointer;
+  @apply border-border bg-transparent;
+  @apply hover:border-primary;
+}
+
+.task-status-checkbox.status-todo {
+  @apply border-status-todo;
+}
+
+.task-status-checkbox.status-doing {
+  @apply bg-status-doing border-status-doing text-primary-foreground;
+}
+
+.task-status-checkbox.status-done {
+  @apply bg-status-done border-status-done text-primary-foreground;
+}
+
+.task-status-checkbox.status-paused {
+  @apply bg-status-paused/20 border-status-paused text-status-paused;
+}
+
+.task-status-checkbox .check-icon {
+  @apply flex items-center justify-center;
+}
+
+.task-status-checkbox .check-icon svg {
+  @apply w-2.5 h-2.5;
+}
+
+.task-status-checkbox .doing-dot {
+  @apply w-1.5 h-1.5 bg-primary-foreground rounded-full animate-pulse;
+}
+
+/* ===== Task Card Content ===== */
+.task-card-content {
+  @apply flex-1 min-w-0;
+}
+
+.task-card-text {
+  @apply text-xs leading-normal cursor-text;
+  @apply text-foreground;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-card-text.completed {
+  @apply text-muted-foreground line-through decoration-muted-foreground/50;
+}
+
+.task-card-edit-input {
+  @apply w-full text-xs bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
+  @apply text-foreground;
+}
+
+/* ===== Task Card Meta ===== */
+.task-card-meta {
+  @apply flex items-center gap-1.5 mt-1 min-h-[14px] flex-wrap;
+}
+
+.task-meta-tag {
+  @apply flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded-full;
+}
+
+.task-meta-tag svg {
+  @apply w-2.5 h-2.5;
+}
+
+.task-meta-tag.reminder {
+  @apply text-muted-foreground;
+}
+
+.task-meta-tag.reminder.overdue {
+  @apply text-destructive font-medium bg-destructive/10;
+}
+
+.task-meta-tag.doing {
+  @apply text-status-doing font-medium bg-status-doing/10;
+}
+
+.task-meta-tag.subtasks {
+  @apply text-muted-foreground;
+}
+
+/* ===== Task Card Actions ===== */
+.task-card-actions {
+  @apply flex items-center gap-0.5;
+  @apply opacity-0 transition-opacity duration-200;
+}
+
+.task-panel-card:hover .task-card-actions {
+  @apply opacity-100;
+}
+
+.task-action-btn {
+  @apply p-1 rounded transition-colors;
+  @apply text-muted-foreground;
+}
+
+.task-action-btn svg {
+  @apply w-3 h-3;
+}
+
+.task-action-btn.pause:hover {
+  @apply text-status-paused bg-status-paused/10;
+}
+
+.task-action-btn.reminder:hover {
+  @apply text-info bg-info/10;
+}
+
+.task-action-btn.delete:hover {
+  @apply text-destructive bg-destructive/10;
+}
+
+/* ===== Subtasks ===== */
+.task-card-subtasks {
+  @apply mt-1.5 pl-6 space-y-0.5;
+}
+
+.subtask-item {
+  @apply flex items-center gap-1.5 text-[10px] text-muted-foreground;
+}
+
+.subtask-checkbox {
+  @apply w-2.5 h-2.5 cursor-pointer transition-colors;
+  @apply text-muted-foreground/50 hover:text-primary;
+}
+
+.subtask-text {
+  @apply truncate;
+}
+
+/* ===== Empty State ===== */
+.task-panel-empty {
+  @apply flex flex-col items-center justify-center h-full py-8;
+  @apply text-muted-foreground;
+}
+
+.empty-icon {
+  @apply mb-2 opacity-60;
+}
+
+.empty-icon svg {
+  @apply w-10 h-10;
+}
+
+.empty-title {
+  @apply text-xs font-medium text-muted-foreground;
+}
+
+.empty-text {
+  @apply text-[10px] text-muted-foreground/70 mt-0.5;
+}
+
+/* ===== Footer ===== */
+.task-panel-footer {
+  @apply px-3 py-1.5 bg-muted/50 border-t border-border;
+  @apply flex justify-between items-center text-[10px] text-muted-foreground;
+  @apply flex-shrink-0;
+}
+
+.footer-stats {
+  @apply hover:text-foreground cursor-pointer transition-colors;
+}
+
+.footer-link {
+  @apply hover:text-foreground cursor-pointer transition-colors;
+}
+
+/* ===== Modal ===== */
+.task-panel-modal-overlay {
+  @apply absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-xl;
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.task-panel-modal {
+  @apply w-72 max-w-[90%] max-h-[80%] overflow-y-auto;
+  @apply bg-popover border border-border rounded-lg shadow-xl;
+  animation: modal-slide-in 0.2s ease-out;
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  @apply flex items-center justify-between px-3 pt-3 pb-2 border-b border-border;
+}
+
+.modal-header h3 {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.modal-close-btn {
+  @apply w-5 h-5 rounded flex items-center justify-center;
+  @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+  @apply transition-colors cursor-pointer;
+}
+
+.modal-close-btn svg {
+  @apply w-3.5 h-3.5;
+}
+
+.modal-body {
+  @apply p-3;
+}
+
+.reminder-options-grid {
+  @apply space-y-1.5;
+}
+
+.reminder-option-btn {
+  @apply w-full flex items-center gap-2 px-3 py-2 text-xs text-left;
+  @apply bg-muted/50 rounded-md;
+  @apply text-foreground hover:bg-accent;
+  @apply transition-colors cursor-pointer;
+}
+
+.reminder-option-btn svg {
+  @apply w-3.5 h-3.5 text-primary;
+}
+
+.modal-footer {
+  @apply flex gap-2 justify-end px-3 pb-3 pt-2 border-t border-border;
+}
+
+.modal-btn {
+  @apply px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-all duration-200;
+}
+
+.modal-btn.primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.modal-btn.secondary {
+  @apply bg-secondary text-secondary-foreground;
+  @apply hover:bg-secondary/80;
+}
+
+/* ===== Context Menu ===== */
 .task-context-menu {
-  @apply bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[140px] z-50;
+  @apply bg-popover border border-border rounded-md shadow-lg py-0.5 min-w-[140px] z-50;
 }
 
 .context-menu-item {
-  @apply px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer flex items-center gap-2 transition-colors;
+  @apply px-2.5 py-1.5 text-xs text-popover-foreground;
+  @apply hover:bg-accent cursor-pointer;
+  @apply flex items-center gap-1.5 transition-colors;
 }
 
 .context-menu-item svg {
-  @apply text-muted-foreground;
+  @apply w-3 h-3 text-muted-foreground;
 }
 
 .context-menu-overlay {
   @apply fixed inset-0 z-40;
-}
-
-/* Subtask/Steps Styles */
-.task-panel-subtasks {
-  @apply mt-2 pl-1 border-l-2 border-border/50;
-}
-
-.task-panel-subtask-item {
-  @apply flex items-center gap-2 py-1 px-2 text-xs text-muted-foreground hover:bg-accent/30 rounded-r transition-all duration-150;
-}
-
-.task-panel-subtask-item .subtask-checkbox {
-  @apply w-4 h-4 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary transition-colors duration-150 flex-shrink-0;
-}
-
-.task-panel-subtask-item .subtask-checkbox:hover {
-  @apply scale-110;
-}
-
-.task-panel-subtask-item .subtask-content {
-  @apply flex-1 min-w-0 truncate;
-}
-
-/* Task Panel VueDatePicker Styles - 强制覆盖所有主题样式 */
-.task-panel .vue-datepicker {
-  @apply w-full text-xs;
-}
-
-/* 强制覆盖所有可能的背景和文本颜色 */
-.task-panel .dp__main {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__menu_content_wrapper {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__calendar_wrap {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__calendar_header {
-  @apply bg-popover text-popover-foreground border-b border-border;
-}
-
-.task-panel .dp__calendar_header_item {
-  @apply text-muted-foreground;
-}
-
-.task-panel .dp__calendar_item {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__calendar_row {
-  @apply bg-popover text-popover-foreground;
-}
-
-/* 强制覆盖时间选择器背景 */
-.task-panel .dp__time_picker {
-  @apply bg-popover text-popover-foreground border-l border-border;
-}
-
-.task-panel .dp__time_col {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__time_display {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__time_picker_inline_container {
-  @apply bg-popover text-popover-foreground;
-}
-
-/* 输入框样式 */
-.task-panel .dp__input {
-  @apply py-1.5 border border-border rounded-md text-xs text-foreground bg-background outline-none transition-all duration-200;
-}
-
-.task-panel .dp__input:focus {
-  @apply border-primary ring-1 ring-primary/20;
-}
-
-.task-panel .dp__input:hover {
-  @apply border-border/80;
-}
-
-/* 弹窗菜单样式 */
-.task-panel .dp__menu {
-  @apply bg-popover border border-border rounded-lg shadow-lg text-xs text-popover-foreground;
-}
-
-.task-panel .dp__menu_inner {
-  @apply bg-popover text-popover-foreground;
-}
-
-/* 优化滚动条样式 */
-.task-panel .dp__scroll_bar {
-  @apply bg-transparent;
-}
-
-.task-panel .dp__scroll_bar::-webkit-scrollbar {
-  @apply w-1;
-}
-
-.task-panel .dp__scroll_bar::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-.task-panel .dp__scroll_bar::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
-}
-
-.task-panel .dp__scroll_bar::-webkit-scrollbar-thumb:active {
-  @apply bg-muted-foreground/60;
-}
-
-/* 日历头部样式 */
-.task-panel .dp__calendar_header {
-  @apply bg-muted/30 border-b border-border text-xs;
-}
-
-.task-panel .dp__calendar_header_item {
-  @apply text-muted-foreground text-xs font-medium;
-}
-
-/* 日期单元格样式 */
-.task-panel .dp__cell_inner {
-  @apply text-foreground hover:bg-accent hover:text-accent-foreground text-xs rounded-md transition-all duration-200;
-}
-
-.task-panel .dp__cell_inner.dp__today {
-  @apply bg-primary/10 text-primary text-xs font-medium border border-primary/20;
-}
-
-.task-panel .dp__cell_inner.dp__active_date {
-  @apply bg-primary text-primary-foreground text-xs font-medium;
-}
-
-.task-panel .dp__cell_offset {
-  @apply text-muted-foreground/50;
-}
-
-.task-panel .dp__cell_disabled {
-  @apply text-muted-foreground cursor-not-allowed opacity-50;
-}
-
-/* 时间输入样式 */
-.task-panel .dp__time_input {
-  @apply bg-background border border-border text-foreground text-xs rounded-md px-2 py-1;
-}
-
-.task-panel .dp__time_input:focus {
-  @apply border-primary ring-1 ring-primary/20;
-}
-
-.task-panel .dp__time_col {
-  @apply text-xs bg-background;
-}
-
-.task-panel .dp__time_col_reg {
-  @apply text-xs hover:bg-accent hover:text-accent-foreground rounded-md transition-all duration-200;
-}
-
-/* 按钮样式 */
-.task-panel .dp__btn {
-  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-2 py-1 transition-all duration-200;
-}
-
-.task-panel .dp__button {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90 border-none rounded-md text-xs px-3 py-1.5 font-medium transition-all duration-200;
-}
-
-.task-panel .dp__button_bottom {
-  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-3 py-1.5 transition-all duration-200;
-}
-
-/* 导航按钮样式 */
-.task-panel .dp--arrow-btn-nav {
-  @apply text-muted-foreground hover:text-foreground hover:bg-accent rounded-md p-1 transition-all duration-200;
-}
-
-/* 月年选择器样式 */
-.task-panel .dp__month_year_select {
-  @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-2 py-1 font-medium transition-all duration-200;
-}
-
-/* 操作按钮样式 */
-.task-panel .dp__action_buttons {
-  @apply border-t border-border bg-muted/30;
-}
-
-.task-panel .dp__action_button {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3 py-1.5 rounded-md transition-all duration-200;
-}
-
-.task-panel .dp__action_cancel {
-  @apply bg-muted/50 text-foreground hover:bg-muted/70 text-xs px-3 py-1.5 rounded-md transition-all duration-200;
-}
-
-/* 图标样式 */
-.task-panel .dp__icon {
-  @apply text-muted-foreground w-4 h-4;
-}
-
-.task-panel .dp__clear_icon {
-  @apply text-muted-foreground hover:text-foreground w-4 h-4 cursor-pointer transition-colors duration-200;
-}
-
-.task-panel .dp__input_icon {
-  @apply text-muted-foreground w-4 h-4;
-}
-
-/* 时间选择器更多样式 */
-.task-panel .dp__time_display {
-  @apply text-xs text-foreground bg-background;
-}
-
-.task-panel .dp__time_picker {
-  @apply text-xs bg-popover border border-border rounded-lg;
-}
-
-.task-panel .dp__time_picker_inline_container {
-  @apply bg-popover;
-}
-
-.task-panel .dp__overlay {
-  @apply text-xs bg-popover text-popover-foreground border border-border rounded-lg;
-}
-
-.task-panel .dp__overlay_row {
-  @apply flex items-center justify-center gap-2 text-xs;
-}
-
-.task-panel .dp__overlay_cell {
-  @apply text-xs hover:bg-accent hover:text-accent-foreground rounded-md transition-all duration-200 px-2 py-1;
-}
-
-.task-panel .dp__overlay_cell_active {
-  @apply bg-primary text-primary-foreground;
-}
-
-.task-panel .dp__overlay_cell_disabled {
-  @apply text-muted-foreground cursor-not-allowed opacity-50;
-}
-
-/* 日历容器样式 */
-.task-panel .dp__calendar {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__calendar_wrap {
-  @apply bg-popover;
-}
-
-.task-panel .dp__instance_calendar {
-  @apply bg-popover;
-}
-
-.task-panel .dp__calendar_header_separator {
-  @apply border-border;
-}
-
-/* 月年选择器覆盖层 */
-.task-panel .dp__year_mode_picker {
-  @apply bg-popover text-popover-foreground;
-}
-
-.task-panel .dp__month_picker {
-  @apply bg-popover text-popover-foreground;
-}
-
-/* 输入相关样式 */
-.task-panel .dp__input_wrap {
-  @apply relative bg-background;
-}
-
-.task-panel .dp__input_reg {
-  @apply w-full bg-background text-foreground;
-}
-
-.task-panel .dp__input_focus {
-  @apply border-primary ring-1 ring-primary/20;
-}
-
-.task-panel .dp__input_valid {
-  @apply border-green-500;
-}
-
-.task-panel .dp__input_invalid {
-  @apply border-destructive;
-}
-
-/* 禁用状态样式 */
-.task-panel .dp__disabled {
-  @apply text-muted-foreground cursor-not-allowed opacity-50;
-}
-
-/* 箭头和边框样式 */
-.task-panel .dp__arrow_top,
-.task-panel .dp__arrow_bottom {
-  @apply border-border;
-}
-
-/* 选择预览样式 */
-.task-panel .dp__selection_preview {
-  @apply text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-md;
-}
-
-.task-panel .dp__selection_grid {
-  @apply bg-popover;
-}
-
-.task-panel .dp__selection_grid_header {
-  @apply bg-muted/30 border-b border-border text-xs font-medium text-muted-foreground;
-}
-
-/* 工具提示样式 */
-.task-panel .dp__tooltip {
-  @apply bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-lg border border-border;
-}
-
-/* 成功/危险状态样式 */
-.task-panel .dp__success {
-  @apply text-green-600 dark:text-green-400;
-}
-
-.task-panel .dp__danger {
-  @apply text-destructive;
-}
-
-/* 高亮和标记样式 */
-.task-panel .dp__marker {
-  @apply bg-destructive w-2 h-2 rounded-full;
-}
-
-.task-panel .dp__marker_line {
-  @apply bg-destructive h-0.5 w-full;
-}
-
-.task-panel .dp__marker_dot {
-  @apply bg-destructive w-1 h-1 rounded-full;
-}
-
-.task-panel .dp__highlight {
-  @apply bg-primary/10 text-primary;
-}
-
-/* 范围选择样式 */
-.task-panel .dp__range_start,
-.task-panel .dp__range_end {
-  @apply bg-primary text-primary-foreground;
-}
-
-.task-panel .dp__range_between {
-  @apply bg-primary/20 text-foreground;
-}
-
-/* 布局样式 */
-.task-panel .dp__flex_row {
-  @apply flex items-center gap-2 text-xs;
-}
-
-.task-panel .dp__calendar_item {
-  @apply text-xs;
-}
-
-.task-panel .dp__calendar_row {
-  @apply text-xs;
-}
-
-.task-panel .dp__month_year_row {
-  @apply text-xs;
-}
-
-.task-panel .dp__year_row {
-  @apply text-xs;
-}
-
-/* 周选择样式 */
-.task-panel .dp__week_num {
-  @apply text-xs text-muted-foreground font-medium;
-}
-
-/* 季度选择样式 */
-.task-panel .dp__quarter_item {
-  @apply text-xs text-foreground hover:bg-accent hover:text-accent-foreground px-2 py-1 rounded-md cursor-pointer transition-all duration-200;
-}
-
-/* 预设范围样式 */
-.task-panel .dp__preset_ranges {
-  @apply bg-popover border-r border-border;
-}
-
-.task-panel .dp__preset_range {
-  @apply text-xs text-foreground hover:bg-accent hover:text-accent-foreground px-3 py-2 cursor-pointer transition-all duration-200;
-}
-
-.task-panel .dp__preset_range_active {
-  @apply bg-primary text-primary-foreground;
-}
-
-
-
-/* 强制主题一致性 - 使用!important覆盖默认样式 */
-.task-panel .dp__menu,
-.task-panel .dp__menu_inner,
-.task-panel .dp__main,
-.task-panel .dp__menu_content_wrapper,
-.task-panel .dp__calendar,
-.task-panel .dp__calendar_wrap,
-.task-panel .dp__instance_calendar,
-.task-panel .dp__time_picker,
-.task-panel .dp__time_picker_inline_container,
-.task-panel .dp__overlay {
-  background-color: hsl(var(--popover)) !important;
-  color: hsl(var(--popover-foreground)) !important;
-  border-color: hsl(var(--border)) !important;
-}
-
-.task-panel .dp__calendar_header {
-  background-color: hsl(var(--muted) / 0.3) !important;
-  border-bottom-color: hsl(var(--border)) !important;
-}
-
-.task-panel .dp__calendar_header_item {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-.task-panel .dp__cell_inner {
-  color: hsl(var(--foreground)) !important;
-}
-
-.task-panel .dp__cell_inner:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
-}
-
-.task-panel .dp__cell_inner.dp__active_date {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-}
-
-.task-panel .dp__cell_inner.dp__today {
-  background-color: hsl(var(--primary) / 0.1) !important;
-  color: hsl(var(--primary)) !important;
-  border-color: hsl(var(--primary) / 0.2) !important;
-}
-
-.task-panel .dp__time_col_reg {
-  color: hsl(var(--foreground)) !important;
-}
-
-.task-panel .dp__time_col_reg:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
-}
-
-.task-panel .dp__button {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-}
-
-.task-panel .dp__button:hover {
-  background-color: hsl(var(--primary) / 0.9) !important;
-}
-
-.task-panel .dp__action_cancel,
-.task-panel .dp__button_bottom {
-  background-color: hsl(var(--muted) / 0.5) !important;
-  color: hsl(var(--foreground)) !important;
-  border-color: hsl(var(--border)) !important;
-}
-
-.task-panel .dp__action_cancel:hover,
-.task-panel .dp__button_bottom:hover {
-  background-color: hsl(var(--muted) / 0.7) !important;
 }

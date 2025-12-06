@@ -1,5 +1,5 @@
 <template>
-  <div class="task-panel" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
+  <div class="task-panel-container" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
     <!-- 面板头部 - 固定时可拖动 -->
     <div class="task-panel-header" :class="{ 'draggable': isPinned }" @mousedown="handleHeaderMouseDown">
       <div class="task-panel-title-wrapper">
@@ -7,19 +7,16 @@
           <div class="task-panel-dropdown-trigger">
             <component :is="getCategoryIcon(selectedCategory)" class="category-icon" />
             <span class="category-label">{{ getCategoryLabel(selectedCategory) }}</span>
-            <span class="task-panel-count">{{ taskCount }} {{ $t('floatView.tasksCount') }}</span>
-            <svg class="dropdown-arrow" :class="{ 'open': showDropdown }" width="12" height="12" viewBox="0 0 24 24" fill="none">
-              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <span class="task-panel-count">{{ taskCount }}</span>
+            <svg class="dropdown-arrow" :class="{ 'open': showDropdown }" width="12" height="12" viewBox="0 0 24 24"
+              fill="none">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div v-if="showDropdown" class="task-panel-dropdown-menu">
-            <div 
-              v-for="category in categoryOptions" 
-              :key="category.value"
-              class="dropdown-item"
-              :class="{ 'active': selectedCategory === category.value }"
-              @click.stop="selectCategory(category.value)"
-            >
+            <div v-for="category in categoryOptions" :key="category.value" class="dropdown-item"
+              :class="{ 'active': selectedCategory === category.value }" @click.stop="selectCategory(category.value)">
               <component :is="category.icon" class="dropdown-item-icon" />
               <span>{{ category.label }}</span>
               <span class="dropdown-item-count">{{ getCategoryCount(category.value) }}</span>
@@ -30,10 +27,10 @@
       <!-- 固定按钮 -->
       <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
         :title="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
-        <svg v-if="isPinned" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg v-if="isPinned" width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" fill="currentColor" />
         </svg>
-        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" stroke="currentColor" stroke-width="1.5"
             fill="none" />
         </svg>
@@ -42,10 +39,11 @@
 
     <!-- 快速添加框 -->
     <div class="task-panel-quick-add">
-      <div class="task-panel-input-container">
+      <div class="task-panel-input-wrapper">
         <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')"
           maxlength="200" @keypress.enter="addTask" ref="quickAddInput">
-        <button class="task-panel-add-btn" @click="addTask" :title="$t('floatView.addTask')">
+        <button class="task-panel-add-btn" :class="{ 'active': newTaskContent.trim() }" @click="addTask"
+          :title="$t('floatView.addTask')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
@@ -57,157 +55,170 @@
     <div class="task-panel-list-container">
       <div v-if="tasks.length > 0" class="task-panel-list">
         <div v-for="task in sortedTasks" :key="task.id" :class="[
-          'task-panel-item',
-          (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
-            ? 'overtime'
-            : task.status || (task.completed ? 'done' : 'todo')
+          'task-panel-card',
+          `status-${task.status || (task.completed ? 'done' : 'todo')}`,
+          {
+            'overtime': (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
+          }
         ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
-          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)"
-            :title="$t('floatView.clickToToggleStatus')">
-            <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
-          </div>
 
-          <div class="task-panel-content">
-            <div class="task-panel-main-row">
-              <div class="task-panel-text-container">
-                <div v-if="!isEditing(task.id)" class="task-panel-text" @dblclick="startEditTask(task.id)"
-                  :title="$t('floatView.doubleClickToEdit')">
-                  {{ task.content }}
-                </div>
-                <input v-else v-model="editingContent" class="task-panel-edit-input"
-                  @keydown.enter="saveTaskEdit(task.id)" @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)"
-                  ref="editInput" />
+          <!-- 主行内容 -->
+          <div class="task-card-main">
+            <!-- 状态指示器 -->
+            <button class="task-status-checkbox" :class="`status-${task.status || (task.completed ? 'done' : 'todo')}`"
+              @click="cycleTaskStatus(task.id)" :title="$t('floatView.clickToToggleStatus')">
+              <span v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'done'" class="check-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span v-else-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
+                class="doing-dot"></span>
+            </button>
+
+            <!-- 任务内容区域 -->
+            <div class="task-card-content">
+              <div v-if="!isEditing(task.id)" class="task-card-text"
+                :class="{ 'completed': (task.status || (task.completed ? 'done' : 'todo')) === 'done' }"
+                @dblclick="startEditTask(task.id)" :title="$t('floatView.doubleClickToEdit')">
+                {{ task.content }}
               </div>
+              <input v-else v-model="editingContent" class="task-card-edit-input" @keydown.enter="saveTaskEdit(task.id)"
+                @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
 
-              <div class="task-panel-actions">
-                <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
-                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)"
-                  :title="$t('floatView.pauseTask')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
-                  </svg>
-                </button>
-                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)"
-                  :title="$t('floatView.setReminder')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- 元信息行 -->
+              <div class="task-card-meta">
+                <!-- 提醒时间 -->
+                <div v-if="task.reminderTime && (task.status || (task.completed ? 'done' : 'todo')) !== 'done'"
+                  :class="['task-meta-tag reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
                       fill="currentColor" />
                   </svg>
-                </button>
-                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)"
-                  :title="$t('floatView.deleteTask')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <span>{{ formatReminderTime(task.reminderTime) }}</span>
+                </div>
+
+                <!-- 进行中状态标签 -->
+                <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-meta-tag doing">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                      fill="currentColor" />
                   </svg>
-                </button>
+                  <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
+                </div>
+
+                <!-- 子任务指示器 -->
+                <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                      fill="currentColor" />
+                  </svg>
+                  <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
+                  }}</span>
+                </div>
               </div>
             </div>
 
-            <!-- 元信息占满整行 -->
-            <div :class="['task-panel-meta', { 'compact': shouldUseCompactMode(task) }]">
-              <span :class="['task-panel-status', `status-${task.status || (task.completed ? 'done' : 'todo')}`]">
-                {{ getStatusText(task.status || (task.completed ? 'done' : 'todo')) }}
-              </span>
-
-              <!-- 提醒时间信息 -->
-              <div v-if="task.reminderTime"
-                :class="['task-panel-reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 悬浮操作按钮 -->
+            <div class="task-card-actions">
+              <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
+                class="task-action-btn pause" @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
+                    fill="currentColor" />
+                </svg>
+              </button>
+              <button class="task-action-btn reminder" @click="showReminderModal(task.id)"
+                :title="$t('floatView.setReminder')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
                     fill="currentColor" />
                 </svg>
-                {{ formatReminderTime(task.reminderTime) }}
-              </div>
-
-              <!-- 时间追踪信息（仅显示进行中任务） -->
-              <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-panel-duration">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" />
+              </button>
+              <button class="task-action-btn delete" @click="deleteTask(task.id)" :title="$t('floatView.deleteTask')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                {{ $t('floatView.inProgress') }} {{ formatDurationCompact(getTaskTotalDuration(task)) }}
-              </div>
-
-              <!-- 占位元素，推动内容向右对齐 -->
-              <div class="task-panel-meta-spacer"></div>
+              </button>
             </div>
+          </div>
 
-            <!-- 子任务/步骤列表（仅显示未完成的） -->
-            <div v-if="getIncompleteSteps(task).length > 0" class="task-panel-subtasks">
-              <div 
-                v-for="step in getIncompleteSteps(task)" 
-                :key="step.id" 
-                class="task-panel-subtask-item"
-              >
-                <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
-                  </svg>
-                </div>
-                <span class="subtask-content">{{ step.content }}</span>
+          <!-- 子任务列表 -->
+          <div v-if="getIncompleteSteps(task).length > 0" class="task-card-subtasks">
+            <div v-for="step in getIncompleteSteps(task)" :key="step.id" class="subtask-item">
+              <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                </svg>
               </div>
+              <span class="subtask-text">{{ step.content }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 空状态 -->
-      <div v-else class="task-panel-empty show">
-        <div class="task-panel-empty-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div v-else class="task-panel-empty">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
             <path
               d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
               fill="currentColor" />
           </svg>
         </div>
-        <h3>{{ $t('floatView.excellent') }}</h3>
-        <p>{{ $t('floatView.allTasksCompleted') }}</p>
+        <h3 class="empty-title">{{ $t('floatView.excellent') }}</h3>
+        <p class="empty-text">{{ $t('floatView.allTasksCompleted') }}</p>
       </div>
     </div>
 
     <!-- 提醒设置弹窗 -->
-    <div v-if="showReminder" class="task-panel-reminder-modal show">
-      <div class="task-panel-modal-content" @click.stop>
+    <div v-if="showReminder" class="task-panel-modal-overlay">
+      <div class="task-panel-modal" @click.stop>
         <div class="modal-header">
           <h3>{{ $t('floatView.setReminder') }}</h3>
-          <button class="modal-close-button" @click="hideReminderModal">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <button class="modal-close-btn" @click="hideReminderModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </button>
         </div>
         <div class="modal-body">
-          <!-- 快速提醒选项 -->
-          <div class="reminder-options">
-            <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option"
+          <div class="reminder-options-grid">
+            <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option-btn"
               @click="selectCustomReminder(reminder)">
-              <i class="fas fa-clock reminder-option-icon"></i>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
+                  fill="currentColor" />
+              </svg>
               <span>{{ reminder.label }}</span>
             </button>
           </div>
-
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</button>
-          <button class="btn btn-primary" @click="saveTaskReminder">{{ $t('floatView.save') }}</button>
+          <button class="modal-btn secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</button>
+          <button class="modal-btn primary" @click="saveTaskReminder">{{ $t('floatView.save') }}</button>
         </div>
       </div>
     </div>
 
     <!-- 面板底部 -->
     <div class="task-panel-footer">
-      <div class="task-panel-footer-stats" @click="openTaskManager" title="点击打开任务管理">{{ footerStats }}</div>
+      <span class="footer-stats" @click="openTaskManager">{{ footerStats }}</span>
+      <span class="footer-link" @click="openTaskManager">→</span>
     </div>
 
     <!-- 右键菜单 -->
     <div v-if="showContextMenu" class="task-context-menu" :style="contextMenuStyle" @click.stop>
       <div class="context-menu-item" @click="createFloatingTask">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
             fill="currentColor" />
         </svg>
@@ -215,7 +226,7 @@
       </div>
     </div>
 
-    <!-- 遮罩层，用于关闭右键菜单 -->
+    <!-- 遮罩层 -->
     <div v-if="showContextMenu" class="context-menu-overlay" @click="hideContextMenu"></div>
   </div>
 </template>
@@ -324,7 +335,7 @@ const loadTasks = async () => {
 
     // 使用选中的分类过滤任务
     const currentListId = taskStore.currentListId
-    
+
     // 对于 completed 分类，显示已完成任务；其他分类不显示已完成任务
     const includeCompleted = selectedCategory.value === 'completed'
 
