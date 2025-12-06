@@ -4,7 +4,8 @@
       'flat-task-item-completed': task.status === 'done',
       'flat-task-item-editing': isEditing,
       'flat-task-item-hovered': isHovered,
-      'flat-task-item-dragging': isDragging
+      'flat-task-item-dragging': isDragging,
+      'flat-task-item-selected': isSelected
     }" 
     @click="handleTaskClick" 
     @mouseenter="$emit('mouseenter')" 
@@ -25,8 +26,18 @@
 
       <!-- 任务左侧部分（包含勾选框和文本） -->
       <div class="flat-task-left">
-        <!-- 圆形勾选框 -->
-        <div class="flat-task-checkbox">
+        <!-- 多选模式下显示选择复选框 -->
+        <div v-if="isMultiSelectMode" class="flat-task-select-checkbox" @click.stop>
+          <input 
+            type="checkbox" 
+            :id="`select-task-${task.id}`" 
+            :checked="isSelected"
+            @change="$emit('select-change')"
+          />
+          <label :for="`select-task-${task.id}`" class="flat-select-checkbox-label"></label>
+        </div>
+        <!-- 圆形勾选框 - 多选模式下隐藏 -->
+        <div v-else class="flat-task-checkbox">
           <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
             @change="handleToggleComplete" @click.stop />
           <label :for="`flat-task-${task.id}`" class="flat-checkbox-label" @click.stop></label>
@@ -131,12 +142,21 @@ const props = defineProps({
   isHovered: {
     type: Boolean,
     default: false
+  },
+  isMultiSelectMode: {
+    type: Boolean,
+    default: false
+  },
+  isSelected: {
+    type: Boolean,
+    default: false
   }
 })
 
 // 定义事件
 const emit = defineEmits([
   'task-click',
+  'select-change',
   'mouseenter',
   'mouseleave',
   'drag-start',

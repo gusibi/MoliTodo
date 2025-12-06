@@ -42,15 +42,46 @@
 
       <!-- 扁平化任务列表 -->
       <div v-else class="flat-task-list-items">
+        <!-- 多选操作栏 - 仅在已完成分类且有选中任务时显示 -->
+        <div v-if="isMultiSelectMode && selectedTaskIds.size > 0" class="flat-task-multiselect-bar">
+          <div class="flat-task-multiselect-info">
+            <span class="flat-task-multiselect-count">已选中 {{ selectedTaskIds.size }} 项</span>
+            <button class="flat-task-multiselect-clear" @click="clearSelection">
+              取消选择
+            </button>
+          </div>
+          <div class="flat-task-multiselect-actions">
+            <button class="flat-task-multiselect-delete" @click="deleteSelectedTasks">
+              <i class="fas fa-trash"></i>
+              <span>删除选中</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 按清单分组展示 -->
         <div v-for="group in groupedTasks" :key="group.id" class="flat-task-group">
           <!-- 清单标题 - 只在非清单视图中显示 -->
           <div v-if="!isInListView" class="flat-task-group-header" @click.stop="toggleGroupCollapse(group.id)">
             <div class="flat-task-group-title">
+              <!-- 多选模式下显示全选复选框 -->
+              <div v-if="isMultiSelectMode" class="flat-task-group-select" @click.stop>
+                <input 
+                  type="checkbox" 
+                  :id="`group-select-${group.id}`"
+                  :checked="isGroupAllSelected(group)"
+                  :indeterminate="getGroupSelectedCount(group) > 0 && !isGroupAllSelected(group)"
+                  @change="toggleSelectAll(group)"
+                  class="flat-task-group-checkbox"
+                />
+                <label :for="`group-select-${group.id}`" class="flat-task-group-checkbox-label">全选</label>
+              </div>
               <div class="flat-task-group-info">
                 <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
                 <span :style="{ color: group.color }">{{ group.name }}</span>
                 <span class="flat-task-group-count">({{ group.tasks.length }})</span>
+                <span v-if="isMultiSelectMode && getGroupSelectedCount(group) > 0" class="flat-task-group-selected-count">
+                  - 已选 {{ getGroupSelectedCount(group) }}
+                </span>
               </div>
               <i class="flat-task-group-collapse-icon"
                 :class="collapsedGroups.has(group.id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'"
@@ -61,10 +92,25 @@
           <!-- 清单标题 - 在清单视图中显示（不可折叠），只在有多个分组时显示 -->
           <div v-else-if="isInListView && groupedTasks.length > 1" class="flat-task-group-header-static">
             <div class="flat-task-group-title">
+              <!-- 多选模式下显示全选复选框 -->
+              <div v-if="isMultiSelectMode" class="flat-task-group-select" @click.stop>
+                <input 
+                  type="checkbox" 
+                  :id="`group-select-list-${group.id}`"
+                  :checked="isGroupAllSelected(group)"
+                  :indeterminate="getGroupSelectedCount(group) > 0 && !isGroupAllSelected(group)"
+                  @change="toggleSelectAll(group)"
+                  class="flat-task-group-checkbox"
+                />
+                <label :for="`group-select-list-${group.id}`" class="flat-task-group-checkbox-label">全选</label>
+              </div>
               <div class="flat-task-group-info">
                 <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
                 <span>{{ group.name }}</span>
                 <span class="flat-task-group-count">({{ group.tasks.length }})</span>
+                <span v-if="isMultiSelectMode && getGroupSelectedCount(group) > 0" class="flat-task-group-selected-count">
+                  - 已选 {{ getGroupSelectedCount(group) }}
+                </span>
               </div>
             </div>
           </div>
@@ -79,7 +125,10 @@
                 :time-update-trigger="timeUpdateTrigger"
                 :is-editing="editingTaskId === task.id"
                 :is-hovered="hoveredTaskId === task.id"
+                :is-multi-select-mode="isMultiSelectMode"
+                :is-selected="selectedTaskIds.has(task.id)"
                 @task-click="handleTaskClick"
+                @select-change="toggleTaskSelection(task.id)"
                 @mouseenter="hoveredTaskId = task.id"
                 @mouseleave="hoveredTaskId = null"
               />
@@ -277,6 +326,9 @@ const emit = defineEmits([
 
 const hoveredTaskId = ref(null)
 
+// 多选状态管理
+const selectedTaskIds = ref(new Set())
+
 // 快速添加相关
 const newTaskContent = ref('')
 const shouldSplitTask = ref(false)
@@ -342,6 +394,9 @@ const taskStore = useTaskStore()
 
 // 获取当前分类
 const currentCategory = computed(() => taskStore.currentCategory)
+
+// 计算属性：是否处于多选模式（仅在已完成分类中启用）
+const isMultiSelectMode = computed(() => currentCategory.value === 'completed')
 
 // 计算属性：是否应该显示时间过滤器
 const shouldShowTimeFilter = computed(() => {
@@ -790,6 +845,83 @@ const collapseAllGroups = () => {
   collapsedGroups.value = new Set(allGroupIds)
   saveCollapsedState()
 }
+
+// ===== 多选操作方法 =====
+
+// 切换单个任务的选中状态
+const toggleTaskSelection = (taskId) => {
+  const newSet = new Set(selectedTaskIds.value)
+  if (newSet.has(taskId)) {
+    newSet.delete(taskId)
+  } else {
+    newSet.add(taskId)
+  }
+  selectedTaskIds.value = newSet
+}
+
+// 检查某个分组是否全选
+const isGroupAllSelected = (group) => {
+  if (!group.tasks || group.tasks.length === 0) return false
+  return group.tasks.every(task => selectedTaskIds.value.has(task.id))
+}
+
+// 获取分组中已选中的任务数量
+const getGroupSelectedCount = (group) => {
+  if (!group.tasks) return 0
+  return group.tasks.filter(task => selectedTaskIds.value.has(task.id)).length
+}
+
+// 切换某个分组的全选状态
+const toggleSelectAll = (group) => {
+  const newSet = new Set(selectedTaskIds.value)
+  const allSelected = isGroupAllSelected(group)
+  
+  group.tasks.forEach(task => {
+    if (allSelected) {
+      newSet.delete(task.id)
+    } else {
+      newSet.add(task.id)
+    }
+  })
+  
+  selectedTaskIds.value = newSet
+}
+
+// 批量删除选中的任务
+const deleteSelectedTasks = async () => {
+  const count = selectedTaskIds.value.size
+  if (count === 0) return
+  
+  if (!confirm(`确定要删除选中的 ${count} 个任务吗？此操作不可撤销。`)) {
+    return
+  }
+  
+  try {
+    const taskIdsToDelete = Array.from(selectedTaskIds.value)
+    
+    // 逐个删除任务
+    for (const taskId of taskIdsToDelete) {
+      await taskStore.deleteTask(taskId)
+    }
+    
+    // 清空选中状态
+    selectedTaskIds.value = new Set()
+    
+    console.log(`成功删除 ${count} 个任务`)
+  } catch (error) {
+    console.error('批量删除任务失败:', error)
+  }
+}
+
+// 清除所有选中
+const clearSelection = () => {
+  selectedTaskIds.value = new Set()
+}
+
+// 监听分类变化，切换分类时清除选中状态
+watch(() => currentCategory.value, () => {
+  clearSelection()
+})
 
 // 启动时间更新定时器
 const startTimeUpdateTimer = () => {

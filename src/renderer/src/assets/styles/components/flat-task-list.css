@@ -553,3 +553,80 @@
   scrollbar-color: hsl(var(--primary) / 0.3) transparent;
 }
 
+/* ===== Multi-select Styles ===== */
+
+/* Multi-select action bar */
+.flat-task-multiselect-bar {
+  @apply flex items-center justify-between px-4 py-2 mb-2 bg-primary/10 border border-primary/20 rounded-lg mx-2;
+}
+
+.flat-task-multiselect-info {
+  @apply flex items-center gap-3;
+}
+
+.flat-task-multiselect-count {
+  @apply text-sm font-medium text-primary;
+}
+
+.flat-task-multiselect-clear {
+  @apply text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors duration-200;
+}
+
+.flat-task-multiselect-actions {
+  @apply flex items-center gap-2;
+}
+
+.flat-task-multiselect-delete {
+  @apply flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-destructive-foreground bg-destructive hover:bg-destructive/90 rounded-md cursor-pointer transition-all duration-200;
+}
+
+.flat-task-multiselect-delete i {
+  @apply text-xs;
+}
+
+/* Group select all checkbox */
+.flat-task-group-select {
+  @apply flex items-center gap-2 mr-3;
+}
+
+.flat-task-group-checkbox {
+  @apply w-4 h-4 rounded border-2 border-border cursor-pointer accent-primary;
+}
+
+.flat-task-group-checkbox:checked {
+  @apply bg-primary border-primary;
+}
+
+.flat-task-group-checkbox-label {
+  @apply text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors duration-200;
+}
+
+.flat-task-group-selected-count {
+  @apply text-xs text-primary font-normal ml-1;
+}
+
+/* Task item selection checkbox */
+.flat-task-select-checkbox {
+  @apply relative flex-shrink-0;
+}
+
+.flat-task-select-checkbox input[type="checkbox"] {
+  @apply w-4 h-4 rounded border-2 border-border cursor-pointer accent-primary;
+}
+
+.flat-task-select-checkbox input[type="checkbox"]:checked {
+  @apply bg-primary border-primary;
+}
+
+.flat-select-checkbox-label {
+  @apply hidden;
+}
+
+/* Selected task item styling */
+.flat-task-item-selected {
+  @apply bg-primary/10 border-l-2 border-l-primary -ml-0.5 pl-0.5;
+}
+
+.flat-task-item-selected:hover {
+  @apply bg-primary/15;
+}
