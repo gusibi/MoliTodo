@@ -22,6 +22,80 @@
   @apply text-sm text-muted-foreground font-normal ml-2;
 }
 
+/* Dropdown Title Wrapper */
+.task-panel-title-wrapper {
+  @apply flex-1;
+}
+
+/* Dropdown Styles */
+.task-panel-dropdown {
+  @apply relative;
+}
+
+.task-panel-dropdown-trigger {
+  @apply flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-lg transition-all duration-200 hover:bg-accent/50;
+}
+
+.task-panel-dropdown-trigger .category-icon {
+  @apply text-primary w-5 h-5;
+}
+
+.task-panel-dropdown-trigger .category-label {
+  @apply text-base font-semibold text-card-foreground;
+}
+
+.task-panel-dropdown-trigger .task-panel-count {
+  @apply text-sm text-muted-foreground font-normal ml-1;
+}
+
+.task-panel-dropdown-trigger .dropdown-arrow {
+  @apply text-muted-foreground transition-transform duration-200 ml-1;
+}
+
+.task-panel-dropdown-trigger .dropdown-arrow.open {
+  @apply rotate-180;
+}
+
+.task-panel-dropdown-menu {
+  @apply absolute top-full left-0 mt-1 w-48 bg-popover border border-border rounded-lg shadow-lg py-1 z-50;
+  animation: dropdown-fade-in 0.15s ease-out;
+}
+
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  @apply flex items-center gap-2 px-3 py-2 cursor-pointer transition-all duration-150 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground;
+}
+
+.dropdown-item.active {
+  @apply bg-primary/10 text-primary;
+}
+
+.dropdown-item-icon {
+  @apply w-4 h-4 text-muted-foreground;
+}
+
+.dropdown-item.active .dropdown-item-icon {
+  @apply text-primary;
+}
+
+.dropdown-item-count {
+  @apply ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full;
+}
+
+.dropdown-item.active .dropdown-item-count {
+  @apply bg-primary/20 text-primary;
+}
+
 /* Pin Button */
 .task-panel-pin-btn {
   @apply w-7 h-7 ml-auto border-0 rounded-lg bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground;

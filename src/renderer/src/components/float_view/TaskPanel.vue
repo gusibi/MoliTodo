@@ -2,13 +2,31 @@
   <div class="task-panel" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
     <!-- 面板头部 - 固定时可拖动 -->
     <div class="task-panel-header" :class="{ 'draggable': isPinned }" @mousedown="handleHeaderMouseDown">
-      <h2 class="task-panel-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
-        </svg>
-        {{ $t('floatView.todayTasks') }}
-        <span class="task-panel-count">{{ taskCount }} {{ $t('floatView.tasksCount') }}</span>
-      </h2>
+      <div class="task-panel-title-wrapper">
+        <div class="task-panel-dropdown" @click="toggleDropdown" ref="dropdownRef">
+          <div class="task-panel-dropdown-trigger">
+            <component :is="getCategoryIcon(selectedCategory)" class="category-icon" />
+            <span class="category-label">{{ getCategoryLabel(selectedCategory) }}</span>
+            <span class="task-panel-count">{{ taskCount }} {{ $t('floatView.tasksCount') }}</span>
+            <svg class="dropdown-arrow" :class="{ 'open': showDropdown }" width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div v-if="showDropdown" class="task-panel-dropdown-menu">
+            <div 
+              v-for="category in categoryOptions" 
+              :key="category.value"
+              class="dropdown-item"
+              :class="{ 'active': selectedCategory === category.value }"
+              @click.stop="selectCategory(category.value)"
+            >
+              <component :is="category.icon" class="dropdown-item-icon" />
+              <span>{{ category.label }}</span>
+              <span class="dropdown-item-count">{{ getCategoryCount(category.value) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- 固定按钮 -->
       <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
         :title="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
@@ -212,10 +230,55 @@ const isPinned = ref(false)
 const isDragging = ref(false)
 const dragStartPos = ref({ x: 0, y: 0 })
 
+// 下拉选择器相关
+const showDropdown = ref(false)
+const selectedCategory = ref('today')
+const dropdownRef = ref(null)
+
 // 右键菜单相关
 const showContextMenu = ref(false)
 const contextMenuStyle = ref({})
 const selectedTask = ref(null)
+
+// 分类选项配置
+const categoryOptions = computed(() => [
+  { value: 'today', label: $t('categories.today'), icon: CalendarDayIcon },
+  { value: 'planned', label: $t('categories.planned'), icon: CalendarWeekIcon },
+  { value: 'doing', label: $t('categories.doing'), icon: PlayCircleIcon },
+  { value: 'paused', label: $t('categories.paused'), icon: PauseCircleIcon },
+  { value: 'all', label: $t('categories.all'), icon: ListIcon },
+  { value: 'inbox', label: $t('categories.inbox'), icon: InboxIcon },
+  { value: 'completed', label: $t('categories.completed'), icon: CheckCircleIcon }
+])
+
+// 图标组件
+const CalendarDayIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z', fill: 'currentColor' })
+])
+
+const CalendarWeekIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7v-5z', fill: 'currentColor' })
+])
+
+const PlayCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z', fill: 'currentColor' })
+])
+
+const PauseCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z', fill: 'currentColor' })
+])
+
+const ListIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z', fill: 'currentColor' })
+])
+
+const InboxIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5v-3h3.56c.69 1.19 1.97 2 3.45 2s2.75-.81 3.45-2H19v3zm0-5h-4.99c0 1.1-.9 2-2 2s-2-.9-2-2H5V5h14v9z', fill: 'currentColor' })
+])
+
+const CheckCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z', fill: 'currentColor' })
+])
 
 // 引用
 const quickAddInput = ref(null)
@@ -243,15 +306,17 @@ const loadTasks = async () => {
     // 确保任务数据已加载
     await taskStore.getAllTasks()
 
-    // 使用 taskStore 的统一过滤方法
-    const currentCategory = taskStore.currentCategory
+    // 使用选中的分类过滤任务
     const currentListId = taskStore.currentListId
+    
+    // 对于 completed 分类，显示已完成任务；其他分类不显示已完成任务
+    const includeCompleted = selectedCategory.value === 'completed'
 
-    // 获取过滤后的任务（不包含已完成任务）
-    tasks.value = taskStore.getSortedTasks(currentCategory, currentListId, false)
+    // 获取过滤后的任务
+    tasks.value = taskStore.getSortedTasks(selectedCategory.value, currentListId, includeCompleted)
 
     // 获取已完成任务的计数
-    const stats = taskStore.getCategoryStats(currentCategory, currentListId)
+    const stats = taskStore.getCategoryStats(selectedCategory.value, currentListId)
     completedTasksCount.value = stats.completed
   } catch (error) {
     console.error('加载任务失败:', error)
@@ -583,6 +648,42 @@ const shouldUseCompactMode = (task) => {
   return itemCount >= 3 || (task.content && task.content.length > 30)
 }
 
+// 下拉选择器方法
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+const selectCategory = (category) => {
+  selectedCategory.value = category
+  showDropdown.value = false
+  loadTasks()
+}
+
+const getCategoryLabel = (category) => {
+  const option = categoryOptions.value.find(opt => opt.value === category)
+  return option ? option.label : $t('categories.unknown')
+}
+
+const getCategoryIcon = (category) => {
+  const option = categoryOptions.value.find(opt => opt.value === category)
+  return option ? option.icon : CalendarDayIcon
+}
+
+const getCategoryCount = (category) => {
+  const stats = taskStore.getCategoryStats(category, null)
+  if (category === 'completed') {
+    return stats.completed
+  }
+  return stats.total - stats.completed
+}
+
+// 点击外部关闭下拉菜单
+const handleClickOutside = (event) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+    showDropdown.value = false
+  }
+}
+
 // 打开任务管理页面
 const openTaskManager = async () => {
   try {
@@ -828,17 +929,21 @@ onMounted(async () => {
   // 监听任务更新事件
   window.electronAPI.events.on('tasks-updated', handleTasksUpdated)
 
+  // 监听点击外部关闭下拉菜单
+  document.addEventListener('click', handleClickOutside)
+
   // 启动定时器
   startUpdateTimer()
 
   onUnmounted(() => {
     stopUpdateTimer()
+    document.removeEventListener('click', handleClickOutside)
     window.electronAPI.events.removeAllListeners('tasks-updated')
   })
 })
 
-// 监听分类和清单变化，重新加载任务
-watch(() => [taskStore.currentCategory, taskStore.currentListId], () => {
+// 监听清单变化，重新加载任务
+watch(() => taskStore.currentListId, () => {
   loadTasks()
 }, { immediate: false })
 </script>

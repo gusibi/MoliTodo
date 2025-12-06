@@ -401,6 +401,7 @@
     "defaultTaskName": "Task",
     "timeSpent": "Time spent",
     "todayTasks": "Today's Tasks",
+    "selectCategory": "Select Category",
     "tasksCount": "tasks",
     "addNewTask": "Add new task...",
     "excellent": "Excellent!",

@@ -401,6 +401,7 @@
     "defaultTaskName": "任务",
     "timeSpent": "用时",
     "todayTasks": "今日任务",
+    "selectCategory": "选择分类",
     "tasksCount": "个任务",
     "addNewTask": "添加新任务...",
     "excellent": "太棒了！",
