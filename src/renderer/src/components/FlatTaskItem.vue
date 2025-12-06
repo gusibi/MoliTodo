@@ -26,8 +26,8 @@
 
       <!-- 任务左侧部分（包含勾选框和文本） -->
       <div class="flat-task-left">
-        <!-- 多选模式下显示选择复选框 -->
-        <div v-if="isMultiSelectMode" class="flat-task-select-checkbox" @click.stop>
+        <!-- 多选模式下且显示选择复选框时 -->
+        <div v-if="showSelectCheckbox" class="flat-task-select-checkbox" @click.stop>
           <input 
             type="checkbox" 
             :id="`select-task-${task.id}`" 
@@ -36,7 +36,7 @@
           />
           <label :for="`select-task-${task.id}`" class="flat-select-checkbox-label"></label>
         </div>
-        <!-- 圆形勾选框 - 多选模式下隐藏 -->
+        <!-- 圆形勾选框 - 默认显示完成状态 -->
         <div v-else class="flat-task-checkbox">
           <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
             @change="handleToggleComplete" @click.stop />
@@ -144,6 +144,10 @@ const props = defineProps({
     default: false
   },
   isMultiSelectMode: {
+    type: Boolean,
+    default: false
+  },
+  showSelectCheckbox: {
     type: Boolean,
     default: false
   },

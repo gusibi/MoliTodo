@@ -830,6 +830,20 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 批量删除任务
+  const deleteTasksBatch = async (taskIds) => {
+    try {
+      const result = await window.electronAPI.tasks.deleteBatch(taskIds)
+      if (result.success) {
+        await getAllTasks() // 重新获取任务列表
+      }
+      return result
+    } catch (error) {
+      console.error('批量删除任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // 开始任务
   const startTask = async (taskId) => {
     try {
@@ -2158,6 +2172,7 @@ export const useTaskStore = defineStore('task', () => {
     updateTaskReminder,
     completeTask,
     deleteTask,
+    deleteTasksBatch,
     startTask,
     pauseTask,
     moveTaskToList,

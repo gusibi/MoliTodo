@@ -228,6 +228,23 @@ class IpcHandlers {
       return { success };
     });
 
+    // 批量删除任务
+    ipcMain.handle('delete-tasks-batch', async (event, taskIds) => {
+      try {
+        const results = [];
+        for (const taskId of taskIds) {
+          const success = await this.taskService.deleteTask(taskId);
+          this.notificationService.cancelTaskReminder(taskId);
+          results.push({ taskId, success });
+        }
+        this.broadcastTaskUpdates();
+        return { success: true, results, deletedCount: results.filter(r => r.success).length };
+      } catch (error) {
+        console.error('批量删除任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // 时间追踪相关
     ipcMain.handle('start-task', async (event, taskId) => {
       try {

@@ -253,8 +253,16 @@
   @apply py-2 mb-2 border-b border-border;
 }
 
+.flat-task-group-header-compact {
+  @apply px-6 py-2 mb-2 flex justify-end;
+}
+
 .flat-task-group-title {
-  @apply flex items-center w-full text-base;
+  @apply flex items-center justify-between w-full text-base;
+}
+
+.flat-task-group-left {
+  @apply flex items-center gap-2;
 }
 
 .flat-task-group-info {
@@ -266,7 +274,7 @@
 }
 
 .flat-task-group-collapse-icon {
-  @apply text-xs transition-transform duration-200 text-muted-foreground pl-2;
+  @apply text-xs transition-transform duration-200 text-muted-foreground;
 }
 
 /* Task List */
@@ -584,25 +592,44 @@
   @apply text-xs;
 }
 
-/* Group select all checkbox */
-.flat-task-group-select {
-  @apply flex items-center gap-2 mr-3;
+/* Group select actions container */
+.flat-task-group-select-actions {
+  @apply flex items-center gap-2 ml-auto;
 }
 
-.flat-task-group-checkbox {
-  @apply w-4 h-4 rounded border-2 border-border cursor-pointer accent-primary;
+/* Group select button - three states */
+.flat-task-group-select-btn {
+  @apply flex items-center gap-1.5 px-2 py-1 text-xs rounded-md cursor-pointer transition-all duration-200 border;
 }
 
-.flat-task-group-checkbox:checked {
-  @apply bg-primary border-primary;
+.flat-task-group-select-btn.state-none {
+  @apply bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted hover:border-border;
 }
 
-.flat-task-group-checkbox-label {
-  @apply text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors duration-200;
+.flat-task-group-select-btn.state-select {
+  @apply bg-primary/10 border-primary/30 text-primary hover:bg-primary/20;
 }
 
-.flat-task-group-selected-count {
-  @apply text-xs text-primary font-normal ml-1;
+.flat-task-group-select-btn.state-all {
+  @apply bg-primary border-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.flat-task-group-select-btn i {
+  @apply text-xs;
+}
+
+/* Selected info text */
+.flat-task-group-selected-info {
+  @apply text-xs text-primary font-medium;
+}
+
+/* Delete button in group header */
+.flat-task-group-delete-btn {
+  @apply flex items-center justify-center w-6 h-6 rounded-md cursor-pointer transition-all duration-200 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground;
+}
+
+.flat-task-group-delete-btn i {
+  @apply text-xs;
 }
 
 /* Task item selection checkbox */

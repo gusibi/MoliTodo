@@ -14,6 +14,7 @@ const electronAPI = {
     update: (taskId, updates) => ipcRenderer.invoke('update-task', taskId, updates),
     complete: (taskId) => ipcRenderer.invoke('complete-task', taskId),
     delete: (taskId) => ipcRenderer.invoke('delete-task', taskId),
+    deleteBatch: (taskIds) => ipcRenderer.invoke('delete-tasks-batch', taskIds),
     start: (taskId) => ipcRenderer.invoke('start-task', taskId),
     pause: (taskId) => ipcRenderer.invoke('pause-task', taskId),
     completeWithTracking: (taskId) => ipcRenderer.invoke('complete-task-with-tracking', taskId),

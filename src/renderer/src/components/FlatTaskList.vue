@@ -5,13 +5,8 @@
 
     <!-- 时间筛选器 - 在计划中、全部任务和清单视图中显示 -->
     <div v-if="shouldShowTimeFilter" class="flat-task-list-time-filter-container">
-      <TimeFilter 
-        v-model="currentTimeFilter" 
-        :tasks="filteredTasksByTime"
-        @filter-change="handleTimeFilterChange"
-        @generate-report="handleGenerateReport"
-        ref="timeFilterRef"
-      />
+      <TimeFilter v-model="currentTimeFilter" :tasks="filteredTasksByTime" @filter-change="handleTimeFilterChange"
+        @generate-report="handleGenerateReport" ref="timeFilterRef" />
     </div>
 
     <!-- 任务列表内容区域 -->
@@ -42,76 +37,87 @@
 
       <!-- 扁平化任务列表 -->
       <div v-else class="flat-task-list-items">
-        <!-- 多选操作栏 - 仅在已完成分类且有选中任务时显示 -->
-        <div v-if="isMultiSelectMode && selectedTaskIds.size > 0" class="flat-task-multiselect-bar">
-          <div class="flat-task-multiselect-info">
-            <span class="flat-task-multiselect-count">已选中 {{ selectedTaskIds.size }} 项</span>
-            <button class="flat-task-multiselect-clear" @click="clearSelection">
-              取消选择
-            </button>
-          </div>
-          <div class="flat-task-multiselect-actions">
-            <button class="flat-task-multiselect-delete" @click="deleteSelectedTasks">
-              <i class="fas fa-trash"></i>
-              <span>删除选中</span>
-            </button>
-          </div>
-        </div>
-
         <!-- 按清单分组展示 -->
         <div v-for="group in groupedTasks" :key="group.id" class="flat-task-group">
           <!-- 清单标题 - 只在非清单视图中显示 -->
           <div v-if="!isInListView" class="flat-task-group-header" @click.stop="toggleGroupCollapse(group.id)">
             <div class="flat-task-group-title">
-              <!-- 多选模式下显示全选复选框 -->
-              <div v-if="isMultiSelectMode" class="flat-task-group-select" @click.stop>
-                <input 
-                  type="checkbox" 
-                  :id="`group-select-${group.id}`"
-                  :checked="isGroupAllSelected(group)"
-                  :indeterminate="getGroupSelectedCount(group) > 0 && !isGroupAllSelected(group)"
-                  @change="toggleSelectAll(group)"
-                  class="flat-task-group-checkbox"
-                />
-                <label :for="`group-select-${group.id}`" class="flat-task-group-checkbox-label">全选</label>
+              <div class="flat-task-group-left">
+                <i class="flat-task-group-collapse-icon"
+                  :class="collapsedGroups.has(group.id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'"
+                  :title="collapsedGroups.has(group.id) ? '展开' : '折叠'"></i>
+                <div class="flat-task-group-info">
+                  <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
+                  <span :style="{ color: group.color }">{{ group.name }}</span>
+                  <span class="flat-task-group-count">({{ group.tasks.length }})</span>
+                </div>
               </div>
-              <div class="flat-task-group-info">
-                <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
-                <span :style="{ color: group.color }">{{ group.name }}</span>
-                <span class="flat-task-group-count">({{ group.tasks.length }})</span>
-                <span v-if="isMultiSelectMode && getGroupSelectedCount(group) > 0" class="flat-task-group-selected-count">
-                  - 已选 {{ getGroupSelectedCount(group) }}
+              <!-- 多选模式下显示三态选择按钮 - 放在最右边 -->
+              <div v-if="isMultiSelectMode" class="flat-task-group-select-actions" @click.stop>
+                <!-- 删除按钮和已选数量放在左边 -->
+                <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
+                  @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
+                  <i class="fas fa-trash"></i>
+                </button>
+                <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
+                  已选 {{ getGroupSelectedCount(group) }}
                 </span>
+                <!-- 全选按钮固定在最右边 -->
+                <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
+                  @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
+                  <i :class="getGroupSelectIcon(group)"></i>
+                  <span>{{ getGroupSelectLabel(group) }}</span>
+                </button>
               </div>
-              <i class="flat-task-group-collapse-icon"
-                :class="collapsedGroups.has(group.id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'"
-                :title="collapsedGroups.has(group.id) ? '展开' : '折叠'"></i>
             </div>
           </div>
 
           <!-- 清单标题 - 在清单视图中显示（不可折叠），只在有多个分组时显示 -->
           <div v-else-if="isInListView && groupedTasks.length > 1" class="flat-task-group-header-static">
             <div class="flat-task-group-title">
-              <!-- 多选模式下显示全选复选框 -->
-              <div v-if="isMultiSelectMode" class="flat-task-group-select" @click.stop>
-                <input 
-                  type="checkbox" 
-                  :id="`group-select-list-${group.id}`"
-                  :checked="isGroupAllSelected(group)"
-                  :indeterminate="getGroupSelectedCount(group) > 0 && !isGroupAllSelected(group)"
-                  @change="toggleSelectAll(group)"
-                  class="flat-task-group-checkbox"
-                />
-                <label :for="`group-select-list-${group.id}`" class="flat-task-group-checkbox-label">全选</label>
-              </div>
               <div class="flat-task-group-info">
                 <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
                 <span>{{ group.name }}</span>
                 <span class="flat-task-group-count">({{ group.tasks.length }})</span>
-                <span v-if="isMultiSelectMode && getGroupSelectedCount(group) > 0" class="flat-task-group-selected-count">
-                  - 已选 {{ getGroupSelectedCount(group) }}
-                </span>
               </div>
+              <!-- 多选模式下显示三态选择按钮 - 放在最右边 -->
+              <div v-if="isMultiSelectMode" class="flat-task-group-select-actions" @click.stop>
+                <!-- 删除按钮和已选数量放在左边 -->
+                <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
+                  @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
+                  <i class="fas fa-trash"></i>
+                </button>
+                <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
+                  已选 {{ getGroupSelectedCount(group) }}
+                </span>
+                <!-- 全选按钮固定在最右边 -->
+                <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
+                  @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
+                  <i :class="getGroupSelectIcon(group)"></i>
+                  <span>{{ getGroupSelectLabel(group) }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 清单视图中只有一个分组时，仅显示多选控制（已完成分类） -->
+          <div v-else-if="isInListView && groupedTasks.length === 1 && isMultiSelectMode"
+            class="flat-task-group-header-compact">
+            <div class="flat-task-group-select-actions" @click.stop>
+              <!-- 删除按钮和已选数量放在左边 -->
+              <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
+                @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
+                <i class="fas fa-trash"></i>
+              </button>
+              <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
+                已选 {{ getGroupSelectedCount(group) }}
+              </span>
+              <!-- 全选按钮固定在最右边 -->
+              <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
+                @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
+                <i :class="getGroupSelectIcon(group)"></i>
+                <span>{{ getGroupSelectLabel(group) }}</span>
+              </button>
             </div>
           </div>
 
@@ -119,19 +125,12 @@
           <ul class="flat-task-group-items"
             :class="{ 'flat-task-group-collapsed': !isInListView && collapsedGroups.has(group.id) }">
             <div v-for="task in group.tasks" :key="task.id" class="flat-task-item-wrapper">
-              <FlatTaskItem
-                :task="task"
-                :search-query="searchQuery"
-                :time-update-trigger="timeUpdateTrigger"
-                :is-editing="editingTaskId === task.id"
-                :is-hovered="hoveredTaskId === task.id"
-                :is-multi-select-mode="isMultiSelectMode"
-                :is-selected="selectedTaskIds.has(task.id)"
-                @task-click="handleTaskClick"
-                @select-change="toggleTaskSelection(task.id)"
-                @mouseenter="hoveredTaskId = task.id"
-                @mouseleave="hoveredTaskId = null"
-              />
+              <FlatTaskItem :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :is-editing="editingTaskId === task.id" :is-hovered="hoveredTaskId === task.id"
+                :is-multi-select-mode="isMultiSelectMode" :show-select-checkbox="isGroupInSelectMode(group.id)"
+                :is-selected="selectedTaskIds.has(task.id)" @task-click="handleTaskClick"
+                @select-change="toggleTaskSelection(task.id)" @mouseenter="hoveredTaskId = task.id"
+                @mouseleave="hoveredTaskId = null" />
             </div>
           </ul>
         </div>
@@ -142,100 +141,87 @@
         <!-- 主输入区域 -->
         <div class="flat-task-list-main-input">
           <div class="flat-task-list-input-wrapper">
-            <textarea 
-              v-model="newTaskContent" 
-              class="flat-task-list-textarea" 
-              placeholder="添加新任务..." 
-              rows="1"
-              maxlength="200"
-              @keypress.enter.prevent="addTask"
-              ref="quickAddInput"
-            ></textarea>
-            
+            <textarea v-model="newTaskContent" class="flat-task-list-textarea" placeholder="添加新任务..." rows="1"
+              maxlength="200" @keypress.enter.prevent="addTask" ref="quickAddInput"></textarea>
+
             <!-- 输入框内部控制区域 -->
             <div class="flat-task-list-inline-controls">
               <!-- 左侧选项 -->
               <div class="flat-task-list-inline-options">
                 <!-- AI模型选择 -->
-                 <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
-                   <button 
-                     class="flat-task-list-ai-toggle"
-                     :class="{ 'active': taskStore.isAIEnabled }"
-                     @click="toggleAI"
-                     ref="aiButton"
-                   >
-                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                       <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" 
-                             :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'" 
-                             :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" 
-                             stroke-width="2"/>
-                     </svg>
-                     <span class="flat-task-list-ai-label">
-                       {{ taskStore.selectedAIModel ? taskStore.selectedAIModel.name : 'AI' }}
-                     </span>
-                   </button>
-                   
-                   <!-- AI 模型下拉列表 -->
-                   <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
-                     <div class="flat-task-list-ai-dropdown-list">
-                       <!-- 不使用 AI 选项 -->
-                       <div class="flat-task-list-ai-dropdown-item no-ai"
-                            :class="{ 'selected': !taskStore.selectedAIModel }"
-                            @click="selectAIModel(null)">
-                         <div class="flat-task-list-ai-model-info">
-                           <div class="flat-task-list-ai-model-name">不使用 AI</div>
-                           <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
-                         </div>
-                         <div class="flat-task-list-ai-model-check">
-                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                           </svg>
-                         </div>
-                       </div>
-                       
-                       <!-- AI 模型选项 -->
-                       <div v-for="model in taskStore.availableAIModels" 
-                            :key="model.id"
-                            class="flat-task-list-ai-dropdown-item"
-                            :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
-                            @click="selectAIModel(model)">
-                         <div class="flat-task-list-ai-model-info">
-                           <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
-                           <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
-                         </div>
-                         <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
-                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                             <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                           </svg>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
+                <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
+                  <button class="flat-task-list-ai-toggle" :class="{ 'active': taskStore.isAIEnabled }"
+                    @click="toggleAI" ref="aiButton">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                        :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'"
+                        :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" stroke-width="2" />
+                    </svg>
+                    <span class="flat-task-list-ai-label">
+                      {{ taskStore.selectedAIModel ? taskStore.selectedAIModel.name : 'AI' }}
+                    </span>
+                  </button>
 
-                   <!-- 任务拆分选项 -->
-                <button 
-                  @click="shouldSplitTask = !shouldSplitTask"
+                  <!-- AI 模型下拉列表 -->
+                  <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
+                    <div class="flat-task-list-ai-dropdown-list">
+                      <!-- 不使用 AI 选项 -->
+                      <div class="flat-task-list-ai-dropdown-item no-ai"
+                        :class="{ 'selected': !taskStore.selectedAIModel }" @click="selectAIModel(null)">
+                        <div class="flat-task-list-ai-model-info">
+                          <div class="flat-task-list-ai-model-name">不使用 AI</div>
+                          <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
+                        </div>
+                        <div class="flat-task-list-ai-model-check">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <!-- AI 模型选项 -->
+                      <div v-for="model in taskStore.availableAIModels" :key="model.id"
+                        class="flat-task-list-ai-dropdown-item"
+                        :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
+                        @click="selectAIModel(model)">
+                        <div class="flat-task-list-ai-model-info">
+                          <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
+                          <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
+                        </div>
+                        <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 任务拆分选项 -->
+                <button @click="shouldSplitTask = !shouldSplitTask"
                   :class="['flat-task-list-split-btn', { 'active': shouldSplitTask }]"
-                  :title="shouldSplitTask ? '关闭拆分任务：AI 生成的详细步骤会放在步骤中' : '打开拆分任务：AI 会将任务拆分生成多个任务'"
-                >
+                  :title="shouldSplitTask ? '关闭拆分任务：AI 生成的详细步骤会放在步骤中' : '打开拆分任务：AI 会将任务拆分生成多个任务'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                   <span class="flat-task-list-split-text">拆分</span>
                 </button>
               </div>
-              
+
               <!-- 右侧发送按钮 -->
               <div class="flat-task-list-input-actions">
-                <button 
-                  class="flat-task-list-send-btn"
-                  :disabled="!newTaskContent.trim()"
-                  @click="addTask"
-                >
+                <button class="flat-task-list-send-btn" :disabled="!newTaskContent.trim()" @click="addTask">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
                   </svg>
                 </button>
               </div>
@@ -244,40 +230,21 @@
         </div>
       </div>
     </div>
-    
+
     <!-- AI 任务预览弹窗 -->
-    <TaskPreviewModal 
-      :visible="showTaskPreview"
-      :tasks="previewTasks"
-      :original-input="originalTaskInput"
-      :stream-content="streamContent"
-      @close="closeTaskPreview"
-      @created="handleTasksCreated"
-    />
+    <TaskPreviewModal :visible="showTaskPreview" :tasks="previewTasks" :original-input="originalTaskInput"
+      :stream-content="streamContent" @close="closeTaskPreview" @created="handleTasksCreated" />
 
     <!-- 任务选择模态框 -->
-    <TaskSelectionModal
-      :visible="showTaskSelectionModal"
-      :tasks="pendingReportData?.tasks || []"
-      :filter-type="pendingReportData?.filterType || 'all'"
-      @close="closeTaskSelectionModal"
-      @confirm="handleTaskSelectionConfirm"
-    />
+    <TaskSelectionModal :visible="showTaskSelectionModal" :tasks="pendingReportData?.tasks || []"
+      :filter-type="pendingReportData?.filterType || 'all'" @close="closeTaskSelectionModal"
+      @confirm="handleTaskSelectionConfirm" />
 
     <!-- 报告模态框 -->
-    <ReportModal
-      :visible="showReportModal"
-      :report-content="reportContent"
-      :report-type="reportType"
-      :report-period="reportPeriod"
-      :task-count="reportTaskCount"
-      :is-generating="isGeneratingReport"
-      :is-streaming="isStreamingReport"
-      :stream-content="reportStreamContent"
-      :error="reportError"
-      @close="closeReportModal"
-      @retry="retryReportGeneration"
-    />
+    <ReportModal :visible="showReportModal" :report-content="reportContent" :report-type="reportType"
+      :report-period="reportPeriod" :task-count="reportTaskCount" :is-generating="isGeneratingReport"
+      :is-streaming="isStreamingReport" :stream-content="reportStreamContent" :error="reportError"
+      @close="closeReportModal" @retry="retryReportGeneration" />
   </div>
 </template>
 
@@ -402,7 +369,7 @@ const isMultiSelectMode = computed(() => currentCategory.value === 'completed')
 const shouldShowTimeFilter = computed(() => {
   const category = currentCategory.value
   const isInList = taskStore.currentListId !== null
-  
+
   // 在以下情况显示时间过滤器：
   // 1. 计划中分类
   // 2. 全部任务分类
@@ -424,13 +391,13 @@ const handleGenerateReport = (data) => {
   // console.log('🚀 [FlatTaskList] 收到生成报告请求:', data)
   // console.log('[FlatTaskList] 任务数量:', data.tasks.length)
   // console.log('[FlatTaskList] 筛选类型:', data.filterType)
-  
+
   // 保存待处理的报告数据
   pendingReportData.value = data
-  
+
   // 显示任务选择模态框
   showTaskSelectionModal.value = true
-  
+
   console.log('[FlatTaskList] 任务选择模态框已显示')
 }
 
@@ -444,10 +411,10 @@ const handleTaskSelectionConfirm = async (selectionData) => {
   // console.log('[FlatTaskList] 用户确认任务选择:', selectionData)
   // console.log('[FlatTaskList] 选中任务数量:', selectionData.tasks.length)
   // console.log('[FlatTaskList] 报告类型:', selectionData.reportType)
-  
+
   // 关闭任务选择模态框
   showTaskSelectionModal.value = false
-  
+
   try {
     // 设置加载状态
     isGeneratingReport.value = true
@@ -456,9 +423,9 @@ const handleTaskSelectionConfirm = async (selectionData) => {
     reportStreamContent.value = ''
     reportContent.value = ''
     showReportModal.value = true
-    
+
     console.log('[FlatTaskList] 开始生成报告流程...')
-    
+
     // 通知 TimeFilter 组件进入生成状态
     if (timeFilterRef.value) {
       timeFilterRef.value.setGeneratingState(true)
@@ -476,23 +443,23 @@ const handleTaskSelectionConfirm = async (selectionData) => {
       selectionData.filterType,
       aiConfig.reportTemplates || {}
     )
-    
+
     // 如果用户手动选择了报告类型，覆盖自动判断的类型
     if (selectionData.reportType) {
       reportData.reportType = selectionData.reportType
     }
-    
+
     // 添加AI模型信息
     if (selectionData.aiModel) {
       reportData.aiModel = selectionData.aiModel
     }
-    
+
     console.log('[FlatTaskList] 报告数据生成完成:', {
       reportType: reportData.reportType,
       taskCount: reportData.taskCount,
       promptLength: reportData.prompt.length
     })
-    
+
     // 设置报告信息
     reportType.value = reportData.reportType
     reportPeriod.value = reportData.reportPeriod
@@ -500,7 +467,7 @@ const handleTaskSelectionConfirm = async (selectionData) => {
 
     // 使用 taskStore 的流式生成方法
     console.log('[FlatTaskList] 开始调用 taskStore 流式生成报告...')
-    
+
     const result = await taskStore.streamGenerateReport(
       reportData,
       // onChunk 回调
@@ -528,21 +495,21 @@ const handleTaskSelectionConfirm = async (selectionData) => {
         isStreamingReport.value = false
       }
     )
-    
+
     console.log('[FlatTaskList] taskStore 调用完成，结果:', result.success)
-    
+
   } catch (error) {
     console.error('[FlatTaskList] 生成报告异常:', error)
     reportError.value = error.message || '生成报告时发生未知错误'
     isStreamingReport.value = false
   } finally {
     isGeneratingReport.value = false
-    
+
     // 通知 TimeFilter 组件退出生成状态
     if (timeFilterRef.value) {
       timeFilterRef.value.setGeneratingState(false)
     }
-    
+
     console.log('[FlatTaskList] 报告生成流程结束')
   }
 }
@@ -653,7 +620,7 @@ const addTask = async () => {
       if (quickAddInput.value) {
         quickAddInput.value.focus()
       }
-      
+
       try {
         console.log('[FlatTaskList] 调用流式生成方法')
         const result = await taskStore.streamGenerateTaskList(
@@ -714,12 +681,12 @@ const addTask = async () => {
 // 创建普通任务的辅助方法
 const createNormalTask = async (content) => {
   const taskData = { content }
-  
+
   // 如果当前在清单中，添加 listId
   if (taskStore.currentListId !== null) {
     taskData.listId = taskStore.currentListId
   }
-  
+
   await taskStore.createTask(taskData)
   newTaskContent.value = ''
 
@@ -848,6 +815,83 @@ const collapseAllGroups = () => {
 
 // ===== 多选操作方法 =====
 
+// 分组选择模式状态：'none' | 'select' | 'all'
+// none: 不显示checkbox，显示完成状态checkbox
+// select: 显示多选checkbox，可手动选择
+// all: 全选状态
+const groupSelectModes = ref(new Map())
+
+// 检查分组是否处于选择模式（显示多选checkbox）
+const isGroupInSelectMode = (groupId) => {
+  const mode = groupSelectModes.value.get(groupId)
+  return mode === 'select' || mode === 'all'
+}
+
+// 获取分组的选择状态
+const getGroupSelectState = (group) => {
+  const mode = groupSelectModes.value.get(group.id) || 'none'
+  const selectedCount = getGroupSelectedCount(group)
+  const totalCount = group.tasks?.length || 0
+
+  if (mode === 'none') return 'state-none'
+  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return 'state-all'
+  return 'state-select'
+}
+
+// 获取分组选择按钮的图标
+const getGroupSelectIcon = (group) => {
+  const mode = groupSelectModes.value.get(group.id) || 'none'
+  const selectedCount = getGroupSelectedCount(group)
+  const totalCount = group.tasks?.length || 0
+
+  if (mode === 'none') return 'fas fa-square'
+  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return 'fas fa-check-square'
+  return 'fas fa-minus-square'
+}
+
+// 获取分组选择按钮的文字
+const getGroupSelectLabel = (group) => {
+  const mode = groupSelectModes.value.get(group.id) || 'none'
+  const selectedCount = getGroupSelectedCount(group)
+  const totalCount = group.tasks?.length || 0
+
+  if (mode === 'none') return '多选'
+  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return '全选'
+  return '多选'
+}
+
+// 获取分组选择按钮的提示
+const getGroupSelectTooltip = (group) => {
+  const mode = groupSelectModes.value.get(group.id) || 'none'
+
+  if (mode === 'none') return '点击进入多选模式'
+  if (mode === 'all') return '点击取消全选'
+  return '点击全选，再点击退出多选'
+}
+
+// 循环切换分组选择状态：none -> select -> all -> none
+const cycleGroupSelectState = (group) => {
+  const currentMode = groupSelectModes.value.get(group.id) || 'none'
+  const newMap = new Map(groupSelectModes.value)
+  const newSelectedIds = new Set(selectedTaskIds.value)
+
+  if (currentMode === 'none') {
+    // none -> select: 进入多选模式，不选中任何任务
+    newMap.set(group.id, 'select')
+  } else if (currentMode === 'select') {
+    // select -> all: 全选该分组的所有任务
+    newMap.set(group.id, 'all')
+    group.tasks?.forEach(task => newSelectedIds.add(task.id))
+  } else {
+    // all -> none: 退出多选模式，取消该分组的所有选中
+    newMap.set(group.id, 'none')
+    group.tasks?.forEach(task => newSelectedIds.delete(task.id))
+  }
+
+  groupSelectModes.value = newMap
+  selectedTaskIds.value = newSelectedIds
+}
+
 // 切换单个任务的选中状态
 const toggleTaskSelection = (taskId) => {
   const newSet = new Set(selectedTaskIds.value)
@@ -871,54 +915,49 @@ const getGroupSelectedCount = (group) => {
   return group.tasks.filter(task => selectedTaskIds.value.has(task.id)).length
 }
 
-// 切换某个分组的全选状态
-const toggleSelectAll = (group) => {
-  const newSet = new Set(selectedTaskIds.value)
-  const allSelected = isGroupAllSelected(group)
-  
-  group.tasks.forEach(task => {
-    if (allSelected) {
-      newSet.delete(task.id)
-    } else {
-      newSet.add(task.id)
-    }
-  })
-  
-  selectedTaskIds.value = newSet
-}
+// 删除分组中选中的任务（使用批量删除API）
+const deleteGroupSelectedTasks = async (group) => {
+  const groupSelectedIds = group.tasks
+    ?.filter(task => selectedTaskIds.value.has(task.id))
+    .map(task => task.id) || []
 
-// 批量删除选中的任务
-const deleteSelectedTasks = async () => {
-  const count = selectedTaskIds.value.size
-  if (count === 0) return
-  
-  if (!confirm(`确定要删除选中的 ${count} 个任务吗？此操作不可撤销。`)) {
+  if (groupSelectedIds.length === 0) return
+
+  if (!confirm(`确定要删除选中的 ${groupSelectedIds.length} 个任务吗？此操作不可撤销。`)) {
     return
   }
-  
+
   try {
-    const taskIdsToDelete = Array.from(selectedTaskIds.value)
-    
-    // 逐个删除任务
-    for (const taskId of taskIdsToDelete) {
-      await taskStore.deleteTask(taskId)
+    // 使用批量删除API
+    const result = await taskStore.deleteTasksBatch(groupSelectedIds)
+
+    if (result.success) {
+      // 从选中状态中移除已删除的任务
+      const newSelectedIds = new Set(selectedTaskIds.value)
+      groupSelectedIds.forEach(id => newSelectedIds.delete(id))
+      selectedTaskIds.value = newSelectedIds
+
+      // 如果该分组没有选中任务了，退出多选模式
+      if (getGroupSelectedCount(group) === 0) {
+        const newMap = new Map(groupSelectModes.value)
+        newMap.set(group.id, 'none')
+        groupSelectModes.value = newMap
+      }
+
+      console.log(`成功删除 ${result.deletedCount} 个任务`)
     }
-    
-    // 清空选中状态
-    selectedTaskIds.value = new Set()
-    
-    console.log(`成功删除 ${count} 个任务`)
   } catch (error) {
     console.error('批量删除任务失败:', error)
   }
 }
 
-// 清除所有选中
+// 清除所有选中和分组选择模式
 const clearSelection = () => {
   selectedTaskIds.value = new Set()
+  groupSelectModes.value = new Map()
 }
 
-// 监听分类变化，切换分类时清除选中状态
+// 监听分类变化，切换分类时清除选中状态和分组选择模式
 watch(() => currentCategory.value, () => {
   clearSelection()
 })
