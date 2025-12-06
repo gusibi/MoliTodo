@@ -1,4 +1,33 @@
 /* V-Calendar 样式 - 完全使用 Tailwind CSS 语义化变量 */
+
+/* 日期选择器遮罩层容器 */
+.date-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+.date-picker-overlay > * {
+  pointer-events: auto;
+}
+
+/* 日期选择器背景蒙层 - 点击关闭 */
+.date-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: transparent;
+}
+
+/* 日期选择器固定定位弹出层 */
+.date-picker-popup-fixed {
+  @apply bg-popover border border-border rounded-xl shadow-xl p-3 text-xs overflow-visible;
+  z-index: 9999;
+  animation: slideIn 0.2s ease-out;
+}
+
+/* 保留旧的相对定位样式作为后备 */
 .task-edit-vertical .date-picker-popup {
   @apply absolute z-50 mt-2 bg-popover border border-border rounded-xl shadow-xl p-3 text-xs overflow-hidden;
   animation: slideIn 0.2s ease-out;
@@ -15,207 +44,242 @@
   }
 }
 
+/* 主容器样式 - 固定弹出层 */
+.date-picker-popup-fixed .v-calendar {
+  @apply bg-popover text-popover-foreground rounded-lg border-none shadow-none;
+}
+
 /* 主容器样式 */
 .task-edit-vertical .v-calendar {
   @apply bg-popover text-popover-foreground rounded-lg border-none shadow-none;
 }
 
 /* 头部样式 */
-.task-edit-vertical .vc-header {
+.task-edit-vertical .vc-header,
+.date-picker-popup-fixed .vc-header {
   @apply p-0 mb-3;
 }
 
-.task-edit-vertical .vc-title {
+.task-edit-vertical .vc-title,
+.date-picker-popup-fixed .vc-title {
   @apply text-foreground font-semibold text-sm;
 }
 
-.task-edit-vertical .vc-arrow {
+.task-edit-vertical .vc-arrow,
+.date-picker-popup-fixed .vc-arrow {
   @apply text-muted-foreground hover:text-foreground hover:bg-accent rounded-full p-1 transition-all duration-200;
 }
 
-.task-edit-vertical .vc-select {
+.task-edit-vertical .vc-select,
+.date-picker-popup-fixed .vc-select {
   @apply bg-muted/50 text-foreground hover:bg-muted/70 border border-border rounded-md text-xs px-2 py-1 font-medium transition-all duration-200;
 }
 
 /* 日期网格样式 */
-.task-edit-vertical .vc-weeks {
+.task-edit-vertical .vc-weeks,
+.date-picker-popup-fixed .vc-weeks {
   @apply p-0;
 }
 
-.task-edit-vertical .vc-weekdays {
+.task-edit-vertical .vc-weekdays,
+.date-picker-popup-fixed .vc-weekdays {
   @apply grid grid-cols-7 gap-1 mb-2;
 }
 
-.task-edit-vertical .vc-weekday {
+.task-edit-vertical .vc-weekday,
+.date-picker-popup-fixed .vc-weekday {
   @apply text-muted-foreground text-[10px] font-medium text-center uppercase tracking-wider;
 }
 
 /* 日期单元格样式 */
-.task-edit-vertical .vc-day {
+.task-edit-vertical .vc-day,
+.date-picker-popup-fixed .vc-day {
   @apply text-foreground hover:bg-accent hover:text-accent-foreground text-xs rounded-md transition-all duration-200 flex items-center justify-center h-8 w-8 mx-auto;
 }
 
-.task-edit-vertical .vc-day-content {
+.task-edit-vertical .vc-day-content,
+.date-picker-popup-fixed .vc-day-content {
   @apply w-full h-full flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground transition-colors;
 }
 
-.task-edit-vertical .vc-day.is-today .vc-day-content {
+.task-edit-vertical .vc-day.is-today .vc-day-content,
+.date-picker-popup-fixed .vc-day.is-today .vc-day-content {
   @apply bg-primary/10 text-primary font-bold border border-primary/20;
 }
 
-.task-edit-vertical .vc-day.is-selected .vc-day-content {
+.task-edit-vertical .vc-day.is-selected .vc-day-content,
+.date-picker-popup-fixed .vc-day.is-selected .vc-day-content {
   @apply bg-primary text-primary-foreground font-bold shadow-md;
 }
 
-.task-edit-vertical .vc-day.is-disabled {
+.task-edit-vertical .vc-day.is-disabled,
+.date-picker-popup-fixed .vc-day.is-disabled {
   @apply text-muted-foreground/30 cursor-not-allowed pointer-events-none;
 }
 
-.task-edit-vertical .vc-day.is-not-in-month {
+.task-edit-vertical .vc-day.is-not-in-month,
+.date-picker-popup-fixed .vc-day.is-not-in-month {
   @apply text-muted-foreground/30;
 }
 
 /* 时间选择器样式优化 */
-.task-edit-vertical .vc-time-picker {
+.task-edit-vertical .vc-time-picker,
+.date-picker-popup-fixed .vc-time-picker {
   @apply border-t border-border pt-3 mt-2 px-1 pb-1;
 }
 
-.task-edit-vertical .vc-time-header {
+.task-edit-vertical .vc-time-header,
+.date-picker-popup-fixed .vc-time-header {
   @apply text-xs font-medium mb-2 text-muted-foreground flex justify-between items-center leading-none;
 }
 
-.task-edit-vertical .vc-time-header > * {
+.task-edit-vertical .vc-time-header > *,
+.date-picker-popup-fixed .vc-time-header > * {
   @apply flex items-center self-center leading-none;
   vertical-align: middle;
 }
 
 /* 针对 v-calendar v3 的时间选择器列样式 */
-.task-edit-vertical .vc-time-select-group {
+.task-edit-vertical .vc-time-select-group,
+.date-picker-popup-fixed .vc-time-select-group {
   @apply flex items-center justify-center gap-1 bg-muted/30 rounded-lg p-1 border border-border;
-  align-items: center; /* 确保所有子元素垂直居中 */
-  height: auto; /* 确保容器高度自适应 */
+  align-items: center;
+  height: auto;
 }
 
-.task-edit-vertical .vc-base-select {
+.task-edit-vertical .vc-base-select,
+.date-picker-popup-fixed .vc-base-select {
   @apply flex items-center self-center;
   vertical-align: middle;
 }
 
-.task-edit-vertical .vc-time-select-group .vc-base-icon {
+.task-edit-vertical .vc-time-select-group .vc-base-icon,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-icon {
   @apply text-muted-foreground mr-1 flex items-center self-center leading-none;
   display: inline-flex;
   vertical-align: middle;
 }
 
 /* 滚动容器 */
-.task-edit-vertical .vc-base-select select {
+.task-edit-vertical .vc-base-select select,
+.date-picker-popup-fixed .vc-base-select select {
   @apply bg-transparent text-foreground text-xs p-1 border-none outline-none cursor-pointer rounded hover:bg-muted/50 transition-colors;
-  appearance: none; /* 移除默认下拉箭头 */
+  appearance: none;
   text-align: center;
-  vertical-align: middle; /* 确保垂直居中对齐 */
+  vertical-align: middle;
   align-self: center;
 }
 
 /* 分钟选择器优化 - 限制高度和选项数量 */
-.task-edit-vertical .vc-base-select-group {
+.task-edit-vertical .vc-base-select-group,
+.date-picker-popup-fixed .vc-base-select-group {
   @apply max-h-40 overflow-y-auto;
 }
 
 /* 限制分钟内选择器高度，确保只显示部分选项 */
-.task-edit-vertical .vc-time-select-group {
+.task-edit-vertical .vc-time-select-group,
+.date-picker-popup-fixed .vc-time-select-group {
   @apply max-h-32 overflow-y-auto bg-muted/20 rounded-md border border-border/50;
 }
 
-/* 优化分钟选择器，只显示12个选项的高度 */
-.task-edit-vertical .vc-base-select select {
-  @apply bg-transparent text-foreground text-xs p-1 border-none outline-none cursor-pointer rounded hover:bg-muted/50 transition-colors;
-  appearance: none; /* 移除默认下拉箭头 */
-  text-align: center;
-}
-
 /* 针对分钟选择器的特殊处理 - 限制高度为12个选项 */
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select {
-  @apply max-h-32; /* 限制整体高度 */
-  size: 12; /* 只显示12个选项 */
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child select {
+  @apply max-h-32;
+  size: 12;
   scroll-behavior: smooth;
   height: auto;
-  max-height: 12em; /* 大约12个选项的高度 */
+  max-height: 12em;
 }
 
 /* 为分钟选择器创建更紧凑的显示 */
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child {
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child {
   @apply max-h-32 overflow-y-auto;
   position: relative;
-  display: flex; /* 改为flex布局以支持垂直居中 */
+  display: flex;
   align-items: center;
   align-self: center;
   vertical-align: middle;
 }
 
 /* 确保分钟选项更紧凑 */
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child option {
-  @apply py-1 text-xs leading-tight; /* 减少上下内边距和行高 */
-  height: 1.5em; /* 每个选项的高度 */
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child option,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child option {
+  @apply py-1 text-xs leading-tight;
+  height: 1.5em;
 }
 
 /* 时间选择器整体高度限制 */
-.task-edit-vertical .vc-time-select-group {
-  @apply max-h-40 overflow-y-auto; /* 限制整体高度 */
+.task-edit-vertical .vc-time-select-group,
+.date-picker-popup-fixed .vc-time-select-group {
+  @apply max-h-40 overflow-y-auto;
 }
 
 /* 小时和分钟选择器的通用样式 */
-.task-edit-vertical .vc-time-select-group .vc-base-select select {
-  @apply text-xs py-1; /* 减少内边距 */
+.task-edit-vertical .vc-time-select-group .vc-base-select select,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select select {
+  @apply text-xs py-1;
 }
 
 /* 更精确地控制分钟选择器的显示 */
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child {
-  @apply max-h-32; /* 限制分钟选择器高度 */
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child {
+  @apply max-h-32;
 }
 
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select {
-  @apply max-h-24; /* 大约12个选项的高度 (每个选项2em) */
-  overflow-y: auto; /* 启用滚动 */
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child select {
+  @apply max-h-24;
+  overflow-y: auto;
   display: flex;
   align-items: center;
   align-self: center;
   vertical-align: middle;
-  margin: auto; /* 添加自动边距以帮助居中 */
+  margin: auto;
 }
 
 /* 确保时间选择器列不会太高 */
-.task-edit-vertical .vc-time-select-group {
+.task-edit-vertical .vc-time-select-group,
+.date-picker-popup-fixed .vc-time-select-group {
   @apply flex items-center justify-center gap-1 bg-muted/30 rounded-lg p-1 border border-border;
-  max-height: 10rem; /* 限制整体高度 */
+  max-height: 10rem;
   overflow: hidden;
-  align-items: center; /* 确保所有元素垂直居中 */
+  align-items: center;
 }
 
 /* 优化下拉选择器的滚动条样式 */
-.task-edit-vertical .vc-base-select-group::-webkit-scrollbar {
+.task-edit-vertical .vc-base-select-group::-webkit-scrollbar,
+.date-picker-popup-fixed .vc-base-select-group::-webkit-scrollbar {
   @apply w-1;
 }
 
-.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-track {
+.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-track,
+.date-picker-popup-fixed .vc-base-select-group::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
 
-.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-thumb {
+.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-thumb,
+.date-picker-popup-fixed .vc-base-select-group::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/30 rounded-full;
 }
 
-.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-thumb:hover {
+.task-edit-vertical .vc-base-select-group::-webkit-scrollbar-thumb:hover,
+.date-picker-popup-fixed .vc-base-select-group::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/50;
 }
 
 /* 移除不需要的样式 */
 .task-edit-vertical .vc-time-content,
-.task-edit-vertical .vc-time-date {
+.task-edit-vertical .vc-time-date,
+.date-picker-popup-fixed .vc-time-content,
+.date-picker-popup-fixed .vc-time-date {
   @apply hidden;
 }
 
 /* 确保分钟选择器完全垂直居中 */
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child {
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child {
   display: flex !important;
   flex-direction: column;
   justify-content: center;
@@ -224,7 +288,8 @@
   vertical-align: middle;
 }
 
-.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select {
+.task-edit-vertical .vc-time-select-group .vc-base-select:last-child select,
+.date-picker-popup-fixed .vc-time-select-group .vc-base-select:last-child select {
   display: flex !important;
   flex-direction: column;
   justify-content: center;

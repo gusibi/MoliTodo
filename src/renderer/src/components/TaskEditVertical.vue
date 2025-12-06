@@ -154,9 +154,9 @@
           </div>
 
           <!-- 截止日期 -->
-          <div class="task-option-section">
+          <div class="task-option-section" ref="datePickerSection">
             <div class="task-option-item" :class="{ 'active': selectedDate }">
-              <button class="task-option-btn" @click="showDatePicker = !showDatePicker">
+              <button class="task-option-btn" ref="datePickerBtn" @click="toggleDatePicker">
                 <div class="task-option-icon">
                   <i class="fas fa-calendar-alt"></i>
                 </div>
@@ -166,8 +166,21 @@
                 </div>
               </button>
               
-           
-              <div v-if="showDatePicker" class="date-picker-popup">
+              <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- 日期选择器 Portal - 固定定位在最上层 -->
+          <Teleport to="body">
+            <div v-if="showDatePicker" class="date-picker-overlay">
+              <div class="date-picker-backdrop" @click="showDatePicker = false"></div>
+              <div 
+                class="date-picker-popup-fixed" 
+                :style="datePickerStyle"
+                @click.stop
+              >
                 <v-date-picker
                   v-model="dateTimeValue"
                   mode="dateTime"
@@ -179,12 +192,8 @@
                   class="v-calendar"
                 ></v-date-picker>
               </div>
-              
-              <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
-                <i class="fas fa-times"></i>
-              </button>
             </div>
-          </div>
+          </Teleport>
 
           <!-- 重复设置 -->
           <div class="task-option-section">
@@ -286,6 +295,8 @@ const { isDark } = useTheme()
 const taskEditContainer = ref(null)
 const addTaskInput = ref(null)
 const fileInput = ref(null)
+const datePickerBtn = ref(null)
+const datePickerSection = ref(null)
 
 // 任务相关状态
 const newTaskContent = ref('')
@@ -323,6 +334,48 @@ const showRepeatPicker = ref(false)
 
 // 使用 storeToRefs 确保响应式
 const customReminderOptions = storeCustomReminderOptions
+
+// 日期选择器位置状态
+const datePickerPosition = ref({ top: 0, left: 0, showAbove: false })
+
+// 日期选择器样式（动态计算位置）
+const datePickerStyle = computed(() => {
+  const pos = datePickerPosition.value
+  return {
+    position: 'fixed',
+    left: `${pos.left}px`,
+    top: pos.showAbove ? 'auto' : `${pos.top}px`,
+    bottom: pos.showAbove ? `${window.innerHeight - pos.top + 8}px` : 'auto',
+    zIndex: 9999
+  }
+})
+
+// 切换日期选择器并计算位置
+const toggleDatePicker = () => {
+  if (showDatePicker.value) {
+    showDatePicker.value = false
+    return
+  }
+  
+  // 计算按钮位置
+  if (datePickerBtn.value) {
+    const rect = datePickerBtn.value.getBoundingClientRect()
+    const pickerHeight = 380 // 预估的选择器高度
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    
+    // 优先在下方显示，空间不足时在上方
+    const showAbove = spaceBelow < pickerHeight && spaceAbove > spaceBelow
+    
+    datePickerPosition.value = {
+      top: showAbove ? rect.top : rect.bottom + 8,
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 320)), // 确保不超出屏幕
+      showAbove
+    }
+  }
+  
+  showDatePicker.value = true
+}
 
 // 获取本地日期字符串（避免时区问题）
 const getLocalDateString = (date) => {
