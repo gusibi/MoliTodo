@@ -89,7 +89,7 @@
         ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
 
-          <!-- 主行内容 -->
+          <!-- 主行：checkbox + 内容 + 悬浮按钮 -->
           <div class="task-card-main">
             <!-- 状态指示器 -->
             <button class="task-status-checkbox" :class="`status-${task.status || (task.completed ? 'done' : 'todo')}`"
@@ -104,8 +104,8 @@
                 class="doing-dot"></span>
             </button>
 
-            <!-- 任务内容区域 -->
-            <div class="task-card-content">
+            <!-- 任务内容文本 -->
+            <div class="task-card-text-wrapper">
               <div v-if="!isEditing(task.id)" class="task-card-text"
                 :class="{ 'completed': (task.status || (task.completed ? 'done' : 'todo')) === 'done' }"
                 @dblclick="startEditTask(task.id)" :title="$t('floatView.doubleClickToEdit')">
@@ -113,39 +113,6 @@
               </div>
               <input v-else v-model="editingContent" class="task-card-edit-input" @keydown.enter="saveTaskEdit(task.id)"
                 @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
-
-              <!-- 元信息行 -->
-              <div class="task-card-meta">
-                <!-- 提醒时间 -->
-                <div v-if="task.reminderTime && (task.status || (task.completed ? 'done' : 'todo')) !== 'done'"
-                  :class="['task-meta-tag reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                      fill="currentColor" />
-                  </svg>
-                  <span>{{ formatReminderTime(task.reminderTime) }}</span>
-                </div>
-
-                <!-- 进行中状态标签 -->
-                <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-meta-tag doing">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                      fill="currentColor" />
-                  </svg>
-                  <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
-                </div>
-
-                <!-- 子任务指示器 -->
-                <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
-                      fill="currentColor" />
-                  </svg>
-                  <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
-                  }}</span>
-                </div>
-              </div>
             </div>
 
             <!-- 悬浮操作按钮 -->
@@ -173,6 +140,39 @@
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </button>
+            </div>
+          </div>
+
+          <!-- 元信息行（占满宽度） -->
+          <div class="task-card-meta">
+            <!-- 提醒时间 -->
+            <div v-if="task.reminderTime && (task.status || (task.completed ? 'done' : 'todo')) !== 'done'"
+              :class="['task-meta-tag reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
+                  fill="currentColor" />
+              </svg>
+              <span>{{ formatReminderTime(task.reminderTime) }}</span>
+            </div>
+
+            <!-- 进行中状态标签 -->
+            <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-meta-tag doing">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                  fill="currentColor" />
+              </svg>
+              <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
+            </div>
+
+            <!-- 子任务指示器 -->
+            <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                  fill="currentColor" />
+              </svg>
+              <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
+                }}</span>
             </div>
           </div>
 

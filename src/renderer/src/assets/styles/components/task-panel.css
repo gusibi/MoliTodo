@@ -251,15 +251,20 @@
 
 /* ===== Task Card Main Row ===== */
 .task-card-main {
-  @apply flex items-start gap-2;
+  @apply flex items-center gap-2;
 }
 
 /* ===== Status Checkbox ===== */
 .task-status-checkbox {
-  @apply mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
+  @apply flex-shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
   @apply transition-all duration-200 cursor-pointer;
   @apply border-border bg-transparent;
   @apply hover:border-primary;
+}
+
+/* ===== Task Card Text Wrapper ===== */
+.task-card-text-wrapper {
+  @apply flex-1 min-w-0;
 }
 
 .task-status-checkbox.status-todo {
@@ -290,9 +295,9 @@
   @apply w-1.5 h-1.5 bg-primary-foreground rounded-full animate-pulse;
 }
 
-/* ===== Task Card Content ===== */
-.task-card-content {
-  @apply flex-1 min-w-0;
+/* ===== Task Card Meta (second row) ===== */
+.task-card-meta {
+  @apply flex items-center gap-1.5 mt-1 min-h-[14px] flex-wrap w-full pl-5;
 }
 
 .task-card-text {
@@ -311,11 +316,6 @@
 .task-card-edit-input {
   @apply w-full text-xs bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
   @apply text-foreground;
-}
-
-/* ===== Task Card Meta ===== */
-.task-card-meta {
-  @apply flex items-center gap-1.5 mt-1 min-h-[14px] flex-wrap;
 }
 
 .task-meta-tag {
@@ -344,7 +344,7 @@
 
 /* ===== Task Card Actions ===== */
 .task-card-actions {
-  @apply flex items-center gap-0.5;
+  @apply flex items-center gap-0.5 flex-shrink-0;
   @apply opacity-0 transition-opacity duration-200;
 }
 

@@ -34,7 +34,7 @@ class SqliteTaskStatusLogRepository {
       VALUES (?, ?, ?, ?, ?)
     `;
     
-    console.log("SqliteTaskStatusLogRepository save", taskStatusLog)
+    // console.log("SqliteTaskStatusLogRepository save", taskStatusLog)
     try {
       const result = await this.db.run(sql, [
         taskStatusLog.taskId,
