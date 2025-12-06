@@ -7,11 +7,11 @@
 
 /* Panel Header */
 .task-panel-header {
-  @apply px-6 py-4 pb-3 border-b border-border/50 bg-muted/50;
+  @apply px-6 py-4 pb-3 border-b border-border/50 bg-muted/50 flex items-center;
 }
 
 .task-panel-title {
-  @apply text-lg font-semibold text-card-foreground flex items-center gap-2;
+  @apply text-lg font-semibold text-card-foreground flex items-center gap-2 flex-1;
 }
 
 .task-panel-title svg {
@@ -20,6 +20,28 @@
 
 .task-panel-count {
   @apply text-sm text-muted-foreground font-normal ml-2;
+}
+
+/* Pin Button */
+.task-panel-pin-btn {
+  @apply w-7 h-7 ml-auto border-0 rounded-lg bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground;
+}
+
+.task-panel-pin-btn.pinned {
+  @apply text-primary bg-primary/10;
+}
+
+.task-panel-pin-btn.pinned:hover {
+  @apply bg-primary/20 text-primary;
+}
+
+/* Draggable Header */
+.task-panel-header.draggable {
+  @apply cursor-move;
+}
+
+.task-panel-header.draggable:active {
+  @apply cursor-grabbing;
 }
 
 /* Quick Add Section */

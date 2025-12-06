@@ -11,6 +11,48 @@ class IpcHandlers {
     this.taskStatusLogService = taskStatusLogService;
   }
 
+  // 根据 IPC 事件获取发送请求的窗口
+  getWindowFromEvent(event) {
+    const webContentsId = event.sender.id;
+    
+    // 检查是否是 floatingWindow
+    if (this.windowManager.floatingWindow && 
+        !this.windowManager.floatingWindow.isDestroyed() &&
+        this.windowManager.floatingWindow.webContents.id === webContentsId) {
+      return this.windowManager.floatingWindow;
+    }
+    
+    // 检查是否是 taskPanelWindow
+    if (this.windowManager.taskPanelWindow && 
+        !this.windowManager.taskPanelWindow.isDestroyed() &&
+        this.windowManager.taskPanelWindow.webContents.id === webContentsId) {
+      return this.windowManager.taskPanelWindow;
+    }
+    
+    // 检查是否是 taskManagerWindow
+    if (this.windowManager.taskManagerWindow && 
+        !this.windowManager.taskManagerWindow.isDestroyed() &&
+        this.windowManager.taskManagerWindow.webContents.id === webContentsId) {
+      return this.windowManager.taskManagerWindow;
+    }
+    
+    // 检查是否是 settingsWindow
+    if (this.windowManager.settingsWindow && 
+        !this.windowManager.settingsWindow.isDestroyed() &&
+        this.windowManager.settingsWindow.webContents.id === webContentsId) {
+      return this.windowManager.settingsWindow;
+    }
+    
+    // 检查悬浮任务窗口
+    for (const [taskId, window] of this.windowManager.floatingTaskWindows) {
+      if (!window.isDestroyed() && window.webContents.id === webContentsId) {
+        return window;
+      }
+    }
+    
+    return null;
+  }
+
   // 基于任务数据生成活跃度数据的降级方法
   async generateActivityDataFromTasks(days = 365) {
     try {
@@ -806,6 +848,11 @@ class IpcHandlers {
       }
     });
 
+    // 设置面板固定状态
+    ipcMain.handle('set-panel-pinned', (event, pinned) => {
+      this.windowManager.setPanelPinned(pinned);
+    });
+
     // 悬浮任务相关
     ipcMain.handle('create-floating-task', (event, taskId) => {
       this.windowManager.createFloatingTask(taskId);
@@ -994,30 +1041,36 @@ class IpcHandlers {
       return await this.taskService.getIncompleteTaskCount();
     });
 
-    // 悬浮窗口拖拽相关
-    ipcMain.handle('get-window-position', () => {
-      if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
-        const [x, y] = this.windowManager.floatingWindow.getPosition();
+    // 悬浮窗口拖拽相关 - 支持多窗口
+    ipcMain.handle('get-window-position', (event) => {
+      // 根据发送请求的窗口来确定要获取哪个窗口的位置
+      const senderWindow = this.getWindowFromEvent(event);
+      if (senderWindow && !senderWindow.isDestroyed()) {
+        const [x, y] = senderWindow.getPosition();
         return { x, y };
       }
       return { x: 0, y: 0 };
     });
 
     ipcMain.handle('start-drag', (event, position) => {
-      if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
-        this.windowManager.floatingWindow.setPosition(position.x, position.y);
+      const senderWindow = this.getWindowFromEvent(event);
+      if (senderWindow && !senderWindow.isDestroyed()) {
+        senderWindow.setPosition(position.x, position.y);
       }
     });
 
     ipcMain.handle('drag-window', (event, position) => {
-      if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
-        this.windowManager.floatingWindow.setPosition(position.x, position.y);
+      const senderWindow = this.getWindowFromEvent(event);
+      if (senderWindow && !senderWindow.isDestroyed()) {
+        senderWindow.setPosition(position.x, position.y);
       }
     });
 
-    ipcMain.handle('end-drag', () => {
-      if (this.windowManager.floatingWindow && !this.windowManager.floatingWindow.isDestroyed()) {
-        const [x, y] = this.windowManager.floatingWindow.getPosition();
+    ipcMain.handle('end-drag', (event) => {
+      const senderWindow = this.getWindowFromEvent(event);
+      // 只有 floatingWindow 需要保存位置配置
+      if (senderWindow === this.windowManager.floatingWindow && !senderWindow.isDestroyed()) {
+        const [x, y] = senderWindow.getPosition();
         this.windowManager.updateConfig('floatingIcon.x', x);
         this.windowManager.updateConfig('floatingIcon.y', y);
       }

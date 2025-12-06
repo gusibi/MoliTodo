@@ -1,7 +1,7 @@
 <template>
   <div class="task-panel" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
-    <!-- 面板头部 -->
-    <div class="task-panel-header">
+    <!-- 面板头部 - 固定时可拖动 -->
+    <div class="task-panel-header" :class="{ 'draggable': isPinned }" @mousedown="handleHeaderMouseDown">
       <h2 class="task-panel-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
@@ -9,13 +9,24 @@
         {{ $t('floatView.todayTasks') }}
         <span class="task-panel-count">{{ taskCount }} {{ $t('floatView.tasksCount') }}</span>
       </h2>
+      <!-- 固定按钮 -->
+      <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
+        :title="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
+        <svg v-if="isPinned" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" fill="currentColor" />
+        </svg>
+        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" stroke="currentColor" stroke-width="1.5"
+            fill="none" />
+        </svg>
+      </button>
     </div>
 
     <!-- 快速添加框 -->
     <div class="task-panel-quick-add">
       <div class="task-panel-input-container">
-        <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')" maxlength="200"
-          @keypress.enter="addTask" ref="quickAddInput">
+        <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')"
+          maxlength="200" @keypress.enter="addTask" ref="quickAddInput">
         <button class="task-panel-add-btn" @click="addTask" :title="$t('floatView.addTask')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -34,7 +45,8 @@
             : task.status || (task.completed ? 'done' : 'todo')
         ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
           @contextmenu="showTaskContextMenu($event, task)">
-          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)" :title="$t('floatView.clickToToggleStatus')">
+          <div class="task-panel-status-indicator" @click="cycleTaskStatus(task.id)"
+            :title="$t('floatView.clickToToggleStatus')">
             <component :is="getStatusIcon(task.status || (task.completed ? 'done' : 'todo'))" />
           </div>
 
@@ -52,19 +64,22 @@
 
               <div class="task-panel-actions">
                 <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
-                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
+                  class="task-panel-action-btn pause-btn" @click="pauseTask(task.id)"
+                  :title="$t('floatView.pauseTask')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
                   </svg>
                 </button>
-                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)" :title="$t('floatView.setReminder')">
+                <button class="task-panel-action-btn reminder-btn" @click="showReminderModal(task.id)"
+                  :title="$t('floatView.setReminder')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
                       fill="currentColor" />
                   </svg>
                 </button>
-                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)" :title="$t('floatView.deleteTask')">
+                <button class="task-panel-action-btn delete-btn" @click="deleteTask(task.id)"
+                  :title="$t('floatView.deleteTask')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
@@ -193,6 +208,9 @@ const reminderDate = ref('')
 const reminderTime = ref('')
 const dateTimeValue = ref(null)
 const completedTasksCount = ref(0)
+const isPinned = ref(false)
+const isDragging = ref(false)
+const dragStartPos = ref({ x: 0, y: 0 })
 
 // 右键菜单相关
 const showContextMenu = ref(false)
@@ -608,6 +626,9 @@ const createFloatingTask = async () => {
 
 // 面板鼠标事件处理
 const handlePanelMouseEnter = () => {
+  // 如果已固定，不需要发送鼠标事件
+  if (isPinned.value) return
+
   console.log('面板鼠标进入')
   try {
     window.electronAPI.windows.panelMouseEnter()
@@ -617,12 +638,130 @@ const handlePanelMouseEnter = () => {
 }
 
 const handlePanelMouseLeave = () => {
+  // 如果已固定，不需要发送鼠标事件
+  if (isPinned.value) return
+
   console.log('面板鼠标离开')
   try {
     window.electronAPI.windows.panelMouseLeave()
   } catch (error) {
     console.error('发送面板鼠标离开事件失败:', error)
   }
+}
+
+// 固定/取消固定面板
+const togglePin = async () => {
+  try {
+    const newPinned = !isPinned.value
+    isPinned.value = newPinned
+    await window.electronAPI.windows.setPanelPinned(newPinned)
+    console.log('面板固定状态:', newPinned)
+
+    // 如果取消固定，直接隐藏面板
+    if (!newPinned) {
+      await window.electronAPI.windows.hideTaskPanel()
+    }
+  } catch (error) {
+    console.error('切换固定状态失败:', error)
+    // 回滚状态
+    isPinned.value = !isPinned.value
+  }
+}
+
+// 头部拖动处理
+const handleHeaderMouseDown = (event) => {
+  // 只有固定状态才能拖动
+  if (!isPinned.value) return
+  // 只处理左键
+  if (event.button !== 0) return
+  // 如果点击的是按钮，不处理拖动
+  if (event.target.closest('button')) return
+
+  let hasMoved = false
+  let initialWindowPos = null
+  let lastIpcTime = 0
+  let pendingUpdate = false
+  const ipcThrottle = 40 // IPC调用节流
+
+  isDragging.value = true
+  dragStartPos.value = { x: event.screenX, y: event.screenY }
+
+  // 获取当前窗口位置
+  window.electronAPI.drag.getWindowPosition().then(pos => {
+    initialWindowPos = pos
+  }).catch(error => {
+    console.error('获取窗口位置失败:', error)
+  })
+
+  const handleMouseMove = (moveEvent) => {
+    if (!isDragging.value) return
+    if (!initialWindowPos) return
+
+    const deltaX = moveEvent.screenX - dragStartPos.value.x
+    const deltaY = moveEvent.screenY - dragStartPos.value.y
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+    if (distance > 5) {
+      if (!hasMoved) {
+        hasMoved = true
+      }
+
+      // 节流的IPC调用
+      const now = Date.now()
+      if (now - lastIpcTime >= ipcThrottle && !pendingUpdate) {
+        lastIpcTime = now
+        pendingUpdate = true
+
+        const newPosition = {
+          x: initialWindowPos.x + deltaX,
+          y: initialWindowPos.y + deltaY
+        }
+
+        window.electronAPI.drag.dragWindow(newPosition)
+          .then(() => {
+            pendingUpdate = false
+          })
+          .catch((error) => {
+            console.error('窗口位置更新失败:', error)
+            pendingUpdate = false
+          })
+      }
+    }
+  }
+
+  const handleMouseUp = async (upEvent) => {
+    if (!isDragging.value) return
+
+    isDragging.value = false
+
+    if (hasMoved && initialWindowPos) {
+      const finalDeltaX = upEvent.screenX - dragStartPos.value.x
+      const finalDeltaY = upEvent.screenY - dragStartPos.value.y
+      const finalPosition = {
+        x: initialWindowPos.x + finalDeltaX,
+        y: initialWindowPos.y + finalDeltaY
+      }
+
+      try {
+        await window.electronAPI.drag.dragWindow(finalPosition)
+        await window.electronAPI.drag.endDrag()
+      } catch (error) {
+        console.error('最终位置同步失败:', error)
+      }
+    }
+
+    hasMoved = false
+    initialWindowPos = null
+    pendingUpdate = false
+
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+
+  event.preventDefault()
 }
 
 // 监听任务更新事件

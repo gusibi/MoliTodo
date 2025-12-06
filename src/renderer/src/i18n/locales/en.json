@@ -416,6 +416,8 @@
     "save": "Save",
     "createFloatingTask": "Create Floating Task",
     "noTasks": "No tasks",
-    "taskStats": "{total} tasks total, {completed} completed"
+    "taskStats": "{total} tasks total, {completed} completed",
+    "pinPanel": "Pin Panel",
+    "unpinPanel": "Unpin Panel"
   }
 }

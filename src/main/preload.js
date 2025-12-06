@@ -70,6 +70,7 @@ const electronAPI = {
     hideTaskPanel: () => ipcRenderer.invoke('hide-task-panel'),
     panelMouseEnter: () => ipcRenderer.invoke('panel-mouse-enter'),
     panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave'),
+    setPanelPinned: (pinned) => ipcRenderer.invoke('set-panel-pinned', pinned),
     createFloatingTask: (taskId) => ipcRenderer.invoke('create-floating-task', taskId),
     closeFloatingTask: (taskId) => ipcRenderer.invoke('close-floating-task', taskId),
     resizeFloatingTaskWindow: (taskId, height) => ipcRenderer.invoke('resize-floating-task-window', taskId, height),
@@ -122,6 +123,8 @@ const electronAPI = {
         'task-reminder',
         'panel-mouse-enter',
         'panel-mouse-leave',
+        'panel-pinned-changed',
+        'panel-unpinned',
         'play-notification-sound'
       ];
 

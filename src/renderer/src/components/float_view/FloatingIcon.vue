@@ -388,6 +388,12 @@ const handlePanelMouseLeave = () => {
   }, 300)
 }
 
+// 处理面板取消固定事件
+const handlePanelUnpinned = () => {
+  console.log('面板取消固定，隐藏任务面板')
+  panelVisible.value = false
+}
+
 onMounted(async () => {
   // 初始化任务数据
   await taskStore.getAllTasks()
@@ -401,6 +407,9 @@ onMounted(async () => {
   // 监听面板鼠标事件
   window.electronAPI.events.on('panel-mouse-enter', handlePanelMouseEnter)
   window.electronAPI.events.on('panel-mouse-leave', handlePanelMouseLeave)
+  
+  // 监听面板取消固定事件
+  window.electronAPI.events.on('panel-unpinned', handlePanelUnpinned)
 })
 
 onUnmounted(() => {
@@ -420,5 +429,6 @@ onUnmounted(() => {
   window.electronAPI.events.removeAllListeners('config-updated')
   window.electronAPI.events.removeAllListeners('panel-mouse-enter')
   window.electronAPI.events.removeAllListeners('panel-mouse-leave')
+  window.electronAPI.events.removeAllListeners('panel-unpinned')
 })
 </script>

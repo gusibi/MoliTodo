@@ -12,6 +12,7 @@ class WindowManager {
     this.tray = null;
     this.appInstance = appInstance;
     this.taskService = null; // 将在main.js中设置
+    this.isPanelPinned = false; // 面板固定状态
 
     this.configStore = new Store({
       name: 'config',
@@ -304,9 +305,17 @@ class WindowManager {
       this.taskPanelWindow.show();
     });
 
-    // 面板关闭时清理引用
+    // 面板关闭时清理引用并重置固定状态
     this.taskPanelWindow.on('closed', () => {
       this.taskPanelWindow = null;
+      // 如果面板是固定状态关闭的，需要重置状态并显示悬浮图标
+      if (this.isPanelPinned) {
+        this.isPanelPinned = false;
+        const config = this.configStore.get('floatingIcon');
+        if (config.visible && this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+          this.floatingWindow.show();
+        }
+      }
     });
   }
 
@@ -316,6 +325,41 @@ class WindowManager {
     } else {
       this.createTaskPanel();
     }
+  }
+
+  // 设置面板固定状态
+  setPanelPinned(pinned) {
+    this.isPanelPinned = pinned;
+    
+    if (pinned) {
+      // 固定面板时，隐藏悬浮图标
+      if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+        this.floatingWindow.hide();
+      }
+      // 通知面板已固定
+      if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+        this.taskPanelWindow.webContents.send('panel-pinned-changed', true);
+      }
+    } else {
+      // 取消固定时，显示悬浮图标
+      const config = this.configStore.get('floatingIcon');
+      if (config.visible && this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+        this.floatingWindow.show();
+      }
+      // 通知面板取消固定
+      if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+        this.taskPanelWindow.webContents.send('panel-pinned-changed', false);
+      }
+      // 通知悬浮图标面板取消固定
+      if (this.floatingWindow && !this.floatingWindow.isDestroyed()) {
+        this.floatingWindow.webContents.send('panel-unpinned');
+      }
+    }
+  }
+
+  // 获取面板固定状态
+  isPanelPinnedState() {
+    return this.isPanelPinned || false;
   }
 
   createTray() {
