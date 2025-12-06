@@ -246,15 +246,18 @@
 }
 
 .flat-task-group-header {
-  @apply flex items-center justify-between px-6 py-2 cursor-pointer select-none mb-2  border-border/10;
+  @apply flex items-center justify-between px-6 py-2 cursor-pointer select-none mb-2 border-border/10;
+  @apply sticky top-0 z-10 bg-background;
 }
 
 .flat-task-group-header-static {
   @apply py-2 mb-2 border-b border-border;
+  @apply sticky top-0 z-10 bg-background;
 }
 
 .flat-task-group-header-compact {
   @apply px-6 py-2 mb-2 flex justify-end;
+  @apply sticky top-0 z-10 bg-background;
 }
 
 .flat-task-group-title {
