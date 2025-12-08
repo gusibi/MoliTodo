@@ -172,7 +172,7 @@
                   fill="currentColor" />
               </svg>
               <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
-                }}</span>
+              }}</span>
             </div>
           </div>
 
@@ -388,7 +388,13 @@ const addTask = async () => {
   if (!content) return
 
   try {
-    await taskStore.createTask({ content })
+    // 构建任务数据，如果选择了清单则传递 listId
+    const taskData = { content }
+    if (selectedListId.value !== null) {
+      taskData.listId = selectedListId.value
+    }
+
+    await taskStore.createTask(taskData)
     newTaskContent.value = ''
 
     // 重新加载任务列表以显示新添加的任务

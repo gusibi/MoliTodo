@@ -34,12 +34,12 @@ class TaskService {
     );
 
     const savedTask = await this.taskRepository.save(task);
-    
+
     // 记录任务创建的状态日志
     if (this.taskStatusLogService) {
       await this.taskStatusLogService.logStatusChange(savedTask.id, null, savedTask.status, savedTask.createdAt);
     }
-    
+
     return savedTask;
   }
 
@@ -100,12 +100,12 @@ class TaskService {
 
     console.log("createTaskInList: save task ", task)
     const savedTask = await this.taskRepository.save(task);
-    
+
     // 记录任务创建的状态日志
     if (this.taskStatusLogService) {
       await this.taskStatusLogService.logStatusChange(savedTask.id, null, savedTask.status, savedTask.createdAt);
     }
-    
+
     return savedTask;
   }
 
@@ -126,13 +126,13 @@ class TaskService {
     }
 
     const oldStatus = task.status;
-    
+
     // 如果是重复任务，创建下一个实例
     let nextInstanceCreated = false;
     if (task.isRecurring()) {
       const nextInstance = await this.createNextRecurringInstance(task);
       nextInstanceCreated = nextInstance !== null;
-      
+
       // 如果成功创建了新实例，清理当前任务的重复数据
       if (nextInstanceCreated) {
         task.clearRecurrence();
@@ -143,12 +143,12 @@ class TaskService {
     task.completedAt = new Date();
     task.markAsCompleted();
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
     }
-    
+
     return updatedTask;
   }
 
@@ -161,37 +161,37 @@ class TaskService {
   async createNextRecurringInstance(recurringTask, fromDate = null) {
     try {
       console.log('createNextRecurringInstance recurringTask: ', recurringTask, fromDate)
-      
+
       // 确定起始日期：如果提供了 fromDate 则使用它，否则使用任务的生效日期
       let startDate = fromDate;
       if (!startDate) {
         // 如果是实例任务，使用 occurrenceDate；否则使用 createdAt
-        startDate = recurringTask.occurrenceDate 
+        startDate = recurringTask.occurrenceDate
           ? new Date(recurringTask.occurrenceDate)
           : new Date(recurringTask.createdAt);
       }
-      
+
       console.log('计算下一个实例的起始日期:', startDate)
-      
+
       const RecurringTaskService = require('./recurring-task-service');
       const nextOccurrences = RecurringTaskService.getNextOccurrences(recurringTask, 1, startDate);
       console.log('nextOccurrences: ', nextOccurrences)
-      
+
       if (nextOccurrences.length === 0) {
         console.log('没有找到下一个重复实例');
         return null;
       }
 
       const nextDate = nextOccurrences[0];
-      
+
       // 计算下一个实例的提醒时间
       let nextReminderTime = null;
       const reminderDate = new Date(nextDate);
-      
+
       // 使用 recurrence.reminderTime，如果没有则使用默认值 9:00
       const reminderTimeStr = recurringTask.recurrence?.reminderTime || '9:00';
       const [hours, minutes] = reminderTimeStr.split(':').map(Number);
-      
+
       // 将 reminderDate 与 reminderTime 的时间部分组合
       reminderDate.setHours(hours, minutes, 0, 0);
       nextReminderTime = reminderDate;
@@ -199,12 +199,12 @@ class TaskService {
 
       // 设置 seriesId：优先使用 recurringTask.seriesId，否则使用 recurringTask.id
       const seriesId = recurringTask.seriesId || recurringTask.id;
-      
+
       // 设置 occurrenceDate：当天 0 点时间戳
       const occurrenceDate = new Date(nextDate);
       occurrenceDate.setHours(0, 0, 0, 0);
       console.log("occurrenceDate: ------", occurrenceDate)
-      
+
       // 创建新的任务实例
       const nextInstance = new Task({
         id: Task.generateId(),
@@ -224,12 +224,12 @@ class TaskService {
 
       console.log("nextInstance: ------", nextInstance)
       const savedInstance = await this.taskRepository.save(nextInstance);
-      
+
       // 记录任务创建的状态日志
       if (this.taskStatusLogService) {
         await this.taskStatusLogService.logStatusChange(savedInstance.id, null, savedInstance.status, savedInstance.createdAt);
       }
-      
+
       return savedInstance;
     } catch (error) {
       console.error('创建下一个重复任务实例失败:', error);
@@ -251,12 +251,12 @@ class TaskService {
     const oldStatus = task.status;
     task.markAsIncomplete();
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
     }
-    
+
     return updatedTask;
   }
 
@@ -289,20 +289,20 @@ class TaskService {
 
     console.log("[updateTask] task service updateTask updates: ------", updates)
 
-    if (task.reminderTime === null && updates.reminderTime === null && updates.recurrence && updates.recurrence != ""){ // 如果重复配置有值, 尝试获取第一次的提醒时间
-        reminderTime = this.calculateRecurringReminderTime(updates.recurrence, updates.reminderTime);
+    if (task.reminderTime === null && updates.reminderTime === null && updates.recurrence && updates.recurrence != "") { // 如果重复配置有值, 尝试获取第一次的提醒时间
+      reminderTime = this.calculateRecurringReminderTime(updates.recurrence, updates.reminderTime);
     }
     // 更新内容
     if (updates.content !== undefined) {
       task.updateContent(updates.content);
     }
 
- 
+
     // 更新状态
     if (updates.status !== undefined) {
       const oldStatus = task.status;
       task.updateStatus(updates.status);
-      
+
       // 记录状态变化日志
       if (this.taskStatusLogService && oldStatus !== updates.status) {
         // 延迟记录，等任务保存成功后再记录
@@ -317,7 +317,7 @@ class TaskService {
       } else if (updates.recurrence && updates.recurrence != "") {
         console.log("重复任务不校验, recurrence: ", updates.recurrence)
         task.setReminder(new Date(updates.reminderTime), true, task.reminderTime);
-      }else{
+      } else {
         // 统一处理：所有提醒时间都应该是 Date 对象或 ISO 字符串
         // 传入原始提醒时间用于对比，避免对未变化的提醒时间进行过去时间验证
         task.setReminder(new Date(updates.reminderTime), false, task.reminderTime);
@@ -345,7 +345,7 @@ class TaskService {
 
     // console.log("task service task: ------ final", task)
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 处理延迟的状态日志记录
     if (this._pendingStatusLog) {
       await this.taskStatusLogService.logStatusChange(
@@ -355,7 +355,7 @@ class TaskService {
       );
       this._pendingStatusLog = null;
     }
-    
+
     return updatedTask;
   }
 
@@ -390,12 +390,12 @@ class TaskService {
     const oldStatus = task.status;
     task.updateStatus(status);
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, status);
     }
-    
+
     return updatedTask;
   }
 
@@ -462,12 +462,12 @@ class TaskService {
     const oldStatus = task.status;
     task.startTask();
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
     }
-    
+
     return updatedTask;
   }
 
@@ -485,12 +485,12 @@ class TaskService {
     const oldStatus = task.status;
     task.pauseTask();
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
     }
-    
+
     return updatedTask;
   }
 
@@ -513,12 +513,12 @@ class TaskService {
     const oldStatus = task.status;
     task.completeTask();
     const updatedTask = await this.taskRepository.save(task);
-    
+
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
       await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
     }
-    
+
     return updatedTask;
   }
 
@@ -591,7 +591,7 @@ class TaskService {
     }
 
     const updatedTasks = [];
-    
+
     for (const taskId of taskIds) {
       try {
         const task = await this.moveTaskToList(taskId, targetListId);
@@ -669,7 +669,7 @@ class TaskService {
    */
   async getTasksByCategory(category, listId = null) {
     let tasks;
-    
+
     if (listId !== null) {
       tasks = await this.getTasksByListId(listId);
     } else {
@@ -698,19 +698,19 @@ class TaskService {
     }
 
     const searchTerm = query.trim().toLowerCase();
-    
+
     return tasks.filter(task => {
       // 搜索任务内容
       if (task.content.toLowerCase().includes(searchTerm)) {
         return true;
       }
-      
+
       // 搜索备注内容
       const comment = task.getComment();
       if (comment && comment.toLowerCase().includes(searchTerm)) {
         return true;
       }
-      
+
       return false;
     });
   }
@@ -756,7 +756,7 @@ class TaskService {
     const completedTasks = allTasks.filter(task => task.isCompleted());
     const inProgressTasks = allTasks.filter(task => task.isInProgress());
     const pausedTasks = allTasks.filter(task => task.isPaused());
-    
+
     let totalWorkTime = 0;
     let totalCompletedTasks = 0;
     let currentActiveTime = 0;
@@ -838,7 +838,7 @@ class TaskService {
     const now = new Date();
     const futureDate = new Date(now);
     futureDate.setFullYear(futureDate.getFullYear() + 1); // 查看未来1年
-    
+
     // 计算第一个发生日期
     const occurrences = RecurrenceRule.calculateOccurrences(
       recurrence,
@@ -846,7 +846,7 @@ class TaskService {
       futureDate,
       now // 使用当前时间作为基准日期
     );
-    
+
     if (occurrences.length > 0) {
       // 使用第一个发生日期 + recurrence.reminderTime
       const [hours, minutes] = recurrence.reminderTime.split(':').map(Number);
@@ -876,7 +876,7 @@ class TaskService {
       updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);
       // console.log("updateRecurringTask: calculated reminderTime:", updates.reminderTime);
     }
-    
+
     // console.log("updateRecurringTask: updates:", updates)
     const task = await this.updateTask(taskId, updates);
     if (recurrence) {
@@ -895,7 +895,7 @@ class TaskService {
   async completeRecurringInstance(seriesId, occurrenceDate) {
     // 查找是否已存在该实例的覆盖记录
     const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
-    
+
     if (existingInstance) {
       // 如果存在，直接完成该实例
       await this.completeTask(existingInstance.id);
@@ -905,7 +905,7 @@ class TaskService {
       if (!recurringTask) {
         throw new Error('重复任务不存在');
       }
-      
+
       const overrideInstance = new Task(
         Task.generateId(),
         recurringTask.content,
@@ -919,11 +919,11 @@ class TaskService {
         seriesId,
         occurrenceDate
       );
-      
+
       overrideInstance.markAsCompleted();
       await this.taskRepository.save(overrideInstance);
     }
-    
+
     return { success: true };
   }
 
@@ -936,7 +936,7 @@ class TaskService {
   async deleteRecurringInstance(seriesId, occurrenceDate) {
     // 查找是否已存在该实例的覆盖记录
     const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
-    
+
     if (existingInstance) {
       // 如果存在覆盖实例，删除它
       await this.deleteTask(existingInstance.id);
@@ -946,7 +946,7 @@ class TaskService {
       if (!recurringTask) {
         throw new Error('重复任务不存在');
       }
-      
+
       const deletedInstance = new Task(
         Task.generateId(),
         recurringTask.content,
@@ -960,10 +960,10 @@ class TaskService {
         seriesId,
         occurrenceDate
       );
-      
+
       await this.taskRepository.save(deletedInstance);
     }
-    
+
     return { success: true };
   }
 
@@ -977,7 +977,7 @@ class TaskService {
   async updateRecurringInstance(seriesId, occurrenceDate, updates) {
     // 查找是否已存在该实例的覆盖记录
     let existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
-    
+
     if (existingInstance) {
       // 如果存在，更新该实例
       await this.updateTask(existingInstance.id, updates);
@@ -987,7 +987,7 @@ class TaskService {
       if (!recurringTask) {
         throw new Error('重复任务不存在');
       }
-      
+
       const overrideInstance = new Task(
         Task.generateId(),
         updates.content || recurringTask.content,
@@ -1001,10 +1001,10 @@ class TaskService {
         seriesId,
         occurrenceDate
       );
-      
+
       await this.taskRepository.save(overrideInstance);
     }
-    
+
     return { success: true };
   }
 
@@ -1016,13 +1016,13 @@ class TaskService {
   async deleteRecurringSeries(seriesId) {
     // 删除主重复任务
     await this.deleteTask(seriesId);
-    
+
     // 删除所有相关的覆盖实例
     const overrideInstances = await this.taskRepository.findOverrideInstances(seriesId);
     for (const instance of overrideInstances) {
       await this.deleteTask(instance.id);
     }
-    
+
     return { success: true };
   }
 
@@ -1037,7 +1037,7 @@ class TaskService {
     if (!task || !task.isRecurring()) {
       return [];
     }
-    
+
     const RecurringTaskService = require('./recurring-task-service');
     return RecurringTaskService.getNextOccurrences(task, count);
   }
@@ -1055,7 +1055,7 @@ class TaskService {
       if (!task.seriesId || !task.occurrenceDate) {
         return false;
       }
-      
+
       // 检查实例日期是否在指定范围内
       const occurrenceDate = new Date(task.occurrenceDate);
       return occurrenceDate >= startDate && occurrenceDate <= endDate;
@@ -1086,7 +1086,7 @@ class TaskService {
       // 调用AI服务生成任务列表
       const result = await AIService.generateTaskList(content, aiModel, this.windowManager);
       const generatedTasks = result.tasks;
-      
+
       // 为生成的任务添加 listId
       const tasksWithListId = generatedTasks.map(task => ({
         ...task,
@@ -1119,7 +1119,7 @@ class TaskService {
    */
   async streamGenerateTaskList(content, aiModel, listId = 0, onChunk, shouldSplitTask = false) {
     console.log('[TaskService] streamGenerateTaskList 开始', { content, aiModel, listId, onChunk: !!onChunk, shouldSplitTask });
-    
+
     if (!content || content.trim().length === 0) {
       throw new Error('输入内容不能为空');
     }
@@ -1137,9 +1137,9 @@ class TaskService {
       // 调用AI服务流式生成任务列表
       const result = await AIService.streamGenerateTaskList(content, aiModel, this.windowManager, onChunk, shouldSplitTask);
       console.log('[TaskService] AIService返回结果:', result);
-      
+
       const generatedTasks = result.tasks;
-      
+
       // 为生成的任务添加 listId
       const tasksWithListId = generatedTasks.map(task => ({
         ...task,
@@ -1151,7 +1151,7 @@ class TaskService {
         tasks: tasksWithListId,
         message: `成功使用 ${aiModel.name} (${aiModel.provider}) 生成了 ${tasksWithListId.length} 个任务`
       };
-      
+
       console.log('[TaskService] 最终返回结果:', finalResult);
       return finalResult;
     } catch (error) {
@@ -1172,9 +1172,9 @@ class TaskService {
   async createUserGuideTasks(listId = 0) {
     try {
       console.log('[TaskService] 开始创建用户引导任务，目标清单ID:', listId);
-      
+
       const createdTasks = [];
-      
+
       for (const guideTask of USER_GUIDE_TASKS) {
         const taskData = {
           metadata: guideTask.metadata || {},
@@ -1182,18 +1182,18 @@ class TaskService {
           dueTime: null,
           recurrence: null
         };
-        
+
         const task = await this.createTaskInList(
           guideTask.content,
           listId,
           null, // reminderTime
           taskData
         );
-        
+
         createdTasks.push(task);
         console.log('[TaskService] 创建引导任务:', guideTask.content);
       }
-      
+
       console.log('[TaskService] 用户引导任务创建完成，共创建', createdTasks.length, '个任务');
       return createdTasks;
     } catch (error) {
