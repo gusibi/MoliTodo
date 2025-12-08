@@ -69,67 +69,71 @@
       <div class="task-manager-views-container flex-1 min-h-0 relative" :class="{
         'overflow-auto': viewMode !== 'monthly' && viewMode !== 'kanban' && !showEditPanel,
         'overflow-hidden': viewMode === 'monthly' || viewMode === 'kanban',
-        'flex': viewMode === 'list' && !showEditPanel,
-        'task-manager-views-flex': viewMode === 'list' && showEditPanel
+        'task-manager-views-flex': viewMode === 'list'
       }">
-        <!-- 列表视图 -->
-        <div v-if="viewMode === 'list'" class="task-list-container" :class="{ 'with-edit-panel': showEditPanel }">
-          <FlatTaskList :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
-            :editing-task-id="selectedTask?.id"
-            @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
-            @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" 
-            @show-edit-panel="handleShowEditPanel" @hide-edit-panel="handleHideEditPanel" />
-        </div>
-        
-        <!-- 列表视图的右侧编辑面板 -->
-        <div v-if="showEditPanel && viewMode === 'list'" class="edit-panel-container">
-          <TaskEditVertical 
-            :task="selectedTask" 
-            :is-editing="true" 
-            @update-task="handleUpdateTask" 
-            @cancel-edit="handleHideEditPanel" 
-            @delete-task="handleDeleteTask"
-          />
-        </div>
-
-        <!-- 月视图 -->
-        <MonthlyView v-else-if="viewMode === 'monthly'" :tasks="displayTasks" :loading="loading"
-          :search-query="searchQuery" @edit-task="handleEditTask" @create-task="handleAddTask"
-          @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
-
-        <!-- 看板视图 -->
-        <div v-if="viewMode === 'kanban'" class="kanban-view-wrapper">
-          <!-- 看板内容 - 始终渲染，不受编辑面板影响 -->
-          <div class="kanban-content">
-            <KanbanBoard 
-              :tasks="displayTasks" 
-              :loading="loading"
-              :search-query="searchQuery"
-              :current-list-id="currentListId"
+        <!-- 视图切换过渡动画 -->
+        <Transition name="view-fade" mode="out-in" appear>
+          <!-- 列表视图 -->
+          <div v-if="viewMode === 'list'" key="list" class="task-list-container" :class="{ 'with-edit-panel': showEditPanel }">
+            <FlatTaskList :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
               :editing-task-id="selectedTask?.id"
-              @add-task="handleAddTask" 
-              @update-task="handleUpdateTaskWithStatusTracking" 
-              @edit-task="handleEditTask"
-              @show-edit-panel="handleShowEditPanel" 
-            />
+              @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
+              @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" 
+              @show-edit-panel="handleShowEditPanel" @hide-edit-panel="handleHideEditPanel" />
           </div>
 
-          <!-- 看板视图的覆盖式编辑面板 -->
-          <Transition name="kanban-edit-panel">
-            <div v-if="showEditPanel" class="kanban-edit-panel-overlay">
-              <div class="kanban-edit-panel-backdrop" @click="handleHideEditPanel"></div>
-              <div class="kanban-edit-panel-container">
-                <TaskEditVertical 
-                  :task="selectedTask" 
-                  :is-editing="true" 
-                  @update-task="handleUpdateTask" 
-                  @cancel-edit="handleHideEditPanel" 
-                  @delete-task="handleDeleteTask"
-                />
-              </div>
+          <!-- 月视图 -->
+          <MonthlyView v-else-if="viewMode === 'monthly'" key="monthly" :tasks="displayTasks" :loading="loading"
+            :search-query="searchQuery" @edit-task="handleEditTask" @create-task="handleAddTask"
+            @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" />
+
+          <!-- 看板视图 -->
+          <div v-else-if="viewMode === 'kanban'" key="kanban" class="kanban-view-wrapper">
+            <!-- 看板内容 - 始终渲染，不受编辑面板影响 -->
+            <div class="kanban-content">
+              <KanbanBoard 
+                :tasks="displayTasks" 
+                :loading="loading"
+                :search-query="searchQuery"
+                :current-list-id="currentListId"
+                :editing-task-id="selectedTask?.id"
+                @add-task="handleAddTask" 
+                @update-task="handleUpdateTaskWithStatusTracking" 
+                @edit-task="handleEditTask"
+                @show-edit-panel="handleShowEditPanel" 
+              />
             </div>
-          </Transition>
-        </div>
+
+            <!-- 看板视图的覆盖式编辑面板 -->
+            <Transition name="kanban-edit-panel" appear>
+              <div v-if="showEditPanel" class="kanban-edit-panel-overlay">
+                <div class="kanban-edit-panel-backdrop" @click="handleHideEditPanel"></div>
+                <div class="kanban-edit-panel-container">
+                  <TaskEditVertical 
+                    :task="selectedTask" 
+                    :is-editing="true" 
+                    @update-task="handleUpdateTask" 
+                    @cancel-edit="handleHideEditPanel" 
+                    @delete-task="handleDeleteTask"
+                  />
+                </div>
+              </div>
+            </Transition>
+          </div>
+        </Transition>
+
+        <!-- 列表视图的右侧编辑面板 - 独立于视图切换动画 -->
+        <Transition name="edit-panel-slide" appear>
+          <div v-if="showEditPanel && viewMode === 'list'" class="edit-panel-container">
+            <TaskEditVertical 
+              :task="selectedTask" 
+              :is-editing="true" 
+              @update-task="handleUpdateTask" 
+              @cancel-edit="handleHideEditPanel" 
+              @delete-task="handleDeleteTask"
+            />
+          </div>
+        </Transition>
       </div>
 
       <!-- 统计信息条 - 固定在底部 -->

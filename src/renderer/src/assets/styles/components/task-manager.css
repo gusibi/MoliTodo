@@ -12,7 +12,9 @@
 
 /* 主要内容区域样式 */
 .task-manager-main-content {
-  @apply flex-1 flex flex-col overflow-hidden relative bg-background m-2 rounded-lg shadow-lg;
+  @apply flex flex-col overflow-hidden relative bg-background m-2 rounded-lg shadow-lg;
+  /* 使用 calc 计算固定宽度，减去侧边栏宽度和 margin */
+  width: calc(100% - 280px - 16px);
   height: calc(100vh - 16px); /* 减去margin */
   min-height: 0; /* 重要：允许flex子元素收缩 */
 }
@@ -190,18 +192,12 @@
   @apply flex-1 min-w-0 transition-all duration-300 ease-in-out;
 }
 
-.task-list-container.with-panel {
-  flex: 0 0 calc(100% - 384px);
-}
 
-.edit-panel-container {
-  @apply bg-muted-foreground overflow-y-auto shadow-lg border-l border-border;
-  @apply w-full max-w-md max-h-full overflow-hidden;
-}
 
-/* 任务视图容器的 flex 布局（仅用于列表视图） */
+/* 任务视图容器 - 列表视图使用 flex 布局实现左锚定右收缩 */
 .task-manager-views-flex {
   display: flex !important;
+  flex-direction: row;
 }
 
 /* 看板视图包装器 */
@@ -257,14 +253,236 @@
   transform: translateX(0);
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .task-list-container.with-panel {
-    flex: 0 0 calc(100% - 100vw);
+/* ========================================
+   视图切换过渡动画
+   ======================================== */
+
+/* 视图淡入淡出动画 */
+.view-fade-enter-active {
+  animation: view-fade-in 0.25s ease-out;
+}
+
+.view-fade-leave-active {
+  animation: view-fade-out 0.2s ease-in;
+}
+
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
-  
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes view-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+/* ========================================
+   编辑面板滑入滑出动画
+   ======================================== */
+
+/* 列表视图的右侧编辑面板 - 宽度展开动画（左锚定右收缩） */
+.edit-panel-slide-enter-active {
+  animation: edit-panel-expand 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.edit-panel-slide-leave-active {
+  animation: edit-panel-collapse 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes edit-panel-expand {
+  from {
+    flex-basis: 0;
+    max-width: 0;
+    opacity: 0;
+  }
+  to {
+    flex-basis: 400px;
+    max-width: 400px;
+    opacity: 1;
+  }
+}
+
+@keyframes edit-panel-collapse {
+  from {
+    flex-basis: 400px;
+    max-width: 400px;
+    opacity: 1;
+  }
+  to {
+    flex-basis: 0;
+    max-width: 0;
+    opacity: 0;
+  }
+}
+
+/* 列表容器 - flex 子元素，自动填充剩余空间 */
+.task-list-container {
+  @apply h-full overflow-auto;
+  flex: 1 1 auto;
+  min-width: 0; /* 允许收缩到内容以下 */
+  transition: flex 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-list-container.with-edit-panel {
+  /* 有编辑面板时，列表仍然自动填充剩余空间 */
+}
+
+/* 列表视图的右侧编辑面板 - flex 子元素，固定宽度 */
+.edit-panel-container {
+  @apply h-full z-40;
+  @apply bg-background shadow-2xl border-l border-border;
+  flex: 0 0 400px; /* 固定宽度 400px，不伸缩 */
+  max-width: 400px;
+  overflow: hidden;
+}
+
+/* ========================================
+   看板编辑面板动画优化
+   ======================================== */
+
+/* 看板编辑面板背景淡入 */
+.kanban-edit-panel-enter-active .kanban-edit-panel-backdrop {
+  animation: backdrop-fade-in 0.2s ease-out;
+}
+
+.kanban-edit-panel-leave-active .kanban-edit-panel-backdrop {
+  animation: backdrop-fade-out 0.2s ease-in;
+}
+
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdrop-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 看板编辑面板容器滑入 */
+.kanban-edit-panel-enter-active .kanban-edit-panel-container {
+  animation: kanban-panel-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kanban-edit-panel-leave-active .kanban-edit-panel-container {
+  animation: kanban-panel-slide-out 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes kanban-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes kanban-panel-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* ========================================
+   搜索框展开收起动画
+   ======================================== */
+
+.task-manager-inline-search {
+  animation: search-expand 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes search-expand {
+  from {
+    opacity: 0;
+    width: 36px;
+    transform: scaleX(0.5);
+  }
+  to {
+    opacity: 1;
+    width: 200px;
+    transform: scaleX(1);
+  }
+}
+
+/* ========================================
+   按钮状态切换动画
+   ======================================== */
+
+.task-manager-action-btn {
+  @apply w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-manager-action-btn:hover {
+  @apply text-foreground bg-accent;
+  transform: translateY(-1px);
+}
+
+.task-manager-action-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.task-manager-action-btn.active {
+  @apply bg-primary/10 text-primary border-primary/20;
+}
+
+.task-manager-action-btn.active:hover {
+  @apply bg-primary/20 border-primary/30;
+}
+
+/* ========================================
+   响应式设计
+   ======================================== */
+
+@media (max-width: 768px) {
   .edit-panel-container {
-    flex: 0 0 100vw;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  @keyframes edit-panel-expand {
+    from {
+      flex-basis: 0;
+      max-width: 0;
+      opacity: 0;
+    }
+    to {
+      flex-basis: 100%;
+      max-width: 100%;
+      opacity: 1;
+    }
+  }
+
+  @keyframes edit-panel-collapse {
+    from {
+      flex-basis: 100%;
+      max-width: 100%;
+      opacity: 1;
+    }
+    to {
+      flex-basis: 0;
+      max-width: 0;
+      opacity: 0;
+    }
   }
 
   .kanban-edit-panel-container {
