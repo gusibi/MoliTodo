@@ -1,0 +1,5 @@
+{
+  "name": "Floating Task Panel",
+  "description": "A beautiful, modern React implementation of a floating task manager panel using Tailwind CSS.",
+  "requestFramePermissions": []
+}

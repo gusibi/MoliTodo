@@ -29,6 +29,11 @@ class WindowManager {
         },
         autoStart: false,
         showNotifications: true,
+        apiServer: {
+          enabled: false,
+          host: '127.0.0.1',
+          port: 1234
+        },
         notificationSound: {
           enabled: true,
           soundFile: 'ding-126626.mp3',

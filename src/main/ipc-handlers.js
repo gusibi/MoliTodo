@@ -3,12 +3,13 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class IpcHandlers {
-  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService }) {
+  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer }) {
     this.taskService = taskService;
     this.listService = listService;
     this.notificationService = notificationService;
     this.windowManager = windowManager;
     this.taskStatusLogService = taskStatusLogService;
+    this.localApiServer = localApiServer;
   }
 
   // 根据 IPC 事件获取发送请求的窗口
@@ -112,6 +113,7 @@ class IpcHandlers {
     this.setupAIHandlers();
     this.setupTaskStatusLogHandlers();
     this.setupAppHandlers();
+    this.setupLocalApiHandlers();
   }
 
   setupTaskHandlers() {
@@ -715,7 +717,13 @@ class IpcHandlers {
     });
 
     ipcMain.handle('update-config', (event, key, value) => {
-      return this.windowManager.updateConfig(key, value);
+      const result = this.windowManager.updateConfig(key, value);
+      if (this.localApiServer && key.startsWith('apiServer.')) {
+        this.localApiServer.applyConfig(this.windowManager.getConfig()).catch((error) => {
+          console.error('同步本地 API 服务配置失败:', error);
+        });
+      }
+      return result;
     });
 
     ipcMain.handle('save-config', () => {
@@ -735,6 +743,11 @@ class IpcHandlers {
         },
         autoStart: false,
         showNotifications: true,
+        apiServer: {
+          enabled: false,
+          host: '127.0.0.1',
+          port: 1234
+        },
         notificationSound: {
           enabled: true,
           soundFile: 'ding-126626.mp3',
@@ -806,6 +819,33 @@ class IpcHandlers {
       } catch (error) {
         return { success: false, error: error.message };
       }
+    });
+  }
+
+  setupLocalApiHandlers() {
+    ipcMain.handle('local-api:get-state', async () => {
+      if (!this.localApiServer) {
+        return {
+          enabled: false,
+          running: false,
+          host: '127.0.0.1',
+          port: 1234,
+          baseUrl: 'http://127.0.0.1:1234',
+          docsUrl: 'http://127.0.0.1:1234/api/docs',
+          openApiUrl: 'http://127.0.0.1:1234/api/openapi.json',
+          lastError: 'Local API server is not available'
+        };
+      }
+
+      return this.localApiServer.getState();
+    });
+
+    ipcMain.handle('local-api:sync', async () => {
+      if (!this.localApiServer) {
+        throw new Error('Local API server is not available');
+      }
+
+      return this.localApiServer.applyConfig(this.windowManager.getConfig());
     });
   }
 

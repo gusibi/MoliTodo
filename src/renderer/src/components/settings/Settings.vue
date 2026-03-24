@@ -53,6 +53,15 @@
             <AISettings />
           </div>
 
+          <!-- 本地接口 -->
+          <div v-if="activeCategory === 'api'">
+            <ApiServerSettings
+              :config="config"
+              @update:config="updateConfig"
+              @show-message="showMessage"
+            />
+          </div>
+
           <!-- 统计信息 -->
           <div v-if="activeCategory === 'statistics'">
             <StatisticsSettings />
@@ -98,6 +107,7 @@ import DataSettings from './DataSettings.vue'
 import ReminderSettings from './ReminderSettings.vue'
 import StatisticsSettings from './StatisticsSettings.vue'
 import AboutSettings from './AboutSettings.vue'
+import ApiServerSettings from './ApiServerSettings.vue'
 
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
@@ -112,6 +122,11 @@ const activeCategory = ref('general')
 const config = reactive({
   autoStart: false,
   showNotifications: true,
+  apiServer: {
+    enabled: false,
+    host: '127.0.0.1',
+    port: 1234
+  },
   language: 'zh', // 默认语言
   notificationSound: {
     enabled: true,
@@ -174,6 +189,11 @@ const settingsCategories = computed(() => [
     id: 'ai',
     name: t('settings.aiTitle'),
     icon: h('i', { class: 'fas fa-robot' })
+  },
+  {
+    id: 'api',
+    name: t('settings.api.title'),
+    icon: h('i', { class: 'fas fa-plug' })
   },
   {
     id: 'statistics',

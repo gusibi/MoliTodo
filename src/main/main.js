@@ -1,6 +1,7 @@
 const { app } = require('electron');
 const WindowManager = require('./window-manager');
 const IpcHandlers = require('./ipc-handlers');
+const LocalApiServer = require('./local-api-server');
 
 // 导入业务层
 const FileTaskRepository = require('../infrastructure/persistence/file-task-repository');
@@ -23,6 +24,7 @@ class MoliTodoApp {
     this.taskService = null;
     this.listService = null;
     this.notificationService = new NotificationService();
+    this.localApiServer = null;
     
     this.isQuitting = false;
   }
@@ -49,13 +51,22 @@ class MoliTodoApp {
       // 将 WindowManager 传递给 TaskService
       this.taskService.windowManager = this.windowManager;
 
+      this.localApiServer = new LocalApiServer({
+        taskService: this.taskService,
+        listService: this.listService,
+        notificationService: this.notificationService,
+        windowManager: this.windowManager
+      });
+      await this.localApiServer.initialize();
+
       // 初始化 IPC 处理器
       this.ipcHandlers = new IpcHandlers({
         taskService: this.taskService,
         listService: this.listService,
         notificationService: this.notificationService,
         windowManager: this.windowManager,
-        taskStatusLogService: this.taskStatusLogService
+        taskStatusLogService: this.taskStatusLogService,
+        localApiServer: this.localApiServer
       });
       this.ipcHandlers.initialize();
 
@@ -159,6 +170,9 @@ class MoliTodoApp {
       if (!this.isQuitting) {
         this.isQuitting = true;
         this.notificationService.clearAllSchedules();
+        if (this.localApiServer) {
+          this.localApiServer.dispose().catch(console.error);
+        }
         
         // 清理所有窗口但不重复调用 app.quit()
         if (this.windowManager) {
@@ -225,6 +239,9 @@ class MoliTodoApp {
   quit() {
     this.isQuitting = true;
     this.notificationService.clearAllSchedules();
+    if (this.localApiServer) {
+      this.localApiServer.dispose().catch(console.error);
+    }
     app.quit();
   }
 }

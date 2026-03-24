@@ -61,6 +61,11 @@ const electronAPI = {
     }
   },
 
+  localApi: {
+    getState: () => ipcRenderer.invoke('local-api:get-state'),
+    sync: () => ipcRenderer.invoke('local-api:sync')
+  },
+
   // 窗口相关 API
   windows: {
     showTaskManager: () => ipcRenderer.invoke('show-task-manager'),
