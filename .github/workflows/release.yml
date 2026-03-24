@@ -40,15 +40,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Setup Python (Windows)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
       - name: Setup Visual Studio Build Tools
         run: |
           choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive"
       - run: npm install
+        env:
+          PYTHON_PATH: ${{ env.pythonLocation }}\python.exe
+          npm_config_python: ${{ env.pythonLocation }}\python.exe
       - run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYTHON_PATH: ${{ env.pythonLocation }}\python.exe
+          npm_config_python: ${{ env.pythonLocation }}\python.exe
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
