@@ -23,12 +23,12 @@
     "floating": {
       "title": "Floating Desktop Icon",
       "description": "An always-on-top floating icon on your desktop edge showing task count badge. Click to open the task panel, with independent floating task windows that never interrupt your workflow.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "AI Task Generation",
       "description": "Describe your needs in natural language and AI automatically breaks them into structured task lists. Supports OpenAI, Gemini, Claude, Grok, and more. Smart time inference with streaming output.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "AI Work Reports",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "Recurring Tasks",
       "description": "Support daily, weekly, monthly, and yearly recurrence patterns. Custom intervals, multi-day selection, end conditions, series management with instance overrides.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "Time Tracking",

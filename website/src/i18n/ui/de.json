@@ -23,12 +23,12 @@
     "floating": {
       "title": "Schwebendes Desktop-Icon",
       "description": "Ein immer sichtbares Icon am Bildschirmrand mit einer Aufgabenanzahl-Badge. Klicken Sie, um das Aufgabenpanel zu öffnen — mit unabhängigen schwebenden Aufgabenfenstern, die Ihren Workflow nie unterbrechen.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "KI-Aufgabenerstellung",
       "description": "Beschreiben Sie Ihre Bedürfnisse in natürlicher Sprache und die KI zerlegt sie automatisch in strukturierte Aufgabenlisten. Unterstützt OpenAI, Gemini, Claude, Grok und mehr. Intelligente Zeitanerkennung mit Streaming-Ausgabe.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "KI-Arbeitsberichte",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "Wiederkehrende Aufgaben",
       "description": "Unterstützt tägliche, wöchentliche, monatliche und jährliche Wiederholungsmuster. Benutzerdefinierte Intervalle, Mehrtagesauswahl, Endbedingungen, Serienverwaltung mit Instanzüberschreibungen.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "Zeiterfassung",

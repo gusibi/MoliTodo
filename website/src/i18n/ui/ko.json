@@ -23,12 +23,12 @@
     "floating": {
       "title": "플로팅 데스크톱 아이콘",
       "description": "데스크톱 가장자리에 항상 최상단에 표시되는 플로팅 아이콘에 작업 수 배지가 나타납니다. 클릭하면 작업 패널이 열리며, 독립적인 플로팅 작업 창으로 워크플로를 방해하지 않습니다.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "AI 작업 생성",
       "description": "자연어로 요구사항을 설명하면 AI가 자동으로 구조화된 작업 목록으로 분해합니다. OpenAI, Gemini, Claude, Grok 등을 지원. 스마트한 시간 추론 및 스트리밍 출력.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "AI 업무 보고서",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "반복 작업",
       "description": "매일, 매주, 매월, 매년 반복 패턴을 지원. 사용자 지정 간격, 복수 일 선택, 종료 조건, 인스턴스별 재정의가 포함된 시리즈 관리.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "시간 추적",

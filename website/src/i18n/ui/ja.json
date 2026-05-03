@@ -23,12 +23,12 @@
     "floating": {
       "title": "フローティングデスクトップアイコン",
       "description": "デスクトップ端に常に最前面に表示されるフローティングアイコンにタスク数バッジが表示されます。クリックでタスクパネルを開き、独立したフローティングタスクウィンドウでワークフローを中断しません。",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "AIタスク生成",
       "description": "自然言語で要件を伝えるだけで、AIが自動的に構造化されたタスクリストに分解します。OpenAI、Gemini、Claude、Grokなどに対応。スマートな時間推定とストリーミング出力。",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "AI業務レポート",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "繰り返しタスク",
       "description": "日次、週次、月次、年次の繰り返しパターンに対応。カスタム間隔、複数日選択、終了条件、インスタンスの個別上書きを含むシリーズ管理。",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "時間管理",

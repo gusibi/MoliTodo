@@ -23,12 +23,12 @@
     "floating": {
       "title": "Ícono Flotante de Escritorio",
       "description": "Un ícono flotante siempre visible en el borde de tu escritorio que muestra un indicador con el número de tareas. Haz clic para abrir el panel de tareas, con ventanas flotantes independientes que nunca interrumpen tu flujo de trabajo.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "Generación de Tareas con IA",
       "description": "Describe tus necesidades en lenguaje natural y la IA las divide automáticamente en listas de tareas estructuradas. Compatible con OpenAI, Gemini, Claude, Grok y más. Inferencia inteligente de tiempo con salida en streaming.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "Informes de Trabajo con IA",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "Tareas Recurrentes",
       "description": "Soporta patrones de recurrencia diarios, semanales, mensuales y anuales. Intervalos personalizados, selección de múltiples días, condiciones de finalización y gestión de series con sobrescritura de instancias.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "Seguimiento de Tiempo",

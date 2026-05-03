@@ -23,12 +23,12 @@
     "floating": {
       "title": "Ícone Flutuante de Desktop",
       "description": "Um ícone flutuante sempre visível na borda do seu desktop mostrando um indicador com o número de tarefas. Clique para abrir o painel de tarefas, com janelas flutuantes independentes que nunca interrompem seu fluxo de trabalho.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "Geração de Tarefas com IA",
       "description": "Descreva suas necessidades em linguagem natural e a IA as divide automaticamente em listas de tarefas estruturadas. Compatível com OpenAI, Gemini, Claude, Grok e mais. Inferência inteligente de tempo com saída em streaming.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "Relatórios de Trabalho com IA",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "Tarefas Recorrentes",
       "description": "Suporta padrões de recorrência diários, semanais, mensais e anuais. Intervalos personalizados, seleção de múltiplos dias, condições de encerramento e gerenciamento de séries com sobrescrita de instâncias.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "Controle de Tempo",

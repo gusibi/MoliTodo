@@ -23,12 +23,12 @@
     "floating": {
       "title": "Icône Flottante sur le Bureau",
       "description": "Une icône toujours visible en bord d'écran affichant un badge avec le nombre de tâches. Cliquez pour ouvrir le panneau de tâches, avec des fenêtres flottantes indépendantes qui ne perturbent jamais votre flux de travail.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "Génération de Tâches par IA",
       "description": "Décrivez vos besoins en langage naturel et l'IA les décompose automatiquement en listes de tâches structurées. Prend en charge OpenAI, Gemini, Claude, Grok et plus encore. Inférence intelligente des délais avec sortie en continu.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "Rapports de Travail par IA",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "Tâches Récurrentes",
       "description": "Prend en charge les motifs de récurrence quotidiens, hebdomadaires, mensuels et annuels. Intervalles personnalisés, sélection multi-jours, conditions de fin, gestion des séries avec remplacements d'instances.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "Suivi du Temps",

@@ -140,7 +140,7 @@ AI 生成:
 
 ### AI 任务生成界面
 <div align="center">
-  <img src="screenshots/ai-task-generation.png" alt="AI 任务生成" width="800">
+  <img src="screenshots/ai-task-generation.jpg" alt="AI 任务生成" width="800">
   <p><em>AI 驱动的自然语言任务生成，支持多提供商</em></p>
 </div>
 
@@ -158,7 +158,7 @@ AI 生成:
 
 ### 重复任务配置
 <div align="center">
-  <img src="screenshots/recurring-tasks.png" alt="重复任务" width="800">
+  <img src="screenshots/recurring-tasks.jpg" alt="重复任务" width="800">
   <p><em>灵活的重复任务模式，智能规则预览</em></p>
 </div>
 
@@ -170,7 +170,7 @@ AI 生成:
 
 ### 清单管理侧边栏
 <div align="center">
-  <img src="screenshots/list-management.png" alt="清单管理" width="800">
+  <img src="screenshots/list-management.jpg" alt="清单管理" width="800">
   <p><em>高级清单侧边栏，自定义颜色、图标和任务统计</em></p>
 </div>
 

@@ -23,12 +23,12 @@
     "floating": {
       "title": "أيقونة عائمة على سطح المكتب",
       "description": "أيقونة عائمة دائمًا فوق النوافذ على حافة سطح المكتب تُظهر عدد المهام. انقر لفتح لوحة المهام، مع نوافذ مهام عائمة مستقلة لا تُقاطع سير عملك.",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "إنشاء المهام بالذكاء الاصطناعي",
       "description": "صِف احتياجاتك باللغة الطبيعية وسيقوم الذكاء الاصطناعي بتقسيمها تلقائيًا إلى قوائم مهام منظمة. يدعم OpenAI وGemini وClaude وGrok والمزيد. استنتاج ذكي للتواريخ مع إخراج تدريجي.",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "تقارير العمل بالذكاء الاصطناعي",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "المهام المتكررة",
       "description": "دعم التكرار اليومي والأسبوعي والشهري والسنوي. فترات مخصصة، اختيار أيام متعددة، شروط انتهاء، إدارة السلاسل مع تخصيص النسخ.",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "تتبع الوقت",

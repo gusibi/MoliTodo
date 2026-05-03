@@ -140,7 +140,7 @@ AI Generated:
 
 ### AI Task Generation Interface
 <div align="center">
-  <img src="screenshots/ai-task-generation.png" alt="AI Task Generation" width="800">
+  <img src="screenshots/ai-task-generation.jpg" alt="AI Task Generation" width="800">
   <p><em>AI-powered natural language task generation with multi-provider support</em></p>
 </div>
 
@@ -170,7 +170,7 @@ AI Generated:
 
 ### List Management Sidebar
 <div align="center">
-  <img src="screenshots/list-management.png" alt="List Management" width="800">
+  <img src="screenshots/list-management.jpg" alt="List Management" width="800">
   <p><em>Advanced list sidebar with custom colors, icons, and task statistics</em></p>
 </div>
 

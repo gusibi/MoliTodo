@@ -23,12 +23,12 @@
     "floating": {
       "title": "悬浮桌面图标",
       "description": "常驻桌面边缘的悬浮图标，显示待办数量徽章。点击即可展开任务面板，支持独立悬浮任务窗口，工作时不打断你的思路。",
-      "screenshot": "floating-icon-demo.png"
+      "screenshot": "floating-icon-demo.jpg"
     },
     "aiTask": {
       "title": "AI智能生成任务",
       "description": "用自然语言描述你的需求，AI自动拆解为结构化任务列表。支持OpenAI、Gemini、Claude、Grok等多个AI服务商，智能推断时间，流式输出。",
-      "screenshot": "ai-task-generation.png"
+      "screenshot": "ai-task-generation.jpg"
     },
     "aiReport": {
       "title": "AI工作报告",
@@ -48,7 +48,7 @@
     "recurring": {
       "title": "循环任务",
       "description": "支持每日、每周、每月、每年四种循环模式。自定义间隔、多选日期、结束条件，系列管理与实例覆盖。",
-      "screenshot": "recurring-tasks.png"
+      "screenshot": "recurring-tasks.jpg"
     },
     "timeTracking": {
       "title": "时间追踪",
