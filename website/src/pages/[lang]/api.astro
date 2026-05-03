@@ -1,0 +1,533 @@
+---
+import type { Locale } from '../../i18n/utils';
+import { getStaticPaths, useTranslations } from '../../i18n/utils';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+export { getStaticPaths };
+
+const { lang } = Astro.props as { lang: Locale };
+const { t } = await useTranslations(lang);
+
+const baseUrl = 'http://127.0.0.1:1234';
+
+interface Endpoint {
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  path: string;
+  summaryKey: string;
+  descKey: string;
+  color: string;
+  params?: { name: string; type: string; required: boolean; desc: string }[];
+  bodyParams?: { name: string; type: string; required: boolean; desc: string }[];
+  curlExample: string;
+  responseExample: string;
+  sideEffects?: string;
+}
+
+const endpoints: Endpoint[] = [
+  {
+    method: 'GET', path: '/', summaryKey: 'info', descKey: 'info',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    curlExample: `curl ${baseUrl}/`,
+    responseExample: `{
+  "name": "MoliTodo Local API",
+  "version": "1.0.0",
+  "baseUrl": "${baseUrl}",
+  "docsUrl": "${baseUrl}/api/docs",
+  "openApiUrl": "${baseUrl}/api/openapi.json"
+}`,
+  },
+  {
+    method: 'GET', path: '/api/health', summaryKey: 'health', descKey: 'health',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    curlExample: `curl ${baseUrl}/api/health`,
+    responseExample: `{
+  "ok": true,
+  "server": "MoliTodo Local API",
+  "timestamp": "2026-05-03T10:30:00.000Z"
+}`,
+  },
+  {
+    method: 'GET', path: '/api/lists', summaryKey: 'getLists', descKey: 'getLists',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    curlExample: `curl ${baseUrl}/api/lists`,
+    responseExample: `{
+  "success": true,
+  "data": [
+    {
+      "id": 0,
+      "name": "默认清单",
+      "color": "#007AFF",
+      "icon": "inbox",
+      "isDefault": true,
+      "sortOrder": 0
+    }
+  ]
+}`,
+  },
+  {
+    method: 'POST', path: '/api/lists', summaryKey: 'createList', descKey: 'createList',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    bodyParams: [
+      { name: 'name', type: 'string', required: true, desc: '1-50 characters, unique' },
+      { name: 'color', type: 'string', required: false, desc: 'HEX color, e.g. "#4F46E5"' },
+      { name: 'icon', type: 'string', required: false, desc: 'Icon name (list, inbox, star...)' },
+    ],
+    curlExample: `curl -X POST ${baseUrl}/api/lists \\
+  -H "Content-Type: application/json" \\
+  -d '{"name":"AI Tasks","color":"#4F46E5","icon":"star"}'`,
+    responseExample: `{
+  "success": true,
+  "data": {
+    "id": 1714725600000,
+    "name": "AI Tasks",
+    "color": "#4F46E5",
+    "icon": "star",
+    "isDefault": false,
+    "sortOrder": 1
+  }
+}`,
+  },
+  {
+    method: 'GET', path: '/api/tasks', summaryKey: 'getTasks', descKey: 'getTasks',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    params: [
+      { name: 'status', type: 'string', required: false, desc: 'todo | doing | paused | done' },
+      { name: 'listId', type: 'number', required: false, desc: 'Filter by list ID' },
+      { name: 'category', type: 'string', required: false, desc: 'inbox | today | doing | paused | planned | completed | all' },
+      { name: 'query', type: 'string', required: false, desc: 'Full-text search keyword' },
+      { name: 'includeCompleted', type: 'string', required: false, desc: '"true" to include completed tasks' },
+    ],
+    curlExample: `# All incomplete tasks
+curl ${baseUrl}/api/tasks
+
+# Search by keyword
+curl "${baseUrl}/api/tasks?query=API"
+
+# Filter by category
+curl "${baseUrl}/api/tasks?category=today"
+
+# Combined filters
+curl "${baseUrl}/api/tasks?status=doing&listId=0"`,
+    responseExample: `{
+  "success": true,
+  "data": [
+    {
+      "id": "m1abc2def3",
+      "content": "Write API docs",
+      "status": "todo",
+      "completed": false,
+      "createdAt": "2026-05-03T08:00:00.000Z",
+      "reminderTime": null,
+      "startedAt": null,
+      "completedAt": null,
+      "totalDuration": 0,
+      "listId": 0,
+      "metadata": {},
+      "dueDate": null,
+      "dueTime": null
+    }
+  ]
+}`,
+  },
+  {
+    method: 'POST', path: '/api/tasks', summaryKey: 'createTask', descKey: 'createTask',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    bodyParams: [
+      { name: 'content', type: 'string', required: true, desc: 'Task content (non-empty)' },
+      { name: 'listId', type: 'number', required: false, desc: 'Target list ID (default: 0)' },
+      { name: 'reminderTime', type: 'string', required: false, desc: 'ISO 8601 datetime' },
+      { name: 'dueDate', type: 'string', required: false, desc: 'e.g. "2026-05-03"' },
+      { name: 'dueTime', type: 'string', required: false, desc: 'e.g. "18:00"' },
+      { name: 'metadata', type: 'object', required: false, desc: 'Free-form metadata object' },
+    ],
+    curlExample: `curl -X POST ${baseUrl}/api/tasks \\
+  -H "Content-Type: application/json" \\
+  -d '{"content":"Write API docs","listId":0,"dueDate":"2026-05-03","dueTime":"18:00"}'`,
+    responseExample: `{
+  "success": true,
+  "data": {
+    "id": "m1abc2def3",
+    "content": "Write API docs",
+    "status": "todo",
+    "completed": false,
+    "dueDate": "2026-05-03",
+    "dueTime": "18:00",
+    "listId": 0
+  }
+}`,
+  },
+  {
+    method: 'PATCH', path: '/api/tasks/:id', summaryKey: 'updateTask', descKey: 'updateTask',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    bodyParams: [
+      { name: 'content', type: 'string', required: false, desc: 'New task content' },
+      { name: 'status', type: 'string', required: false, desc: 'todo | doing | done' },
+      { name: 'reminderTime', type: 'string|null', required: false, desc: 'ISO 8601 or null to clear' },
+      { name: 'listId', type: 'number', required: false, desc: 'Move to different list' },
+      { name: 'metadata', type: 'object', required: false, desc: 'Merged with existing metadata' },
+    ],
+    curlExample: `curl -X PATCH ${baseUrl}/api/tasks/TASK_ID \\
+  -H "Content-Type: application/json" \\
+  -d '{"content":"Updated title","metadata":{"priority":"high"}}'`,
+    responseExample: `{
+  "success": true,
+  "data": { "id": "m1abc2def3", "content": "Updated title", ... }
+}`,
+    sideEffects: 'If reminderTime is included, existing reminder is cancelled and rescheduled.',
+  },
+  {
+    method: 'DELETE', path: '/api/tasks/:id', summaryKey: 'deleteTask', descKey: 'deleteTask',
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    curlExample: `curl -X DELETE ${baseUrl}/api/tasks/TASK_ID`,
+    responseExample: `{ "success": true }`,
+    sideEffects: 'Cancels any scheduled reminder for this task.',
+  },
+  {
+    method: 'POST', path: '/api/tasks/:id/start', summaryKey: 'startTask', descKey: 'startTask',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    curlExample: `curl -X POST ${baseUrl}/api/tasks/TASK_ID/start`,
+    responseExample: `{
+  "success": true,
+  "data": { "id": "m1abc2def3", "status": "doing", "startedAt": "..." }
+}`,
+  },
+  {
+    method: 'POST', path: '/api/tasks/:id/pause', summaryKey: 'pauseTask', descKey: 'pauseTask',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    curlExample: `curl -X POST ${baseUrl}/api/tasks/TASK_ID/pause`,
+    responseExample: `{
+  "success": true,
+  "data": { "id": "m1abc2def3", "status": "paused", "totalDuration": 125000 }
+}`,
+  },
+  {
+    method: 'POST', path: '/api/tasks/:id/complete', summaryKey: 'completeTask', descKey: 'completeTask',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    curlExample: `curl -X POST ${baseUrl}/api/tasks/TASK_ID/complete`,
+    responseExample: `{
+  "success": true,
+  "data": { "id": "m1abc2def3", "status": "done", "completed": true, "completedAt": "..." }
+}`,
+    sideEffects: 'Accumulates remaining work time, records completion time, cancels reminder.',
+  },
+];
+
+const taskFields = [
+  { name: 'id', type: 'string', desc: 'Base-36 encoded unique ID' },
+  { name: 'content', type: 'string', desc: 'Task content/title' },
+  { name: 'status', type: 'string', desc: 'todo | doing | paused | done' },
+  { name: 'completed', type: 'boolean', desc: 'true if status is done' },
+  { name: 'createdAt', type: 'string', desc: 'ISO 8601 creation time' },
+  { name: 'updatedAt', type: 'string', desc: 'ISO 8601 last update time' },
+  { name: 'reminderTime', type: 'string|null', desc: 'ISO 8601 reminder time' },
+  { name: 'startedAt', type: 'string|null', desc: 'When task was started' },
+  { name: 'completedAt', type: 'string|null', desc: 'When task was completed' },
+  { name: 'totalDuration', type: 'number', desc: 'Total work time in ms' },
+  { name: 'listId', type: 'number', desc: 'Parent list ID (0 = default)' },
+  { name: 'metadata', type: 'object', desc: 'Free-form metadata' },
+  { name: 'dueDate', type: 'string|null', desc: 'Due date, e.g. "2026-05-03"' },
+  { name: 'dueTime', type: 'string|null', desc: 'Due time, e.g. "18:00"' },
+  { name: 'recurrence', type: 'object|null', desc: 'Recurring task rule' },
+  { name: 'seriesId', type: 'string|null', desc: 'Links to parent series' },
+];
+
+const statusTransitions = [
+  { from: 'todo', to: 'doing', action: 'start' },
+  { from: 'doing', to: 'paused', action: 'pause' },
+  { from: 'paused', to: 'doing', action: 'start' },
+  { from: 'todo', to: 'done', action: 'complete' },
+  { from: 'doing', to: 'done', action: 'complete' },
+  { from: 'paused', to: 'done', action: 'complete' },
+];
+
+const categories = [
+  { name: 'inbox', desc: 'Status = todo AND no reminderTime' },
+  { name: 'today', desc: 'Due today OR status = doing' },
+  { name: 'doing', desc: 'Status = doing' },
+  { name: 'paused', desc: 'Status = paused' },
+  { name: 'planned', desc: 'Has a reminderTime' },
+  { name: 'completed', desc: 'Status = done' },
+  { name: 'all', desc: 'All tasks' },
+];
+
+function methodBadge(method: string) {
+  const map: Record<string, string> = {
+    'GET': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    'POST': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    'PATCH': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    'DELETE': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return map[method] || '';
+}
+---
+
+<BaseLayout lang={lang} title={t('apiDocs.metaTitle')} description={t('apiDocs.metaDesc')}>
+  <Navbar lang={lang} t={t} />
+
+  <main id="main-content" class="pt-24 pb-20">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="mb-12">
+        <div class="flex items-center gap-3 mb-4">
+          <a href={`/${lang}/`} class="text-sm text-muted dark:text-muted-dark hover:text-primary transition-colors">
+            MoliTodo
+          </a>
+          <span class="text-muted dark:text-muted-dark">/</span>
+          <span class="text-sm text-text dark:text-text-dark font-medium">{t('apiDocs.title')}</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark mb-4">
+          {t('apiDocs.title')}
+        </h1>
+        <p class="text-lg text-muted dark:text-muted-dark max-w-3xl">
+          {t('apiDocs.subtitle')}
+        </p>
+      </div>
+
+      <!-- Overview cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div class="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          <h3 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-1">{t('apiDocs.baseUrl')}</h3>
+          <code class="text-sm text-primary font-mono">http://127.0.0.1:1234</code>
+          <p class="text-xs text-muted dark:text-muted-dark mt-1">{t('apiDocs.baseUrlDesc')}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          <h3 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-1">{t('apiDocs.cors')}</h3>
+          <code class="text-sm text-primary font-mono">Access-Control-Allow-Origin: *</code>
+          <p class="text-xs text-muted dark:text-muted-dark mt-1">{t('apiDocs.corsDesc')}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          <h3 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-1">{t('apiDocs.auth')}</h3>
+          <span class="text-sm text-green-600 dark:text-green-400 font-medium">None</span>
+          <p class="text-xs text-muted dark:text-muted-dark mt-1">{t('apiDocs.authDesc')}</p>
+        </div>
+        <div class="p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          <h3 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-1">{t('apiDocs.contentType')}</h3>
+          <code class="text-sm text-primary font-mono">application/json</code>
+          <p class="text-xs text-muted dark:text-muted-dark mt-1">{t('apiDocs.contentTypeDesc')}</p>
+        </div>
+      </div>
+
+      <!-- Error format -->
+      <div class="mb-12 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800">
+        <h3 class="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">{t('apiDocs.errorFormat')}</h3>
+        <pre class="text-sm text-red-700 dark:text-red-300 font-mono"><code>{`{
+  "success": false,
+  "error": "<error message>"
+}`}</code></pre>
+      </div>
+
+      <!-- Task Status Lifecycle -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('apiDocs.statusLifecycle')}</h2>
+        <p class="text-muted dark:text-muted-dark mb-6">{t('apiDocs.statusLifecycleDesc')}</p>
+        <div class="flex flex-wrap gap-3 items-center justify-center p-6 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          {statusTransitions.map((tr) => (
+            <div class="flex items-center gap-2">
+              <span class={`px-3 py-1 rounded-full text-sm font-mono font-medium ${
+                tr.from === 'todo' ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' :
+                tr.from === 'doing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                tr.from === 'paused' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              }`}>{tr.from}</span>
+              <span class="text-xs text-muted dark:text-muted-dark px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded font-mono">{tr.action}</span>
+              <svg class="w-4 h-4 text-muted dark:text-muted-dark rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+              <span class={`px-3 py-1 rounded-full text-sm font-mono font-medium ${
+                tr.to === 'doing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                tr.to === 'paused' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              }`}>{tr.to}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Smart Categories -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('apiDocs.categories')}</h2>
+        <p class="text-muted dark:text-muted-dark mb-6">{t('apiDocs.categoriesDesc')}</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border dark:border-border-dark">
+                <th class="text-start py-3 px-4 font-semibold text-text dark:text-text-dark">{t('apiDocs.field')}</th>
+                <th class="text-start py-3 px-4 font-semibold text-text dark:text-text-dark">{t('apiDocs.description')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((cat) => (
+                <tr class="border-b border-border dark:border-border-dark last:border-0">
+                  <td class="py-3 px-4"><code class="text-primary font-mono text-sm">{cat.name}</code></td>
+                  <td class="py-3 px-4 text-muted dark:text-muted-dark font-mono text-xs">{cat.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Endpoints -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-8">{t('apiDocs.endpoints')}</h2>
+
+        <div class="space-y-8">
+          {endpoints.map((ep, idx) => (
+            <article id={`ep-${idx}`} class="bg-white dark:bg-gray-800/50 rounded-2xl border border-border dark:border-border-dark overflow-hidden">
+              <!-- Endpoint header -->
+              <div class="flex items-center gap-3 px-6 py-4 border-b border-border dark:border-border-dark bg-gray-50 dark:bg-gray-800/30">
+                <span class={`px-2.5 py-1 rounded-md text-xs font-bold font-mono ${methodBadge(ep.method)}`}>
+                  {ep.method}
+                </span>
+                <code class="text-sm font-mono text-text dark:text-text-dark">{ep.path}</code>
+              </div>
+
+              <div class="px-6 py-5">
+                <h3 class="text-lg font-semibold text-text dark:text-text-dark mb-1">
+                  {t(`apiDocs.ep.${ep.summaryKey}.summary`)}
+                </h3>
+                <p class="text-sm text-muted dark:text-muted-dark mb-5">
+                  {t(`apiDocs.ep.${ep.descKey}.desc`)}
+                </p>
+
+                <!-- Query Parameters -->
+                {ep.params && (
+                  <div class="mb-5">
+                    <h4 class="text-sm font-semibold text-text dark:text-text-dark mb-3">{t('apiDocs.parameters')}</h4>
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-sm">
+                        <thead>
+                          <tr class="border-b border-border dark:border-border-dark">
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.field')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.type')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.required')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.description')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ep.params.map((p) => (
+                            <tr class="border-b border-border dark:border-border-dark last:border-0">
+                              <td class="py-2 px-3"><code class="text-primary font-mono text-xs">{p.name}</code></td>
+                              <td class="py-2 px-3"><code class="text-muted dark:text-muted-dark font-mono text-xs">{p.type}</code></td>
+                              <td class="py-2 px-3">
+                                {p.required ? (
+                                  <span class="text-xs text-red-600 dark:text-red-400 font-medium">{t('apiDocs.required')}</span>
+                                ) : (
+                                  <span class="text-xs text-muted dark:text-muted-dark">{t('apiDocs.optional')}</span>
+                                )}
+                              </td>
+                              <td class="py-2 px-3 text-muted dark:text-muted-dark text-xs">{p.desc}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <!-- Request Body Parameters -->
+                {ep.bodyParams && (
+                  <div class="mb-5">
+                    <h4 class="text-sm font-semibold text-text dark:text-text-dark mb-3">{t('apiDocs.parameters')} (JSON Body)</h4>
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-sm">
+                        <thead>
+                          <tr class="border-b border-border dark:border-border-dark">
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.field')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.type')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.required')}</th>
+                            <th class="text-start py-2 px-3 font-medium text-muted dark:text-muted-dark text-xs">{t('apiDocs.description')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ep.bodyParams.map((p) => (
+                            <tr class="border-b border-border dark:border-border-dark last:border-0">
+                              <td class="py-2 px-3"><code class="text-primary font-mono text-xs">{p.name}</code></td>
+                              <td class="py-2 px-3"><code class="text-muted dark:text-muted-dark font-mono text-xs">{p.type}</code></td>
+                              <td class="py-2 px-3">
+                                {p.required ? (
+                                  <span class="text-xs text-red-600 dark:text-red-400 font-medium">{t('apiDocs.required')}</span>
+                                ) : (
+                                  <span class="text-xs text-muted dark:text-muted-dark">{t('apiDocs.optional')}</span>
+                                )}
+                              </td>
+                              <td class="py-2 px-3 text-muted dark:text-muted-dark text-xs">{p.desc}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <!-- Side Effects -->
+                {ep.sideEffects && (
+                  <div class="mb-5 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p class="text-xs text-amber-800 dark:text-amber-300">
+                      <strong>{t('apiDocs.sideEffects')}:</strong> {ep.sideEffects}
+                    </p>
+                  </div>
+                )}
+
+                <!-- Code examples -->
+                <div class="grid lg:grid-cols-2 gap-4">
+                  <div>
+                    <h4 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-2">{t('apiDocs.example')}</h4>
+                    <pre class="p-4 bg-gray-900 dark:bg-black/50 rounded-xl text-xs text-gray-100 font-mono overflow-x-auto"><code>{ep.curlExample}</code></pre>
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-semibold text-muted dark:text-muted-dark uppercase tracking-wider mb-2">{t('apiDocs.response')}</h4>
+                    <pre class="p-4 bg-gray-900 dark:bg-black/50 rounded-xl text-xs text-gray-100 font-mono overflow-x-auto"><code>{ep.responseExample}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- Task Data Model -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('apiDocs.taskModel')}</h2>
+        <p class="text-muted dark:text-muted-dark mb-6">{t('apiDocs.taskModelDesc')}</p>
+        <div class="overflow-x-auto bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border dark:border-border-dark">
+                <th class="text-start py-3 px-4 font-semibold text-text dark:text-text-dark">{t('apiDocs.field')}</th>
+                <th class="text-start py-3 px-4 font-semibold text-text dark:text-text-dark">{t('apiDocs.type')}</th>
+                <th class="text-start py-3 px-4 font-semibold text-text dark:text-text-dark">{t('apiDocs.description')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {taskFields.map((f) => (
+                <tr class="border-b border-border dark:border-border-dark last:border-0">
+                  <td class="py-3 px-4"><code class="text-primary font-mono text-sm">{f.name}</code></td>
+                  <td class="py-3 px-4"><code class="text-muted dark:text-muted-dark font-mono text-sm">{f.type}</code></td>
+                  <td class="py-3 px-4 text-muted dark:text-muted-dark">{f.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Notes -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('apiDocs.notes')}</h2>
+        <ul class="space-y-3">
+          {[1,2,3,4,5].map((i) => (
+            <li class="flex gap-3">
+              <span class="flex-shrink-0 w-6 h-6 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-primary text-xs font-bold">{i}</span>
+              <span class="text-sm text-muted dark:text-muted-dark">{t(`apiDocs.note${i}`)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <Footer lang={lang} t={t} />
+</BaseLayout>

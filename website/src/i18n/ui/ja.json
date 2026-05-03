@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "title": "MoliTodo - AI搭載フローティングデスクトップタスクマネージャー",
+    "description": "AI搭載のフローティングデスクトップタスク管理アプリ。シンプルでインテリジェント、かつ効率的なタスク管理を実現。100%ローカル保存、オープンソースで無料。"
+  },
+  "nav": {
+    "features": "機能",
+    "ai": "AI",
+    "download": "ダウンロード",
+    "github": "GitHub",
+    "language": "言語"
+  },
+  "hero": {
+    "tagline": "タスク管理をシンプルに、インテリジェントに、効率的に",
+    "subtitle": "AI搭載のフローティングデスクトップタスクマネージャー。画面端に常駐し、ワンクリックでアクセス可能。100%ローカル保存、永久に無料でオープンソース。",
+    "ctaDownload": "無料ダウンロード",
+    "ctaGitHub": "ソースを見る",
+    "version": "v1.3.0"
+  },
+  "features": {
+    "title": "充実した機能、すべてここに",
+    "subtitle": "MoliTodoは、フローティングクイックアクセスからAIによる自動生成まで、タスク管理に必要なすべてを統合しています。",
+    "floating": {
+      "title": "フローティングデスクトップアイコン",
+      "description": "デスクトップ端に常に最前面に表示されるフローティングアイコンにタスク数バッジが表示されます。クリックでタスクパネルを開き、独立したフローティングタスクウィンドウでワークフローを中断しません。",
+      "screenshot": "floating-icon-demo.png"
+    },
+    "aiTask": {
+      "title": "AIタスク生成",
+      "description": "自然言語で要件を伝えるだけで、AIが自動的に構造化されたタスクリストに分解します。OpenAI、Gemini、Claude、Grokなどに対応。スマートな時間推定とストリーミング出力。",
+      "screenshot": "ai-task-generation.png"
+    },
+    "aiReport": {
+      "title": "AI業務レポート",
+      "description": "ワンクリックで日次・週次レポートを生成。タスクの完了状況を自動分析。カスタマイズ可能なMarkdownテンプレートとストリーミング生成に対応。",
+      "screenshot": "ai-work-reports.png"
+    },
+    "calendar": {
+      "title": "カレンダービュー",
+      "description": "日・週・月のビューモード。空きスロットをクリックしてすばやくタスクを作成。タスクリストパネルの統合、今日のハイライト、繰り返しタスクのインスタンス表示に対応。",
+      "screenshot": "unified-calendar.png"
+    },
+    "kanban": {
+      "title": "かんばんボード",
+      "description": "ドラッグ＆ドロップのかんばん管理。「未着手」「進行中」「一時停止」「完了」のカラムでタスクの進捗を可視化し、優先度をすばやく調整できます。",
+      "screenshot": "kanban.png"
+    },
+    "recurring": {
+      "title": "繰り返しタスク",
+      "description": "日次、週次、月次、年次の繰り返しパターンに対応。カスタム間隔、複数日選択、終了条件、インスタンスの個別上書きを含むシリーズ管理。",
+      "screenshot": "recurring-tasks.png"
+    },
+    "timeTracking": {
+      "title": "時間管理",
+      "description": "開始、一時停止、完了のワークフローを内蔵。各タスクの作業時間を正確に記録。合計時間、平均所要時間、効率データの統計機能。",
+      "screenshot": "setting-statistics.png"
+    },
+    "api": {
+      "title": "ローカルAPIサーバー",
+      "description": "AIエージェントや自動化ツール向けのタスク管理エンドポイントを提供する内蔵REST APIサーバー。完全なCRUD操作を備えたOpenAPI仕様。",
+      "screenshot": "local-api.png"
+    },
+    "privacy": {
+      "title": "プライバシー最優先",
+      "description": "100%ローカルSQLiteストレージ。データはパソコンから外に出ません。クラウド依存なし、テレメトリなし、MITライセンスのオープンソース。",
+      "screenshot": "setting-import-export.png"
+    },
+    "themes": {
+      "title": "複数テーマ",
+      "description": "ライト、ダーク、システム追従モード。4つのカラーテーマ：デフォルトブルー、Twitter、Morandi Mist、ミントグリーン。ウィンドウ間リアルタイム同期。",
+      "screenshot": "setting-themes.png"
+    },
+    "stats": {
+      "title": "統計",
+      "description": "GitHubスタイルのアクティビティヒートマップ、日別ステータス推移チャート、完了率統計、作業時間分析。作業パターンを包括的に把握できます。",
+      "screenshot": "setting-statistics.png"
+    },
+    "importExport": {
+      "title": "インポート・エクスポート",
+      "description": "JSON形式による完全なデータバックアップとリストア。タスクとリストの一括エクスポートに対応。安心のデータ移行、データを完全にコントロール。",
+      "screenshot": "setting-import-export.png"
+    }
+  },
+  "ai": {
+    "title": "AIの力で、生産性を解放",
+    "subtitle": "MoliTodoは複数のAIプロバイダーと深く統合し、AIをタスク管理のアシスタントとして活用できます。",
+    "providers": "対応AIプロバイダー",
+    "naturalLanguage": "自然言語からタスクへ",
+    "naturalLanguageDesc": "要件を伝えるだけで、AIが自動的に理解し、実行可能なタスクリストに分解します。スマートな期限とリマインダーの推定機能付き。",
+    "streaming": "ストリーミング出力",
+    "streamingDesc": "AIの応答がリアルタイムで表示され、待ち時間がゼロに。生成されたタスクをプレビューして一括編集し、ワンクリックで作成。",
+    "reports": "スマートレポート",
+    "reportsDesc": "タスクデータに基づいて業務レポートを自動生成。カスタムテンプレートに対応し、ワンクリックで日次・週次レポートを生成。"
+  },
+  "multiview": {
+    "title": "複数ビュー、全体を把握",
+    "subtitle": "カレンダー、かんばん、リストのビューモードで、さまざまな作業スタイルとシナリオに対応。",
+    "calendar": "カレンダー",
+    "kanban": "かんばん",
+    "list": "リスト",
+    "calendarDesc": "日・週・月単位の詳細度。タスクの時間分布を可視化し、ドラッグで簡単に作成。",
+    "kanbanDesc": "4カラムのかんばんでドラッグ＆ドロップでタスクステータスを管理。「未着手」「進行中」「一時停止」「完了」で流れが明確に。",
+    "listDesc": "検索、フィルター、ソート付きのクラシックリストビュー。サイドバーでリストやスマートカテゴリをすばやく切り替え。",
+    "listScreenshot": "task-manager-demo.png"
+  },
+  "privacy": {
+    "title": "あなたのデータは、あなたのもの",
+    "subtitle": "MoliTodoはプライバシー最優先の設計思想を貫いています。タスクデータは常にあなただけのものです。",
+    "local": "100%ローカルストレージ",
+    "localDesc": "パソコン上に保存されるSQLiteデータベース。超高速のデータ転送、ネットワーク接続は不要。",
+    "openSource": "完全オープンソース",
+    "openSourceDesc": "MITライセンスのオープンソースで、コードは完全に透明。誰でもレビュー、貢献、改善が可能です。",
+    "noTelemetry": "テレメトリなし",
+    "noTelemetryDesc": "使用データの収集も、ユーザー行動のトラッキングも、広告も一切なし。純粋で集中できるツール。",
+    "export": "データの自由",
+    "exportDesc": "JSON形式のインポート・エクスポートで、いつでも簡単にデータを移行可能。ベンダーロックインは一切ありません。"
+  },
+  "download": {
+    "title": "無料ダウンロード、今すぐスタート",
+    "subtitle": "macOSとWindowsに対応。永久に無料、オープンソースだから安心。",
+    "macOS": "macOS",
+    "macOSDesc": "IntelおよびApple Siliconに対応",
+    "windows": "Windows",
+    "windowsDesc": "Windows 10/11 x64に対応",
+    "github": "GitHub",
+    "githubDesc": "ソースコードの閲覧と貢献",
+    "downloadBtn": "ダウンロード",
+    "viewBtn": "閲覧",
+    "note": "注意：macOSユーザーは初回起動時に「システム設定 > プライバシーとセキュリティ」でアプリの実行を許可するか、以下を実行する必要があります："
+  },
+  "footer": {
+    "product": "プロダクト",
+    "resources": "リソース",
+    "community": "コミュニティ",
+    "features": "機能",
+    "download": "ダウンロード",
+    "changelog": "更新履歴",
+    "docs": "ドキュメント",
+    "api": "APIドキュメント",
+    "github": "GitHub",
+    "issues": "問題を報告",
+    "discussions": "ディスカッション",
+    "license": "MITライセンス",
+    "copyright": "© 2025 gusibi. All rights reserved.",
+    "about": "概要"
+  },
+  "apiDocs": {
+    "title": "API ドキュメント",
+    "metaTitle": "MoliTodo API ドキュメント - ローカル REST API リファレンス",
+    "metaDesc": "MoliTodo ローカル REST API 完全リファレンス。タスクとリストのCRUD操作、ステータス管理、検索・フィルタリングをサポート。",
+    "subtitle": "MoliTodo にはローカル REST API サーバーが内蔵されており、AIエージェント、自動化スクリプト、サードパーティツールにタスク管理エンドポイントを提供します。",
+    "baseUrl": "ベース URL",
+    "baseUrlDesc": "デフォルトでは localhost のみでリッスンします。ポートは設定で変更可能です。",
+    "cors": "CORS",
+    "corsDesc": "すべてのレスポンスに CORS ヘッダーが含まれ、任意のオリジンからのアクセスを許可します。",
+    "auth": "認証",
+    "authDesc": "認証は不要です。セキュリティは localhost のみのバインディングに基づいています。",
+    "contentType": "リクエスト形式",
+    "contentTypeDesc": "リクエストボディは JSON 形式を使用。レスポンスも同様に JSON です。",
+    "errorFormat": "エラーレスポンス",
+    "taskModel": "タスクデータモデル",
+    "taskModelDesc": "タスクオブジェクトには以下のフィールドが含まれます：",
+    "statusLifecycle": "タスクステータス遷移",
+    "statusLifecycleDesc": "タスクは以下のステータス遷移をサポートします：",
+    "categories": "スマートカテゴリ",
+    "categoriesDesc": "タスクのフィルタリングに以下のカテゴリを使用できます：",
+    "endpoints": "エンドポイント一覧",
+    "get": "GET",
+    "post": "POST",
+    "patch": "PATCH",
+    "delete": "DELETE",
+    "parameters": "パラメータ",
+    "response": "レスポンス",
+    "example": "リクエスト例",
+    "required": "必須",
+    "optional": "任意",
+    "field": "フィールド",
+    "type": "型",
+    "description": "説明",
+    "noParams": "パラメータ不要",
+    "sideEffects": "副作用",
+    "notes": "利用上の注意",
+    "note1": "現在のタスク状態が重要な場合、書き込み前に読み込みを行ってください。",
+    "note2": "サーバーは localhost のみでリッスンし、ローカル AI エージェントと自動化ツール専用です。",
+    "note3": "タスク ID はベース36エンコードされたタイムスタンプとランダムサフィックスです。",
+    "note4": "リスト ID はミリ秒タイムスタンプです。デフォルトリストの ID は常に 0 です。",
+    "note5": "metadata フィールドは自由形式のオブジェクトです。コメントは metadata.comment に保存されます。",
+    "ep": {
+      "info": {
+        "summary": "サービス情報",
+        "desc": "API サービスのメタデータ（名前、バージョン、関連リンク）を返します。"
+      },
+      "health": {
+        "summary": "ヘルスチェック",
+        "desc": "サービスの稼働状態と現在のタイムスタンプを返します。サービスの可用性確認に使用できます。"
+      },
+      "docs": {
+        "summary": "API ドキュメント",
+        "desc": "エンドポイント一覧と curl コマンド例を含む自己記述型ドキュメントオブジェクトを返します。"
+      },
+      "openapi": {
+        "summary": "OpenAPI 仕様",
+        "desc": "OpenAPI 3.1.0 仕様書を返します。"
+      },
+      "getLists": {
+        "summary": "全リスト取得",
+        "desc": "sortOrder でソートされた全リストを返します。デフォルトリストが常に最初に表示されます。"
+      },
+      "createList": {
+        "summary": "リスト作成",
+        "desc": "新しいタスクリストを作成します。名前は必須、色とアイコンはオプションです。"
+      },
+      "getTasks": {
+        "summary": "タスク検索",
+        "desc": "ステータス、リスト、カテゴリ、キーワードでタスクをフィルタリングできます。デフォルトでは未完了タスクを返します。"
+      },
+      "createTask": {
+        "summary": "タスク作成",
+        "desc": "新しいタスクを作成します。内容は必須、リスト、リマインダー、期限日はオプションです。"
+      },
+      "updateTask": {
+        "summary": "タスク更新",
+        "desc": "タスクフィールドを部分的に更新します。内容、ステータス、リマインダー、リストなどをサポートします。"
+      },
+      "deleteTask": {
+        "summary": "タスク削除",
+        "desc": "タスクを削除し、リマインダーをキャンセルします。タスクが存在しない場合も成功を返します。"
+      },
+      "startTask": {
+        "summary": "タスク開始",
+        "desc": "タスクを未着手または一時停止から進行中に変更し、開始時刻を記録します。"
+      },
+      "pauseTask": {
+        "summary": "タスク一時停止",
+        "desc": "進行中のタスクを一時停止し、経過時間を累積します。"
+      },
+      "completeTask": {
+        "summary": "タスク完了",
+        "desc": "タスクを完了し、完了時刻を記録、残り作業時間を累積、リマインダーをキャンセルします。"
+      }
+    }
+  },
+  "about": {
+    "title": "MoliTodo について",
+    "metaTitle": "MoliTodo について - AI搭載フローディングデスクトップタスクマネージャー",
+    "metaDesc": "MoliTodoのストーリー、設計思想、技術アーキテクチャをご紹介。",
+    "storyTitle": "私たちのストーリー",
+    "storyP1": "MoliTodoは、あるシンプルな観察から生まれました。従来のToDoアプリは常にウィンドウの切り替えを必要とし、ワークフローを中断してしまいます。良いタスク管理ツールは空気のように自然に存在すべきだと考えています。",
+    "storyP2": "そのため、MoliTodoはユニークなフローティングアイコンデザインを採用しています。デスクトップの端に小さなアイコンが常駐し、現在のタスク数を表示します。クリックでタスクパネルを開き、集中作業時には個別のタスクを独立したフローティングウィンドウとしてポップアウトできます。",
+    "storyP3": "AI技術の進化に伴い、複数のAIサービスをMoliTodoに統合しました。自然言語でニーズを伝えるとAIが自動的に構造化タスクに分解し、ワンクリックで日次・週次レポートを生成できます。",
+    "philosophyTitle": "設計思想",
+    "philosophy1Title": "邪魔しない",
+    "philosophy1Desc": "MoliTodoはポップアップで作業を中断することはありません。デスクトップの隅に静かに佇み、必要な時だけ現れます。",
+    "philosophy2Title": "プライバシー最優先",
+    "philosophy2Desc": "すべてのデータはローカルのSQLiteデータベースに保存され、クラウドにアップロードされることはありません。テレメトリもトラッキングも広告もなし。",
+    "philosophy3Title": "オープンソース",
+    "philosophy3Desc": "MoliTodoはMITライセンスで公開されています。ソースコードの閲覧、問題報告、貢献が誰にでも可能です。",
+    "philosophy4Title": "AI搭載",
+    "philosophy4Desc": "OpenAI、Gemini、Claude、Grokなどと深く統合。AIはあなたの判断を置き換えるのではなく、タスク管理アシスタントとして機能します。",
+    "techTitle": "技術アーキテクチャ",
+    "techDesc": "MoliTodoはモダンな技術スタックで構築されています：",
+    "techElectron": "Electron - macOSとWindows対応のクロスプラットフォームフレームワーク",
+    "techVue": "Vue 3 - Composition API採用のリアクティブフロントエンド",
+    "techSQLite": "SQLite - 高性能ローカルデータベース",
+    "techVite": "Vite - 高速ビルドツール",
+    "techTailwind": "Tailwind CSS - ユーティリティファーストのCSS",
+    "techAI": "Vercel AI SDK - 統一AIプロバイダー抽象レイヤー",
+    "opensourceTitle": "オープンソースコミュニティ",
+    "opensourceDesc": "MoliTodoは活発なオープンソースプロジェクトです：",
+    "opensource1": "Issueでバグ報告や機能提案",
+    "opensource2": "ForkしてPull Requestを提出",
+    "opensource3": "ドキュメントと国際化の改善",
+    "opensource4": "使用Tipsとベストプラクティスの共有",
+    "versionTitle": "バージョン情報",
+    "versionCurrent": "現在のバージョン",
+    "versionLicense": "ライセンス",
+    "versionPlatforms": "対応プラットフォーム",
+    "versionPlatformsDesc": "macOS (Intel / Apple Silicon), Windows (x64)",
+    "footer": {
+      "about": "概要"
+    }
+  }
+}

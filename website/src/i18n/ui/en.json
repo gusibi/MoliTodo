@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "title": "MoliTodo - AI-Powered Floating Desktop Task Manager",
+    "description": "AI-powered floating desktop task management app. Making task management simple, intelligent, and efficient. 100% local storage, open source and free."
+  },
+  "nav": {
+    "features": "Features",
+    "ai": "AI",
+    "download": "Download",
+    "github": "GitHub",
+    "language": "Language"
+  },
+  "hero": {
+    "tagline": "Making Task Management Simple, Intelligent, and Efficient",
+    "subtitle": "AI-powered floating desktop task manager. Lives on the edge of your screen, one-click access, 100% local storage, free and open source forever.",
+    "ctaDownload": "Download Free",
+    "ctaGitHub": "View Source",
+    "version": "v1.3.0"
+  },
+  "features": {
+    "title": "Powerful Features, All in One Place",
+    "subtitle": "MoliTodo integrates everything you need for task management, from floating quick access to AI-powered generation.",
+    "floating": {
+      "title": "Floating Desktop Icon",
+      "description": "An always-on-top floating icon on your desktop edge showing task count badge. Click to open the task panel, with independent floating task windows that never interrupt your workflow.",
+      "screenshot": "floating-icon-demo.png"
+    },
+    "aiTask": {
+      "title": "AI Task Generation",
+      "description": "Describe your needs in natural language and AI automatically breaks them into structured task lists. Supports OpenAI, Gemini, Claude, Grok, and more. Smart time inference with streaming output.",
+      "screenshot": "ai-task-generation.png"
+    },
+    "aiReport": {
+      "title": "AI Work Reports",
+      "description": "Generate daily/weekly work reports with one click. Automatically analyzes task completion status. Supports customizable Markdown templates with streaming generation.",
+      "screenshot": "ai-work-reports.png"
+    },
+    "calendar": {
+      "title": "Calendar Views",
+      "description": "Day, week, and month view modes. Click empty slots to quickly create tasks. Integrated task list panel, today highlighting, and recurring task instance display.",
+      "screenshot": "unified-calendar.png"
+    },
+    "kanban": {
+      "title": "Kanban Board",
+      "description": "Drag-and-drop kanban management with Todo, In Progress, Paused, and Done columns. Visualize task progress and quickly adjust priorities.",
+      "screenshot": "kanban.png"
+    },
+    "recurring": {
+      "title": "Recurring Tasks",
+      "description": "Support daily, weekly, monthly, and yearly recurrence patterns. Custom intervals, multi-day selection, end conditions, series management with instance overrides.",
+      "screenshot": "recurring-tasks.png"
+    },
+    "timeTracking": {
+      "title": "Time Tracking",
+      "description": "Built-in start, pause, and complete workflow. Accurately records work duration for each task. Statistics for total time, average duration, and efficiency data.",
+      "screenshot": "setting-statistics.png"
+    },
+    "api": {
+      "title": "Local API Server",
+      "description": "Built-in REST API server providing task management endpoints for AI agents and automation tools. OpenAPI spec with full CRUD operations.",
+      "screenshot": "local-api.png"
+    },
+    "privacy": {
+      "title": "Privacy First",
+      "description": "100% local SQLite storage. Your data never leaves your computer. No cloud dependency, no telemetry, open source with MIT license.",
+      "screenshot": "setting-import-export.png"
+    },
+    "themes": {
+      "title": "Multiple Themes",
+      "description": "Light, dark, and system-following modes. Four color themes: Default Blue, Twitter, Morandi Mist, and Mint Green. Cross-window real-time sync.",
+      "screenshot": "setting-themes.png"
+    },
+    "stats": {
+      "title": "Statistics",
+      "description": "GitHub-style activity heatmap, daily status trend charts, completion rate stats, and work time analysis. Understand your work patterns comprehensively.",
+      "screenshot": "setting-statistics.png"
+    },
+    "importExport": {
+      "title": "Import & Export",
+      "description": "Complete JSON format data backup and restore, supporting full export of tasks and lists. Worry-free data migration with full control over your data.",
+      "screenshot": "setting-import-export.png"
+    }
+  },
+  "ai": {
+    "title": "AI Intelligence, Unleash Productivity",
+    "subtitle": "MoliTodo deeply integrates multiple AI providers to make artificial intelligence your task management assistant.",
+    "providers": "Supported AI Providers",
+    "naturalLanguage": "Natural Language to Tasks",
+    "naturalLanguageDesc": "Describe your needs and AI automatically understands and breaks them into executable task lists with smart deadline and reminder inference.",
+    "streaming": "Streaming Output",
+    "streamingDesc": "AI responses display in real-time, no more waiting. Preview and batch-edit generated tasks before creating them with one click.",
+    "reports": "Smart Reports",
+    "reportsDesc": "Automatically generate work reports based on task data. Supports custom templates with one-click daily/weekly report generation."
+  },
+  "multiview": {
+    "title": "Multiple Views, Full Overview",
+    "subtitle": "Calendar, kanban, and list view modes to adapt to different work habits and scenarios.",
+    "calendar": "Calendar",
+    "kanban": "Kanban",
+    "list": "List",
+    "calendarDesc": "Day/week/month granularity. Visualize task time distribution with drag-to-create at a glance.",
+    "kanbanDesc": "Four-column kanban for drag-and-drop task status management. Todo, In Progress, Paused, Done — clear flow.",
+    "listDesc": "Classic list view with search, filter, and sort. Sidebar for quick list and smart category switching.",
+    "listScreenshot": "task-manager-demo.png"
+  },
+  "privacy": {
+    "title": "Your Data, Your Control",
+    "subtitle": "MoliTodo upholds a privacy-first design philosophy. Your task data always belongs only to you.",
+    "local": "100% Local Storage",
+    "localDesc": "SQLite database stored on your computer. Blazing fast data transfer, no network connection required.",
+    "openSource": "Fully Open Source",
+    "openSourceDesc": "MIT licensed open source with completely transparent code. Anyone can review, contribute, and improve.",
+    "noTelemetry": "No Telemetry",
+    "noTelemetryDesc": "No usage data collected, no user behavior tracking, no ads. A pure, focused tool.",
+    "export": "Data Freedom",
+    "exportDesc": "JSON format import/export with easy data migration anytime. No vendor lock-in whatsoever."
+  },
+  "download": {
+    "title": "Download Free, Start Now",
+    "subtitle": "Available for macOS and Windows. Free forever, open source peace of mind.",
+    "macOS": "macOS",
+    "macOSDesc": "Intel and Apple Silicon supported",
+    "windows": "Windows",
+    "windowsDesc": "Windows 10/11 x64 supported",
+    "github": "GitHub",
+    "githubDesc": "View source code and contribute",
+    "downloadBtn": "Download",
+    "viewBtn": "View",
+    "note": "Note: macOS users may need to allow the app in System Settings > Privacy & Security on first launch, or run:"
+  },
+  "footer": {
+    "product": "Product",
+    "resources": "Resources",
+    "community": "Community",
+    "features": "Features",
+    "download": "Download",
+    "changelog": "Changelog",
+    "docs": "Documentation",
+    "api": "API Docs",
+    "github": "GitHub",
+    "issues": "Report Issues",
+    "discussions": "Discussions",
+    "license": "MIT License",
+    "copyright": "© 2025 gusibi. All rights reserved.",
+    "about": "About"
+  },
+  "apiDocs": {
+    "title": "API Documentation",
+    "metaTitle": "MoliTodo API Docs - Local REST API Reference",
+    "metaDesc": "Complete MoliTodo local REST API reference. Supports task and list CRUD operations, status management, search and filtering.",
+    "subtitle": "MoliTodo includes a built-in local REST API server, providing task management endpoints for AI agents, automation scripts, and third-party tools.",
+    "baseUrl": "Base URL",
+    "baseUrlDesc": "Listens on localhost only by default. Port is configurable in settings.",
+    "cors": "CORS",
+    "corsDesc": "All responses include CORS headers, allowing access from any origin.",
+    "auth": "Authentication",
+    "authDesc": "No authentication required. Security is based on localhost-only binding.",
+    "contentType": "Content Type",
+    "contentTypeDesc": "Request bodies use JSON format. Responses are also JSON.",
+    "errorFormat": "Error Response",
+    "taskModel": "Task Data Model",
+    "taskModelDesc": "Task objects include the following fields:",
+    "statusLifecycle": "Task Status Lifecycle",
+    "statusLifecycleDesc": "Tasks support the following status transitions:",
+    "categories": "Smart Categories",
+    "categoriesDesc": "The following categories are available for task filtering:",
+    "endpoints": "Endpoints",
+    "get": "GET",
+    "post": "POST",
+    "patch": "PATCH",
+    "delete": "DELETE",
+    "parameters": "Parameters",
+    "response": "Response",
+    "example": "Example",
+    "required": "Required",
+    "optional": "Optional",
+    "field": "Field",
+    "type": "Type",
+    "description": "Description",
+    "noParams": "No parameters",
+    "sideEffects": "Side Effects",
+    "notes": "Notes",
+    "note1": "Read before writing when current task state matters.",
+    "note2": "Server only listens on localhost — designed for local AI agents and automation tools.",
+    "note3": "Task IDs are base-36 encoded timestamps with random suffixes.",
+    "note4": "List IDs are millisecond timestamps. The default list always has ID 0.",
+    "note5": "The metadata field is a free-form object. Comments are stored at metadata.comment.",
+    "ep": {
+      "info": {
+        "summary": "Service Info",
+        "desc": "Returns API service metadata including name, version, and related links."
+      },
+      "health": {
+        "summary": "Health Check",
+        "desc": "Returns service health status and current timestamp. Use to verify the service is running."
+      },
+      "docs": {
+        "summary": "API Docs",
+        "desc": "Returns a self-describing docs object with endpoint listing and curl examples."
+      },
+      "openapi": {
+        "summary": "OpenAPI Spec",
+        "desc": "Returns an OpenAPI 3.1.0 specification document."
+      },
+      "getLists": {
+        "summary": "Get All Lists",
+        "desc": "Returns all lists sorted by sortOrder. The default list is always first."
+      },
+      "createList": {
+        "summary": "Create List",
+        "desc": "Creates a new task list. Requires a name; color and icon are optional."
+      },
+      "getTasks": {
+        "summary": "Query Tasks",
+        "desc": "Query tasks with filters for status, list, category, and keyword. Returns incomplete tasks by default."
+      },
+      "createTask": {
+        "summary": "Create Task",
+        "desc": "Creates a new task. Requires content; list, reminder time, due date are optional."
+      },
+      "updateTask": {
+        "summary": "Update Task",
+        "desc": "Partially updates task fields. Supports content, status, reminder time, list, and more."
+      },
+      "deleteTask": {
+        "summary": "Delete Task",
+        "desc": "Deletes a task and cancels its reminder. Returns success even if task doesn't exist."
+      },
+      "startTask": {
+        "summary": "Start Task",
+        "desc": "Transitions task from todo or paused to doing. Records the startedAt timestamp."
+      },
+      "pauseTask": {
+        "summary": "Pause Task",
+        "desc": "Pauses an in-progress task. Accumulates elapsed time into totalDuration."
+      },
+      "completeTask": {
+        "summary": "Complete Task",
+        "desc": "Completes a task, records completion time, accumulates remaining work time, and cancels reminders."
+      }
+    }
+  },
+  "about": {
+    "title": "About MoliTodo",
+    "metaTitle": "About MoliTodo - AI-Powered Floating Desktop Task Manager",
+    "metaDesc": "Learn about MoliTodo story, design philosophy, and technical architecture. An AI-powered floating desktop task management tool.",
+    "storyTitle": "Our Story",
+    "storyP1": "MoliTodo was born from a simple observation: traditional to-do apps always require you to switch windows and interrupt your workflow. We believe a good task management tool should exist as naturally as air - invisible when you do not need it, right at your fingertips when you do.",
+    "storyP2": "That is why MoliTodo uses a unique floating icon design. A small icon lives on the edge of your desktop, showing your current task count. Click it to open the task panel, or pop individual tasks into independent floating windows for focused work.",
+    "storyP3": "As AI technology evolved, we integrated multiple AI services into MoliTodo. Now you can describe your needs in natural language and AI will automatically break them into structured tasks, or generate daily and weekly work reports with one click.",
+    "philosophyTitle": "Design Philosophy",
+    "philosophy1Title": "Non-Intrusive",
+    "philosophy1Desc": "MoliTodo never interrupts your work with pop-ups. It quietly sits in the corner of your desktop, appearing only when you need it.",
+    "philosophy2Title": "Privacy First",
+    "philosophy2Desc": "All data is stored in a local SQLite database - never uploaded to any cloud. No telemetry, no tracking, no ads. Your task data belongs only to you.",
+    "philosophy3Title": "Open Source",
+    "philosophy3Desc": "MoliTodo is licensed under MIT. Anyone can inspect the source code, report issues, or contribute. We believe transparency is the foundation of trust.",
+    "philosophy4Title": "AI-Powered",
+    "philosophy4Desc": "Deep integration with OpenAI, Gemini, Claude, Grok and more - AI becomes your task management assistant, not a replacement for your judgment.",
+    "techTitle": "Technical Architecture",
+    "techDesc": "MoliTodo is built with a modern tech stack ensuring performance, stability, and extensibility:",
+    "techElectron": "Electron - Cross-platform desktop framework for macOS and Windows",
+    "techVue": "Vue 3 - Reactive frontend framework with Composition API",
+    "techSQLite": "SQLite - High-performance local database, zero config, zero dependencies",
+    "techVite": "Vite - Lightning-fast build tool for smooth development experience",
+    "techTailwind": "Tailwind CSS - Utility-first CSS framework",
+    "techAI": "Vercel AI SDK - Unified AI provider abstraction layer",
+    "opensourceTitle": "Open Source Community",
+    "opensourceDesc": "MoliTodo is an active open source project. All forms of contribution are welcome:",
+    "opensource1": "Submit Issues to report bugs or suggest features",
+    "opensource2": "Fork the repository and submit Pull Requests",
+    "opensource3": "Improve documentation and internationalization",
+    "opensource4": "Share usage tips and best practices",
+    "versionTitle": "Version Info",
+    "versionCurrent": "Current Version",
+    "versionLicense": "License",
+    "versionPlatforms": "Platforms",
+    "versionPlatformsDesc": "macOS (Intel / Apple Silicon), Windows (x64)",
+    "footer": {
+      "about": "About"
+    }
+  }
+}

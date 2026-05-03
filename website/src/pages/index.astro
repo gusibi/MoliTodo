@@ -1,0 +1,32 @@
+---
+// Root page - redirect to default locale
+const detectScript = `
+  (function() {
+    const supported = ['zh','en','ja','ko','fr','de','es','pt','ru','ar'];
+    const saved = localStorage.getItem('lang');
+    if (saved && supported.includes(saved)) {
+      window.location.replace('/' + saved + '/');
+      return;
+    }
+    const nav = navigator.language.toLowerCase();
+    const match = supported.find(l => nav.startsWith(l)) || 'zh';
+    window.location.replace('/' + match + '/');
+  })();
+`;
+---
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="index, follow" />
+  <title>MoliTodo</title>
+  <link rel="canonical" href="https://molitodo.com/" />
+  <meta http-equiv="refresh" content="0;url=/zh/" />
+  <script is:inline set:html={detectScript} />
+</head>
+<body>
+  <p>Redirecting to <a href="/zh/">MoliTodo</a>...</p>
+</body>
+</html>

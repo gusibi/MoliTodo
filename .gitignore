@@ -4,6 +4,7 @@
 .DS_Store
 .idea/
 .vscode/
+.codebuddy/
 .vercel/
 *.suo
 *.log

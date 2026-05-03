@@ -1,0 +1,148 @@
+---
+import type { Locale } from '../i18n/utils';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  lang: Locale;
+  t: (key: string) => string;
+}
+
+const { lang, t } = Astro.props;
+
+const navLinks = [
+  { href: '#features', label: t('nav.features') },
+  { href: '#ai', label: t('nav.ai') },
+  { href: '#download', label: t('nav.download') },
+];
+---
+
+<header class="fixed top-0 start-0 end-0 z-40 bg-white/80 dark:bg-bg-dark/80 backdrop-blur-lg border-b border-transparent">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href={`/${lang}/`} class="flex items-center gap-2.5">
+        <img src="/favicon.png" alt="MoliTodo" class="w-8 h-8 rounded-lg" width="32" height="32" />
+        <span class="text-lg font-bold text-text dark:text-text-dark">MoliTodo</span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-1">
+        {navLinks.map((link) => (
+          <a
+            href={link.href}
+            class="px-4 py-2 text-sm text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {link.label}
+          </a>
+        ))}
+        <a
+          href="https://github.com/gusibi/MoliTodo"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="px-4 py-2 text-sm text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          GitHub
+        </a>
+        <div class="w-px h-6 bg-border dark:bg-border-dark mx-1"></div>
+        <LanguageSwitcher currentLang={lang} id="lang-desktop" />
+        <button
+          id="theme-toggle"
+          class="p-2 text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile menu button -->
+      <div class="flex md:hidden items-center gap-2">
+        <LanguageSwitcher currentLang={lang} id="lang-mobile" />
+        <button
+          id="theme-toggle-mobile"
+          class="p-2 text-muted dark:text-muted-dark rounded-lg"
+          aria-label="Toggle dark mode"
+        >
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+        <button
+          id="mobile-menu-toggle"
+          class="p-2 text-muted dark:text-muted-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          aria-expanded="false"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden pb-4">
+      <div class="flex flex-col gap-1">
+        {navLinks.map((link) => (
+          <a
+            href={link.href}
+            class="px-4 py-2.5 text-sm text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {link.label}
+          </a>
+        ))}
+        <a
+          href="https://github.com/gusibi/MoliTodo"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="px-4 py-2.5 text-sm text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Theme toggle
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+    document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+    document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggleTheme);
+
+    // Mobile menu
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileToggle?.addEventListener('click', () => {
+      const isOpen = !mobileMenu.classList.contains('hidden');
+      mobileMenu.classList.toggle('hidden');
+      mobileToggle.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    // Close mobile menu on link click
+    mobileMenu?.querySelectorAll('a').forEach((a) => {
+      a.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+    // Navbar border on scroll
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 10) {
+        header?.classList.add('border-border', 'dark:border-border-dark');
+      } else {
+        header?.classList.remove('border-border', 'dark:border-border-dark');
+      }
+    });
+  });
+</script>

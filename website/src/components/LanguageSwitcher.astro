@@ -1,0 +1,74 @@
+---
+import type { Locale } from '../i18n/utils';
+import { locales, localeNames } from '../i18n/utils';
+
+interface Props {
+  currentLang: Locale;
+  id?: string;
+}
+
+const { currentLang, id = 'lang' } = Astro.props;
+
+function getLangPath(lang: string) {
+  return `/${lang}/`;
+}
+---
+
+<div class="relative" id={`${id}-switcher`}>
+  <button
+    id={`${id}-toggle`}
+    class="flex items-center gap-1.5 px-3 py-2 text-sm text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    aria-expanded="false"
+    aria-haspopup="true"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+    </svg>
+    <span>{localeNames[currentLang]}</span>
+    <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+  <div
+    id={`${id}-menu`}
+    class="hidden absolute end-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-border dark:border-border-dark py-1 z-50"
+    role="menu"
+  >
+    {locales.map((lang) => (
+      <a
+        href={getLangPath(lang)}
+        class={`block px-4 py-2 text-sm transition-colors ${
+          lang === currentLang
+            ? 'text-primary bg-blue-50 dark:bg-blue-900/20 font-medium'
+            : 'text-text dark:text-text-dark hover:bg-gray-100 dark:hover:bg-gray-700'
+        }`}
+        role="menuitem"
+        hreflang={lang}
+      >
+        {localeNames[lang]}
+      </a>
+    ))}
+  </div>
+</div>
+
+<script is:inline define:vars={{ id }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById(`${id}-toggle`);
+    const menu = document.getElementById(`${id}-menu`);
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = !menu.classList.contains('hidden');
+      menu.classList.toggle('hidden');
+      toggle.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+        menu.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+</script>

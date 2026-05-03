@@ -1,0 +1,98 @@
+---
+import type { Locale } from '../i18n/utils';
+
+interface Props {
+  lang: Locale;
+  t: (key: string) => string;
+}
+
+const { lang, t } = Astro.props;
+
+const releasesUrl = 'https://github.com/gusibi/MoliTodo/releases/latest';
+
+const platforms = [
+  {
+    key: 'macOS',
+    icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 00 2 2z',
+    url: releasesUrl,
+    download: true,
+  },
+  {
+    key: 'windows',
+    icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    url: releasesUrl,
+    download: true,
+  },
+  {
+    key: 'github',
+    icon: 'M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z',
+    url: 'https://github.com/gusibi/MoliTodo',
+    download: false,
+  },
+];
+---
+
+<section id="download" class="py-20 sm:py-28 relative overflow-hidden">
+  <!-- Background -->
+  <div class="absolute inset-0 -z-10 bg-gradient-to-b from-blue-500/5 via-transparent to-transparent"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark mb-4">
+        {t('download.title')}
+      </h2>
+      <p class="text-lg text-muted dark:text-muted-dark max-w-2xl mx-auto">
+        {t('download.subtitle')}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+      {platforms.map((platform) => (
+        <a
+          href={platform.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class={`group flex flex-col items-center p-8 rounded-2xl border-2 transition-all ${
+            platform.download
+              ? 'border-primary/20 hover:border-primary hover:shadow-lg hover:shadow-primary/10 bg-white dark:bg-gray-800/50'
+              : 'border-border dark:border-border-dark hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-800/50'
+          }`}
+        >
+          <div class={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${
+            platform.download
+              ? 'bg-primary/10 text-primary'
+              : 'bg-gray-100 dark:bg-gray-700 text-muted dark:text-muted-dark'
+          }`}>
+            <svg class="w-8 h-8" fill={platform.key === 'github' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d={platform.icon} />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-text dark:text-text-dark mb-1">
+            {t(`download.${platform.key}`)}
+          </h3>
+          <p class="text-sm text-muted dark:text-muted-dark text-center mb-4">
+            {t(`download.${platform.key}Desc`)}
+          </p>
+          <span class={`inline-flex items-center gap-1.5 text-sm font-medium ${
+            platform.download ? 'text-primary' : 'text-muted dark:text-muted-dark'
+          }`}>
+            {platform.download ? t('download.downloadBtn') : t('download.viewBtn')}
+            <svg class="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </span>
+        </a>
+      ))}
+    </div>
+
+    <!-- macOS quarantine note -->
+    <div class="mt-8 max-w-2xl mx-auto p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
+      <p class="text-sm text-amber-800 dark:text-amber-200">
+        <strong>{t('download.note')}</strong>
+      </p>
+      <code class="block mt-2 p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg text-xs text-amber-900 dark:text-amber-100 font-mono break-all">
+        xattr -cr /Applications/MoliTodo.app
+      </code>
+    </div>
+  </div>
+</section>

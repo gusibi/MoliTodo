@@ -1,0 +1,88 @@
+---
+import type { Locale } from '../i18n/utils';
+
+interface Props {
+  lang: Locale;
+  t: (key: string) => string;
+}
+
+const { lang, t } = Astro.props;
+
+const aiProviders = [
+  { name: 'OpenAI', color: '#10a37f' },
+  { name: 'Google Gemini', color: '#4285f4' },
+  { name: 'Claude', color: '#d97706' },
+  { name: 'Grok', color: '#1d9bf0' },
+];
+
+const capabilities = [
+  { key: 'naturalLanguage', icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
+  { key: 'streaming', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { key: 'reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+];
+---
+
+<section id="ai" class="py-20 sm:py-28 bg-gray-50 dark:bg-gray-900/30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark mb-4">
+        {t('ai.title')}
+      </h2>
+      <p class="text-lg text-muted dark:text-muted-dark max-w-2xl mx-auto">
+        {t('ai.subtitle')}
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-16">
+      <!-- AI demo image -->
+      <div class="order-2 lg:order-1">
+        <div class="rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+          <img
+            src="/screenshots/ai-task-generation.png"
+            alt="MoliTodo AI task generation"
+            class="w-full h-auto"
+            loading="lazy"
+            width="1200"
+            height="800"
+          />
+        </div>
+      </div>
+
+      <!-- Capabilities -->
+      <div class="order-1 lg:order-2 space-y-8">
+        {capabilities.map((cap) => (
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d={cap.icon} />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-text dark:text-text-dark mb-1">
+                {t(`ai.${cap.key}`)}
+              </h3>
+              <p class="text-muted dark:text-muted-dark leading-relaxed">
+                {t(`ai.${cap.key}Desc`)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- AI Provider badges -->
+    <div class="text-center">
+      <p class="text-sm font-medium text-muted dark:text-muted-dark mb-4">{t('ai.providers')}</p>
+      <div class="flex flex-wrap justify-center gap-3">
+        {aiProviders.map((provider) => (
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full border border-border dark:border-border-dark text-sm font-medium text-text dark:text-text-dark"
+          >
+            <span class="w-2.5 h-2.5 rounded-full" style={`background-color: ${provider.color}`}></span>
+            {provider.name}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

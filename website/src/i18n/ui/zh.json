@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "title": "MoliTodo - AI智能悬浮式待办事项应用",
+    "description": "AI智能驱动的悬浮式桌面待办事项应用。让任务管理变得简单、智能、高效。100%本地存储，开源免费。"
+  },
+  "nav": {
+    "features": "功能",
+    "ai": "AI",
+    "download": "下载",
+    "github": "GitHub",
+    "language": "语言"
+  },
+  "hero": {
+    "tagline": "让任务管理变得简单、智能、高效",
+    "subtitle": "AI智能驱动的悬浮式桌面待办事项管理工具。常驻桌面边缘，一键触达，100%本地存储，永久免费开源。",
+    "ctaDownload": "免费下载",
+    "ctaGitHub": "查看源码",
+    "version": "v1.3.0"
+  },
+  "features": {
+    "title": "强大功能，一应俱全",
+    "subtitle": "MoliTodo 集成了任务管理所需的一切功能，从悬浮快捷操作到AI智能生成，满足你的所有需求。",
+    "floating": {
+      "title": "悬浮桌面图标",
+      "description": "常驻桌面边缘的悬浮图标，显示待办数量徽章。点击即可展开任务面板，支持独立悬浮任务窗口，工作时不打断你的思路。",
+      "screenshot": "floating-icon-demo.png"
+    },
+    "aiTask": {
+      "title": "AI智能生成任务",
+      "description": "用自然语言描述你的需求，AI自动拆解为结构化任务列表。支持OpenAI、Gemini、Claude、Grok等多个AI服务商，智能推断时间，流式输出。",
+      "screenshot": "ai-task-generation.png"
+    },
+    "aiReport": {
+      "title": "AI工作报告",
+      "description": "一键生成每日/每周工作报告，自动分析任务完成情况。支持自定义Markdown模板，流式生成，一键复制。",
+      "screenshot": "ai-work-reports.png"
+    },
+    "calendar": {
+      "title": "日历视图",
+      "description": "日视图、周视图、月视图三种模式，点击空白时段快速创建任务。集成任务列表面板，今日高亮，循环任务实例展示。",
+      "screenshot": "unified-calendar.png"
+    },
+    "kanban": {
+      "title": "看板视图",
+      "description": "拖拽式看板管理，待办、进行中、暂停、完成四列布局。直观掌控任务进度，快速调整优先级。",
+      "screenshot": "kanban.png"
+    },
+    "recurring": {
+      "title": "循环任务",
+      "description": "支持每日、每周、每月、每年四种循环模式。自定义间隔、多选日期、结束条件，系列管理与实例覆盖。",
+      "screenshot": "recurring-tasks.png"
+    },
+    "timeTracking": {
+      "title": "时间追踪",
+      "description": "内置开始、暂停、完成工作流，精确记录每个任务的工作时长。统计总工时、平均用时、效率数据。",
+      "screenshot": "setting-statistics.png"
+    },
+    "api": {
+      "title": "本地API服务",
+      "description": "内置REST API服务器，为AI Agent和自动化工具提供任务管理接口。支持OpenAPI规范，完整的CRUD操作。",
+      "screenshot": "local-api.png"
+    },
+    "privacy": {
+      "title": "隐私优先",
+      "description": "100%本地SQLite存储，数据不离开你的电脑。无云端依赖，无遥测数据，开源透明，MIT许可证。",
+      "screenshot": "setting-import-export.png"
+    },
+    "themes": {
+      "title": "多主题切换",
+      "description": "支持亮色/暗色/跟随系统三种模式。默认蓝、Twitter、莫兰迪薄雾、薄荷绿四种配色主题，跨窗口实时同步。",
+      "screenshot": "setting-themes.png"
+    },
+    "stats": {
+      "title": "数据统计",
+      "description": "GitHub风格活跃热力图、每日状态趋势图、完成率统计、工时分析。全面了解你的工作模式。",
+      "screenshot": "setting-statistics.png"
+    },
+    "importExport": {
+      "title": "数据导入导出",
+      "description": "完整的JSON格式数据备份与恢复，支持任务和列表的全量导出。数据迁移无忧，随时掌控数据安全。",
+      "screenshot": "setting-import-export.png"
+    }
+  },
+  "ai": {
+    "title": "AI智能，释放生产力",
+    "subtitle": "MoliTodo 深度集成多家AI服务商，让人工智能成为你的任务管理助手。",
+    "providers": "支持的AI服务商",
+    "naturalLanguage": "自然语言转任务",
+    "naturalLanguageDesc": "描述你的需求，AI自动理解并拆解为可执行的任务列表，智能推断截止时间和提醒。",
+    "streaming": "流式输出",
+    "streamingDesc": "AI响应实时显示，不再等待。支持预览和批量编辑生成的任务后一键创建。",
+    "reports": "智能报告",
+    "reportsDesc": "基于任务数据自动生成工作报告，支持自定义模板，每日/每周报告一键生成。"
+  },
+  "multiview": {
+    "title": "多视图，总览全局",
+    "subtitle": "日历、看板、列表三种视图模式，适配不同的工作习惯和场景需求。",
+    "calendar": "日历",
+    "kanban": "看板",
+    "list": "列表",
+    "calendarDesc": "日/周/月三种粒度，可视化任务时间分布，拖拽创建，一目了然。",
+    "kanbanDesc": "四列看板，拖拽管理任务状态。待办、进行中、暂停、完成，清晰流转。",
+    "listDesc": "经典列表视图，支持搜索、筛选、排序。侧边栏快速切换列表和智能分类。",
+    "listScreenshot": "task-manager-demo.png"
+  },
+  "privacy": {
+    "title": "你的数据，你做主",
+    "subtitle": "MoliTodo 坚持隐私优先的设计理念，你的任务数据永远只属于你自己。",
+    "local": "100%本地存储",
+    "localDesc": "SQLite数据库存储在你的电脑上，数据传输速度极快，无需网络连接。",
+    "openSource": "完全开源",
+    "openSourceDesc": "MIT许可证开源，代码完全透明。任何人都可以审查、贡献和改进。",
+    "noTelemetry": "无遥测数据",
+    "noTelemetryDesc": "不收集任何使用数据，不追踪用户行为，不投放广告。纯粹的工具。",
+    "export": "数据自由",
+    "exportDesc": "JSON格式导入导出，数据可随时迁移。没有任何锁定机制。"
+  },
+  "download": {
+    "title": "免费下载，即刻开始",
+    "subtitle": "支持 macOS 和 Windows 平台，永久免费，开源无忧。",
+    "macOS": "macOS",
+    "macOSDesc": "支持 Intel 和 Apple Silicon",
+    "windows": "Windows",
+    "windowsDesc": "支持 Windows 10/11 x64",
+    "github": "GitHub",
+    "githubDesc": "查看源码，参与贡献",
+    "downloadBtn": "下载",
+    "viewBtn": "查看",
+    "note": "注意：macOS 用户首次打开可能需要在「系统设置 > 隐私与安全性」中允许运行，或执行："
+  },
+  "footer": {
+    "product": "产品",
+    "resources": "资源",
+    "community": "社区",
+    "features": "功能介绍",
+    "download": "下载",
+    "changelog": "更新日志",
+    "docs": "文档",
+    "api": "API 文档",
+    "github": "GitHub",
+    "issues": "问题反馈",
+    "discussions": "社区讨论",
+    "license": "MIT 许可证",
+    "copyright": "© 2025 gusibi. 保留所有权利。",
+    "about": "关于"
+  },
+  "apiDocs": {
+    "title": "API 文档",
+    "metaTitle": "MoliTodo API 文档 - 本地 REST API 参考",
+    "metaDesc": "MoliTodo 本地 REST API 完整参考文档。支持任务和清单的 CRUD 操作、状态管理、搜索筛选等功能。",
+    "subtitle": "MoliTodo 内置本地 REST API 服务器，为 AI Agent、自动化脚本和第三方工具提供任务管理接口。",
+    "baseUrl": "基础 URL",
+    "baseUrlDesc": "默认仅监听本地回环地址，端口可在设置中配置。",
+    "cors": "跨域支持",
+    "corsDesc": "所有响应均包含 CORS 头，允许任意来源访问。",
+    "auth": "认证",
+    "authDesc": "无需认证。安全基于仅监听 localhost 的特性。",
+    "contentType": "请求格式",
+    "contentTypeDesc": "请求体使用 JSON 格式，响应体同样为 JSON。",
+    "errorFormat": "错误响应",
+    "taskModel": "任务数据模型",
+    "taskModelDesc": "任务对象包含以下字段：",
+    "statusLifecycle": "任务状态流转",
+    "statusLifecycleDesc": "任务支持以下状态转换：",
+    "categories": "智能分类",
+    "categoriesDesc": "查询任务时可使用以下分类进行筛选：",
+    "endpoints": "接口列表",
+    "get": "查询",
+    "post": "创建",
+    "patch": "更新",
+    "delete": "删除",
+    "parameters": "请求参数",
+    "response": "响应示例",
+    "example": "请求示例",
+    "required": "必填",
+    "optional": "可选",
+    "field": "字段",
+    "type": "类型",
+    "description": "说明",
+    "noParams": "无需参数",
+    "sideEffects": "副作用",
+    "notes": "使用说明",
+    "note1": "写入操作前建议先读取当前任务状态。",
+    "note2": "服务器仅监听 localhost，专为本地 AI Agent 和自动化工具设计。",
+    "note3": "任务 ID 为 base-36 编码的时间戳加随机后缀。",
+    "note4": "清单 ID 为毫秒时间戳，默认清单 ID 为 0。",
+    "note5": "metadata 字段为自由格式对象，评论存储在 metadata.comment 中。",
+    "ep": {
+      "info": {
+        "summary": "服务信息",
+        "desc": "返回 API 服务基本信息，包括名称、版本和相关链接。"
+      },
+      "health": {
+        "summary": "健康检查",
+        "desc": "返回服务运行状态和当前时间戳，可用于检测服务是否可用。"
+      },
+      "docs": {
+        "summary": "API 文档",
+        "desc": "返回自描述的 API 文档对象，包含接口列表和 curl 示例。"
+      },
+      "openapi": {
+        "summary": "OpenAPI 规范",
+        "desc": "返回 OpenAPI 3.1.0 规范文档。"
+      },
+      "getLists": {
+        "summary": "获取所有清单",
+        "desc": "返回所有清单列表，按 sortOrder 排序，默认清单始终排在第一位。"
+      },
+      "createList": {
+        "summary": "创建清单",
+        "desc": "创建一个新的任务清单，需指定名称，可选颜色和图标。"
+      },
+      "getTasks": {
+        "summary": "查询任务",
+        "desc": "查询任务列表。支持按状态、清单、分类、关键词筛选。默认返回未完成任务。"
+      },
+      "createTask": {
+        "summary": "创建任务",
+        "desc": "创建新任务。需指定内容，可选清单、提醒时间、截止日期等。"
+      },
+      "updateTask": {
+        "summary": "更新任务",
+        "desc": "部分更新任务字段。支持修改内容、状态、提醒时间、清单等。"
+      },
+      "deleteTask": {
+        "summary": "删除任务",
+        "desc": "删除指定任务，同时取消该任务的提醒通知。任务不存在时静默返回成功。"
+      },
+      "startTask": {
+        "summary": "开始任务",
+        "desc": "将任务状态从待办或暂停转为进行中，记录开始时间。"
+      },
+      "pauseTask": {
+        "summary": "暂停任务",
+        "desc": "将进行中的任务暂停，累计已用时间，清除开始时间。"
+      },
+      "completeTask": {
+        "summary": "完成任务",
+        "desc": "完成任务，累计剩余工时，记录完成时间，取消提醒通知。"
+      }
+    }
+  },
+  "about": {
+    "title": "关于 MoliTodo",
+    "metaTitle": "关于 MoliTodo - AI智能悬浮式待办事项应用",
+    "metaDesc": "了解 MoliTodo 的故事、设计理念和技术架构。一款AI智能驱动的悬浮式桌面待办事项管理工具。",
+    "storyTitle": "我们的故事",
+    "storyP1": "MoliTodo 诞生于一个简单的观察：传统的待办事项应用总是需要你切换窗口、打断工作流。我们相信，好的任务管理工具应该像空气一样自然存在——你不需要时它不会打扰你，需要时它就在手边。",
+    "storyP2": "于是，MoliTodo 采用了独特的「悬浮图标」设计。一个小巧的图标常驻在桌面边缘，显示当前待办数量。点击即可展开任务面板，需要专注时还能把单个任务弹出为独立悬浮窗口。整个过程中，你不需要离开当前的工作窗口。",
+    "storyP3": "随着 AI 技术的发展，我们进一步将多款 AI 服务集成到 MoliTodo 中。现在，你可以用自然语言描述需求，AI 会自动帮你拆解成结构化任务；也可以一键生成每日或每周的工作报告。任务管理从此变得更加智能高效。",
+    "philosophyTitle": "设计理念",
+    "philosophy1Title": "不打扰",
+    "philosophy1Desc": "MoliTodo 永远不会主动弹窗打断你的工作。它安静地待在桌面角落，只有你需要时才出现。",
+    "philosophy2Title": "隐私至上",
+    "philosophy2Desc": "所有数据存储在本地 SQLite 数据库中，不上传到任何云端。没有遥测、没有追踪、没有广告。你的任务数据只属于你自己。",
+    "philosophy3Title": "开源透明",
+    "philosophy3Desc": "MoliTodo 采用 MIT 开源许可证，任何人都可以查看源代码、报告问题、提交贡献。我们相信透明是信任的基础。",
+    "philosophy4Title": "AI 赋能",
+    "philosophy4Desc": "深度集成 OpenAI、Gemini、Claude、Grok 等多家 AI 服务商，让人工智能成为你的任务管理助手，而非取代你的判断。",
+    "techTitle": "技术架构",
+    "techDesc": "MoliTodo 采用现代化的技术栈构建，确保性能、稳定性和可扩展性：",
+    "techElectron": "Electron — 跨平台桌面应用框架，支持 macOS 和 Windows",
+    "techVue": "Vue 3 — 响应式前端框架，采用 Composition API",
+    "techSQLite": "SQLite — 高性能本地数据库，零配置、零依赖",
+    "techVite": "Vite — 极速构建工具，开发体验流畅",
+    "techTailwind": "Tailwind CSS — 实用优先的 CSS 框架",
+    "techAI": "Vercel AI SDK — 统一的 AI 服务商抽象层",
+    "opensourceTitle": "开源社区",
+    "opensourceDesc": "MoliTodo 是一个活跃的开源项目，欢迎任何形式的贡献：",
+    "opensource1": "提交 Issue 报告 Bug 或提出功能建议",
+    "opensource2": "Fork 仓库并提交 Pull Request",
+    "opensource3": "完善文档和国际化翻译",
+    "opensource4": "分享使用心得和最佳实践",
+    "versionTitle": "版本信息",
+    "versionCurrent": "当前版本",
+    "versionLicense": "开源许可",
+    "versionPlatforms": "支持平台",
+    "versionPlatformsDesc": "macOS (Intel / Apple Silicon)、Windows (x64)",
+    "footer": {
+      "about": "关于"
+    }
+  }
+}

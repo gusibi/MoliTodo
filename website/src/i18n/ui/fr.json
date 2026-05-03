@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "title": "MoliTodo - Gestionnaire de Tâches Flottant pour Bureau Propulsé par IA",
+    "description": "Application de gestion de tâches flottante propulsée par IA. Gestion simple, intelligente et efficace. Stockage 100 % local, open source et gratuit."
+  },
+  "nav": {
+    "features": "Fonctionnalités",
+    "ai": "IA",
+    "download": "Télécharger",
+    "github": "GitHub",
+    "language": "Langue"
+  },
+  "hero": {
+    "tagline": "Rendre la Gestion des Tâches Simple, Intelligente et Efficace",
+    "subtitle": "Gestionnaire de tâches flottant pour bureau propulsé par IA. S'installe en bord d'écran, accès en un clic, stockage 100 % local, gratuit et open source pour toujours.",
+    "ctaDownload": "Télécharger Gratuitement",
+    "ctaGitHub": "Voir le Code Source",
+    "version": "v1.3.0"
+  },
+  "features": {
+    "title": "Des Fonctionnalités Puissantes, Tout en Un",
+    "subtitle": "MoliTodo regroupe tout ce dont vous avez besoin pour gérer vos tâches, de l'accès rapide flottant à la génération par IA.",
+    "floating": {
+      "title": "Icône Flottante sur le Bureau",
+      "description": "Une icône toujours visible en bord d'écran affichant un badge avec le nombre de tâches. Cliquez pour ouvrir le panneau de tâches, avec des fenêtres flottantes indépendantes qui ne perturbent jamais votre flux de travail.",
+      "screenshot": "floating-icon-demo.png"
+    },
+    "aiTask": {
+      "title": "Génération de Tâches par IA",
+      "description": "Décrivez vos besoins en langage naturel et l'IA les décompose automatiquement en listes de tâches structurées. Prend en charge OpenAI, Gemini, Claude, Grok et plus encore. Inférence intelligente des délais avec sortie en continu.",
+      "screenshot": "ai-task-generation.png"
+    },
+    "aiReport": {
+      "title": "Rapports de Travail par IA",
+      "description": "Générez des rapports de travail quotidiens/hebdomadaires en un clic. Analyse automatique de l'état d'avancement des tâches. Prend en charge des modèles Markdown personnalisables avec génération en continu.",
+      "screenshot": "ai-work-reports.png"
+    },
+    "calendar": {
+      "title": "Vues Calendrier",
+      "description": "Modes d'affichage jour, semaine et mois. Cliquez sur un créneau vide pour créer rapidement une tâche. Panneau de liste de tâches intégré, mise en surbrillance du jour et affichage des instances de tâches récurrentes.",
+      "screenshot": "unified-calendar.png"
+    },
+    "kanban": {
+      "title": "Tableau Kanban",
+      "description": "Gestion kanban par glisser-déposer avec les colonnes À faire, En cours, En pause et Terminé. Visualisez l'avancement des tâches et ajustez rapidement les priorités.",
+      "screenshot": "kanban.png"
+    },
+    "recurring": {
+      "title": "Tâches Récurrentes",
+      "description": "Prend en charge les motifs de récurrence quotidiens, hebdomadaires, mensuels et annuels. Intervalles personnalisés, sélection multi-jours, conditions de fin, gestion des séries avec remplacements d'instances.",
+      "screenshot": "recurring-tasks.png"
+    },
+    "timeTracking": {
+      "title": "Suivi du Temps",
+      "description": "Workflow intégré de démarrage, pause et finalisation. Enregistre précisément la durée de travail pour chaque tâche. Statistiques sur le temps total, la durée moyenne et l'efficacité.",
+      "screenshot": "setting-statistics.png"
+    },
+    "api": {
+      "title": "Serveur API Local",
+      "description": "Serveur REST API intégré fournissant des endpoints de gestion de tâches pour les agents IA et les outils d'automatisation. Spécification OpenAPI avec opérations CRUD complètes.",
+      "screenshot": "local-api.png"
+    },
+    "privacy": {
+      "title": "Confidentialité Avant Tout",
+      "description": "Stockage 100 % local avec SQLite. Vos données ne quittent jamais votre ordinateur. Aucune dépendance au cloud, aucune télémétrie, open source sous licence MIT.",
+      "screenshot": "setting-import-export.png"
+    },
+    "themes": {
+      "title": "Thèmes Multiples",
+      "description": "Modes clair, sombre et suivi du système. Quatre thèmes de couleurs : Bleu par défaut, Twitter, Brume Morandi et Menthe. Synchronisation en temps réel entre les fenêtres.",
+      "screenshot": "setting-themes.png"
+    },
+    "stats": {
+      "title": "Statistiques",
+      "description": "Carte d'activité de style GitHub, graphiques de tendance quotidienne, taux de complétion et analyse du temps de travail. Comprenez vos habitudes de travail en profondeur.",
+      "screenshot": "setting-statistics.png"
+    },
+    "importExport": {
+      "title": "Import et Export",
+      "description": "Sauvegarde et restauration complètes au format JSON, avec export intégral des tâches et des listes. Migration de données sans souci et contrôle total de vos données.",
+      "screenshot": "setting-import-export.png"
+    }
+  },
+  "ai": {
+    "title": "L'Intelligence Artificielle au Service de la Productivité",
+    "subtitle": "MoliTodo intègre en profondeur plusieurs fournisseurs d'IA pour faire de l'intelligence artificielle votre assistant de gestion de tâches.",
+    "providers": "Fournisseurs d'IA Pris en Charge",
+    "naturalLanguage": "Du Langage Naturel aux Tâches",
+    "naturalLanguageDesc": "Décrivez vos besoins et l'IA les comprend automatiquement pour les décomposer en listes de tâches exécutables, avec inférence intelligente des délais et des rappels.",
+    "streaming": "Sortie en Continu",
+    "streamingDesc": "Les réponses de l'IA s'affichent en temps réel, sans attendre. Prévisualisez et modifiez par lots les tâches générées avant de les créer en un clic.",
+    "reports": "Rapports Intelligents",
+    "reportsDesc": "Générez automatiquement des rapports de travail basés sur les données des tâches. Prend en charge des modèles personnalisés avec génération de rapports quotidiens/hebdomadaires en un clic."
+  },
+  "multiview": {
+    "title": "Vues Multiples, Vue d'Ensemble Complète",
+    "subtitle": "Modes d'affichage calendrier, kanban et liste pour s'adapter à différents styles de travail et scénarios.",
+    "calendar": "Calendrier",
+    "kanban": "Kanban",
+    "list": "Liste",
+    "calendarDesc": "Granularité jour/semaine/mois. Visualisez la distribution temporelle des tâches avec création par glisser-déposer en un coup d'œil.",
+    "kanbanDesc": "Kanban en quatre colonnes pour gérer les statuts des tâches par glisser-déposer. À faire, En cours, En pause, Terminé — un flux clair.",
+    "listDesc": "Vue en liste classique avec recherche, filtre et tri. Barre latérale pour un accès rapide aux listes et aux catégories intelligentes.",
+    "listScreenshot": "task-manager-demo.png"
+  },
+  "privacy": {
+    "title": "Vos Données, Votre Contrôle",
+    "subtitle": "MoliTodo défend une philosophie de conception axée sur la confidentialité. Vos données de tâches vous appartiennent toujours.",
+    "local": "Stockage 100 % Local",
+    "localDesc": "Base de données SQLite stockée sur votre ordinateur. Transfert de données ultra-rapide, aucune connexion réseau requise.",
+    "openSource": "Entièrement Open Source",
+    "openSourceDesc": "Open source sous licence MIT avec un code entièrement transparent. Tout le monde peut le consulter, y contribuer et l'améliorer.",
+    "noTelemetry": "Aucune Télémétrie",
+    "noTelemetryDesc": "Aucune donnée d'utilisation collectée, aucun suivi du comportement utilisateur, aucune publicité. Un outil pur et concentré.",
+    "export": "Liberté des Données",
+    "exportDesc": "Import/Export au format JSON pour une migration de données facile à tout moment. Aucune dépendance envers un fournisseur."
+  },
+  "download": {
+    "title": "Téléchargez Gratuitement, Commencez Maintenant",
+    "subtitle": "Disponible pour macOS et Windows. Gratuit pour toujours, open source en toute sérénité.",
+    "macOS": "macOS",
+    "macOSDesc": "Compatible Intel et Apple Silicon",
+    "windows": "Windows",
+    "windowsDesc": "Compatible Windows 10/11 x64",
+    "github": "GitHub",
+    "githubDesc": "Voir le code source et contribuer",
+    "downloadBtn": "Télécharger",
+    "viewBtn": "Voir",
+    "note": "Remarque : les utilisateurs macOS devront peut-être autoriser l'application dans Réglages Système > Confidentialité et Sécurité au premier lancement, ou exécuter :"
+  },
+  "footer": {
+    "product": "Produit",
+    "resources": "Ressources",
+    "community": "Communauté",
+    "features": "Fonctionnalités",
+    "download": "Télécharger",
+    "changelog": "Journal des Modifications",
+    "docs": "Documentation",
+    "api": "Documentation API",
+    "github": "GitHub",
+    "issues": "Signaler un Problème",
+    "discussions": "Discussions",
+    "license": "Licence MIT",
+    "copyright": "© 2025 gusibi. Tous droits réservés.",
+    "about": "A propos"
+  },
+  "apiDocs": {
+    "title": "Documentation API",
+    "metaTitle": "Documentation API MoliTodo - Référence REST Locale",
+    "metaDesc": "Référence complète de l'API REST locale MoliTodo. Prend en charge les opérations CRUD sur les tâches et listes, la gestion des statuts, la recherche et le filtrage.",
+    "subtitle": "MoliTodo intègre un serveur REST API local, fournissant des endpoints de gestion de tâches pour les agents IA, scripts d'automatisation et outils tiers.",
+    "baseUrl": "URL de base",
+    "baseUrlDesc": "Écoute uniquement sur localhost par défaut. Le port est configurable dans les paramètres.",
+    "cors": "CORS",
+    "corsDesc": "Toutes les réponses incluent des en-têtes CORS, autorisant l'accès depuis n'importe quelle origine.",
+    "auth": "Authentification",
+    "authDesc": "Aucune authentification requise. La sécurité repose sur la liaison localhost uniquement.",
+    "contentType": "Type de contenu",
+    "contentTypeDesc": "Les corps de requête utilisent le format JSON. Les réponses sont également en JSON.",
+    "errorFormat": "Réponse d'erreur",
+    "taskModel": "Modèle de données des tâches",
+    "taskModelDesc": "Les objets tâche contiennent les champs suivants :",
+    "statusLifecycle": "Cycle de vie des statuts",
+    "statusLifecycleDesc": "Les tâches prennent en charge les transitions de statut suivantes :",
+    "categories": "Catégories intelligentes",
+    "categoriesDesc": "Les catégories suivantes sont disponibles pour le filtrage des tâches :",
+    "endpoints": "Liste des endpoints",
+    "get": "GET",
+    "post": "POST",
+    "patch": "PATCH",
+    "delete": "DELETE",
+    "parameters": "Paramètres",
+    "response": "Réponse",
+    "example": "Exemple",
+    "required": "Obligatoire",
+    "optional": "Optionnel",
+    "field": "Champ",
+    "type": "Type",
+    "description": "Description",
+    "noParams": "Aucun paramètre",
+    "sideEffects": "Effets de bord",
+    "notes": "Notes d'utilisation",
+    "note1": "Lisez avant d'écrire lorsque l'état actuel de la tâche est important.",
+    "note2": "Le serveur n'écoute que sur localhost — conçu pour les agents IA et outils d'automatisation locaux.",
+    "note3": "Les ID de tâche sont des timestamps encodés en base-36 avec des suffixes aléatoires.",
+    "note4": "Les ID de liste sont des timestamps en millisecondes. La liste par défaut a toujours l'ID 0.",
+    "note5": "Le champ metadata est un objet libre. Les commentaires sont stockés dans metadata.comment.",
+    "ep": {
+      "info": {
+        "summary": "Informations du service",
+        "desc": "Retourne les métadonnées du service API, y compris le nom, la version et les liens associés."
+      },
+      "health": {
+        "summary": "Vérification de santé",
+        "desc": "Retourne l'état du service et le timestamp actuel. Utilisable pour vérifier la disponibilité du service."
+      },
+      "docs": {
+        "summary": "Documentation API",
+        "desc": "Retourne un objet de documentation auto-descriptif avec la liste des endpoints et des exemples curl."
+      },
+      "openapi": {
+        "summary": "Spécification OpenAPI",
+        "desc": "Retourne un document de spécification OpenAPI 3.1.0."
+      },
+      "getLists": {
+        "summary": "Lister toutes les listes",
+        "desc": "Retourne toutes les listes triées par sortOrder. La liste par défaut est toujours en première position."
+      },
+      "createList": {
+        "summary": "Créer une liste",
+        "desc": "Crée une nouvelle liste de tâches. Le nom est obligatoire ; la couleur et l'icône sont optionnels."
+      },
+      "getTasks": {
+        "summary": "Rechercher des tâches",
+        "desc": "Recherche des tâches avec des filtres par statut, liste, catégorie et mot-clé. Retourne les tâches incomplètes par défaut."
+      },
+      "createTask": {
+        "summary": "Créer une tâche",
+        "desc": "Crée une nouvelle tâche. Le contenu est obligatoire ; la liste, le rappel et la date limite sont optionnels."
+      },
+      "updateTask": {
+        "summary": "Mettre à jour une tâche",
+        "desc": "Mise à jour partielle des champs de la tâche. Prend en charge le contenu, le statut, le rappel, la liste, etc."
+      },
+      "deleteTask": {
+        "summary": "Supprimer une tâche",
+        "desc": "Supprime une tâche et annule son rappel. Retourne un succès même si la tâche n'existe pas."
+      },
+      "startTask": {
+        "summary": "Démarrer une tâche",
+        "desc": "Transitionne la tâche de à faire ou en pause vers en cours. Enregistre le timestamp de début."
+      },
+      "pauseTask": {
+        "summary": "Mettre en pause",
+        "desc": "Met en pause une tâche en cours. Accumule le temps écoulé dans totalDuration."
+      },
+      "completeTask": {
+        "summary": "Terminer une tâche",
+        "desc": "Termine une tâche, enregistre l'heure de fin, accumule le temps restant et annule les rappels."
+      }
+    }
+  },
+  "about": {
+    "title": "A propos de MoliTodo",
+    "metaTitle": "A propos de MoliTodo",
+    "metaDesc": "Decouvrez lhistoire et la philosophie de MoliTodo.",
+    "storyTitle": "Notre histoire",
+    "storyP1": "MoliTodo est ne dune simple observation : les applications traditionnelles necessitent toujours de changer de fenetre.",
+    "storyP2": "Cest pourquoi MoliTodo utilise un icone flottante unique sur le bord de votre bureau.",
+    "storyP3": "Avec lIA, nous avons integre plusieurs services pour decomposer vos besoins en taches structurees.",
+    "philosophyTitle": "Philosophie",
+    "philosophy1Title": "Non intrusif",
+    "philosophy1Desc": "MoliTodo ninterrompt jamais votre travail.",
+    "philosophy2Title": "Confidentialite dabord",
+    "philosophy2Desc": "Toutes les donnees sont stockees localement dans SQLite.",
+    "philosophy3Title": "Open source",
+    "philosophy3Desc": "Sous licence MIT, ouvert a tous.",
+    "philosophy4Title": "Propulse par lIA",
+    "philosophy4Desc": "Integration avec OpenAI, Gemini, Claude, Grok et plus.",
+    "techTitle": "Architecture technique",
+    "techDesc": "Stack technologique moderne :",
+    "techElectron": "Electron - Framework desktop multiplateforme",
+    "techVue": "Vue 3 - Framework frontend reactif",
+    "techSQLite": "SQLite - Base de donnees locale haute performance",
+    "techVite": "Vite - Outil de build ultra-rapide",
+    "techTailwind": "Tailwind CSS - Framework CSS utility-first",
+    "techAI": "Vercel AI SDK - Couche dabstraction IA",
+    "opensourceTitle": "Communaute open source",
+    "opensourceDesc": "Toutes les contributions sont bienvenues :",
+    "opensource1": "Soumettez des Issues pour les bugs",
+    "opensource2": "Fork et Pull Requests",
+    "opensource3": "Ameliorez la documentation",
+    "opensource4": "Partagez vos astuces",
+    "versionTitle": "Version",
+    "versionCurrent": "Version actuelle",
+    "versionLicense": "Licence",
+    "versionPlatforms": "Plateformes",
+    "versionPlatformsDesc": "macOS, Windows (x64)",
+    "footer": {
+      "about": "A propos"
+    }
+  }
+}

@@ -1,0 +1,154 @@
+---
+import type { Locale } from '../i18n/utils';
+
+interface Props {
+  lang: Locale;
+  t: (key: string) => string;
+}
+
+const { lang, t } = Astro.props;
+---
+
+<section class="py-20 sm:py-28">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark mb-4">
+        {t('multiview.title')}
+      </h2>
+      <p class="text-lg text-muted dark:text-muted-dark max-w-2xl mx-auto">
+        {t('multiview.subtitle')}
+      </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-8">
+      <div class="inline-flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1" role="tablist">
+        <button
+          class="view-tab px-6 py-2.5 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 text-text dark:text-text-dark shadow-sm transition-all"
+          data-view="calendar"
+          role="tab"
+          aria-selected="true"
+        >
+          {t('multiview.calendar')}
+        </button>
+        <button
+          class="view-tab px-6 py-2.5 text-sm font-medium rounded-lg text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark transition-all"
+          data-view="kanban"
+          role="tab"
+          aria-selected="false"
+        >
+          {t('multiview.kanban')}
+        </button>
+        <button
+          class="view-tab px-6 py-2.5 text-sm font-medium rounded-lg text-muted dark:text-muted-dark hover:text-text dark:hover:text-text-dark transition-all"
+          data-view="list"
+          role="tab"
+          aria-selected="false"
+        >
+          {t('multiview.list')}
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab content -->
+    <div class="relative">
+      <div class="view-panel" data-view="calendar">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <h3 class="text-2xl font-bold text-text dark:text-text-dark mb-4">
+              {t('multiview.calendar')}
+            </h3>
+            <p class="text-muted dark:text-muted-dark leading-relaxed mb-6">
+              {t('multiview.calendarDesc')}
+            </p>
+          </div>
+          <div class="rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+            <img
+              src="/screenshots/unified-calendar.png"
+              alt="MoliTodo Calendar View"
+              class="w-full h-auto"
+              loading="lazy"
+              width="1200"
+              height="800"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="view-panel hidden" data-view="kanban">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <h3 class="text-2xl font-bold text-text dark:text-text-dark mb-4">
+              {t('multiview.kanban')}
+            </h3>
+            <p class="text-muted dark:text-muted-dark leading-relaxed mb-6">
+              {t('multiview.kanbanDesc')}
+            </p>
+          </div>
+          <div class="rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+            <img
+              src="/screenshots/kanban.png"
+              alt="MoliTodo Kanban Board"
+              class="w-full h-auto"
+              loading="lazy"
+              width="1200"
+              height="800"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="view-panel hidden" data-view="list">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <h3 class="text-2xl font-bold text-text dark:text-text-dark mb-4">
+              {t('multiview.list')}
+            </h3>
+            <p class="text-muted dark:text-muted-dark leading-relaxed mb-6">
+              {t('multiview.listDesc')}
+            </p>
+          </div>
+          <div class="rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+            <img
+              src="/screenshots/task-manager-demo.png"
+              alt="MoliTodo List View"
+              class="w-full h-auto"
+              loading="lazy"
+              width="1200"
+              height="800"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.view-tab');
+    const panels = document.querySelectorAll('.view-panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const view = tab.getAttribute('data-view');
+
+        tabs.forEach((t) => {
+          const isActive = t.getAttribute('data-view') === view;
+          t.classList.toggle('bg-white', isActive);
+          t.classList.toggle('dark:bg-gray-700', isActive);
+          t.classList.toggle('text-text', isActive);
+          t.classList.toggle('dark:text-text-dark', isActive);
+          t.classList.toggle('shadow-sm', isActive);
+          t.classList.toggle('text-muted', !isActive);
+          t.classList.toggle('dark:text-muted-dark', !isActive);
+          t.setAttribute('aria-selected', String(isActive));
+        });
+
+        panels.forEach((panel) => {
+          panel.classList.toggle('hidden', panel.getAttribute('data-view') !== view);
+        });
+      });
+    });
+  });
+</script>

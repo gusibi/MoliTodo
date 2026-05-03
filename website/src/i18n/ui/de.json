@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "title": "MoliTodo - KI-gesteuerter Floating-Desktop-Task-Manager",
+    "description": "KI-gesteuerte Desktop-App zur Aufgabenverwaltung mit schwebendem Icon. Einfach, intelligent und effizient. 100 % lokale Speicherung, Open Source und kostenlos."
+  },
+  "nav": {
+    "features": "Funktionen",
+    "ai": "KI",
+    "download": "Download",
+    "github": "GitHub",
+    "language": "Sprache"
+  },
+  "hero": {
+    "tagline": "Aufgabenverwaltung einfach, intelligent und effizient gestalten",
+    "subtitle": "KI-gesteuerter Floating-Desktop-Task-Manager. Lebt am Bildschirmrand, ein Klick entfernt, 100 % lokale Speicherung, kostenlos und für immer Open Source.",
+    "ctaDownload": "Kostenlos Herunterladen",
+    "ctaGitHub": "Quellcode Ansehen",
+    "version": "v1.3.0"
+  },
+  "features": {
+    "title": "Leistungsstarke Funktionen, alles an einem Ort",
+    "subtitle": "MoliTodo vereint alles, was Sie für die Aufgabenverwaltung brauchen — vom schwebenden Schnellzugriff bis zur KI-gestützten Erstellung.",
+    "floating": {
+      "title": "Schwebendes Desktop-Icon",
+      "description": "Ein immer sichtbares Icon am Bildschirmrand mit einer Aufgabenanzahl-Badge. Klicken Sie, um das Aufgabenpanel zu öffnen — mit unabhängigen schwebenden Aufgabenfenstern, die Ihren Workflow nie unterbrechen.",
+      "screenshot": "floating-icon-demo.png"
+    },
+    "aiTask": {
+      "title": "KI-Aufgabenerstellung",
+      "description": "Beschreiben Sie Ihre Bedürfnisse in natürlicher Sprache und die KI zerlegt sie automatisch in strukturierte Aufgabenlisten. Unterstützt OpenAI, Gemini, Claude, Grok und mehr. Intelligente Zeitanerkennung mit Streaming-Ausgabe.",
+      "screenshot": "ai-task-generation.png"
+    },
+    "aiReport": {
+      "title": "KI-Arbeitsberichte",
+      "description": "Erstellen Sie tägliche/wöchentliche Arbeitsberichte mit einem Klick. Automatische Analyse des Aufgabenstatus. Unterstützt anpassbare Markdown-Vorlagen mit Streaming-Generierung.",
+      "screenshot": "ai-work-reports.png"
+    },
+    "calendar": {
+      "title": "Kalenderansichten",
+      "description": "Tages-, Wochen- und Monatsansichten. Klicken Sie auf leere Zeitschlitze, um schnell Aufgaben zu erstellen. Integriertes Aufgabenlisten-Panel, Hervorhebung des heutigen Tags und Anzeige wiederkehrender Aufgabeninstanzen.",
+      "screenshot": "unified-calendar.png"
+    },
+    "kanban": {
+      "title": "Kanban-Board",
+      "description": "Kanban-Verwaltung per Drag-and-Drop mit den Spalten Offen, In Bearbeitung, Pausiert und Erledigt. Visualisieren Sie den Aufgabenfortschritt und passen Sie Prioritäten schnell an.",
+      "screenshot": "kanban.png"
+    },
+    "recurring": {
+      "title": "Wiederkehrende Aufgaben",
+      "description": "Unterstützt tägliche, wöchentliche, monatliche und jährliche Wiederholungsmuster. Benutzerdefinierte Intervalle, Mehrtagesauswahl, Endbedingungen, Serienverwaltung mit Instanzüberschreibungen.",
+      "screenshot": "recurring-tasks.png"
+    },
+    "timeTracking": {
+      "title": "Zeiterfassung",
+      "description": "Integrierter Workflow zum Starten, Pausieren und Abschließen. Erfasst präzise die Arbeitsdauer für jede Aufgabe. Statistiken über Gesamtzeit, durchschnittliche Dauer und Effizienz.",
+      "screenshot": "setting-statistics.png"
+    },
+    "api": {
+      "title": "Lokaler API-Server",
+      "description": "Integrierter REST-API-Server mit Endpunkten zur Aufgabenverwaltung für KI-Agenten und Automatisierungstools. OpenAPI-Spezifikation mit vollständigen CRUD-Operationen.",
+      "screenshot": "local-api.png"
+    },
+    "privacy": {
+      "title": "Datenschutz zuerst",
+      "description": "100 % lokale SQLite-Speicherung. Ihre Daten verlassen niemals Ihren Computer. Keine Cloud-Abhängigkeit, kein Telemetrie, Open Source unter MIT-Lizenz.",
+      "screenshot": "setting-import-export.png"
+    },
+    "themes": {
+      "title": "Mehrere Themes",
+      "description": "Heller, dunkler und systemgebundener Modus. Vier Farbthemen: Standardblau, Twitter, Morandi Mist und Mintgrün. Echtzeit-Synchronisation über Fenster hinweg.",
+      "screenshot": "setting-themes.png"
+    },
+    "stats": {
+      "title": "Statistiken",
+      "description": "GitHub-Stil Aktivitäts-Heatmap, tägliche Status-Trenddiagramme, Abschlussraten-Statistiken und Arbeitszeit-Analyse. Erkennen Sie Ihre Arbeitsmuster umfassend.",
+      "screenshot": "setting-statistics.png"
+    },
+    "importExport": {
+      "title": "Import & Export",
+      "description": "Vollständige JSON-Datensicherung und -Wiederherstellung mit Export aller Aufgaben und Listen. Sorgenfreie Datenmigration mit voller Kontrolle über Ihre Daten.",
+      "screenshot": "setting-import-export.png"
+    }
+  },
+  "ai": {
+    "title": "KI-Intelligenz, Produktivität entfesseln",
+    "subtitle": "MoliTodo integriert tiefgreifend mehrere KI-Anbieter, um künstliche Intelligenz zu Ihrem Aufgabenverwaltungsassistenten zu machen.",
+    "providers": "Unterstützte KI-Anbieter",
+    "naturalLanguage": "Von natürlicher Sprache zu Aufgaben",
+    "naturalLanguageDesc": "Beschreiben Sie Ihre Bedürfnisse und die KI versteht und zerlegt sie automatisch in ausführbare Aufgabenlisten mit intelligenter Frist- und Erinnerungserkennung.",
+    "streaming": "Streaming-Ausgabe",
+    "streamingDesc": "KI-Antworten werden in Echtzeit angezeigt — kein Warten mehr. Vorschau und Stapelbearbeitung generierter Aufgaben vor der Erstellung mit einem Klick.",
+    "reports": "Intelligente Berichte",
+    "reportsDesc": "Automatische Generierung von Arbeitsberichten auf Basis von Aufgabendaten. Unterstützt benutzerdefinierte Vorlagen mit Ein-Klick-Tages-/Wochenberichtgenerierung."
+  },
+  "multiview": {
+    "title": "Mehrere Ansichten, voller Überblick",
+    "subtitle": "Kalender-, Kanban- und Listenansicht, um sich an verschiedene Arbeitsgewohnheiten und Szenarien anzupassen.",
+    "calendar": "Kalender",
+    "kanban": "Kanban",
+    "list": "Liste",
+    "calendarDesc": "Tages-/Wochen-/Monatsgranularität. Visualisieren Sie die Zeitverteilung von Aufgaben mit Drag-and-Drop-Erstellung auf einen Blick.",
+    "kanbanDesc": "Vier-Spalten-Kanban für Drag-and-Drop-Aufgabenstatusverwaltung. Offen, In Bearbeitung, Pausiert, Erledigt — klarer Workflow.",
+    "listDesc": "Klassische Listenansicht mit Suche, Filter und Sortierung. Seitenleiste für schnellen Listen- und Smart-Kategorie-Wechsel.",
+    "listScreenshot": "task-manager-demo.png"
+  },
+  "privacy": {
+    "title": "Ihre Daten, Ihre Kontrolle",
+    "subtitle": "MoliTodo vertritt eine datenschutzorientierte Designphilosophie. Ihre Aufgabendaten gehören immer nur Ihnen.",
+    "local": "100 % lokale Speicherung",
+    "localDesc": "SQLite-Datenbank auf Ihrem Computer gespeichert. Blitzschnelle Datenübertragung, keine Netzwerkverbindung erforderlich.",
+    "openSource": "Vollständig Open Source",
+    "openSourceDesc": "Open Source unter MIT-Lizenz mit vollständig transparentem Code. Jeder kann ihn einsehen, beitragen und verbessern.",
+    "noTelemetry": "Kein Telemetrie",
+    "noTelemetryDesc": "Keine Nutzungsdaten erhoben, kein Tracking des Nutzerverhaltens, keine Werbung. Ein reines, fokussiertes Werkzeug.",
+    "export": "Datenfreiheit",
+    "exportDesc": "JSON-Format Import/Export für einfache Datenmigration jederzeit. Keinerlei Herstellerabhängigkeit."
+  },
+  "download": {
+    "title": "Kostenlos Herunterladen, Jetzt Starten",
+    "subtitle": "Verfügbar für macOS und Windows. Für immer kostenlos, Open Source mit ruhigem Gewissen.",
+    "macOS": "macOS",
+    "macOSDesc": "Intel und Apple Silicon unterstützt",
+    "windows": "Windows",
+    "windowsDesc": "Windows 10/11 x64 unterstützt",
+    "github": "GitHub",
+    "githubDesc": "Quellcode ansehen und beitragen",
+    "downloadBtn": "Herunterladen",
+    "viewBtn": "Ansehen",
+    "note": "Hinweis: macOS-Benutzer müssen die App beim ersten Start möglicherweise unter Systemeinstellungen > Datenschutz & Sicherheit erlauben, oder folgenden Befehl ausführen:"
+  },
+  "footer": {
+    "product": "Produkt",
+    "resources": "Ressourcen",
+    "community": "Community",
+    "features": "Funktionen",
+    "download": "Download",
+    "changelog": "Änderungsprotokoll",
+    "docs": "Dokumentation",
+    "api": "API-Dokumentation",
+    "github": "GitHub",
+    "issues": "Fehler Melden",
+    "discussions": "Diskussionen",
+    "license": "MIT-Lizenz",
+    "copyright": "© 2025 gusibi. Alle Rechte vorbehalten.",
+    "about": "Uber"
+  },
+  "apiDocs": {
+    "title": "API-Dokumentation",
+    "metaTitle": "MoliTodo API-Dokumentation - Lokale REST-API-Referenz",
+    "metaDesc": "Vollständige MoliTodo lokale REST-API-Referenz. Unterstützt Task- und Listen-CRUD-Operationen, Statusverwaltung, Suche und Filterung.",
+    "subtitle": "MoliTodo enthält einen integrierten lokalen REST-API-Server, der Task-Management-Endpunkte für KI-Agenten, Automatisierungsskripte und Drittanbieter-Tools bereitstellt.",
+    "baseUrl": "Basis-URL",
+    "baseUrlDesc": "Hört standardmäßig nur auf localhost. Der Port ist in den Einstellungen konfigurierbar.",
+    "cors": "CORS",
+    "corsDesc": "Alle Antworten enthalten CORS-Header, die den Zugriff von jeder Quelle erlauben.",
+    "auth": "Authentifizierung",
+    "authDesc": "Keine Authentifizierung erforderlich. Sicherheit basiert auf der localhost-Bindung.",
+    "contentType": "Anfrageformat",
+    "contentTypeDesc": "Anfragetexte verwenden das JSON-Format. Antworten sind ebenfalls JSON.",
+    "errorFormat": "Fehlerantwort",
+    "taskModel": "Aufgaben-Datenmodell",
+    "taskModelDesc": "Aufgabenobjekte enthalten die folgenden Felder:",
+    "statusLifecycle": "Aufgabenstatus-Lebenszyklus",
+    "statusLifecycleDesc": "Aufgaben unterstützen die folgenden Statusübergänge:",
+    "categories": "Intelligente Kategorien",
+    "categoriesDesc": "Die folgenden Kategorien stehen zur Aufgabenfilterung zur Verfügung:",
+    "endpoints": "Endpunkte",
+    "get": "GET",
+    "post": "POST",
+    "patch": "PATCH",
+    "delete": "DELETE",
+    "parameters": "Parameter",
+    "response": "Antwort",
+    "example": "Beispiel",
+    "required": "Erforderlich",
+    "optional": "Optional",
+    "field": "Feld",
+    "type": "Typ",
+    "description": "Beschreibung",
+    "noParams": "Keine Parameter",
+    "sideEffects": "Nebeneffekte",
+    "notes": "Hinweise",
+    "note1": "Lesen Sie vor dem Schreiben, wenn der aktuelle Aufgabenstatus wichtig ist.",
+    "note2": "Der Server hört nur auf localhost — ausgelegt für lokale KI-Agenten und Automatisierungstools.",
+    "note3": "Aufgaben-IDs sind Base-36-codierte Zeitstempel mit zufälligen Suffixen.",
+    "note4": "Listen-IDs sind Millisekunden-Zeitstempel. Die Standardliste hat immer die ID 0.",
+    "note5": "Das metadata-Feld ist ein freiformales Objekt. Kommentare werden in metadata.comment gespeichert.",
+    "ep": {
+      "info": {
+        "summary": "Service-Informationen",
+        "desc": "Gibt API-Service-Metadaten zurück, einschließlich Name, Version und zugehörige Links."
+      },
+      "health": {
+        "summary": "Gesundheitsprüfung",
+        "desc": "Gibt den Service-Status und den aktuellen Zeitstempel zurück. Zur Überprüfung der Verfügbarkeit."
+      },
+      "docs": {
+        "summary": "API-Dokumentation",
+        "desc": "Gibt ein selbstbeschreibendes Dokumentationsobjekt mit Endpunktliste und curl-Beispielen zurück."
+      },
+      "openapi": {
+        "summary": "OpenAPI-Spezifikation",
+        "desc": "Gibt ein OpenAPI 3.1.0-Spezifikationsdokument zurück."
+      },
+      "getLists": {
+        "summary": "Alle Listen abrufen",
+        "desc": "Gibt alle nach sortOrder sortierten Listen zurück. Die Standardliste steht immer an erster Stelle."
+      },
+      "createList": {
+        "summary": "Liste erstellen",
+        "desc": "Erstellt eine neue Aufgabenliste. Name ist erforderlich; Farbe und Icon sind optional."
+      },
+      "getTasks": {
+        "summary": "Aufgaben suchen",
+        "desc": "Filtert Aufgaben nach Status, Liste, Kategorie und Stichwort. Gibt standardmäßig unvollständige Aufgaben zurück."
+      },
+      "createTask": {
+        "summary": "Aufgabe erstellen",
+        "desc": "Erstellt eine neue Aufgabe. Inhalt ist erforderlich; Liste, Erinnerung und Frist sind optional."
+      },
+      "updateTask": {
+        "summary": "Aufgabe aktualisieren",
+        "desc": "Aktualisiert Aufgabenfelder teilweise. Unterstützt Inhalt, Status, Erinnerung, Liste usw."
+      },
+      "deleteTask": {
+        "summary": "Aufgabe löschen",
+        "desc": "Löscht eine Aufgabe und storniert deren Erinnerung. Gibt Erfolg zurück, auch wenn die Aufgabe nicht existiert."
+      },
+      "startTask": {
+        "summary": "Aufgabe starten",
+        "desc": "Wechselt die Aufgabe von Offen oder Pausiert zu In Arbeit. Erfasst den Startzeitpunkt."
+      },
+      "pauseTask": {
+        "summary": "Aufgabe pausieren",
+        "desc": "Pausiert eine laufende Aufgabe. Akkumuliert die verstrichene Zeit in totalDuration."
+      },
+      "completeTask": {
+        "summary": "Aufgabe abschließen",
+        "desc": "Schließt eine Aufgabe ab, erfasst die Abschlusszeit, akkumuliert die verbleibende Arbeitszeit und storniert Erinnerungen."
+      }
+    }
+  },
+  "about": {
+    "title": "Uber MoliTodo",
+    "metaTitle": "Uber MoliTodo",
+    "metaDesc": "Erfahren Sie mehr uber MoliTodo.",
+    "storyTitle": "Unsere Geschichte",
+    "storyP1": "MoliTodo entstand aus einer einfachen Beobachtung: Traditionelle Apps erfordern Fensterwechsel.",
+    "storyP2": "Deshalb verwendet MoliTodo ein schwebendes Icon am Rand Ihres Desktops.",
+    "storyP3": "KI-Integration erlaubt es, Aufgaben in natuerlicher Sprache zu beschreiben.",
+    "philosophyTitle": "Designphilosophie",
+    "philosophy1Title": "Nicht stoerend",
+    "philosophy1Desc": "MoliTodo unterbricht nie Ihre Arbeit.",
+    "philosophy2Title": "Datenschutz zuerst",
+    "philosophy2Desc": "Alle Daten werden lokal in SQLite gespeichert.",
+    "philosophy3Title": "Open Source",
+    "philosophy3Desc": "Unter MIT-Lizenz, offen fuer alle.",
+    "philosophy4Title": "KI-gesteuert",
+    "philosophy4Desc": "Integration mit OpenAI, Gemini, Claude, Grok.",
+    "techTitle": "Technische Architektur",
+    "techDesc": "Moderne Technologie:",
+    "techElectron": "Electron - Plattformuebergreifendes Framework",
+    "techVue": "Vue 3 - Reaktives Frontend-Framework",
+    "techSQLite": "SQLite - Hochleistungs-Lokaldatenbank",
+    "techVite": "Vite - Blitschnelles Build-Tool",
+    "techTailwind": "Tailwind CSS - Utility-first CSS",
+    "techAI": "Vercel AI SDK - KI-Abstraktionsschicht",
+    "opensourceTitle": "Community",
+    "opensourceDesc": "Alle Beitraege sind willkommen:",
+    "opensource1": "Issues fuer Bugs",
+    "opensource2": "Fork und Pull Requests",
+    "opensource3": "Dokumentation verbessern",
+    "opensource4": "Tipps teilen",
+    "versionTitle": "Version",
+    "versionCurrent": "Aktuelle Version",
+    "versionLicense": "Lizenz",
+    "versionPlatforms": "Plattformen",
+    "versionPlatformsDesc": "macOS, Windows (x64)",
+    "footer": {
+      "about": "Uber"
+    }
+  }
+}

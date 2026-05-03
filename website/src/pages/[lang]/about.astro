@@ -1,0 +1,150 @@
+---
+import type { Locale } from '../../i18n/utils';
+import { getStaticPaths, useTranslations } from '../../i18n/utils';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+export { getStaticPaths };
+
+const { lang } = Astro.props as { lang: Locale };
+const { t } = await useTranslations(lang);
+
+const techStack = [
+  { key: 'techElectron', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+  { key: 'techVue', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z' },
+  { key: 'techSQLite', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
+  { key: 'techVite', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { key: 'techTailwind', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485' },
+  { key: 'techAI', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+];
+
+const philosophies = [
+  { key: 'philosophy1', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' },
+  { key: 'philosophy2', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' },
+  { key: 'philosophy3', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' },
+  { key: 'philosophy4', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' },
+];
+
+const contributions = ['opensource1', 'opensource2', 'opensource3', 'opensource4'];
+---
+
+<BaseLayout lang={lang} title={t('about.metaTitle')} description={t('about.metaDesc')}>
+  <Navbar lang={lang} t={t} />
+
+  <main id="main-content" class="pt-24 pb-20">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-3 mb-8">
+        <a href={`/${lang}/`} class="text-sm text-muted dark:text-muted-dark hover:text-primary transition-colors">MoliTodo</a>
+        <span class="text-muted dark:text-muted-dark">/</span>
+        <span class="text-sm text-text dark:text-text-dark font-medium">{t('about.title')}</span>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark mb-8">
+        {t('about.title')}
+      </h1>
+
+      <!-- Story -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-6">{t('about.storyTitle')}</h2>
+        <div class="space-y-4 text-muted dark:text-muted-dark leading-relaxed">
+          <p>{t('about.storyP1')}</p>
+          <p>{t('about.storyP2')}</p>
+          <p>{t('about.storyP3')}</p>
+        </div>
+      </section>
+
+      <!-- Design Philosophy -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-6">{t('about.philosophyTitle')}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {philosophies.map((p) => (
+            <div class="p-6 bg-white dark:bg-gray-800/50 rounded-2xl border border-border dark:border-border-dark">
+              <div class={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${p.color}`}>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d={p.icon} />
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-text dark:text-text-dark mb-2">
+                {t(`about.${p.key}Title`)}
+              </h3>
+              <p class="text-sm text-muted dark:text-muted-dark leading-relaxed">
+                {t(`about.${p.key}Desc`)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Technical Architecture -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('about.techTitle')}</h2>
+        <p class="text-muted dark:text-muted-dark mb-6">{t('about.techDesc')}</p>
+        <div class="space-y-3">
+          {techStack.map((tech) => (
+            <div class="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-border dark:border-border-dark">
+              <div class="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-muted dark:text-muted-dark">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d={tech.icon} />
+                </svg>
+              </div>
+              <span class="text-sm text-text dark:text-text-dark">{t(`about.${tech.key}`)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Open Source -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold text-text dark:text-text-dark mb-4">{t('about.opensourceTitle')}</h2>
+        <p class="text-muted dark:text-muted-dark mb-6">{t('about.opensourceDesc')}</p>
+        <ul class="space-y-3 mb-6">
+          {contributions.map((c, i) => (
+            <li class="flex items-start gap-3">
+              <span class="flex-shrink-0 w-6 h-6 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-primary text-xs font-bold mt-0.5">
+                {i + 1}
+              </span>
+              <span class="text-muted dark:text-muted-dark">{t(`about.${c}`)}</span>
+            </li>
+          ))}
+        </ul>
+        <a
+          href="https://github.com/gusibi/MoliTodo"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+          </svg>
+          GitHub
+        </a>
+      </section>
+
+      <!-- Version Info -->
+      <section class="p-6 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-border dark:border-border-dark">
+        <h2 class="text-lg font-bold text-text dark:text-text-dark mb-4">{t('about.versionTitle')}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="text-muted dark:text-muted-dark block mb-1">{t('about.versionCurrent')}</span>
+            <span class="font-mono font-medium text-text dark:text-text-dark">v1.3.0</span>
+          </div>
+          <div>
+            <span class="text-muted dark:text-muted-dark block mb-1">{t('about.versionLicense')}</span>
+            <span class="font-medium text-text dark:text-text-dark">MIT</span>
+          </div>
+          <div>
+            <span class="text-muted dark:text-muted-dark block mb-1">{t('about.versionPlatforms')}</span>
+            <span class="font-medium text-text dark:text-text-dark">{t('about.versionPlatformsDesc')}</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <Footer lang={lang} t={t} />
+</BaseLayout>

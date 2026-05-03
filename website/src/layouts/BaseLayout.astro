@@ -1,0 +1,83 @@
+---
+import type { Locale } from '../i18n/utils';
+import { locales, localeNames } from '../i18n/utils';
+import JsonLd from '../components/JsonLd.astro';
+import '../styles/global.css';
+
+interface Props {
+  lang: Locale;
+  title: string;
+  description: string;
+}
+
+const { lang, title, description } = Astro.props;
+const isRtl = lang === 'ar';
+const canonicalUrl = `https://molitodo.com/${lang}/`;
+
+const ogLocaleMap: Record<Locale, string> = {
+  zh: 'zh_CN', en: 'en_US', ja: 'ja_JP', ko: 'ko_KR',
+  fr: 'fr_FR', de: 'de_DE', es: 'es_ES', pt: 'pt_BR',
+  ru: 'ru_RU', ar: 'ar_SA',
+};
+
+const darkModeScript = `
+  (function() {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+`;
+---
+
+<!DOCTYPE html>
+<html lang={lang} dir={isRtl ? 'rtl' : 'ltr'} class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="index, follow" />
+
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+
+  <!-- hreflang -->
+  {locales.map((l) => (
+    <link rel="alternate" hreflang={l} href={`https://molitodo.com/${l}/`} />
+  ))}
+  <link rel="alternate" hreflang="x-default" href="https://molitodo.com/zh/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content="https://molitodo.com/og-image.png" />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:locale" content={ogLocaleMap[lang]} />
+  {locales.filter(l => l !== lang).map((l) => (
+    <meta property="og:locale:alternate" content={ogLocaleMap[l]} />
+  ))}
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content="https://molitodo.com/og-image.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <JsonLd lang={lang} />
+
+  <script is:inline set:html={darkModeScript} />
+</head>
+<body class="bg-bg text-text dark:bg-bg-dark dark:text-text-dark font-sans antialiased">
+  <a href="#main-content" class="skip-to-content">
+    {lang === 'zh' ? '跳到主要内容' : lang === 'ar' ? 'انتقل إلى المحتوى الرئيسي' : lang === 'ja' ? 'メインコンテンツへスキップ' : lang === 'ko' ? '주요 콘텐츠로 건너뛰기' : 'Skip to main content'}
+  </a>
+  <slot />
+</body>
+</html>
