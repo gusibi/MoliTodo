@@ -1,20 +1,6 @@
-@import "tailwindcss";
-
-@theme {
-  --font-sans: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-surface: #ffffff;
-  --color-surface-dark: #111827;
-  --color-text: #1f2937;
-  --color-text-dark: #f3f4f6;
-  --color-muted: #6b7280;
-  --color-muted-dark: #9ca3af;
-  --color-border: #e5e7eb;
-  --color-border-dark: #374151;
-  --color-bg: #f9fafb;
-  --color-bg-dark: #030712;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @font-face {
   font-family: 'Inter';
@@ -69,12 +55,6 @@
   animation: pulse-ring 2s ease-out infinite;
 }
 
-/* Stagger delays */
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-
 /* Dark mode */
 .dark {
   color-scheme: dark;
@@ -103,7 +83,7 @@ html {
   width: auto;
   height: auto;
   padding: 0.5rem 1rem;
-  background: var(--color-primary);
+  background: #3b82f6;
   color: white;
   border-radius: 0.5rem;
   z-index: 9999;

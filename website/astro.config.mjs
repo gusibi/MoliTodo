@@ -1,14 +1,10 @@
 import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   output: 'static',
   site: 'https://molitodo.com',
   trailingSlash: 'always',
-  vite: {
-    plugins: [tailwindcss()],
-  },
   integrations: [
     sitemap({
       i18n: {
