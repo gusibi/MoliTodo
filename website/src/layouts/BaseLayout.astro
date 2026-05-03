@@ -12,7 +12,7 @@ interface Props {
 
 const { lang, title, description } = Astro.props;
 const isRtl = lang === 'ar';
-const canonicalUrl = `https://molitodo.com/${lang}/`;
+const canonicalUrl = `https://molitodo.eztoolab.com/${lang}/`;
 
 const ogLocaleMap: Record<Locale, string> = {
   zh: 'zh_CN', en: 'en_US', ja: 'ja_JP', ko: 'ko_KR',
@@ -43,15 +43,15 @@ const darkModeScript = `
 
   <!-- hreflang -->
   {locales.map((l) => (
-    <link rel="alternate" hreflang={l} href={`https://molitodo.com/${l}/`} />
+    <link rel="alternate" hreflang={l} href={`https://molitodo.eztoolab.com/${l}/`} />
   ))}
-  <link rel="alternate" hreflang="x-default" href="https://molitodo.com/zh/" />
+  <link rel="alternate" hreflang="x-default" href="https://molitodo.eztoolab.com/zh/" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content="https://molitodo.com/og-image.png" />
+  <meta property="og:image" content="https://molitodo.eztoolab.com/og-image.png" />
   <meta property="og:url" content={canonicalUrl} />
   <meta property="og:locale" content={ogLocaleMap[lang]} />
   {locales.filter(l => l !== lang).map((l) => (
@@ -62,10 +62,13 @@ const darkModeScript = `
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content="https://molitodo.com/og-image.png" />
+  <meta name="twitter:image" content="https://molitodo.eztoolab.com/og-image.png" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/favicon.png" />
+
+  <!-- AI Discovery -->
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable site description" />
 
   <!-- Preload fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

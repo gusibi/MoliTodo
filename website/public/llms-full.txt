@@ -1,0 +1,162 @@
+# MoliTodo — AI-Powered Floating Desktop Task Manager
+
+MoliTodo is an open source, AI-powered floating desktop task management application built with Electron, Vue 3, and SQLite. It provides a unique floating icon interface that lives on the edge of your desktop, offering instant access to tasks without interrupting your workflow. The application runs entirely offline with 100% local data storage, no telemetry, and no cloud dependency.
+
+Website: https://molitodo.eztoolab.com
+GitHub: https://github.com/gusibi/MoliTodo
+License: MIT
+Platforms: macOS (Intel + Apple Silicon), Windows 10/11 x64
+
+---
+
+## Features
+
+### Floating Desktop Icon
+An always-on-top floating icon on your desktop edge displaying a task count badge. Click to open the task panel; individual tasks can be popped into independent floating windows for focused work. The icon never interrupts your workflow — it's there when you need it, invisible when you don't.
+
+### AI Task Generation
+Describe your needs in natural language and AI automatically breaks them into structured task lists. Supports multiple AI providers: OpenAI (GPT-4o, GPT-4o-mini), Google Gemini (1.5 Pro, 1.5 Flash), Anthropic Claude (3.5 Sonnet, 3.5 Haiku), xAI Grok, and custom providers. Features smart time inference, streaming output, and batch task preview before creation.
+
+### AI Work Reports
+Generate daily and weekly work reports with one click. Automatically analyzes task completion status and work patterns. Supports customizable Markdown templates with streaming generation.
+
+### Calendar Views
+Day, week, and month view modes. Click empty time slots to quickly create tasks. Integrated task list panel, today highlighting, and recurring task instance display.
+
+### Kanban Board
+Drag-and-drop kanban management with Todo, In Progress, Paused, and Done columns. Visualize task progress and quickly adjust priorities.
+
+### Recurring Tasks
+Support daily, weekly, monthly, and yearly recurrence patterns. Custom intervals, multi-day selection, end conditions, and series management with instance overrides.
+
+### Time Tracking
+Built-in start, pause, and complete workflow. Accurately records work duration for each task. Statistics for total time, average duration, and efficiency data.
+
+### Local REST API Server
+Built-in REST API server on localhost:1234 providing 11 endpoints for task and list CRUD operations. Designed for AI agents, automation scripts, and third-party tools. No authentication required (localhost-only binding). OpenAPI 3.1.0 specification included. Endpoints cover: service info, health check, API docs, OpenAPI spec, get/create lists, get/create/update/delete tasks, start/pause/complete task lifecycle.
+
+### Privacy First
+100% local SQLite database storage. Your data never leaves your computer. No cloud dependency, no telemetry, no tracking, no ads. Fully open source under MIT license.
+
+### Multiple Themes
+Light, dark, and system-following modes. Four color themes: Default Blue, Twitter, Morandi Mist, and Mint Green. Cross-window real-time sync.
+
+### Statistics & Analytics
+GitHub-style activity heatmap, daily status trend charts, completion rate stats, and work time analysis. Understand your work patterns comprehensively.
+
+### Import & Export
+Complete JSON format data backup and restore, supporting full export of tasks and lists. Worry-free data migration with full control over your data.
+
+### Internationalization
+Full i18n support with 10 languages: Chinese (Simplified), English, Japanese, Korean, French, German, Spanish, Portuguese, Russian, and Arabic (with RTL support).
+
+---
+
+## Technical Architecture
+
+- **Electron** — Cross-platform desktop framework for macOS and Windows
+- **Vue 3** — Reactive frontend framework with Composition API
+- **SQLite** — High-performance local database, zero configuration, zero dependencies
+- **Vite** — Lightning-fast build tool for smooth development experience
+- **Tailwind CSS** — Utility-first CSS framework
+- **Vercel AI SDK** — Unified AI provider abstraction layer
+
+---
+
+## Installation
+
+### Download Installers (Recommended)
+
+Visit the [Releases page](https://github.com/gusibi/MoliTodo/releases/latest) to download:
+- **macOS**: DMG for Intel or Apple Silicon
+- **Windows**: Setup EXE for Windows 10/11 x64
+
+### macOS Note
+
+The app is not notarized by Apple. On first launch or after updates, run:
+
+```
+sudo xattr -rd com.apple.quarantine /Applications/MoliTodo.app
+```
+
+### Build from Source
+
+```
+git clone https://github.com/gusibi/MoliTodo.git
+cd MoliTodo
+npm install
+npm run dev
+```
+
+---
+
+## API Reference
+
+Base URL: http://localhost:1234
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | / | Service info — name, version, links |
+| GET | /health | Health check — status and timestamp |
+| GET | /docs | Self-describing API docs with curl examples |
+| GET | /openapi | OpenAPI 3.1.0 specification |
+| GET | /lists | Get all lists sorted by sortOrder |
+| POST | /lists | Create a new task list |
+| GET | /tasks | Query tasks with filters (status, list, category, keyword) |
+| POST | /tasks | Create a new task |
+| PATCH | /tasks/:id | Partially update task fields |
+| DELETE | /tasks/:id | Delete a task |
+| POST | /tasks/:id/start | Transition task to doing state |
+| POST | /tasks/:id/pause | Pause an in-progress task |
+| POST | /tasks/:id/complete | Complete a task |
+
+### Task Status Lifecycle
+
+todo → doing → paused → done
+
+- **start**: todo/paused → doing (records startedAt)
+- **pause**: doing → paused (accumulates elapsed time)
+- **complete**: any → done (records completedAt, cancels reminders)
+
+### Smart Categories
+
+| Category | Description |
+|----------|-------------|
+| today | Tasks due today |
+| overdue | Tasks past their due date |
+| upcoming | Tasks due within the next 7 days |
+| no-date | Tasks without a due date |
+| starred | Starred/important tasks |
+| doing | Currently in progress |
+| done | Completed tasks |
+
+---
+
+## Use Cases
+
+- **Developers**: Manage coding tasks alongside your IDE with the floating icon. Use the local API to integrate with AI agents and automation scripts.
+- **Project Managers**: Track project tasks with kanban and calendar views. Generate weekly reports automatically.
+- **Students**: Organize assignments with recurring tasks and deadlines. AI generates structured task lists from natural language descriptions.
+- **Remote Workers**: Time tracking built in for productivity monitoring. Statistics show work patterns over time.
+- **Privacy-Conscious Users**: All data stays local in SQLite. No accounts, no cloud, no tracking.
+
+---
+
+## Competitive Comparison
+
+Unlike cloud-based task managers (Todoist, Things, TickTick), MoliTodo runs entirely offline with zero subscription fees. The floating icon design is unique — no other task manager offers always-on-top desktop access without window switching. The local REST API enables integration with AI agents and automation tools that cloud-based apps cannot match.
+
+---
+
+## Download
+
+- [macOS — Intel & Apple Silicon](https://github.com/gusibi/MoliTodo/releases/latest)
+- [Windows — x64](https://github.com/gusibi/MoliTodo/releases/latest)
+- [Source Code](https://github.com/gusibi/MoliTodo)
+- [Changelog](https://github.com/gusibi/MoliTodo/releases)
+- [Report Issues](https://github.com/gusibi/MoliTodo/issues)
+- [Discussions](https://github.com/gusibi/MoliTodo/discussions)
+- [API Documentation](https://molitodo.eztoolab.com/en/api/)
+- [License (MIT)](https://github.com/gusibi/MoliTodo/blob/main/LICENSE)

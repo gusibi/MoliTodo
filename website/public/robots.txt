@@ -1,4 +1,56 @@
+# robots.txt — AI Visibility Configuration
+# https://molitodo.eztoolab.com
+
+# Traditional crawlers
 User-agent: *
 Allow: /
 
-Sitemap: https://molitodo.com/sitemap-index.xml
+# Search & retrieval: allow (these help users find your site via AI search)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Training opt-out tokens: block
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+# User-triggered: allow (activated when a user explicitly asks about your site)
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Agent
+Allow: /
+
+# Training crawlers: block
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# Undeclared / aggressive crawlers: block
+User-agent: Bytespider
+Disallow: /
+
+# Sitemap
+Sitemap: https://molitodo.eztoolab.com/sitemap-index.xml

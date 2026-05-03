@@ -3,7 +3,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   output: 'static',
-  site: 'https://molitodo.com',
+  site: 'https://molitodo.eztoolab.com',
   trailingSlash: 'always',
   integrations: [
     sitemap({

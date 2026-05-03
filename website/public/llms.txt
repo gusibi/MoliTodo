@@ -1,0 +1,29 @@
+# MoliTodo
+
+> AI-powered floating desktop task manager. Making task management simple, intelligent, and efficient. 100% local storage, open source and free.
+
+## Documentation
+
+- [Home](https://molitodo.eztoolab.com/en/) - Product overview, features, download links, and screenshots
+- [API Documentation](https://molitodo.eztoolab.com/en/api/) - Complete REST API reference with 11 endpoints for task and list management
+- [About](https://molitodo.eztoolab.com/en/about/) - Design philosophy, technical architecture, and open source community
+
+## Download
+
+- [macOS Download](https://github.com/gusibi/MoliTodo/releases/latest) - Supports Intel and Apple Silicon
+- [Windows Download](https://github.com/gusibi/MoliTodo/releases/latest) - Windows 10/11 x64
+- [Changelog](https://github.com/gusibi/MoliTodo/releases) - Release notes and version history
+
+## GitHub
+
+- [Source Code](https://github.com/gusibi/MoliTodo) - MIT licensed, fully open source
+- [Issues](https://github.com/gusibi/MoliTodo/issues) - Bug reports and feature requests
+- [Discussions](https://github.com/gusibi/MoliTodo/discussions) - Community conversations
+
+## About
+
+MoliTodo is an open source, AI-powered floating desktop task manager built with Electron, Vue 3, and SQLite. It lives on the edge of your screen as a floating icon with a task count badge — click to open the task panel, or pop individual tasks into independent floating windows. All data is stored locally in SQLite with zero cloud dependency, no telemetry, and no tracking.
+
+Key capabilities: AI task generation from natural language (supports OpenAI, Gemini, Claude, Grok), one-click daily/weekly work reports, calendar (day/week/month), kanban board, list views, recurring tasks, time tracking, local REST API server for AI agents and automation, multiple themes, statistics with activity heatmap, and JSON import/export.
+
+Available for macOS and Windows. Licensed under MIT.
