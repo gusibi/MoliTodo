@@ -27,3 +27,14 @@ MoliTodo is an open source, AI-powered floating desktop task manager built with 
 Key capabilities: AI task generation from natural language (supports OpenAI, Gemini, Claude, Grok), one-click daily/weekly work reports, calendar (day/week/month), kanban board, list views, recurring tasks, time tracking, local REST API server for AI agents and automation, multiple themes, statistics with activity heatmap, and JSON import/export.
 
 Available for macOS and Windows. Licensed under MIT.
+
+## Related Projects (EZTOLAB Ecosystem)
+
+MoliTodo is part of EZTOLAB, the personal tool lab of indie developer gusibi. Each tool focuses on a single job:
+
+- [EZTOLAB](https://eztoolab.com) — Tool lab home, product matrix and design philosophy
+- [MoliBot](https://molibot.eztoolab.com) — Multi-channel personal AI assistant runtime (Web, Telegram, Feishu, WeChat, QQ, CLI)
+- [MoliShot](https://molishot.eztoolab.com) — macOS screenshot & OCR tool
+- [MoliTutu](https://tutu.eztoolab.com) — Smart image compression & CDN hosting
+- [Momo Paper](https://momo.eztoolab.com) — Routed document design system (15 types, 5 charts, 14 diagram primitives)
+- [LLM Wiki](https://llmwiki.eztoolab.com) — AI-powered personal knowledge compiler (Obsidian plugin + Claude Code Skill)
