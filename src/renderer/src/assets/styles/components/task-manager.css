@@ -4,10 +4,20 @@
   @apply flex min-h-full w-full bg-transparent text-foreground overflow-hidden flex-1;
 }
 
+/* Windows/Linux 没有 vibrancy，窗口也不是 transparent，
+   这里必须自己铺一层不透明背景，否则侧边栏会透出桌面（issue #8） */
+.platform-opaque .task-manager {
+  @apply bg-background;
+}
+
 /* 左侧边栏样式 */
 .task-manager-sidebar {
   @apply w-[280px] flex flex-col z-10 pt-8;
   height: 100vh;
+}
+
+.platform-opaque .task-manager-sidebar {
+  @apply bg-muted/30;
 }
 
 /* 主要内容区域样式 */

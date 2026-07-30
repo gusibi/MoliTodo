@@ -30,7 +30,9 @@
       "tomorrowAt": "明天 {time}",
       "daysAgo": "{days}天前"
     },
-    "date": "日期"
+    "date": "日期",
+    "optional": "可选",
+    "unknownError": "未知错误"
   },
   "views": {
     "listView": "列表视图",

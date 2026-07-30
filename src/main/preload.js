@@ -73,6 +73,7 @@ const electronAPI = {
     toggleTaskPanel: () => ipcRenderer.invoke('toggle-task-panel'),
     showTaskPanel: () => ipcRenderer.invoke('show-task-panel'),
     hideTaskPanel: () => ipcRenderer.invoke('hide-task-panel'),
+    setFloatingIconIgnoreMouse: (ignore) => ipcRenderer.invoke('set-floating-icon-ignore-mouse', ignore),
     panelMouseEnter: () => ipcRenderer.invoke('panel-mouse-enter'),
     panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave'),
     setPanelPinned: (pinned) => ipcRenderer.invoke('set-panel-pinned', pinned),
@@ -108,6 +109,8 @@ const electronAPI = {
 
   // 应用相关 API
   app: {
+    // 渲染进程需要它来区分毛玻璃（仅 macOS）和不透明背景
+    platform: process.platform,
     updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath),
     quit: () => ipcRenderer.invoke('app-quit'),
     getVersion: () => ipcRenderer.invoke('app-get-version'),

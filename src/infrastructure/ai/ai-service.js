@@ -1,7 +1,7 @@
 const { generateText, streamText } = require('ai');
 const { openai, createOpenAI } = require('@ai-sdk/openai');
-const { anthropic } = require('@ai-sdk/anthropic');
-const { google } = require('@ai-sdk/google');
+const { createAnthropic } = require('@ai-sdk/anthropic');
+const { createGoogleGenerativeAI } = require('@ai-sdk/google');
 
 /**
  * AI服务类，负责处理不同AI提供商的连接和测试
@@ -19,57 +19,21 @@ class AIService {
   static async testConnection(config) {
     const { provider, apiKey, baseURL, model } = config;
 
-    console.log("测试连接配置:", config);
-    
+    // 不要打印 apiKey
+    console.log("测试连接配置:", { provider, baseURL, model, apiKey: apiKey ? '***' : '(未配置)' });
+
+
     if (!apiKey) {
-      return { success: false, error: 'API Key 不能为空' };
+      return { success: false, message: 'API Key 不能为空', error: 'API Key 不能为空' };
     }
-    
+
     if (!model) {
-      return { success: false, error: '模型名称不能为空' };
+      return { success: false, message: '模型名称不能为空', error: '模型名称不能为空' };
     }
     
     try {
-      let modelInstance;
-      
-      // console.log("apiKey类型:", typeof apiKey, "值:", apiKey);
-      
-      switch (provider.toLowerCase()) {
-        case 'openai':
-          const openaiProvider = createOpenAI({
-            apiKey,
-            baseURL: baseURL || 'https://api.openai.com/v1'
-          });
-          modelInstance = openaiProvider.chat(model);
-          break;
-          
-        case 'anthropic':
-          const anthropicProvider = anthropic({
-            apiKey
-          });
-          modelInstance = anthropicProvider(model);
-          break;
-          
-        case 'google':
-          const googleProvider = google({
-            apiKey
-          });
-          modelInstance = googleProvider(model);
-          break;
-          
-        default:
-          // 自定义提供商，使用OpenAI兼容格式
-          if (!baseURL) {
-            return { success: false, error: '自定义提供商需要提供baseURL' };
-          }
-          const customProvider = createOpenAI({
-            apiKey,
-            baseURL
-          });
-          modelInstance = customProvider.chat(model);
-      }
-      
-      // console.log("apiKey:", apiKey, "baseUrl: ", baseURL);
+      const modelInstance = this.getModelInstance(config);
+
       // 发送测试请求
       const { text } = await generateText({
         model: modelInstance,
@@ -89,24 +53,27 @@ class AIService {
       
     } catch (error) {
       console.error('AI连接测试失败:', error);
-      
+
       // 解析不同类型的错误
+      const rawMessage = (error && error.message) || '';
       let errorMessage = '连接失败';
-      
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+
+      if (rawMessage.includes('401') || rawMessage.includes('Unauthorized')) {
         errorMessage = 'API密钥无效或已过期';
-      } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+      } else if (rawMessage.includes('404') || rawMessage.includes('Not Found')) {
         errorMessage = '模型不存在或API端点错误';
-      } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
+      } else if (rawMessage.includes('429') || rawMessage.includes('Rate limit')) {
         errorMessage = 'API调用频率超限，请稍后重试';
-      } else if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
+      } else if (rawMessage.includes('timeout') || rawMessage.includes('ECONNREFUSED')) {
         errorMessage = '网络连接超时，请检查网络设置';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (rawMessage) {
+        errorMessage = rawMessage;
       }
-      
+
+      // message 与 error 保持一致：调用方（设置页）读取的是 message
       return {
         success: false,
+        message: errorMessage,
         error: errorMessage
       };
     }
@@ -129,26 +96,40 @@ class AIService {
     }
     
     switch (provider.toLowerCase()) {
-      case 'openai':
+      case 'openai': {
         const openaiProvider = createOpenAI({
           apiKey,
           baseURL: baseURL || 'https://api.openai.com/v1'
         });
         return openaiProvider.chat(model);
-        
-      case 'anthropic':
-        const anthropicProvider = anthropic({
-          apiKey
+      }
+
+      case 'anthropic': {
+        const anthropicProvider = createAnthropic({
+          apiKey,
+          ...(baseURL ? { baseURL } : {})
         });
         return anthropicProvider(model);
-        
-      case 'google':
-        const googleProvider = google({
-          apiKey
+      }
+
+      case 'google': {
+        const googleProvider = createGoogleGenerativeAI({
+          apiKey,
+          ...(baseURL ? { baseURL } : {})
         });
         return googleProvider(model);
-        
-      default:
+      }
+
+      case 'xai': {
+        // xAI 提供 OpenAI 兼容接口
+        const xaiProvider = createOpenAI({
+          apiKey,
+          baseURL: baseURL || 'https://api.x.ai/v1'
+        });
+        return xaiProvider.chat(model);
+      }
+
+      default: {
         // 自定义提供商，使用OpenAI兼容格式
         if (!baseURL) {
           throw new Error('自定义提供商需要提供baseURL');
@@ -158,6 +139,7 @@ class AIService {
           baseURL
         });
         return customProvider.chat(model);
+      }
     }
   }
 
@@ -172,33 +154,33 @@ class AIService {
     const config = windowManager.getConfig();
     const aiConfig = config.ai || {};
     const providers = aiConfig.providers || {};
-    const customProviders = aiConfig.customProviders || [{}];
-    
+    const customProviders = aiConfig.customProviders || [];
+
+    // 内置提供商的默认模型，key 与配置中 providers 的 key 一致
+    const builtInDefaults = {
+      openai: { model: 'gpt-4o', baseURL: 'https://api.openai.com/v1' },
+      google: { model: 'gemini-1.5-pro' },
+      anthropic: { model: 'claude-3-5-sonnet-20241022' },
+      xai: { model: 'grok-beta', baseURL: 'https://api.x.ai/v1' }
+    };
+
+    // aiModel.id 对内置提供商就是配置 key，比展示名（OpenAI/xAI…）更可靠
+    const providerKey = String(aiModel.id || '').toLowerCase();
+
     // 根据 aiModel 找到对应的配置
     let modelConfig = null;
-    
-    if (aiModel.provider === 'OpenAI' && providers.openai) {
+
+    if (builtInDefaults[providerKey] && providers[providerKey]) {
+      const saved = providers[providerKey];
+      const defaults = builtInDefaults[providerKey];
       modelConfig = {
-        provider: 'openai',
-        model: providers.openai.model || 'gpt-4o',
-        apiKey: providers.openai.apiKey,
-        baseURL: providers.openai.baseURL || 'https://api.openai.com/v1'
+        provider: providerKey,
+        model: saved.model || defaults.model,
+        apiKey: saved.apiKey,
+        baseURL: saved.baseURL || defaults.baseURL
       };
-    } else if (aiModel.provider === 'Google' && providers.google) {
-      modelConfig = {
-        provider: 'google',
-        model: providers.google.model || 'gemini-1.5-pro',
-        apiKey: providers.google.apiKey
-      };
-    } else if (aiModel.provider === 'Anthropic' && providers.anthropic) {
-      modelConfig = {
-        provider: 'anthropic',
-        model: providers.anthropic.model || 'claude-3-5-sonnet-20241022',
-        apiKey: providers.anthropic.apiKey,
-        baseURL: providers.anthropic.baseURL || 'https://api.anthropic.com'
-      };
-    } else if (aiModel.provider === 'Custom' && customProviders.length > 0) {
-      // 对于自定义提供商，需要根据 aiModel.id 找到对应的配置
+    } else {
+      // 自定义提供商，根据 aiModel.id 找到对应的配置
       const customProvider = customProviders.find(p => p.id === aiModel.id);
       if (customProvider) {
         modelConfig = {
@@ -209,7 +191,8 @@ class AIService {
         };
       }
     }
-    
+
+
     if (!modelConfig) {
       throw new Error(`未找到 AI 模型 ${aiModel.name} (${aiModel.provider}) 的配置`);
     }

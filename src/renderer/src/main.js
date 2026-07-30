@@ -12,6 +12,13 @@ import './assets/global.css'
 // Import global notification listener
 import { setupGlobalNotificationListener } from './utils/globalNotificationListener.js'
 
+// 标记平台：只有 macOS 的窗口是 transparent + vibrancy，
+// 其它平台需要给根容器铺不透明背景，否则会透出桌面（issue #8）
+const platform = window.electronAPI?.app?.platform
+document.documentElement.classList.add(
+  platform === 'darwin' ? 'platform-mac' : 'platform-opaque'
+)
+
 // 创建应用
 const app = createApp(App)
 const pinia = createPinia()

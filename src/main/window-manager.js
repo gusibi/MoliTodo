@@ -185,8 +185,11 @@ class WindowManager {
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
-      vibrancy: 'sidebar',
-      transparent: true,
+      // vibrancy 只在 macOS 生效。Windows/Linux 上如果仍然开 transparent，
+      // 侧边栏没有背景色就会直接透出桌面（issue #8）。
+      ...(process.platform === 'darwin'
+        ? { vibrancy: 'sidebar', transparent: true }
+        : {}),
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true
@@ -227,8 +230,10 @@ class WindowManager {
       frame: false, // 禁用原生标题栏
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // macOS 保留红绿灯按钮
       show: false,
-      transparent: true,
-      vibrancy: 'under-window', // 毛玻璃效果
+      // 同任务管理窗口：毛玻璃只在 macOS 生效
+      ...(process.platform === 'darwin'
+        ? { transparent: true, vibrancy: 'under-window' }
+        : {}),
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true
@@ -252,11 +257,10 @@ class WindowManager {
     });
   }
 
-  createTaskPanel() {
-    if (this.taskPanelWindow) {
-      return;
-    }
-
+  /**
+   * 根据悬浮图标的位置计算面板应该出现的位置和高度
+   */
+  computePanelBounds() {
     const floatingBounds = this.floatingWindow.getBounds();
     const { screen } = require('electron');
     const display = screen.getDisplayNearestPoint({ x: floatingBounds.x, y: floatingBounds.y });
@@ -276,6 +280,22 @@ class WindowManager {
     if (panelY + maxHeight > workArea.y + workArea.height) {
       panelY = workArea.y + workArea.height - maxHeight;
     }
+
+    return { x: panelX, y: panelY, width: 320, height: Math.round(maxHeight) };
+  }
+
+  createTaskPanel() {
+    // 面板已存在时只做重新定位并显示，避免销毁窗口导致用户已输入的内容丢失
+    if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
+      const bounds = this.computePanelBounds();
+      if (!this.isPanelPinned) {
+        this.taskPanelWindow.setBounds(bounds);
+      }
+      this.taskPanelWindow.show();
+      return;
+    }
+
+    const { x: panelX, y: panelY, height: maxHeight } = this.computePanelBounds();
 
     const currentIcon = this.getCurrentAppIcon();
 
@@ -324,9 +344,44 @@ class WindowManager {
     });
   }
 
-  toggleTaskPanel() {
+  /**
+   * 控制悬浮图标窗口是否穿透鼠标事件。
+   * 悬浮窗是一个方形透明窗口，但可见的图标是圆形；不做穿透的话，
+   * 圆形之外的透明区域仍然会挡住下面的应用（issue #11）。
+   * @param {boolean} ignore 为 true 时鼠标事件穿透到下层窗口
+   */
+  setFloatingIconIgnoreMouse(ignore) {
+    if (!this.floatingWindow || this.floatingWindow.isDestroyed()) {
+      return;
+    }
+
+    if (ignore) {
+      // forward 让渲染进程仍然能收到 mousemove，从而判断光标何时进入圆形区域。
+      // Linux 下不支持 forward，那里退化为不穿透（保持原有行为）。
+      if (process.platform === 'linux') {
+        this.floatingWindow.setIgnoreMouseEvents(false);
+      } else {
+        this.floatingWindow.setIgnoreMouseEvents(true, { forward: true });
+      }
+    } else {
+      this.floatingWindow.setIgnoreMouseEvents(false);
+    }
+  }
+
+  /**
+   * 隐藏任务面板。
+   * 这里刻意用 hide() 而不是 close()：面板会因为鼠标移出而频繁隐藏，
+   * 销毁窗口会把用户正在输入的内容一起丢掉（见 issue #10）。
+   */
+  hideTaskPanel() {
     if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
-      this.taskPanelWindow.close();
+      this.taskPanelWindow.hide();
+    }
+  }
+
+  toggleTaskPanel() {
+    if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed() && this.taskPanelWindow.isVisible()) {
+      this.hideTaskPanel();
     } else {
       this.createTaskPanel();
     }

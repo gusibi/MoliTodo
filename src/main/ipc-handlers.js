@@ -806,7 +806,6 @@ class IpcHandlers {
     // AI 连接测试
     ipcMain.handle('test-ai-connection', async (event, config) => {
       const { AIService } = require('../infrastructure/ai/ai-service');
-      console.log("测试连接配置:", config);
       return await AIService.testConnection(config);
     });
 
@@ -817,7 +816,8 @@ class IpcHandlers {
         const modelConfig = AIService.getModelConfig(aiModel, this.windowManager);
         return await AIService.testConnection(modelConfig);
       } catch (error) {
-        return { success: false, error: error.message };
+        const message = (error && error.message) || '连接失败';
+        return { success: false, message, error: message };
       }
     });
   }
@@ -867,9 +867,12 @@ class IpcHandlers {
     });
 
     ipcMain.handle('hide-task-panel', () => {
-      if (this.windowManager.taskPanelWindow) {
-        this.windowManager.taskPanelWindow.close();
-      }
+      this.windowManager.hideTaskPanel();
+    });
+
+    // 悬浮图标鼠标穿透（圆形命中区域，见 issue #11）
+    ipcMain.handle('set-floating-icon-ignore-mouse', (event, ignore) => {
+      this.windowManager.setFloatingIconIgnoreMouse(ignore);
     });
 
     // 面板鼠标进入事件

@@ -67,7 +67,9 @@
     <div class="task-panel-quick-add">
       <div class="task-panel-input-wrapper">
         <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')"
-          maxlength="200" @keypress.enter="addTask" ref="quickAddInput">
+          maxlength="200" @keypress.enter="addTask" ref="quickAddInput"
+          @focus="handleInputFocus" @blur="handleInputBlur"
+          @compositionstart="handleCompositionStart" @compositionend="handleCompositionEnd">
         <button class="task-panel-add-btn" :class="{ 'active': newTaskContent.trim() }" @click="addTask"
           :title="$t('floatView.addTask')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -283,6 +285,11 @@ const completedTasksCount = ref(0)
 const isPinned = ref(false)
 const isDragging = ref(false)
 const dragStartPos = ref({ x: 0, y: 0 })
+
+// 输入状态：用于抑制打字过程中的自动隐藏（issue #10）
+const isInputFocused = ref(false)
+const isComposing = ref(false)
+const isMouseOverPanel = ref(false)
 
 // 下拉选择器相关
 const showDropdown = ref(false)
@@ -875,7 +882,36 @@ const createFloatingTask = async () => {
 }
 
 // 面板鼠标事件处理
+// 用户正在输入时不允许自动隐藏面板。
+// 输入法候选框是一层原生窗口，盖住光标时 Chromium 会真的抛出 mouseleave，
+// 导致面板在打字过程中被收起（issue #10）。
+// 只看焦点/组词状态：内容非空不作为条件，否则输入框留了字就再也不会自动收起了。
+// 输入内容本身由主进程 hide()（而非 close()）保住，不会丢。
+const isInputActive = () => isInputFocused.value || isComposing.value
+
+const handleInputFocus = () => {
+  isInputFocused.value = true
+}
+
+const handleInputBlur = () => {
+  isInputFocused.value = false
+  // 失焦后如果鼠标其实已经不在面板上了，补发一次离开事件
+  if (!isMouseOverPanel.value && !isInputActive()) {
+    handlePanelMouseLeave()
+  }
+}
+
+const handleCompositionStart = () => {
+  isComposing.value = true
+}
+
+const handleCompositionEnd = () => {
+  isComposing.value = false
+}
+
 const handlePanelMouseEnter = () => {
+  isMouseOverPanel.value = true
+
   // 如果已固定，不需要发送鼠标事件
   if (isPinned.value) return
 
@@ -888,8 +924,16 @@ const handlePanelMouseEnter = () => {
 }
 
 const handlePanelMouseLeave = () => {
+  isMouseOverPanel.value = false
+
   // 如果已固定，不需要发送鼠标事件
   if (isPinned.value) return
+
+  // 正在输入（含输入法组词）时不隐藏
+  if (isInputActive()) {
+    console.log('输入中，忽略面板鼠标离开事件')
+    return
+  }
 
   console.log('面板鼠标离开')
   try {

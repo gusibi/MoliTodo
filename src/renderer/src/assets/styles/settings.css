@@ -15,6 +15,16 @@
   @apply backdrop-blur-xl;
 }
 
+/* Windows/Linux 上窗口不透明也没有 vibrancy，
+   半透明背景会直接透出桌面，这里改为不透明（issue #8） */
+.platform-opaque .setting-main-container {
+  @apply bg-background;
+}
+
+.platform-opaque .setting-sidebar {
+  @apply bg-sidebar backdrop-blur-none;
+}
+
 .setting-sidebar-title {
   @apply text-lg font-semibold text-sidebar-foreground mt-8 mb-6 px-2;
 }

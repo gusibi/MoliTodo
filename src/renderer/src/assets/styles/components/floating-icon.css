@@ -29,9 +29,12 @@
   }
 
   /* Main floating icon */
+  /* 直径跟随设置中的图标大小；--floating-icon-size 由 FloatingIcon.vue 注入 */
   .floating-icon {
     @apply relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out;
-    @apply w-12 h-12 rounded-full shadow-lg pointer-events-auto;
+    @apply rounded-full shadow-lg pointer-events-auto;
+    width: var(--floating-icon-size, 48px);
+    height: var(--floating-icon-size, 48px);
     -webkit-app-region: no-drag;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
@@ -117,11 +120,9 @@
 
 /* Responsive design */
 @layer utilities {
+  /* 注意：悬浮窗视口本身只有几十像素宽，这个媒体查询总是命中。
+     图标尺寸不要写在这里，否则会覆盖 --floating-icon-size。 */
   @media (max-width: 768px) {
-    .floating-icon {
-      @apply w-11 h-11;
-    }
-
     .floating-icon-badge {
       @apply min-w-4 h-4 text-xs;
     }

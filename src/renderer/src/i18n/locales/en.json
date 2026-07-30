@@ -30,7 +30,9 @@
       "tomorrowAt": "Tomorrow {time}",
       "daysAgo": "{days} days ago"
     },
-    "date": "Date"
+    "date": "Date",
+    "optional": "Optional",
+    "unknownError": "Unknown error"
   },
   "settings": {
     "title": "Settings",

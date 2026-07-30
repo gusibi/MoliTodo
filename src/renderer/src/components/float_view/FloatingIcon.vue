@@ -58,6 +58,47 @@ const panelVisible = ref(false)
 let hoverTimeout = null
 let hideTimeout = null
 
+// 鼠标穿透状态（issue #11）
+// 悬浮窗是方形，可见图标是圆形，方形里圆形之外的区域必须让鼠标事件穿透，
+// 否则会挡住下面应用的按钮。当前是否处于穿透态。
+let isIgnoringMouse = null
+
+const setIgnoreMouse = (ignore) => {
+  if (isIgnoringMouse === ignore) return
+  isIgnoringMouse = ignore
+  try {
+    window.electronAPI.windows.setFloatingIconIgnoreMouse(ignore)
+  } catch (error) {
+    console.error('设置鼠标穿透失败:', error)
+  }
+}
+
+// 判断光标是否落在可见圆形图标内
+const isPointInIcon = (clientX, clientY) => {
+  const el = floatingIconRef.value
+  if (!el) return false
+
+  const rect = el.getBoundingClientRect()
+  const cx = rect.left + rect.width / 2
+  const cy = rect.top + rect.height / 2
+  const dx = clientX - cx
+  const dy = clientY - cy
+  // 半径留 1px 容差，避免边缘抖动
+  const radius = Math.min(rect.width, rect.height) / 2 + 1
+
+  return dx * dx + dy * dy <= radius * radius
+}
+
+const handleWindowMouseMove = (event) => {
+  // 拖动过程中必须保持可交互，否则会中途丢失鼠标
+  if (isDragging.value) {
+    setIgnoreMouse(false)
+    return
+  }
+
+  setIgnoreMouse(!isPointInIcon(event.clientX, event.clientY))
+}
+
 
 const handleClick = () => {
   // 如果面板可见，则隐藏面板
@@ -359,9 +400,20 @@ const handleTaskReminder = (event, task) => {
   // 提醒状态将持续显示直到用户交互
 }
 
+// 让可见圆形的直径跟随设置里的图标大小。
+// 之前圆形是写死的，窗口却按配置缩放，放大后方窗里多出一圈看不见但会挡住
+// 下层应用的区域（issue #11）。留出 badge 和 hover 放大的余量。
+const applyIconSize = (size) => {
+  const windowSize = Number(size) || 50
+  // hover 时会放大到 1.1 倍，同时角标要露出来，圆形比窗口略小
+  const diameter = Math.max(24, Math.round(windowSize * 0.88))
+  document.documentElement.style.setProperty('--floating-icon-size', `${diameter}px`)
+}
+
 const handleConfigUpdate = (event, config) => {
-  console.log('配置更新:', config)
-  // 这里可以根据配置更新图标样式
+  if (config && config.size) {
+    applyIconSize(config.size)
+  }
 }
 
 // 面板鼠标事件处理
@@ -410,6 +462,18 @@ onMounted(async () => {
   
   // 监听面板取消固定事件
   window.electronAPI.events.on('panel-unpinned', handlePanelUnpinned)
+
+  // 应用图标大小配置
+  try {
+    const config = await window.electronAPI.config.get()
+    applyIconSize(config?.floatingIcon?.size)
+  } catch (error) {
+    console.error('读取悬浮图标配置失败:', error)
+  }
+
+  // 圆形命中区域：静止时让方形窗口的空白区域穿透鼠标事件
+  window.addEventListener('mousemove', handleWindowMouseMove)
+  setIgnoreMouse(true)
 })
 
 onUnmounted(() => {
@@ -430,5 +494,9 @@ onUnmounted(() => {
   window.electronAPI.events.removeAllListeners('panel-mouse-enter')
   window.electronAPI.events.removeAllListeners('panel-mouse-leave')
   window.electronAPI.events.removeAllListeners('panel-unpinned')
+
+  window.removeEventListener('mousemove', handleWindowMouseMove)
+  // 恢复可交互，避免窗口残留在穿透状态
+  setIgnoreMouse(false)
 })
 </script>

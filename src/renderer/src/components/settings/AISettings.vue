@@ -747,6 +747,12 @@ const getSelectedProviderName = () => {
   return provider ? provider.name : ''
 }
 
+// 主进程成功时返回 message，失败时可能只带 error；两者都缺失时兜底，避免显示 undefined
+const resultMessage = (result) => {
+  if (!result) return t('common.unknownError')
+  return result.message || result.error || t('common.unknownError')
+}
+
 const testConnection = async () => {
   if (!aiConfig.selectedProvider || !isProviderConfigured(aiConfig.selectedProvider)) {
     return
@@ -787,10 +793,10 @@ const testConnection = async () => {
     
     // 调用主进程的测试连接方法
     const result = await window.electronAPI.ai.testConnectionByModel(aiModel)
-    
+
     testResult.value = {
       type: result.success ? 'success' : 'error',
-      message: result.message
+      message: resultMessage(result)
     }
   } catch (error) {
     testResult.value = {
@@ -823,9 +829,10 @@ const testCustomConnection = async (provider) => {
     // 调用主进程的测试连接方法
     const result = await window.electronAPI.ai.testConnectionByModel(aiModel)
     
+    const label = provider.name || t('settings.ai.customConfig')
     customTestResults.value[provider.id] = {
       type: result.success ? 'success' : 'error',
-      message: `${provider.name}：${result.message}`
+      message: `${label}：${resultMessage(result)}`
     }
     console.log('自定义配置测试结果', customTestResults.value[provider.id])
   } catch (error) {
