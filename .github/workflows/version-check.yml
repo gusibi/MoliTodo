@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
     paths: [ 'package.json' ]
 
+permissions:
+  contents: write  # 推送 tag 需要写权限
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -47,9 +50,16 @@ jobs:
       - name: Create tag
         if: steps.version_changed.outputs.changed == 'true'
         run: |
+          TAG="v${{ steps.current_version.outputs.version }}"
+
+          # tag 可能已经手动打过了，这种情况下直接跳过，
+          # 否则 push 会因为远端已存在同名 tag 而失败
+          if [ -n "$(git ls-remote --tags origin "refs/tags/$TAG")" ]; then
+            echo "Tag $TAG already exists on origin, skipping."
+            exit 0
+          fi
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag -a "v${{ steps.current_version.outputs.version }}" -m "Release v${{ steps.current_version.outputs.version }}"
-          git push origin "v${{ steps.current_version.outputs.version }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
