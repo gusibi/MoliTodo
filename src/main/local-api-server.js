@@ -1,5 +1,7 @@
 const http = require('http');
 const { URL } = require('url');
+const TaskUseCases = require('../application/task-use-cases');
+const MoliTodoMcpServer = require('./mcp-server');
 
 class LocalApiServer {
   constructor({ taskService, listService, notificationService, windowManager }) {
@@ -7,6 +9,13 @@ class LocalApiServer {
     this.listService = listService;
     this.notificationService = notificationService;
     this.windowManager = windowManager;
+    this.taskUseCases = new TaskUseCases({
+      taskService,
+      listService,
+      notificationService,
+      onReminder: (task) => this.handleTaskReminder(task)
+    });
+    this.mcpServer = new MoliTodoMcpServer({ taskUseCases: this.taskUseCases });
     this.server = null;
     this.state = {
       enabled: false,
@@ -16,6 +25,7 @@ class LocalApiServer {
       baseUrl: 'http://127.0.0.1:1234',
       docsUrl: 'http://127.0.0.1:1234/api/docs',
       openApiUrl: 'http://127.0.0.1:1234/api/openapi.json',
+      mcpUrl: 'http://127.0.0.1:1234/mcp',
       lastError: null
     };
   }
@@ -65,7 +75,8 @@ class LocalApiServer {
       port,
       baseUrl,
       docsUrl: `${baseUrl}/api/docs`,
-      openApiUrl: `${baseUrl}/api/openapi.json`
+      openApiUrl: `${baseUrl}/api/openapi.json`,
+      mcpUrl: `${baseUrl}/mcp`
     };
   }
 
@@ -93,7 +104,11 @@ class LocalApiServer {
     this.server = http.createServer((request, response) => {
       this.handleRequest(request, response).catch((error) => {
         console.error('[LocalApiServer] 请求处理失败:', error);
-        this.sendError(response, 500, error.message || 'Internal server error');
+        if (!response.headersSent) {
+          this.sendError(response, 500, error.message || 'Internal server error');
+        } else if (!response.writableEnded) {
+          response.end();
+        }
       });
     });
 
@@ -147,6 +162,11 @@ class LocalApiServer {
   }
 
   async handleRequest(request, response) {
+    if (!this.isAllowedHost(request.headers.host)) {
+      this.sendError(response, 403, 'Invalid Host header');
+      return;
+    }
+
     this.setCorsHeaders(response);
 
     if (request.method === 'OPTIONS') {
@@ -158,13 +178,19 @@ class LocalApiServer {
     const url = new URL(request.url, this.state.baseUrl);
     const { pathname, searchParams } = url;
 
+    if (pathname === '/mcp') {
+      await this.mcpServer.handleRequest(request, response);
+      return;
+    }
+
     if (pathname === '/' || pathname === '/api') {
       this.sendJson(response, 200, {
         name: 'MoliTodo Local API',
         version: '1.0.0',
         baseUrl: this.state.baseUrl,
         docsUrl: this.state.docsUrl,
-        openApiUrl: this.state.openApiUrl
+        openApiUrl: this.state.openApiUrl,
+        mcpUrl: this.state.mcpUrl
       });
       return;
     }
@@ -213,17 +239,17 @@ class LocalApiServer {
       const tasks = await this.queryTasks(searchParams);
       this.sendJson(response, 200, {
         success: true,
-        data: tasks.map((task) => this.serializeTask(task))
+        data: tasks
       });
       return;
     }
 
     if (request.method === 'POST' && pathname === '/api/tasks') {
       const body = await this.readJsonBody(request);
-      const task = await this.createTaskFromRequest(body);
+      const task = await this.taskUseCases.createTask(body);
       this.sendJson(response, 201, {
         success: true,
-        data: this.serializeTask(task)
+        data: task
       });
       return;
     }
@@ -232,23 +258,25 @@ class LocalApiServer {
     if (taskMatch) {
       const taskId = decodeURIComponent(taskMatch[1]);
 
+      if (request.method === 'GET') {
+        const task = await this.taskUseCases.getTask(taskId);
+        this.sendJson(response, 200, { success: true, data: task });
+        return;
+      }
+
       if (request.method === 'PATCH') {
         const body = await this.readJsonBody(request);
-        const task = await this.taskService.updateTask(taskId, body);
-        await this.syncReminder(taskId, body, task);
+        const task = await this.taskUseCases.updateTask(taskId, body);
         this.sendJson(response, 200, {
           success: true,
-          data: this.serializeTask(task)
+          data: task
         });
         return;
       }
 
       if (request.method === 'DELETE') {
-        const success = await this.taskService.deleteTask(taskId);
-        this.notificationService.cancelTaskReminder(taskId);
-        this.sendJson(response, 200, {
-          success
-        });
+        const result = await this.taskUseCases.deleteTask(taskId);
+        this.sendJson(response, 200, result);
         return;
       }
     }
@@ -260,7 +288,7 @@ class LocalApiServer {
       const task = await this.runTaskAction(taskId, action);
       this.sendJson(response, 200, {
         success: true,
-        data: this.serializeTask(task)
+        data: task
       });
       return;
     }
@@ -275,119 +303,29 @@ class LocalApiServer {
     const query = searchParams.get('query');
     const includeCompleted = searchParams.get('includeCompleted') === 'true';
 
-    let tasks;
-
-    if (query) {
-      tasks = await this.taskService.searchTasks(query, this.parseOptionalListId(listIdValue));
-    } else if (category) {
-      tasks = await this.taskService.getTasksByCategory(category, this.parseOptionalListId(listIdValue));
-    } else if (listIdValue !== null) {
-      tasks = await this.taskService.getTasksByListId(this.parseRequiredListId(listIdValue));
-    } else if (includeCompleted) {
-      tasks = await this.taskService.getAllTasks();
-    } else {
-      tasks = await this.taskService.getIncompleteTasks();
-    }
-
-    if (!status) {
-      return tasks;
-    }
-
-    return tasks.filter((task) => task.status === status);
-  }
-
-  async createTaskFromRequest(body = {}) {
-    if (!body || typeof body !== 'object') {
-      throw new Error('请求体必须是 JSON 对象');
-    }
-
-    const taskData = {
-      content: body.content,
-      reminderTime: body.reminderTime || null,
-      listId: body.listId ?? 0,
-      metadata: body.metadata || {},
-      recurrence: body.recurrence || null,
-      dueDate: body.dueDate || null,
-      dueTime: body.dueTime || null
-    };
-
-    const reminderTime = taskData.reminderTime ? new Date(taskData.reminderTime) : null;
-    const task = await this.taskService.createTaskInList(
-      taskData.content,
-      Number.parseInt(taskData.listId, 10) || 0,
-      reminderTime,
-      taskData
-    );
-
-    if (task.reminderTime) {
-      this.notificationService.scheduleTaskReminder(task, (scheduledTask) => {
-        this.handleTaskReminder(scheduledTask);
-      });
-    }
-
-    return task;
+    return this.taskUseCases.listTasks({
+      status,
+      listId: this.parseOptionalListId(listIdValue),
+      category,
+      query,
+      includeCompleted
+    });
   }
 
   async runTaskAction(taskId, action) {
     if (action === 'start') {
-      return this.taskService.startTask(taskId);
+      return this.taskUseCases.startTask(taskId);
     }
 
     if (action === 'pause') {
-      return this.taskService.pauseTask(taskId);
+      return this.taskUseCases.stopTask(taskId);
     }
 
     if (action === 'complete') {
-      const task = await this.taskService.completeTaskWithTracking(taskId);
-      this.notificationService.cancelTaskReminder(taskId);
-      return task;
+      return this.taskUseCases.completeTask(taskId);
     }
 
     throw new Error(`不支持的任务动作: ${action}`);
-  }
-
-  async syncReminder(taskId, updates, task) {
-    if (updates.reminderTime === undefined) {
-      return;
-    }
-
-    this.notificationService.cancelTaskReminder(taskId);
-    if (task.reminderTime) {
-      this.notificationService.scheduleTaskReminder(task, (scheduledTask) => {
-        this.handleTaskReminder(scheduledTask);
-      });
-    }
-  }
-
-  serializeTask(task) {
-    return {
-      id: task.id,
-      content: task.content,
-      status: task.status,
-      completed: task.completed,
-      createdAt: this.toIso(task.createdAt),
-      updatedAt: this.toIso(task.updatedAt),
-      reminderTime: this.toIso(task.reminderTime),
-      startedAt: this.toIso(task.startedAt),
-      completedAt: this.toIso(task.completedAt),
-      totalDuration: task.totalDuration,
-      listId: task.listId,
-      metadata: task.metadata,
-      recurrence: task.recurrence,
-      seriesId: task.seriesId,
-      occurrenceDate: task.occurrenceDate,
-      dueDate: task.dueDate,
-      dueTime: task.dueTime
-    };
-  }
-
-  toIso(value) {
-    if (!value) {
-      return null;
-    }
-
-    const date = value instanceof Date ? value : new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
   }
 
   parseRequiredListId(value) {
@@ -425,9 +363,20 @@ class LocalApiServer {
   }
 
   setCorsHeaders(response) {
-    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Origin', this.state.baseUrl);
     response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id');
+    response.setHeader('Access-Control-Expose-Headers', 'MCP-Session-Id');
+  }
+
+  isAllowedHost(hostHeader) {
+    if (!hostHeader) return false;
+    const allowed = new Set([
+      `${this.state.host}:${this.state.port}`,
+      `127.0.0.1:${this.state.port}`,
+      `localhost:${this.state.port}`
+    ]);
+    return allowed.has(hostHeader.toLowerCase());
   }
 
   sendJson(response, statusCode, payload) {
@@ -478,6 +427,7 @@ class LocalApiServer {
       baseUrl: this.state.baseUrl,
       docsUrl: this.state.docsUrl,
       openApiUrl: this.state.openApiUrl,
+      mcpUrl: this.state.mcpUrl,
       notes: [
         '默认只监听本机 localhost，可直接给本地 AI、脚本或自动化工具调用。',
         '所有请求和响应都使用 JSON。',
@@ -487,6 +437,7 @@ class LocalApiServer {
         { method: 'GET', path: '/api/health', description: '检查服务是否在线' },
         { method: 'GET', path: '/api/docs', description: '读取接口说明和调用示例' },
         { method: 'GET', path: '/api/openapi.json', description: '读取 OpenAPI 规范' },
+        { method: 'POST', path: '/mcp', description: 'MCP Streamable HTTP 入口' },
         { method: 'GET', path: '/api/lists', description: '获取所有清单' },
         { method: 'POST', path: '/api/lists', description: '创建清单' },
         { method: 'GET', path: '/api/tasks', description: '查询任务，支持 status、listId、category、query、includeCompleted 参数' },
@@ -553,6 +504,9 @@ class LocalApiServer {
           }
         },
         '/api/tasks/{taskId}': {
+          get: {
+            summary: '读取单个任务'
+          },
           patch: {
             summary: '更新任务'
           },

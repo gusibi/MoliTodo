@@ -75,6 +75,62 @@ npm install
 npm run dev
 ```
 
+## 🔌 配置 MCP
+
+MoliTodo 内置 MCP Streamable HTTP 服务，支持 AI 客户端直接查询、创建和操作本地任务，不需要配置 Token。
+
+### 1. 开启本地服务
+
+1. 打开 MoliTodo 设置。
+2. 进入“本地接口”。
+3. 开启“本地服务”。
+4. 默认端口为 `1234`，也可以在设置中修改。
+
+MCP 地址：
+
+```text
+http://127.0.0.1:1234/mcp
+```
+
+服务只监听本机 `127.0.0.1`，其他设备无法通过网络访问，因此本地使用不需要 Token。
+
+### 2. 添加到 MCP 客户端
+
+在支持 Streamable HTTP 的 MCP 客户端中添加一个名为 `molitodo` 的服务器。不同客户端的配置界面可能略有不同，核心配置如下：
+
+```json
+{
+  "mcpServers": {
+    "molitodo": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:1234/mcp"
+    }
+  }
+}
+```
+
+如果修改了本地服务端口，需要同步修改配置中的 URL。配置完成后，客户端应能发现以下工具：
+
+| 工具 | 功能 |
+| --- | --- |
+| `list_projects` | 获取所有项目/清单 |
+| `list_tasks` | 查询和筛选任务 |
+| `get_task` | 获取单个任务详情 |
+| `create_task` | 在指定项目下创建任务并设置提醒时间 |
+| `edit_task` | 编辑内容、项目、提醒和截止时间等信息 |
+| `start_task` | 开始任务并开始计时 |
+| `stop_task` | 结束本次计时并暂停任务，不会标记为完成 |
+| `complete_task` | 完成任务 |
+| `delete_task` | 删除任务 |
+
+提醒时间使用带时区的 ISO 8601 格式，例如：
+
+```text
+2026-07-31T09:00:00+08:00
+```
+
+更完整的本地接口和 MCP 说明参见 [本地接口文档](./docs/local-api-server.md)。
+
 ## 🤖 AI Intelligent Features Highlights
 
 ### Multi-Provider AI Support

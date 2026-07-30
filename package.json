@@ -4,6 +4,7 @@
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
+    "test": "node --test test/*.test.js",
     "dev": "npm run rebuild && node dev-start.js",
     "dev:renderer": "vite --config src/renderer/vite.config.js",
     "dev:clean": "npm run rebuild && npm run dev",
@@ -48,6 +49,7 @@
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/vue3": "^6.1.19",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@vuepic/vue-datepicker": "^11.0.2",
     "ai": "^5.0.22",
     "chart.js": "^4.5.0",

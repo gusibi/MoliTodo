@@ -73,6 +73,7 @@
       "baseUrl": "服务地址",
       "docsUrl": "接口文档地址",
       "openApiUrl": "OpenAPI 地址",
+      "mcpUrl": "MCP 地址（Streamable HTTP）",
       "refreshStatus": "刷新状态",
       "invalidPort": "端口号必须在 1 到 65535 之间",
       "portSaved": "端口设置已更新",
@@ -81,7 +82,7 @@
       "skillDescription": "项目里已经附带了一份 skill，AI 可以先读健康检查和接口文档，再开始调任务接口。",
       "skillTipHealth": "先请求 /api/health 确认服务在线。",
       "skillTipDocs": "再请求 /api/docs 或 /api/openapi.json 读取接口和参数。",
-      "skillTipTasks": "任务常用入口是 /api/tasks，以及 /api/tasks/:id/start、/pause、/complete。"
+      "skillTipTasks": "MCP 客户端使用 /mcp；HTTP 客户端使用 /api/tasks 及其操作接口。"
     },
     "statistics": "统计信息",
     "language": "语言设置",

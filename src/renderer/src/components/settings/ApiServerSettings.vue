@@ -75,6 +75,11 @@
           <code class="setting-api-link-value">{{ serverState.openApiUrl }}</code>
         </div>
 
+        <div class="setting-api-link-block">
+          <div class="setting-api-link-label">{{ t('settings.api.mcpUrl') }}</div>
+          <code class="setting-api-link-value">{{ serverState.mcpUrl }}</code>
+        </div>
+
         <div v-if="serverState.lastError" class="setting-api-error">
           {{ serverState.lastError }}
         </div>
@@ -116,6 +121,7 @@ const serverState = reactive({
   baseUrl: 'http://127.0.0.1:1234',
   docsUrl: 'http://127.0.0.1:1234/api/docs',
   openApiUrl: 'http://127.0.0.1:1234/api/openapi.json',
+  mcpUrl: 'http://127.0.0.1:1234/mcp',
   lastError: null
 })
 

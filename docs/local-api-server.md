@@ -14,12 +14,36 @@ MoliTodo 现在支持在本机开启一个本地接口服务，默认地址是 `
 - 健康检查：`GET /api/health`
 - 接口说明：`GET /api/docs`
 - OpenAPI：`GET /api/openapi.json`
+- MCP：`POST /mcp`（Streamable HTTP）
+
+## MCP
+
+开启本地服务后，把以下地址配置到支持 Streamable HTTP 的 MCP 客户端：
+
+```text
+http://127.0.0.1:1234/mcp
+```
+
+MCP 提供以下工具：
+
+- `list_projects`
+- `list_tasks`
+- `get_task`
+- `create_task`
+- `edit_task`
+- `start_task`
+- `stop_task`
+- `complete_task`
+- `delete_task`
+
+其中 `stop_task` 表示结束本次计时并暂停任务，不会把任务标记为完成。提醒时间使用带时区的 ISO 8601 格式，例如 `2026-07-31T09:00:00+08:00`。
 
 ## 主要接口
 
 ### 任务
 
 - `GET /api/tasks`
+- `GET /api/tasks/:id`
 - `POST /api/tasks`
 - `PATCH /api/tasks/:id`
 - `DELETE /api/tasks/:id`

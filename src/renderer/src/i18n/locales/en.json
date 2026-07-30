@@ -58,6 +58,7 @@
       "baseUrl": "Base URL",
       "docsUrl": "Docs URL",
       "openApiUrl": "OpenAPI URL",
+      "mcpUrl": "MCP URL (Streamable HTTP)",
       "refreshStatus": "Refresh",
       "invalidPort": "Port must be between 1 and 65535",
       "portSaved": "Port updated",
@@ -66,7 +67,7 @@
       "skillDescription": "A ready-to-use skill file is included in the project. It tells AI to check health first, then read the docs, then call task endpoints.",
       "skillTipHealth": "Call /api/health first to confirm the server is online.",
       "skillTipDocs": "Then call /api/docs or /api/openapi.json to read endpoints and parameters.",
-      "skillTipTasks": "Main task entry points are /api/tasks and /api/tasks/:id/start, /pause, /complete."
+      "skillTipTasks": "Use /mcp for MCP clients, or /api/tasks and its action endpoints for HTTP clients."
     },
     "statistics": "Statistics",
     "statisticsDescription": "View task statistics and data analysis",

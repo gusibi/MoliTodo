@@ -139,9 +139,8 @@ class TaskService {
       }
     }
 
-    // 设置完成时间并标记为完成
-    task.completedAt = new Date();
-    task.markAsCompleted();
+    // 设置完成时间、累计进行中耗时并标记为完成
+    task.completeTask();
     const updatedTask = await this.taskRepository.save(task);
 
     // 记录状态变化日志
@@ -343,6 +342,16 @@ class TaskService {
       }
     }
 
+    if (updates.dueDate !== undefined) {
+      task.dueDate = updates.dueDate;
+      task.updatedAt = new Date();
+    }
+
+    if (updates.dueTime !== undefined) {
+      task.dueTime = updates.dueTime;
+      task.updatedAt = new Date();
+    }
+
     // console.log("task service task: ------ final", task)
     const updatedTask = await this.taskRepository.save(task);
 
@@ -440,6 +449,10 @@ class TaskService {
     return await this.taskRepository.findAll();
   }
 
+  async getTaskById(taskId) {
+    return await this.taskRepository.findById(taskId);
+  }
+
   /**
    * 获取未完成任务数量
    * @returns {Promise<number>}
@@ -500,26 +513,7 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async completeTaskWithTracking(taskId) {
-    const task = await this.taskRepository.findById(taskId);
-    if (!task) {
-      throw new Error('任务不存在');
-    }
-
-    if (task.completed) {
-      console.log(`任务 ${taskId} 已经完成，跳过操作`);
-      return task;
-    }
-
-    const oldStatus = task.status;
-    task.completeTask();
-    const updatedTask = await this.taskRepository.save(task);
-
-    // 记录状态变化日志
-    if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
-      await this.taskStatusLogService.logStatusChange(taskId, oldStatus, updatedTask.status);
-    }
-
-    return updatedTask;
+    return this.completeTask(taskId);
   }
 
   /**
