@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -100,7 +100,7 @@
           "arch": "arm64"
         }
       ],
-      "icon": "resources/icon-3.png"
+      "icon": "resources/icon.png"
     },
     "win": {
       "target": [
@@ -111,7 +111,7 @@
           ]
         }
       ],
-      "icon": "resources/icon-3.png"
+      "icon": "resources/icon.png"
     }
   }
 }
