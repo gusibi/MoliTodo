@@ -125,7 +125,7 @@
 }
 
 .logo-preview-image {
-  @apply w-8 h-8 rounded-md object-cover;
+  @apply w-8 h-8 rounded-lg object-cover;
 }
 
 .logo-preview-name {
