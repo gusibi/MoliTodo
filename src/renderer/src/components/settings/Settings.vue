@@ -133,7 +133,7 @@ const config = reactive({
     soundFile: 'ding-126626.mp3',
     volume: 50
   },
-  selectedLogo: 'default',
+  selectedLogo: 'b1',
   floatingIcon: {
     visible: true,
     size: 60,

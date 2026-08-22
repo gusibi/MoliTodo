@@ -1,17 +1,17 @@
-<svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <!-- macOS 菜单栏自适应明暗主题的 Todo 清单图标 -->
-  <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <!-- 外圈，占满画布 -->
-    <circle cx="12" cy="12" r="11"/>
-    <!-- 勾选标记，稍微偏右下，避免与清单重叠 -->
-    <path d="M9.5 10.5l2 2 4-5" stroke-width="1.8"/>
-    <!-- 清单横线，分布均匀 -->
-    <line x1="9.5" y1="7.5" x2="12.5" y2="7.5"/>
-    <line x1="14.5" y1="11.5" x2="16.5" y2="11.5"/>
-    <line x1="9.5" y1="15.5" x2="16.5" y2="15.5"/>
-    <!-- 左侧点，与横线对齐，保持间距 -->
-    <circle cx="7" cy="7.5" r="0.8" fill="currentColor" stroke="none"/>
-    <circle cx="7" cy="11.5" r="0.8" fill="currentColor" stroke="none"/>
-    <circle cx="7" cy="15.5" r="0.8" fill="currentColor" stroke="none"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <mask id="pug-cutouts" maskUnits="userSpaceOnUse" x="1" y="2" width="22" height="21">
+    <rect x="1" y="2" width="22" height="21" fill="white"/>
+    <ellipse cx="8.4" cy="10.1" rx="1.55" ry="1.9" fill="black"/>
+    <ellipse cx="15.6" cy="10.1" rx="1.55" ry="1.9" fill="black"/>
+    <path d="M9.1 14.1c1.7 1.35 4.1 1.35 5.8 0" stroke="black" stroke-width="1.35" stroke-linecap="round"/>
+    <path d="M9 18.5l1.8 1.8 4-4.5" stroke="black" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <g fill="currentColor" mask="url(#pug-cutouts)">
+    <path d="M4.8 7.5C2.7 7 1.4 5.5 1.8 3.7c.3-1.4 1.9-2 3.8-1.3 1 .35 1.9 1 2.5 1.8-1.7.55-2.8 1.7-3.3 3.3Z"/>
+    <path d="M19.2 7.5c2.1-.5 3.4-2 3-3.8-.3-1.4-1.9-2-3.8-1.3-1 .35-1.9 1-2.5 1.8 1.7.55 2.8 1.7 3.3 3.3Z"/>
+    <path d="M12 3.6c-5.25 0-8.5 3.2-8.5 8.15 0 2.4 1.05 4.25 2.65 5.45-.45 1.45-.45 3.15-.15 4.8h12c.3-1.65.3-3.35-.15-4.8 1.6-1.2 2.65-3.05 2.65-5.45C20.5 6.8 17.25 3.6 12 3.6Z"/>
+    <ellipse cx="12" cy="13.1" rx="4.25" ry="3.35"/>
   </g>
+  <circle cx="8.4" cy="10.35" r=".62" fill="currentColor"/>
+  <circle cx="15.6" cy="10.35" r=".62" fill="currentColor"/>
 </svg>

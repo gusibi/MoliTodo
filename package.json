@@ -10,6 +10,7 @@
     "dev:clean": "npm run rebuild && npm run dev",
     "rebuild": "electron-rebuild",
     "build:renderer": "vite build --config src/renderer/vite.config.js",
+    "generate:icon-variants": "python3 scripts/generate-icon-variants.py",
     "build": "npm run build:renderer && electron-builder",
     "build:mac": "npm run build",
     "build:win": "npm run build",
@@ -100,7 +101,7 @@
           "arch": "arm64"
         }
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.icns"
     },
     "win": {
       "target": [
@@ -111,7 +112,7 @@
           ]
         }
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.ico"
     }
   }
 }

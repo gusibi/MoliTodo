@@ -1145,86 +1145,16 @@ class IpcHandlers {
           throw new Error(`图标文件不存在: ${fullIconPath}`);
         }
 
-        // 更新运行时图标
-        if (process.platform === 'darwin') {
-          app.dock.setIcon(fullIconPath);
-        } else {
-          app.setIcon(fullIconPath);
-        }
+        const runtimeIconPath = this.windowManager.resolveRuntimeAppIconPath(fullIconPath);
+        this.windowManager.applyAppIcon(runtimeIconPath);
 
-        // 更新所有窗口的图标
-        const { nativeImage } = require('electron');
-        const windowIcon = nativeImage.createFromPath(fullIconPath);
-
-        const windows = [
-          this.windowManager.floatingWindow,
-          this.windowManager.taskManagerWindow,
-          this.windowManager.settingsWindow,
-          this.windowManager.taskPanelWindow
-        ];
-
-        windows.forEach(window => {
-          if (window && !window.isDestroyed()) {
-            window.setIcon(windowIcon);
-          }
-        });
-
-        if (this.windowManager.floatingTaskWindows) {
-          this.windowManager.floatingTaskWindows.forEach(window => {
-            if (window && !window.isDestroyed()) {
-              window.setIcon(windowIcon);
-            }
-          });
-        }
-
-        // macOS 特殊处理：尝试更新应用包图标和清除缓存
-        if (process.platform === 'darwin') {
-          try {
-            await this.refreshMacIconCache();
-          } catch (error) {
-            console.warn('刷新 macOS 图标缓存失败:', error.message);
-          }
-        }
-
-        console.log(`应用图标已更新: ${fullIconPath}`);
-        return { success: true, iconPath: fullIconPath };
+        console.log(`应用图标已更新: ${runtimeIconPath}`);
+        return { success: true, iconPath: runtimeIconPath };
       } catch (error) {
         console.error('更新应用图标失败:', error);
         return { success: false, error: error.message };
       }
     });
-  }
-
-  // 刷新 macOS 图标缓存
-  async refreshMacIconCache() {
-    if (process.platform !== 'darwin') {
-      return;
-    }
-
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
-    const execAsync = promisify(exec);
-
-    try {
-      // 清除图标缓存
-      await execAsync('sudo find /private/var/folders/ -name com.apple.dock.iconcache -delete 2>/dev/null || true');
-      await execAsync('sudo find /private/var/folders/ -name com.apple.iconservices -delete 2>/dev/null || true');
-
-      // 重启相关服务
-      await execAsync('killall Dock 2>/dev/null || true');
-      await execAsync('killall Finder 2>/dev/null || true');
-
-      console.log('macOS 图标缓存已刷新');
-    } catch (error) {
-      // 如果没有 sudo 权限，尝试用户级别的缓存清理
-      try {
-        await execAsync('rm -rf ~/Library/Caches/com.apple.iconservices.store 2>/dev/null || true');
-        await execAsync('killall Dock 2>/dev/null || true');
-        console.log('用户级别的 macOS 图标缓存已刷新');
-      } catch (userError) {
-        throw new Error(`刷新图标缓存失败: ${error.message}`);
-      }
-    }
   }
 
   // 广播任务更新到所有窗口

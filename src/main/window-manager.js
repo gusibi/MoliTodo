@@ -11,6 +11,7 @@ class WindowManager {
     this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
     this.tray = null;
     this.appInstance = appInstance;
+    this.platform = process.platform;
     this.taskService = null; // 将在main.js中设置
     this.isPanelPinned = false; // 面板固定状态
 
@@ -89,6 +90,12 @@ class WindowManager {
   }
 
   async initialize() {
+    try {
+      this.applyCurrentAppIcon();
+    } catch (error) {
+      console.warn('无法应用已保存的应用图标:', error.message);
+    }
+
     this.createFloatingWindow();
     this.createTray();
 
@@ -115,6 +122,8 @@ class WindowManager {
       y: y,
       frame: false,
       transparent: true, // 设置窗口为透明背景
+      backgroundColor: '#00000000', // 防止 macOS 原生窗口底色填充透明区域
+      hasShadow: false,
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
@@ -424,14 +433,7 @@ class WindowManager {
 
   createTray() {
     try {
-      // 在开发环境和生产环境下使用不同的路径
-      let trayIconPath;
-      if (process.env.NODE_ENV === 'development') {
-        trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
-      } else {
-        // 在打包后的应用中，资源文件位于应用根目录的 resources 文件夹
-        trayIconPath = path.join(process.resourcesPath, 'resources/tray-icon.png');
-      }
+      const trayIconPath = this.getTrayIconPath();
 
       // 检查图标文件是否存在
       const fs = require('fs');
@@ -449,9 +451,11 @@ class WindowManager {
         return;
       }
 
-      const resizedImage = image.resize({ width: 16, height: 16 });
+      if (process.platform === 'darwin') {
+        image.setTemplateImage(true);
+      }
 
-      this.tray = new Tray(resizedImage);
+      this.tray = new Tray(image);
       this.tray.setToolTip('MoliTodo - 悬浮待办');
 
       this.updateTrayMenu().catch(console.error);
@@ -584,13 +588,7 @@ class WindowManager {
   // 创建带有数字角标的托盘图标
   createTrayIconWithBadge(count = 0) {
     try {
-      let trayIconPath;
-      if (process.env.NODE_ENV === 'development') {
-        trayIconPath = path.join(__dirname, '../../resources/tray-icon.png');
-      } else {
-        // 在打包后的应用中，资源文件位于应用根目录的 resources 文件夹
-        trayIconPath = path.join(process.resourcesPath, 'resources/tray-icon.png');
-      }
+      const trayIconPath = this.getTrayIconPath();
       const fs = require('fs');
 
       // 先确保原始图标存在并可用
@@ -605,10 +603,14 @@ class WindowManager {
         return null;
       }
 
+      if (process.platform === 'darwin') {
+        baseImage.setTemplateImage(true);
+      }
+
       // 如果没有任务数量，直接返回原图标
       if (count <= 0) {
         console.log('没有任务，返回原始图标');
-        return baseImage.resize({ width: 16, height: 16 });
+        return baseImage;
       }
 
       // 尝试使用简单的PNG生成方法
@@ -697,35 +699,120 @@ class WindowManager {
     this.configStore.set('userGuideCompleted', true);
   }
 
-  // 获取当前应用图标
-  getCurrentAppIcon() {
-    const selectedLogo = this.configStore.get('selectedLogo', 'default');
-    let iconPath;
-
-    // 根据选中的logo ID获取对应的资源路径
-    const logoMap = {
-      'icon-3': 'resources/icon-3.png',
-      'default': 'resources/icon.png',
-      'icon-v1': 'resources/icon-v1.png',
-      'icon-1': 'resources/icon-1.png',
-      'icon-2': 'resources/icon-2.png',
-      'icon-4': 'resources/icon-4.png'
-    };
-
-    const resourcePath = logoMap[selectedLogo] || logoMap['default'];
+  getTrayIconPath() {
+    const iconFile = process.platform === 'darwin'
+      ? 'tray-iconTemplate.png'
+      : process.platform === 'win32'
+        ? 'tray-icon.ico'
+        : 'tray-icon.png';
 
     if (process.env.NODE_ENV === 'development') {
-      iconPath = path.join(__dirname, '../../', resourcePath);
-    } else {
-      iconPath = path.join(process.resourcesPath, resourcePath);
+      return path.join(__dirname, '../../resources', iconFile);
     }
 
+    return path.join(process.resourcesPath, 'resources', iconFile);
+  }
+
+  getResourcePath(resourcePath) {
+    if (process.env.NODE_ENV === 'development') {
+      return path.join(__dirname, '../../', resourcePath);
+    }
+
+    return path.join(process.resourcesPath, resourcePath);
+  }
+
+  getLogoFileName(logoId) {
+    const logoMap = {
+      a1: 'A1',
+      a2: 'A2',
+      a3: 'A3',
+      a4: 'A4',
+      b1: 'B1',
+      b2: 'B2',
+      b3: 'B3',
+      b4: 'B4'
+    };
+
+    return logoMap[logoId] || logoMap.b1;
+  }
+
+  getAppIconPathForLogo(logoId) {
+    const fileName = this.getLogoFileName(logoId);
+    let resourcePath = `resources/logos/${fileName}.png`;
+
+    if (this.platform === 'darwin') {
+      resourcePath = `resources/logos/macos/${fileName}.png`;
+    } else if (this.platform === 'win32') {
+      resourcePath = `resources/logos/windows/${fileName}.ico`;
+    }
+
+    return this.getResourcePath(resourcePath);
+  }
+
+  // 获取当前应用图标（自动选择当前系统的运行时版本）
+  getCurrentAppIconPath() {
+    return this.getAppIconPathForLogo(this.configStore.get('selectedLogo', 'b1'));
+  }
+
+  // 将设置页传入的原始预览图路径映射为当前系统的运行时图标。
+  // 保留路径接口兼容性，同时避免把原始方形 PNG 直接交给 Dock/任务栏。
+  resolveRuntimeAppIconPath(iconPath) {
+    const sourcePath = String(iconPath || '');
+    const logoMatch = sourcePath.match(/[\\/]resources[\\/]logos[\\/]([ab][1-4])\.png$/i);
+
+    if (!logoMatch) {
+      return sourcePath;
+    }
+
+    return this.getAppIconPathForLogo(logoMatch[1].toLowerCase());
+  }
+
+  getCurrentAppIcon() {
+    const iconPath = this.getCurrentAppIconPath();
+
     try {
-      return nativeImage.createFromPath(iconPath);
+      const image = nativeImage.createFromPath(iconPath);
+      return image.isEmpty() ? null : image;
     } catch (error) {
       console.warn('无法加载应用图标，使用默认图标:', error);
       return null;
     }
+  }
+
+  applyCurrentAppIcon() {
+    return this.applyAppIcon(this.getCurrentAppIconPath());
+  }
+
+  applyAppIcon(iconPath) {
+    const runtimeIconPath = this.resolveRuntimeAppIconPath(iconPath);
+    const image = nativeImage.createFromPath(runtimeIconPath);
+    if (image.isEmpty()) {
+      throw new Error(`图标文件无法加载: ${runtimeIconPath}`);
+    }
+
+    if (this.platform === 'darwin') {
+      if (!app.dock || typeof app.dock.setIcon !== 'function') {
+        throw new Error('macOS Dock 图标 API 不可用');
+      }
+      app.dock.setIcon(image);
+      return image;
+    }
+
+    const windows = [
+      this.floatingWindow,
+      this.taskManagerWindow,
+      this.settingsWindow,
+      this.taskPanelWindow,
+      ...this.floatingTaskWindows.values()
+    ];
+
+    windows.forEach(window => {
+      if (window && !window.isDestroyed()) {
+        window.setIcon(image);
+      }
+    });
+
+    return image;
   }
 
   // 窗口控制方法

@@ -22,7 +22,8 @@
 
     <LogoSelector 
       :config="config" 
-      @update:config="handleLogoConfigUpdate" 
+      @update:config="handleLogoConfigUpdate"
+      @update-error="handleLogoUpdateError"
     />
 
     <FloatingIconSettings 
@@ -52,20 +53,12 @@ const props = defineProps({
 const emit = defineEmits(['update:config', 'show-message'])
 
 // 处理Logo配置更新
-const handleLogoConfigUpdate = async (updatedConfig) => {
-  try {
-    // 更新本地配置
-    Object.assign(props.config, updatedConfig)
-    
-    // 保存selectedLogo到配置文件
-    if (window.electronAPI && window.electronAPI.config) {
-      await window.electronAPI.config.set('selectedLogo', updatedConfig.selectedLogo)
-    }
-    emit('update:config', 'selectedLogo', updatedConfig.selectedLogo)
-  } catch (error) {
-    console.error('Failed to update logo config:', error)
-    emit('show-message', t('settings.logoUpdateFailed'), 'error')
-  }
+const handleLogoConfigUpdate = (updatedConfig) => {
+  Object.assign(props.config, updatedConfig)
+}
+
+const handleLogoUpdateError = () => {
+  emit('show-message', t('settings.logoUpdateFailed'), 'error')
 }
 
 const updateConfig = async (key, value) => {

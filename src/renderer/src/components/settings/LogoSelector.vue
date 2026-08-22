@@ -23,7 +23,7 @@
         </svg>
         <div class="icon-tip-text">
           <strong>macOS 用户提示：</strong>
-          <p>Dock 图标已更新。如果启动台或应用程序文件夹中的图标未更新，请重启应用或注销后重新登录。</p>
+          <p>Dock 图标已更新，下次启动会继续使用当前选择。启动台和应用程序文件仍使用安装包的默认图标。</p>
         </div>
         <button @click="showMacIconTip = false" class="icon-tip-close">×</button>
       </div>
@@ -31,10 +31,10 @@
 
     <div class="logo-grid">
       <div v-for="logo in logoOptions" :key="logo.id" class="logo-option"
-        :class="{ 'logo-option-active': props.config.selectedLogo === logo.id }" @click="selectLogo(logo.id)">
+        :class="{ 'logo-option-active': selectedLogoId === logo.id }" @click="selectLogo(logo.id)">
         <img :src="logo.displayPath" :alt="logo.name" class="logo-option-image" />
         <!-- <span class="logo-option-name">{{ logo.name }}</span> -->
-        <div v-if="props.config.selectedLogo === logo.id" class="logo-option-check">
+        <div v-if="selectedLogoId === logo.id" class="logo-option-check">
           <svg class="logo-check-icon" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -58,7 +58,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['update:config'])
+const emit = defineEmits(['update:config', 'update-error'])
 
 // 响应式数据
 const showMacIconTip = ref(false)
@@ -66,47 +66,64 @@ const showMacIconTip = ref(false)
 // 可用的logo选项
 const logoOptions = ref([
   {
-    id: 'icon-3',
-    name: '紫色时间',
-    displayPath: './icon-3.png',
-    resourcePath: 'resources/icon-3.png'
+    id: 'a1',
+    name: 'A1 暖杏天蓝',
+    displayPath: './logos/A1.png',
+    resourcePath: 'resources/logos/A1.png'
   },
   {
-    id: 'default',
-    name: '默认图标',
-    displayPath: './icon.png',
-    resourcePath: 'resources/icon.png'
+    id: 'a2',
+    name: 'A2 奶油薄荷',
+    displayPath: './logos/A2.png',
+    resourcePath: 'resources/logos/A2.png'
   },
   {
-    id: 'icon-v1',
-    name: '经典版本',
-    displayPath: './icon-v1.png',
-    resourcePath: 'resources/icon-v1.png'
+    id: 'a3',
+    name: 'A3 金赭珊瑚',
+    displayPath: './logos/A3.png',
+    resourcePath: 'resources/logos/A3.png'
   },
   {
-    id: 'icon-1',
-    name: '简约风格',
-    displayPath: './icon-1.png',
-    resourcePath: 'resources/icon-1.png'
+    id: 'a4',
+    name: 'A4 奶油薰衣草',
+    displayPath: './logos/A4.png',
+    resourcePath: 'resources/logos/A4.png'
   },
   {
-    id: 'icon-2',
-    name: '彩色版本',
-    displayPath: './icon-2.png',
-    resourcePath: 'resources/icon-2.png'
+    id: 'b1',
+    name: 'B1 经典歪头',
+    displayPath: './logos/B1.png',
+    resourcePath: 'resources/logos/B1.png'
   },
-
   {
-    id: 'icon-4',
-    name: '极简主题',
-    displayPath: './icon-4.png',
-    resourcePath: 'resources/icon-4.png'
+    id: 'b2',
+    name: 'B2 托腮思考',
+    displayPath: './logos/B2.png',
+    resourcePath: 'resources/logos/B2.png'
+  },
+  {
+    id: 'b3',
+    name: 'B3 正面忠诚',
+    displayPath: './logos/B3.png',
+    resourcePath: 'resources/logos/B3.png'
+  },
+  {
+    id: 'b4',
+    name: 'B4 忧郁大眼',
+    displayPath: './logos/B4.png',
+    resourcePath: 'resources/logos/B4.png'
   }
 ])
 
 // 计算属性
+const selectedLogoId = computed(() => {
+  return logoOptions.value.some(logo => logo.id === props.config.selectedLogo)
+    ? props.config.selectedLogo
+    : 'b1'
+})
+
 const currentLogo = computed(() => {
-  return logoOptions.value.find(logo => logo.id === props.config.selectedLogo) || logoOptions.value[0]
+  return logoOptions.value.find(logo => logo.id === selectedLogoId.value)
 })
 
 const currentLogoPath = computed(() => {
@@ -117,26 +134,21 @@ const currentLogoPath = computed(() => {
 const selectLogo = async (logoId) => {
   const selectedLogo = logoOptions.value.find(logo => logo.id === logoId)
   if (selectedLogo) {
-    // 更新配置
-    const updatedConfig = {
-      ...props.config,
-      selectedLogo: logoId
-    }
-    emit('update:config', updatedConfig)
-
-    // 保存选中的图标到配置存储
     try {
+      const iconUpdateResult = await window.electronAPI?.app?.updateAppIcon(selectedLogo.resourcePath)
+      if (!iconUpdateResult?.success) {
+        throw new Error(iconUpdateResult?.error || '应用图标更新失败')
+      }
+
       await window.electronAPI.config.update('selectedLogo', logoId)
-    } catch (error) {
-      console.error('保存图标配置失败:', error)
-    }
 
-    // 更新应用图标
-    try {
-      await window.electronAPI?.app?.updateAppIcon(selectedLogo.resourcePath)
+      emit('update:config', {
+        ...props.config,
+        selectedLogo: logoId
+      })
 
       // 在 macOS 上显示提示
-      if (navigator.platform.includes('Mac')) {
+      if (window.electronAPI.app.platform === 'darwin') {
         showMacIconTip.value = true
         // 5秒后自动隐藏提示
         setTimeout(() => {
@@ -145,6 +157,7 @@ const selectLogo = async (logoId) => {
       }
     } catch (error) {
       console.error('更新应用图标失败:', error)
+      emit('update-error', error.message)
     }
   }
 }
