@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate platform-specific runtime icons for all selectable app logos.
 
-The source images remain untouched for the settings preview. Runtime assets use
-transparent, antialiased rounded corners so a raw Electron Dock/taskbar icon
-does not render as an opaque square. Windows gets a multi-size ICO so the shell
-can pick a pixel-appropriate frame at each scale factor.
+The source images remain untouched for the settings preview. macOS assets use
+an inset, antialiased rounded-square footprint for the Dock. Windows keeps the
+source silhouette and gets a multi-size ICO so the shell can choose an exact
+size match.
 """
 
 from __future__ import annotations
@@ -16,8 +16,9 @@ from PIL import Image, ImageDraw
 
 
 LOGO_NAMES = ("A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4")
-WINDOWS_ICON_SIZES = (16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 128, 256)
+WINDOWS_ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 CANVAS_SIZE = 1024
+MACOS_FOOTPRINT_SIZE = 824
 CORNER_RADIUS_RATIO = 0.225
 ANTIALIAS_SCALE = 4
 
@@ -36,16 +37,27 @@ def rounded_alpha_mask(size: int) -> Image.Image:
     return mask.resize((size, size), Image.Resampling.LANCZOS)
 
 
-def prepare_runtime_image(source_path: Path) -> Image.Image:
+def prepare_source_image(source_path: Path) -> Image.Image:
     source = Image.open(source_path).convert("RGBA")
     if source.width != source.height:
-        edge = min(source.size)
-        left = (source.width - edge) // 2
-        top = (source.height - edge) // 2
-        source = source.crop((left, top, left + edge, top + edge))
-    source = source.resize((CANVAS_SIZE, CANVAS_SIZE), Image.Resampling.LANCZOS)
-    source.putalpha(rounded_alpha_mask(CANVAS_SIZE))
+        raise ValueError(f"Source logo must be square: {source_path} is {source.size}")
     return source
+
+
+def prepare_macos_image(source: Image.Image) -> Image.Image:
+    footprint = source.resize(
+        (MACOS_FOOTPRINT_SIZE, MACOS_FOOTPRINT_SIZE),
+        Image.Resampling.LANCZOS,
+    )
+    footprint.putalpha(rounded_alpha_mask(MACOS_FOOTPRINT_SIZE))
+    canvas = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+    offset = (CANVAS_SIZE - MACOS_FOOTPRINT_SIZE) // 2
+    canvas.alpha_composite(footprint, (offset, offset))
+    return canvas
+
+
+def prepare_windows_image(source: Image.Image) -> Image.Image:
+    return source.resize((CANVAS_SIZE, CANVAS_SIZE), Image.Resampling.LANCZOS)
 
 
 def generate(source_dir: Path, output_dir: Path) -> None:
@@ -59,9 +71,13 @@ def generate(source_dir: Path, output_dir: Path) -> None:
         if not source_path.is_file():
             raise FileNotFoundError(f"Missing source logo: {source_path}")
 
-        runtime_image = prepare_runtime_image(source_path)
-        runtime_image.save(macos_dir / f"{name}.png", format="PNG", optimize=True)
-        runtime_image.save(
+        source = prepare_source_image(source_path)
+        prepare_macos_image(source).save(
+            macos_dir / f"{name}.png",
+            format="PNG",
+            optimize=True,
+        )
+        prepare_windows_image(source).save(
             windows_dir / f"{name}.ico",
             format="ICO",
             sizes=[(size, size) for size in WINDOWS_ICON_SIZES],
