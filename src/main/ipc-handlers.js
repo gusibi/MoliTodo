@@ -132,38 +132,40 @@ class IpcHandlers {
 
     // 创建任务
     ipcMain.handle('create-task', async (event, taskData) => {
-      const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
-
-      // 如果有提醒时间，转换为Date对象
-      const calculatedReminderTime = reminderTime ? new Date(reminderTime) : null;
+      const {
+        content,
+        reminderTime,
+        listId,
+        metadata,
+        recurrence,
+        dueDate,
+        dueTime,
+        scheduledStartAt,
+        scheduledEndAt,
+        reminderPolicy
+      } = taskData;
 
       // 构建完整的任务数据
       const fullTaskData = {
-        content,
-        reminderTime: calculatedReminderTime,
-        listId: listId || 0,
         metadata: metadata || {},
-        recurrence: recurrence || null,
-        dueDate: dueDate || null,
-        dueTime: dueTime || null
+        recurrence: recurrence || null
       };
 
-      let task;
-      if (recurrence || listId !== undefined || metadata !== undefined || dueDate || dueTime) {
-        // 使用扩展的创建方法
-        task = await this.taskService.createTaskInList(
-          content,
-          listId || 0,
-          calculatedReminderTime,
-          fullTaskData
-        );
-      } else {
-        // 使用原有的创建方法（向后兼容）
-        task = await this.taskService.createTask(
-          content,
-          calculatedReminderTime
-        );
+      if (Object.prototype.hasOwnProperty.call(taskData, 'reminderTime')) {
+        fullTaskData.reminderTime = reminderTime ? new Date(reminderTime) : null;
       }
+      for (const [key, value] of Object.entries({ dueDate, dueTime, scheduledStartAt, scheduledEndAt, reminderPolicy })) {
+        if (Object.prototype.hasOwnProperty.call(taskData, key)) {
+          fullTaskData[key] = value;
+        }
+      }
+
+      const task = await this.taskService.createTaskInList(
+        content,
+        listId || 0,
+        fullTaskData.reminderTime,
+        fullTaskData
+      );
 
       if (task.reminderTime) {
         this.notificationService.scheduleTaskReminder(task, (task) => {
@@ -239,8 +241,13 @@ class IpcHandlers {
     ipcMain.handle('update-task', async (event, taskId, updates) => {
       const task = await this.taskService.updateTask(taskId, updates);
 
-      // 处理提醒时间的通知调度
-      if (updates.reminderTime !== undefined) {
+      // 处理提醒时间的通知调度（安排 / 策略变化会重新计算相对提醒）
+      if (
+        updates.reminderTime !== undefined ||
+        updates.scheduledStartAt !== undefined ||
+        updates.scheduledEndAt !== undefined ||
+        updates.reminderPolicy !== undefined
+      ) {
         // 先取消现有的提醒
         this.notificationService.cancelTaskReminder(taskId);
 
@@ -445,7 +452,7 @@ class IpcHandlers {
 
     // 清除任务提醒
     ipcMain.handle('clear-task-reminder', async (event, taskId) => {
-      const task = await this.taskService.clearTaskReminder(taskId);
+      const task = await this.taskService.updateTask(taskId, { reminderTime: null });
       this.notificationService.cancelTaskReminder(taskId);
       this.broadcastTaskUpdates();
       return { success: true, task };
@@ -453,36 +460,37 @@ class IpcHandlers {
 
     // 创建重复任务
     ipcMain.handle('task:createRecurring', async (event, taskData) => {
-      const { content, reminderTime, listId, metadata, recurrence, dueDate, dueTime } = taskData;
+      const {
+        content,
+        reminderTime,
+        listId,
+        metadata,
+        recurrence,
+        dueDate,
+        dueTime,
+        scheduledStartAt,
+        scheduledEndAt,
+        reminderPolicy
+      } = taskData;
 
-      // 计算提醒时间
-      let calculatedReminderTime = null;
-      if (reminderTime) {
-        calculatedReminderTime = new Date(reminderTime);
-      } else if (dueDate && dueTime) {
-        // 如果没有设置提醒时间，但有截止日期和时间，则设置为截止时间前30分钟
-        const dueDateTime = new Date(`${dueDate}T${dueTime}`);
-        if (!isNaN(dueDateTime.getTime())) {
-          calculatedReminderTime = new Date(dueDateTime.getTime() - 30 * 60 * 1000); // 提前30分钟
+      const fullTaskData = {
+        metadata: metadata || {},
+        recurrence: recurrence || null
+      };
+      if (Object.prototype.hasOwnProperty.call(taskData, 'reminderTime')) {
+        fullTaskData.reminderTime = reminderTime ? new Date(reminderTime) : null;
+      }
+      for (const [key, value] of Object.entries({ dueDate, dueTime, scheduledStartAt, scheduledEndAt, reminderPolicy })) {
+        if (Object.prototype.hasOwnProperty.call(taskData, key)) {
+          fullTaskData[key] = value;
         }
       }
-
-      // 构建完整的任务数据
-      const fullTaskData = {
-        content,
-        reminderTime: calculatedReminderTime,
-        listId: listId || 0,
-        metadata: metadata || {},
-        recurrence: recurrence || null,
-        dueDate: dueDate || null,
-        dueTime: dueTime || null
-      };
 
       try {
         const task = await this.taskService.createTaskInList(
           content,
           listId || 0,
-          calculatedReminderTime,
+          fullTaskData.reminderTime,
           fullTaskData
         );
 

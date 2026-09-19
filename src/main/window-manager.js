@@ -477,24 +477,8 @@ class WindowManager {
       if (this.taskService) {
         const allTasks = await this.taskService.getAllTasks();
 
-        // 计算今日任务数量（与FloatingIcon.vue保持一致的逻辑）
-        const todayTasks = allTasks.filter(task => {
-          // 提醒日期是今天的任务
-          if (this.isToday(task.reminderTime)) return true;
-          // 今天创建的任务
-          if (this.isToday(task.createdAt)) return true;
-          // 正在进行的任务
-          if (task.status === 'doing') return true;
-          // 有提醒时间，且已经过期还未完成的任务
-          if (task.reminderTime && task.status !== 'done') {
-            const reminderDate = new Date(task.reminderTime);
-            const today = new Date();
-            if (reminderDate < today && !this.isToday(task.reminderTime)) {
-              return true;
-            }
-          }
-          return false;
-        });
+        // 计算今日任务数量（统一使用任务时间模型语义）
+        const todayTasks = allTasks.filter(task => task.isTodayTask());
 
         // 过滤掉已完成的任务（与FloatingIcon.vue保持一致）
         todayTaskCount = todayTasks.filter(task => task.status !== 'done').length;

@@ -235,20 +235,20 @@ class AIService {
       "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
       "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
       "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，每个步骤生成一个任务对象。",
-      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
+      "4. **填充时间信息**: '发生/计划做某事' 写入 'scheduledStartAt'（有结束则加 'scheduledEndAt'）；'某日前提交/截止' 写入 'dueDate'；只有明确提醒要求才写 'reminderPolicy'。时间需与 'context.current_time' 时区一致，没有明确时刻就不要伪造时间。",
       "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
     ],
     "rules": {
       "task_atomicity": "对于项目型任务，每个子任务都应该是最小的可执行单元。",
       "time_inference": {
-        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
+        "specific_time": "用户提供了具体发生时间（如'下午3点'）时，写入 'scheduledStartAt'（ISO 8601，含具体时刻）。",
         "today": "使用 'context.current_time' 的天。",
         "tomorrow": "使用 'context.current_time' 的后一天。",
-        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
-        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
-        "default_time": "如果未指定任何时间，默认为当天 23:59。"
+        "schedule": "用户描述'什么时候做'时写入 'scheduledStartAt'，有结束时间再加 'scheduledEndAt'。",
+        "deadline": "用户描述'某日前提交/截止'时写入 'dueDate'（YYYY-MM-DD），没有明确时刻就不要写 'dueTime'。",
+        "no_guess": "没有明确时刻就不要伪造时间，也不要写成截止或提醒。"
       },
-      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
+      "reminder_policy": "只有用户明确要求提醒时才设置：相对开始提前 N 分钟用 {\"mode\":\"relative\",\"minutesBefore\":N}；绝对时间用 {\"mode\":\"absolute\"} 并给出 'reminderTime'。不要把截止时间自动转成提醒。",
       "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
       "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
     }
@@ -309,9 +309,7 @@ class AIService {
         "task_list": [
           {
             "content": "去看电影",
-            "dueDate": "2025-08-24",
-            "dueTime": "15:00",
-            "reminderTime": "2025-08-24T04:00:00.000Z",
+            "scheduledStartAt": "2025-08-24T15:00:00+08:00",
             "listId": 1755532210105,
             "metadata": { "note": "" }
           }
@@ -349,28 +347,7 @@ class AIService {
       }
       
       // 验证每个任务的基本结构
-      const validTasks = parsedResult.task_list.filter(task => {
-        return task && typeof task.content === 'string' && task.content.trim();
-      }).map(task => {
-        let reminderTime = null;
-        if (task.dueDate && task.dueTime) {
-          // 将 dueDate + dueTime 拼接并转换为 UTC 时间
-          const localDateTime = `${task.dueDate}T${task.dueTime}:00`;
-          const localDate = new Date(localDateTime);
-          reminderTime = localDate.toISOString();
-          console.log("reminderTime:", reminderTime);
-        } else if (task.reminderTime) {
-          reminderTime = task.reminderTime;
-        }
-        
-        return {
-          content: task.content.trim(),
-          dueDate: task.dueDate || null,
-          dueTime: task.dueTime || null,
-          reminderTime: reminderTime,
-          metadata: task.metadata || { note: '' }
-        };
-      });
+      const validTasks = this.normalizeGeneratedTasks(parsedResult.task_list);
       
       console.log("validTasks:", validTasks);
       return {
@@ -472,26 +449,7 @@ class AIService {
       }
       
       // 验证每个任务的基本结构
-      const validTasks = parsedResult.task_list.filter(task => {
-        return task && typeof task.content === 'string' && task.content.trim();
-      }).map(task => {
-        let reminderTime = null;
-        if (task.dueDate && task.dueTime) {
-          const localDateTime = `${task.dueDate}T${task.dueTime}:00`;
-          const localDate = new Date(localDateTime);
-          reminderTime = localDate.toISOString();
-        } else if (task.reminderTime) {
-          reminderTime = task.reminderTime;
-        }
-        
-        return {
-          content: task.content.trim(),
-          dueDate: task.dueDate || null,
-          dueTime: task.dueTime || null,
-          reminderTime: reminderTime,
-          metadata: task.metadata || { note: '' }
-        };
-      });
+      const validTasks = this.normalizeGeneratedTasks(parsedResult.task_list);
       
       return {
         success: true,
@@ -521,6 +479,71 @@ class AIService {
   }
   
   /**
+   * 将 AI 返回的任务时间字段规范化为统一的任务时间模型。
+   * - 发生时间 -> scheduledStartAt / scheduledEndAt
+   * - 截止 -> dueDate（只有日期）或 dueDate + dueTime
+   * - 提醒 -> reminderPolicy / reminderTime
+   * 不会把截止时间自动转换成提醒。
+   * @param {Array} taskList
+   * @returns {Array}
+   */
+  static normalizeGeneratedTasks(taskList) {
+    const taskTime = require('../../domain/services/task-time');
+
+    if (!Array.isArray(taskList)) return [];
+
+    return taskList.filter((task) => {
+      return task && typeof task.content === 'string' && task.content.trim();
+    }).map((task) => {
+      const rawScheduleStart = task.scheduledStartAt || task.scheduled_start_at || null;
+      const rawScheduleEnd = task.scheduledEndAt || task.scheduled_end_at || null;
+
+      let scheduledStartAt = null;
+      let scheduledEndAt = null;
+      if (rawScheduleStart) {
+        const start = taskTime.toDate(rawScheduleStart);
+        if (start) {
+          scheduledStartAt = start.toISOString();
+          const end = taskTime.toDate(rawScheduleEnd);
+          if (end) scheduledEndAt = end.toISOString();
+        }
+      }
+
+      let dueDate = task.dueDate || task.due_date || null;
+      let dueTime = task.dueTime || task.due_time || null;
+      try {
+        const normalized = taskTime.normalizeDeadline(dueDate, dueTime);
+        dueDate = normalized.dueDate;
+        dueTime = normalized.dueTime;
+      } catch (error) {
+        dueDate = null;
+        dueTime = null;
+      }
+
+      const rawPolicy = task.reminderPolicy || task.reminder_policy || null;
+      const rawReminder = task.reminderTime || task.reminder_at || null;
+      let reminderPolicy = rawPolicy;
+      if (!reminderPolicy && rawReminder) {
+        reminderPolicy = { mode: 'absolute', minutesBefore: null };
+      }
+
+      const normalizedTask = {
+        content: task.content.trim(),
+        dueDate,
+        dueTime,
+        scheduledStartAt,
+        scheduledEndAt,
+        reminderPolicy,
+        metadata: task.metadata || { note: '' }
+      };
+      if (rawReminder) {
+        normalizedTask.reminderTime = rawReminder;
+      }
+      return normalizedTask;
+    });
+  }
+
+  /**
    * 获取拆分任务的 prompt
    * @param {string} content - 用户输入内容
    * @param {string} currentTime - 当前时间
@@ -545,20 +568,20 @@ class AIService {
       "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
       "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
       "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，每个步骤生成一个任务对象。",
-      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
+      "4. **填充时间信息**: '发生/计划做某事' 写入 'scheduledStartAt'（有结束则加 'scheduledEndAt'）；'某日前提交/截止' 写入 'dueDate'；只有明确提醒要求才写 'reminderPolicy'。时间需与 'context.current_time' 时区一致，没有明确时刻就不要伪造时间。",
       "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
     ],
     "rules": {
       "task_atomicity": "对于项目型任务，每个子任务都应该是最小的可执行单元。",
       "time_inference": {
-        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
+        "specific_time": "用户提供了具体发生时间（如'下午3点'）时，写入 'scheduledStartAt'（ISO 8601，含具体时刻）。",
         "today": "使用 'context.current_time' 的天。",
         "tomorrow": "使用 'context.current_time' 的后一天。",
-        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
-        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
-        "default_time": "如果未指定任何时间，默认为当天 23:59。"
+        "schedule": "用户描述'什么时候做'时写入 'scheduledStartAt'，有结束时间再加 'scheduledEndAt'。",
+        "deadline": "用户描述'某日前提交/截止'时写入 'dueDate'（YYYY-MM-DD），没有明确时刻就不要写 'dueTime'。",
+        "no_guess": "没有明确时刻就不要伪造时间，也不要写成截止或提醒。"
       },
-      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
+      "reminder_policy": "只有用户明确要求提醒时才设置：相对开始提前 N 分钟用 {\"mode\":\"relative\",\"minutesBefore\":N}；绝对时间用 {\"mode\":\"absolute\"} 并给出 'reminderTime'。不要把截止时间自动转成提醒。",
       "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
       "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
     }
@@ -619,9 +642,7 @@ class AIService {
         "task_list": [
           {
             "content": "去看电影",
-            "dueDate": "2025-08-24",
-            "dueTime": "15:00",
-            "reminderTime": "2025-08-24T04:00:00.000Z",
+            "scheduledStartAt": "2025-08-24T15:00:00+08:00",
             "listId": 1755532210105,
             "metadata": { "note": "" }
           }
@@ -658,20 +679,20 @@ class AIService {
       "1. **判断任务类型**: 首先，评估 'user_goal' 是一个'简单直接的行动'（如'看电影', '打电话', '买东西'）还是一个'需要多步骤完成的项目'（如'完成功能开发', '准备报告', '策划活动'）。",
       "2. **创建任务 (简单行动型)**: 如果目标是'简单行动型'，则直接将其作为单个任务的 'content'，并进入第4步。",
       "3. **任务拆解 (项目型)**: 如果目标是'项目型'，则将其拆解为关键的逻辑步骤，将每个步骤都放到对应的任务的步骤中。",
-      "4. **填充时间信息**: 使用 'context.current_time' 和 'user_goal' 中的时间描述来确定 'dueDate' 和 'dueTime'，转换后的时间需要和 'context.current_time' 保持时区一致，如果没有时间信息，就忽略时间字段",
+      "4. **填充时间信息**: '发生/计划做某事' 写入 'scheduledStartAt'（有结束则加 'scheduledEndAt'）；'某日前提交/截止' 写入 'dueDate'；只有明确提醒要求才写 'reminderPolicy'。时间需与 'context.current_time' 时区一致，没有明确时刻就不要伪造时间。",
       "5. **完成并封装**: 根据规则填充其他字段，将所有生成的任务组合成一个 'task_list' 数组，并编写 'output_description'。"
     ],
     "rules": {
       "task_atomicity": "对于项目型任务，每个步骤都应该是最小的可执行单元。",
       "time_inference": {
-        "specific_time": "如果用户提供了具体时间（如'下午3点', '15:00'），则优先使用该时间作为 'dueTime'。",
+        "specific_time": "用户提供了具体发生时间（如'下午3点'）时，写入 'scheduledStartAt'（ISO 8601，含具体时刻）。",
         "today": "使用 'context.current_time' 的天。",
         "tomorrow": "使用 'context.current_time' 的后一天。",
-        "afternoon": "如果未指定具体时间，'dueTime' 默认为 18:00。",
-        "evening": "如果未指定具体时间，'dueTime' 默认为 21:00。",
-        "default_time": "如果未指定任何时间，默认为当天 23:59。"
+        "schedule": "用户描述'什么时候做'时写入 'scheduledStartAt'，有结束时间再加 'scheduledEndAt'。",
+        "deadline": "用户描述'某日前提交/截止'时写入 'dueDate'（YYYY-MM-DD），没有明确时刻就不要写 'dueTime'。",
+        "no_guess": "没有明确时刻就不要伪造时间，也不要写成截止或提醒。"
       },
-      "reminder_calculation": "'reminderTime' 应设置为 'dueTime' 之前的一小时。",
+      "reminder_policy": "只有用户明确要求提醒时才设置：相对开始提前 N 分钟用 {\"mode\":\"relative\",\"minutesBefore\":N}；绝对时间用 {\"mode\":\"absolute\"} 并给出 'reminderTime'。不要把截止时间自动转成提醒。",
       "placeholder_fields": "如果 'listId' 或 'metadata' 没有特定信息，可以直接使用示例中的值或保持为空。",
       "output_strictness": "最终输出必须是一个完整的、格式正确的 JSON 对象，除此之外不要有任何其他内容。"
     }
@@ -720,9 +741,7 @@ class AIService {
                 ] } },
             {
             "content": "去看电影",
-            "dueDate": "2025-08-24",
-            "dueTime": "15:00",
-            "reminderTime": "2025-08-24T04:00:00.000Z",
+            "scheduledStartAt": "2025-08-24T15:00:00+08:00",
             "listId": 1755532210105,
             "metadata": { "note": "" }
           }

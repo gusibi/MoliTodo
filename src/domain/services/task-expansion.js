@@ -89,41 +89,11 @@ class TaskExpansion {
     
     // 创建虚拟ID（用于前端识别）
     const virtualId = `${recurringTask.id}_${dateStr}`;
-    
-    // 计算提醒时间（如果原任务有提醒）
-    let reminderTime = null;
-    if (recurringTask.recurrence && recurringTask.recurrence.reminderTime) {
-      // 使用 occurrenceDate + recurrence.reminderTime
-      const [hours, minutes] = recurringTask.recurrence.reminderTime.split(':').map(Number);
-      const reminderDate = new Date(occurrenceDate);
-      reminderDate.setHours(hours, minutes, 0, 0);
-      reminderTime = reminderDate;
-    } else if (recurringTask.reminderTime) {
-      // 如果没有重复规则的提醒时间，但原任务有提醒时间，则使用时间差计算
-      const originalReminder = new Date(recurringTask.reminderTime);
-      const originalCreated = new Date(recurringTask.createdAt);
-      const timeDiff = originalReminder.getTime() - originalCreated.getTime();
-      reminderTime = new Date(occurrenceDate.getTime() + timeDiff);
-    }
 
-    // 创建虚拟实例
-    const virtualInstance = new Task(
-      virtualId,
-      recurringTask.content,
-      'todo', // 虚拟实例默认为待办状态
-      occurrenceDate, // 使用实例日期作为创建时间
-      reminderTime,
-      {
-        startedAt: null,
-        completedAt: null,
-        totalDuration: 0
-      },
-      recurringTask.listId,
-      { ...recurringTask.metadata, isVirtual: true }, // 标记为虚拟实例
-      null, // 虚拟实例没有重复规则
-      recurringTask.id, // 系列ID指向原任务
-      dateStr // 实例日期
-    );
+    // 复用统一的实例生成规则，保留安排 / 截止 / 提醒
+    const virtualInstance = recurringTask.createInstance(new Date(occurrenceDate), virtualId);
+    virtualInstance.occurrenceDate = dateStr;
+    virtualInstance.metadata = { ...recurringTask.metadata, isVirtual: true };
 
     virtualInstance.updatedAt = occurrenceDate;
     
@@ -156,6 +126,13 @@ class TaskExpansion {
     );
 
     // 保存到数据库
+    realInstance.scheduledStartAt = virtualInstance.scheduledStartAt;
+    realInstance.scheduledEndAt = virtualInstance.scheduledEndAt;
+    realInstance.dueDate = virtualInstance.dueDate;
+    realInstance.dueTime = virtualInstance.dueTime;
+    realInstance.reminderPolicy = virtualInstance.reminderPolicy;
+    realInstance.reminderTime = virtualInstance.reminderTime;
+
     const savedInstance = await this.taskRepository.save(realInstance);
     return savedInstance;
   }

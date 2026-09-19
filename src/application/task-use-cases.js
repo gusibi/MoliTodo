@@ -45,13 +45,18 @@ class TaskUseCases {
   async createTask(input = {}) {
     const listId = this.parseListId(input.listId ?? 0);
     await this.ensureProjectExists(listId);
-    const reminderTime = this.parseReminderTime(input.reminderTime);
+    const reminderTime = input.reminderTime !== undefined
+      ? this.parseReminderTime(input.reminderTime)
+      : undefined;
     const taskData = {
       metadata: input.metadata || {},
-      recurrence: input.recurrence || null,
-      dueDate: input.dueDate ?? null,
-      dueTime: input.dueTime ?? null
+      recurrence: input.recurrence || null
     };
+    for (const key of ['dueDate', 'dueTime', 'scheduledStartAt', 'scheduledEndAt', 'reminderPolicy']) {
+      if (Object.prototype.hasOwnProperty.call(input, key)) {
+        taskData[key] = input[key];
+      }
+    }
     const task = await this.taskService.createTaskInList(
       input.content,
       listId,
@@ -73,9 +78,11 @@ class TaskUseCases {
     }
 
     const task = await this.taskService.updateTask(taskId, normalized);
-    if (updates.reminderTime !== undefined) {
+    if (updates.reminderTime !== undefined || updates.scheduledStartAt !== undefined || updates.reminderPolicy !== undefined) {
       this.notificationService.cancelTaskReminder(taskId);
-      this.scheduleReminder(task);
+      if (task.reminderTime) {
+        this.scheduleReminder(task);
+      }
     }
     return this.serializeTask(task);
   }
@@ -154,7 +161,11 @@ class TaskUseCases {
       seriesId: task.seriesId,
       occurrenceDate: task.occurrenceDate,
       dueDate: task.dueDate,
-      dueTime: task.dueTime
+      dueTime: task.dueTime,
+      scheduledStartAt: this.toIso(task.scheduledStartAt),
+      scheduledEndAt: this.toIso(task.scheduledEndAt),
+      reminderPolicy: task.reminderPolicy || null,
+      timeWarning: task.timeWarning || null
     };
   }
 

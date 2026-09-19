@@ -9,7 +9,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 4; // 支持重复任务功能的版本
+    this.targetVersion = 5; // 任务时间模型（安排 / 截止 / 提醒策略）
   }
 
   /**
@@ -114,6 +114,11 @@ class DatabaseMigration {
         version: 4,
         description: '添加任务状态日志表',
         migrate: () => this.migration_004_add_task_status_logs()
+      },
+      {
+        version: 5,
+        description: '添加任务时间模型字段',
+        migrate: () => this.migration_005_add_task_time_model()
       }
     ];
 
@@ -275,6 +280,48 @@ class DatabaseMigration {
     await this.db.exec('CREATE INDEX IF NOT EXISTS idx_task_status_logs_transition ON task_status_logs(from_status, to_status)');
 
     console.log('任务状态日志表创建完成，索引已创建');
+  }
+
+  /**
+   * 迁移 005: 添加任务时间模型字段（安排 / 截止 / 提醒策略）
+   * 只新增字段，不批量猜测或改写旧的 Deadline / Reminder 数据。
+   */
+  async migration_005_add_task_time_model() {
+    console.log('执行迁移: 添加任务时间模型字段');
+
+    const tableInfo = await this.db.all("PRAGMA table_info(tasks)");
+    const columnNames = tableInfo.map(col => col.name);
+
+    if (!columnNames.includes('due_date')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN due_date TEXT');
+      console.log('已添加 due_date 字段');
+    }
+
+    if (!columnNames.includes('due_time')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN due_time TEXT');
+      console.log('已添加 due_time 字段');
+    }
+
+    if (!columnNames.includes('scheduled_start_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN scheduled_start_at TEXT');
+      console.log('已添加 scheduled_start_at 字段');
+    }
+
+    if (!columnNames.includes('scheduled_end_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN scheduled_end_at TEXT');
+      console.log('已添加 scheduled_end_at 字段');
+    }
+
+    if (!columnNames.includes('reminder_policy')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN reminder_policy TEXT');
+      console.log('已添加 reminder_policy 字段');
+    }
+
+    // 调度查询需要按安排开始时间过滤
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_scheduled_start_at ON tasks(scheduled_start_at)');
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)');
+
+    console.log('任务时间模型字段添加完成，索引已创建');
   }
 
   /**

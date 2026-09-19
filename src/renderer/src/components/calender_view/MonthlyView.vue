@@ -62,6 +62,7 @@ import { useTaskStore } from '@/store/taskStore'
 import UnifiedCalendar from './UnifiedCalendar.vue'
 import FlatTaskItem from '../FlatTaskItem.vue'
 import { useI18n } from 'vue-i18n'
+import { getMainDateInfo, compareTasksForDate } from '@/utils/task-time-rules.js'
 
 const props = defineProps({
   tasks: {
@@ -135,29 +136,10 @@ const getTasksForDate = (date) => {
   if (!allTasks || allTasks.length === 0) return []
 
   return allTasks.filter(task => {
-    // 对于重复任务实例，检查occurrence_date或occurrenceDate
-    if (task.occurrence_date || task.occurrenceDate) {
-      try {
-        const occurrenceDate = new Date(task.occurrence_date || task.occurrenceDate)
-        if (isNaN(occurrenceDate.getTime())) return false
-        return isSameDay(occurrenceDate, date)
-      } catch (error) {
-        console.warn('Invalid occurrence date for task:', task.id, error)
-        return false
-      }
-    }
-    
-    // 对于普通任务，检查reminderTime
-    if (!task.reminderTime) return false
-
-    try {
-      const reminderDate = new Date(task.reminderTime)
-      if (isNaN(reminderDate.getTime())) return false
-      return isSameDay(reminderDate, date)
-    } catch (error) {
-      console.warn('Invalid reminder time for task:', task.id, error)
-      return false
-    }
+    // 主日期：优先安排开始，其次截止；只有提醒不占日历日期
+    const info = getMainDateInfo(task)
+    if (!info) return false
+    return isSameDay(new Date(`${info.date}T00:00:00`), date)
   })
 }
 
@@ -195,10 +177,8 @@ const allMonthTasks = computed(() => {
   }
   
   return allTasks.sort((a, b) => {
-    // 按提醒时间排序（只处理真正的任务）
-    const timeA = new Date(a.reminderTime || a.createdAt || 0).getTime()
-    const timeB = new Date(b.reminderTime || b.createdAt || 0).getTime()
-    return timeA - timeB
+    // 按安排开始 / 截止时间排序
+    return compareTasksForDate(a, b)
   })
 })
 

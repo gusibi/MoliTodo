@@ -2,6 +2,11 @@ const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const { z } = require('zod');
 
+const reminderPolicySchema = z.object({
+  mode: z.enum(['default', 'disabled', 'relative', 'absolute']),
+  minutesBefore: z.number().int().nonnegative().nullable().optional()
+}).nullable().optional();
+
 class MoliTodoMcpServer {
   constructor({ taskUseCases }) {
     this.taskUseCases = taskUseCases;
@@ -64,13 +69,16 @@ class MoliTodoMcpServer {
 
     server.registerTool('create_task', {
       title: '创建任务',
-      description: '在指定项目中创建任务，可设置提醒、截止日期、元数据和重复规则。',
+      description: '在指定项目中创建任务，可设置安排、截止、提醒、元数据和重复规则。',
       inputSchema: {
         content: z.string().min(1).describe('任务内容'),
         project_id: z.number().int().nonnegative().optional().default(0),
         reminder_at: z.string().datetime({ offset: true }).nullable().optional(),
         due_date: z.string().nullable().optional().describe('截止日期，格式 YYYY-MM-DD'),
         due_time: z.string().nullable().optional().describe('截止时间，格式 HH:mm'),
+        scheduled_start_at: z.string().datetime({ offset: true }).nullable().optional().describe('计划开始时间'),
+        scheduled_end_at: z.string().datetime({ offset: true }).nullable().optional().describe('计划结束时间'),
+        reminder_policy: reminderPolicySchema,
         metadata: z.record(z.string(), z.unknown()).optional(),
         recurrence: z.record(z.string(), z.unknown()).nullable().optional()
       }
@@ -80,13 +88,16 @@ class MoliTodoMcpServer {
       reminderTime: input.reminder_at,
       dueDate: input.due_date,
       dueTime: input.due_time,
+      scheduledStartAt: input.scheduled_start_at,
+      scheduledEndAt: input.scheduled_end_at,
+      reminderPolicy: input.reminder_policy,
       metadata: input.metadata,
       recurrence: input.recurrence
     })));
 
     server.registerTool('edit_task', {
       title: '编辑任务',
-      description: '编辑任务内容、所属项目、提醒、截止日期、元数据或重复规则。传入 null 可清除可空字段。',
+      description: '编辑任务内容、所属项目、安排、截止、提醒、元数据或重复规则。传入 null 可清除可空字段。',
       inputSchema: {
         task_id: z.string().min(1),
         content: z.string().min(1).optional(),
@@ -94,6 +105,9 @@ class MoliTodoMcpServer {
         reminder_at: z.string().datetime({ offset: true }).nullable().optional(),
         due_date: z.string().nullable().optional(),
         due_time: z.string().nullable().optional(),
+        scheduled_start_at: z.string().datetime({ offset: true }).nullable().optional(),
+        scheduled_end_at: z.string().datetime({ offset: true }).nullable().optional(),
+        reminder_policy: reminderPolicySchema,
         metadata: z.record(z.string(), z.unknown()).optional(),
         recurrence: z.record(z.string(), z.unknown()).nullable().optional()
       }
@@ -104,6 +118,9 @@ class MoliTodoMcpServer {
       if (input.reminder_at !== undefined) updates.reminderTime = input.reminder_at;
       if (input.due_date !== undefined) updates.dueDate = input.due_date;
       if (input.due_time !== undefined) updates.dueTime = input.due_time;
+      if (input.scheduled_start_at !== undefined) updates.scheduledStartAt = input.scheduled_start_at;
+      if (input.scheduled_end_at !== undefined) updates.scheduledEndAt = input.scheduled_end_at;
+      if (input.reminder_policy !== undefined) updates.reminderPolicy = input.reminder_policy;
       if (input.metadata !== undefined) updates.metadata = input.metadata;
       if (input.recurrence !== undefined) updates.recurrence = input.recurrence;
       return this.toolResult(await this.taskUseCases.updateTask(input.task_id, updates));

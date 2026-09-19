@@ -75,7 +75,10 @@ class ReportService {
       const formattedTask = {
         content: task.content || '',
         status: this.normalizeTaskStatus(task),
-        reminderTime: task.reminderTime || null,
+        scheduledStartAt: task.scheduledStartAt || null,
+        scheduledEndAt: task.scheduledEndAt || null,
+        dueDate: task.dueDate || null,
+        dueTime: task.dueTime || null,
         completedAt: task.completedAt || null,
         metadata: {
           note: task.metadata?.note || '',
@@ -113,11 +116,10 @@ class ReportService {
       }
     }
 
-    // 检查提醒时间是否过期
-    if (task.reminderTime) {
-      const reminderDate = new Date(task.reminderTime)
-      const now = new Date()
-      if (reminderDate < now) {
+    // 检查截止是否已逾期
+    if (task.dueDate) {
+      const taskTime = require('../../domain/services/task-time')
+      if (taskTime.isOverdue(task)) {
         return 'overdue'
       }
     }
@@ -240,8 +242,8 @@ class ReportService {
       "task_status_logic": [
         { "category": "Completed", "condition": "任务的 `status` 字段为 'done'。如果 `status` 字段不存在，则回退判断：任务对象中存在 'completedAt' 字段。" },
         { "category": "In Progress", "condition": "任务的 `status` 字段为 'doing' 或 'in-progress'。如果 `status` 字段不存在，则回退判断：任务没有 'completedAt' 字段，但其子任务 'steps' 中部分任务已完成。" },
-        { "category": "Planned for Next Period", "condition": "任务的 `status` 字段为 'todo' 或 'planned'。如果 `status` 字段不存在，则回退判断：任务没有 'completedAt' 字段，且其 'reminderTime' 在下一个报告周期内。" },
-        { "category": "Risks & Issues", "condition": "任务的 `status` 字段为 'blocked' 或 'at-risk'。或者，当任务的 `status` 不是 'done'，但其 `reminderTime` 已经显著早于 `currentTime`。" }
+        { "category": "Planned for Next Period", "condition": "任务的 `status` 字段为 'todo' 或 'planned'。如果 `status` 字段不存在，则回退判断：任务没有 'completedAt' 字段，且其 'scheduledStartAt' 或 'dueDate' 在下一个报告周期内。" },
+        { "category": "Risks & Issues", "condition": "任务的 `status` 字段为 'blocked' 或 'at-risk'。或者，当任务的 `status` 不是 'done'，但其 'dueDate' 已经显著早于 `currentTime`，或 'scheduledStartAt' 已过去仍未完成。" }
       ]
     },
     "content_formatting_rules": {

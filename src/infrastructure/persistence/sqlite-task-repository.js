@@ -215,7 +215,10 @@ class SqliteTaskRepository {
         started_at TEXT,
         total_duration INTEGER DEFAULT 0,
         list_id INTEGER DEFAULT 0,
-        metadata TEXT DEFAULT '{}'
+        metadata TEXT DEFAULT '{}',
+        scheduled_start_at TEXT,
+        scheduled_end_at TEXT,
+        reminder_policy TEXT
       )
     `;
 
@@ -258,6 +261,19 @@ class SqliteTaskRepository {
 
     if (!columnNames.includes('due_time')) {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN due_time TEXT');
+    }
+
+    // 任务时间模型字段兼容性检查
+    if (!columnNames.includes('scheduled_start_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN scheduled_start_at TEXT');
+    }
+
+    if (!columnNames.includes('scheduled_end_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN scheduled_end_at TEXT');
+    }
+
+    if (!columnNames.includes('reminder_policy')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN reminder_policy TEXT');
     }
 
     // 重复任务字段兼容性检查
@@ -351,6 +367,9 @@ class SqliteTaskRepository {
       metadata: JSON.stringify(task.metadata || {}),
       due_date: task.dueDate || null,
       due_time: task.dueTime || null,
+      scheduled_start_at: task.scheduledStartAt ? (task.scheduledStartAt instanceof Date ? task.scheduledStartAt.toISOString() : task.scheduledStartAt) : null,
+      scheduled_end_at: task.scheduledEndAt ? (task.scheduledEndAt instanceof Date ? task.scheduledEndAt.toISOString() : task.scheduledEndAt) : null,
+      reminder_policy: task.reminderPolicy ? JSON.stringify(task.reminderPolicy) : null,
       recurrence: task.recurrence ? JSON.stringify(task.recurrence) : null,
       series_id: task.seriesId || null,
       occurrence_date: task.occurrenceDate ? (task.occurrenceDate instanceof Date ? task.occurrenceDate.toISOString() : task.occurrenceDate) : null
@@ -385,6 +404,15 @@ class SqliteTaskRepository {
       recurrence = null;
     }
 
+    // 解析提醒策略
+    let reminderPolicy = null;
+    try {
+      reminderPolicy = row.reminder_policy ? JSON.parse(row.reminder_policy) : null;
+    } catch (error) {
+      console.warn('解析提醒策略失败:', error);
+      reminderPolicy = null;
+    }
+
     const task = new Task(
       row.id,
       row.content,
@@ -398,7 +426,10 @@ class SqliteTaskRepository {
       row.series_id || null,
       row.occurrence_date ? new Date(row.occurrence_date) : null,
       row.due_date || null,
-      row.due_time || null
+      row.due_time || null,
+      row.scheduled_start_at ? new Date(row.scheduled_start_at) : null,
+      row.scheduled_end_at ? new Date(row.scheduled_end_at) : null,
+      reminderPolicy
     );
 
     task.updatedAt = new Date(row.updated_at);
@@ -512,6 +543,9 @@ class SqliteTaskRepository {
           metadata = ?,
           due_date = ?,
           due_time = ?,
+          scheduled_start_at = ?,
+          scheduled_end_at = ?,
+          reminder_policy = ?,
           recurrence = ?,
           series_id = ?,
           occurrence_date = ?
@@ -529,6 +563,9 @@ class SqliteTaskRepository {
         row.metadata,
         row.due_date,
         row.due_time,
+        row.scheduled_start_at,
+        row.scheduled_end_at,
+        row.reminder_policy,
         row.recurrence,
         row.series_id,
         row.occurrence_date,
@@ -538,8 +575,8 @@ class SqliteTaskRepository {
       // 插入新任务
       await this.db.run(`
         INSERT INTO tasks (
-          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, recurrence, series_id, occurrence_date
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, scheduled_start_at, scheduled_end_at, reminder_policy, recurrence, series_id, occurrence_date
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         row.id,
         row.content,
@@ -555,6 +592,9 @@ class SqliteTaskRepository {
         row.metadata,
         row.due_date,
         row.due_time,
+        row.scheduled_start_at,
+        row.scheduled_end_at,
+        row.reminder_policy,
         row.recurrence,
         row.series_id,
         row.occurrence_date

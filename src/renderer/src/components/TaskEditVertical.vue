@@ -777,17 +777,6 @@ const selectCustomReminder = async (reminderOption) => {
     reminderTime: reminderTime ? reminderTime.toISOString() : null
   }
 
-  if (reminderTime) {
-    const year = reminderTime.getFullYear()
-    const month = String(reminderTime.getMonth() + 1).padStart(2, '0')
-    const day = String(reminderTime.getDate()).padStart(2, '0')
-    const hours = String(reminderTime.getHours()).padStart(2, '0')
-    const minutes = String(reminderTime.getMinutes()).padStart(2, '0')
-
-    selectedDate.value = `${year}-${month}-${day}`
-    selectedTime.value = `${hours}:${minutes}`
-  }
-
   showReminderPicker.value = false
 
   // 如果是编辑模式，自动保存提醒时间
@@ -890,7 +879,7 @@ const getMinTimeForDatePicker = () => {
   return { hours: 0, minutes: 0 }
 }
 
-// 处理日期时间变化
+// 处理日期时间变化（一级入口：截止）
 const handleDateTimeChange = async (newValue) => {
   if (newValue) {
     const date = newValue instanceof Date ? newValue : new Date(newValue)
@@ -902,14 +891,16 @@ const handleDateTimeChange = async (newValue) => {
     // 选择后不自动关闭日期选择器，方便用户调整时间
     // showDatePicker.value = false
 
-    // 如果是编辑模式，自动保存提醒时间
+    // 如果是编辑模式，自动保存截止时间
     if (props.isEditing && props.task) {
       try {
-        const reminderTime = date.toISOString()
-        await taskStore.updateTaskReminder(props.task.id, reminderTime)
-        console.log('提醒时间已自动保存:', reminderTime)
+        await taskStore.updateTask(props.task.id, {
+          dueDate: selectedDate.value,
+          dueTime: selectedTime.value
+        })
+        console.log('截止时间已自动保存:', selectedDate.value, selectedTime.value)
       } catch (error) {
-        console.error('自动保存提醒时间失败:', error)
+        console.error('自动保存截止时间失败:', error)
       }
     }
   } else {
@@ -919,10 +910,10 @@ const handleDateTimeChange = async (newValue) => {
     // 如果是编辑模式且清除了时间，也要自动保存
     if (props.isEditing && props.task) {
       try {
-        await taskStore.updateTaskReminder(props.task.id, null)
-        console.log('提醒时间已清除并自动保存')
+        await taskStore.updateTask(props.task.id, { dueDate: null })
+        console.log('截止时间已清除并自动保存')
       } catch (error) {
-        console.error('自动保存提醒时间清除失败:', error)
+        console.error('自动保存截止时间清除失败:', error)
       }
     }
   }
@@ -1182,13 +1173,17 @@ const loadTaskData = () => {
   taskNote.value = props.task.metadata?.note || ''
   steps.value = props.task.metadata?.steps || []
 
-  // 优先使用reminderTime，如果没有则使用dueDate/dueTime
+  // 截止与提醒分别展示，不再用一个入口填充另一个
+  selectedDate.value = props.task.dueDate || ''
+  selectedTime.value = props.task.dueTime || ''
+  if (props.task.dueDate && props.task.dueTime) {
+    dateTimeValue.value = new Date(`${props.task.dueDate}T${props.task.dueTime}:00`)
+  } else {
+    dateTimeValue.value = null
+  }
+
   if (props.task.reminderTime) {
     const reminderDate = new Date(props.task.reminderTime)
-    selectedDate.value = getLocalDateString(reminderDate)
-    selectedTime.value = reminderDate.toTimeString().slice(0, 5)
-    dateTimeValue.value = reminderDate
-
     if (props.task.reminderConfig) {
       selectedReminder.value = {
         value: 'custom',
@@ -1196,19 +1191,15 @@ const loadTaskData = () => {
         config: props.task.reminderConfig,
         reminderTime: props.task.reminderTime
       }
+    } else {
+      selectedReminder.value = {
+        value: 'custom',
+        label: `${getLocalDateString(reminderDate)} ${reminderDate.toTimeString().slice(0, 5)}`,
+        reminderTime: props.task.reminderTime
+      }
     }
   } else {
-    selectedDate.value = props.task.dueDate || ''
-    selectedTime.value = props.task.dueTime || ''
     selectedReminder.value = null
-
-    // 设置 dateTimeValue
-    if (props.task.dueDate && props.task.dueTime) {
-      const dateTimeStr = `${props.task.dueDate}T${props.task.dueTime}:00`
-      dateTimeValue.value = new Date(dateTimeStr)
-    } else {
-      dateTimeValue.value = null
-    }
   }
 
   if (props.task.recurrence) {

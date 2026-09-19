@@ -2,8 +2,10 @@
  * 任务实体 (Task Entity)
  * 领域层核心实体，包含任务的所有业务逻辑
  */
+const taskTime = require('../services/task-time');
+
 class Task {
-  constructor(idOrOptions, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}, recurrence = null, seriesId = null, occurrenceDate = null, dueDate = null, dueTime = null) {
+  constructor(idOrOptions, content, status = 'todo', createdAt = new Date(), reminderTime = null, timeTracking = {}, listId = 0, metadata = {}, recurrence = null, seriesId = null, occurrenceDate = null, dueDate = null, dueTime = null, scheduledStartAt = null, scheduledEndAt = null, reminderPolicy = null) {
     // 支持对象参数调用方式
     if (typeof idOrOptions === 'object' && idOrOptions !== null) {
       const options = idOrOptions;
@@ -24,9 +26,17 @@ class Task {
       this.listId = options.listId || 0;
       this.metadata = options.metadata || {};
       
-      // Due date fields
+      // Schedule fields
+      this.scheduledStartAt = options.scheduledStartAt || null;
+      this.scheduledEndAt = options.scheduledEndAt || null;
+      
+      // Deadline fields
       this.dueDate = options.dueDate || null;
       this.dueTime = options.dueTime || null;
+      this.deadlineInvalid = false;
+      
+      // Reminder policy
+      this.reminderPolicy = options.reminderPolicy || null;
       
       // Recurring task fields
       this.recurrence = options.recurrence || null;
@@ -50,18 +60,46 @@ class Task {
       this.listId = listId || 0;
       this.metadata = metadata || {};
       
-      // Due date fields
+      // Schedule fields
+      this.scheduledStartAt = scheduledStartAt;
+      this.scheduledEndAt = scheduledEndAt;
+      
+      // Deadline fields
       this.dueDate = dueDate;
       this.dueTime = dueTime;
+      this.deadlineInvalid = false;
+      
+      // Reminder policy
+      this.reminderPolicy = reminderPolicy;
       
       // Recurring task fields
       this.recurrence = recurrence;
       this.seriesId = seriesId;
       this.occurrenceDate = occurrenceDate;
     }
+
+    this._normalizeDeadlineFields();
     
     // Keep backward compatibility
     this.completed = this.status === 'done';
+  }
+
+  /**
+   * 兼容读取旧 Deadline：完整 ISO 归一化为 日期 + 时间；
+   * 无效旧值保留原样，不阻止加载。
+   */
+  _normalizeDeadlineFields() {
+    if (!this.dueDate) {
+      this.dueTime = this.dueTime || null;
+      return;
+    }
+    try {
+      const normalized = taskTime.normalizeDeadline(this.dueDate, this.dueTime);
+      this.dueDate = normalized.dueDate;
+      this.dueTime = normalized.dueTime;
+    } catch (error) {
+      this.deadlineInvalid = true;
+    }
   }
 
   /**
@@ -278,30 +316,69 @@ class Task {
 
   /**
    * 检查任务是否属于收件箱分类
-   * 收件箱：待办状态且没有提醒时间的任务
+   * 收件箱：待办状态且没有安排与截止（只有提醒不妨碍进入收件箱）
    * @returns {boolean}
    */
   isInboxTask() {
-    return this.status === 'todo' && !this.reminderTime;
+    return taskTime.isTaskInbox(this);
   }
 
   /**
    * 检查任务是否属于今日分类
-   * 今日：提醒时间是今天且未完成的任务，或正在进行中的任务
+   * 今日：今天有安排/截止、截止逾期、过去安排未完成，或正在进行中
    * @returns {boolean}
    */
   isTodayTask() {
-    return (Task.isToday(this.reminderTime) && this.status !== 'done') || 
-           (this.status === 'doing');
+    return taskTime.isTaskToday(this);
   }
 
   /**
    * 检查任务是否属于计划分类
-   * 计划：有提醒时间的任务
+   * 计划：未完成且有安排或截止
    * @returns {boolean}
    */
   isPlannedTask() {
-    return !!this.reminderTime;
+    return taskTime.isTaskPlanned(this);
+  }
+
+  /**
+   * 检查任务是否未安排
+   * @returns {boolean}
+   */
+  isUnscheduledTask() {
+    return taskTime.isTaskUnscheduled(this);
+  }
+
+  /**
+   * 是否有计划安排
+   * @returns {boolean}
+   */
+  hasSchedule() {
+    return taskTime.hasSchedule(this);
+  }
+
+  /**
+   * 是否有截止
+   * @returns {boolean}
+   */
+  hasDeadline() {
+    return taskTime.hasDeadline(this);
+  }
+
+  /**
+   * 是否逾期
+   * @returns {boolean}
+   */
+  isOverdue() {
+    return taskTime.isOverdue(this);
+  }
+
+  /**
+   * 获取主日期信息
+   * @returns {{date: string, kind: string}|null}
+   */
+  getMainDateInfo() {
+    return taskTime.getMainDateInfo(this);
   }
 
   /**
@@ -340,6 +417,7 @@ class Task {
     if (this.isDoingTask()) categories.push('doing');
     if (this.isPausedTask()) categories.push('paused');
     if (this.isPlannedTask()) categories.push('planned');
+    if (this.isUnscheduledTask()) categories.push('unscheduled');
     if (this.isCompletedTask()) categories.push('completed');
     
     return categories;
@@ -364,6 +442,8 @@ class Task {
         return this.isPausedTask();
       case 'planned':
         return this.isPlannedTask();
+      case 'unscheduled':
+        return this.isUnscheduledTask();
       case 'completed':
         return this.isCompletedTask();
       default:
@@ -409,6 +489,101 @@ class Task {
   clearReminder() {
     this.reminderTime = null;
     this.updatedAt = new Date();
+  }
+
+  /**
+   * 设置计划安排。开始必填，结束可选且不得早于开始。
+   * @param {Date|string} scheduledStartAt
+   * @param {Date|string|null} scheduledEndAt
+   */
+  setSchedule(scheduledStartAt, scheduledEndAt = null) {
+    const normalized = taskTime.normalizeSchedule(scheduledStartAt, scheduledEndAt);
+    this.scheduledStartAt = normalized.scheduledStartAt;
+    this.scheduledEndAt = normalized.scheduledEndAt;
+    this.updatedAt = new Date();
+    this._recomputeRelativeReminder();
+  }
+
+  /**
+   * 清除计划安排（同时清除结束时间）。
+   * 相对提醒随之转为关闭。
+   */
+  clearSchedule() {
+    this.scheduledStartAt = null;
+    this.scheduledEndAt = null;
+    if (this.reminderPolicy && this.reminderPolicy.mode === taskTime.REMINDER_MODES.RELATIVE) {
+      this.reminderPolicy = { mode: taskTime.REMINDER_MODES.DISABLED, minutesBefore: null };
+      this.reminderTime = null;
+    }
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 设置截止日期 / 时间。日期必填，时间可选。
+   * @param {string|null} dueDate
+   * @param {string|null} dueTime
+   */
+  setDeadline(dueDate, dueTime = null) {
+    const normalized = taskTime.normalizeDeadline(dueDate, dueTime);
+    this.dueDate = normalized.dueDate;
+    this.dueTime = normalized.dueTime;
+    this.deadlineInvalid = false;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 清除截止（日期与时间同步清除）。
+   */
+  clearDeadline() {
+    this.dueDate = null;
+    this.dueTime = null;
+    this.deadlineInvalid = false;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 设置提醒策略。相对策略会立即按开始时间计算触发时间。
+   * @param {Object|null} policy { mode, minutesBefore? }
+   * @param {Date|string|null} reminderTime 绝对提醒时间
+   */
+  setReminderPolicy(policy, reminderTime = null) {
+    const normalized = taskTime.normalizeReminderPolicy(policy, reminderTime, this.scheduledStartAt);
+    this.reminderPolicy = normalized;
+
+    if (normalized === null) {
+      return;
+    }
+
+    if (normalized.mode === taskTime.REMINDER_MODES.RELATIVE) {
+      const derived = taskTime.deriveReminderTime(this);
+      this.reminderTime = derived;
+    } else if (normalized.mode === taskTime.REMINDER_MODES.ABSOLUTE) {
+      this.reminderTime = taskTime.toDate(reminderTime);
+    } else {
+      this.reminderTime = null;
+    }
+
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 获取生效的提醒策略。无策略时按绝对提醒解释（旧数据兼容）。
+   * @returns {{mode: string, minutesBefore: number|null, legacy: boolean}}
+   */
+  getEffectiveReminderPolicy() {
+    if (this.reminderPolicy) {
+      return { ...this.reminderPolicy, legacy: false };
+    }
+    if (this.reminderTime) {
+      return { mode: taskTime.REMINDER_MODES.ABSOLUTE, minutesBefore: null, legacy: true };
+    }
+    return { mode: taskTime.REMINDER_MODES.DEFAULT, minutesBefore: null, legacy: true };
+  }
+
+  _recomputeRelativeReminder() {
+    if (this.reminderPolicy && this.reminderPolicy.mode === taskTime.REMINDER_MODES.RELATIVE) {
+      this.reminderTime = taskTime.deriveReminderTime(this);
+    }
   }
 
   /**
@@ -557,7 +732,14 @@ class Task {
       metadata: this.metadata,
       recurrence: this.recurrence,
       seriesId: this.seriesId,
-      occurrenceDate: this.occurrenceDate
+      occurrenceDate: this.occurrenceDate instanceof Date
+        ? this.occurrenceDate.toISOString()
+        : this.occurrenceDate,
+      dueDate: this.dueDate,
+      dueTime: this.dueTime,
+      scheduledStartAt: this.scheduledStartAt ? this.scheduledStartAt.toISOString() : null,
+      scheduledEndAt: this.scheduledEndAt ? this.scheduledEndAt.toISOString() : null,
+      reminderPolicy: this.reminderPolicy
     };
   }
 
@@ -589,7 +771,12 @@ class Task {
       data.metadata || {},
       data.recurrence || null,
       data.seriesId || null,
-      data.occurrenceDate || null
+      data.occurrenceDate || null,
+      data.dueDate || null,
+      data.dueTime || null,
+      data.scheduledStartAt ? new Date(data.scheduledStartAt) : null,
+      data.scheduledEndAt ? new Date(data.scheduledEndAt) : null,
+      data.reminderPolicy || null
     );
   }
 
@@ -641,34 +828,91 @@ class Task {
    * @returns {Task}
    */
   createInstance(occurrenceDate, newId) {
-    // 计算实例的提醒时间
-    let instanceReminderTime = null;
-    if (this.recurrence && this.recurrence.reminderTime) {
-      // 使用 occurrenceDate + recurrence.reminderTime
-      const [hours, minutes] = this.recurrence.reminderTime.split(':').map(Number);
-      const reminderDate = new Date(occurrenceDate);
-      reminderDate.setHours(hours, minutes, 0, 0);
-      instanceReminderTime = reminderDate;
-    } else if (this.reminderTime) {
-      // 如果没有重复规则的提醒时间，但原任务有提醒时间，则使用原任务的提醒时间逻辑
-      instanceReminderTime = this.reminderTime;
+    const occurrence = new Date(occurrenceDate);
+    const templateStart = this.scheduledStartAt ? new Date(this.scheduledStartAt) : null;
+    const templateEnd = this.scheduledEndAt ? new Date(this.scheduledEndAt) : null;
+
+    // 实例安排：使用模板的开始时刻，结束按模板的本地日期偏移生成（支持跨天）
+    let scheduledStartAt = null;
+    let scheduledEndAt = null;
+    if (templateStart) {
+      scheduledStartAt = new Date(occurrence);
+      scheduledStartAt.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
+
+      if (templateEnd) {
+        const dayOffset = taskTime.localDayOffset(templateStart, templateEnd);
+        scheduledEndAt = new Date(occurrence);
+        scheduledEndAt.setDate(scheduledEndAt.getDate() + dayOffset);
+        scheduledEndAt.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+      }
     }
 
-    return new Task(
+    // 实例截止：新系列按模板相对起始日期的日历日偏移生成；
+    // 旧日期型系列不凭空增加截止，已有实例的 Deadline 原样保留。
+    let dueDate = null;
+    let dueTime = null;
+    if (this.dueDate && templateStart) {
+      const dueAnchor = new Date(`${this.dueDate}T00:00:00`);
+      const dayOffset = taskTime.localDayOffset(templateStart, dueAnchor);
+      const instanceDue = new Date(occurrence);
+      instanceDue.setDate(instanceDue.getDate() + dayOffset);
+      dueDate = taskTime.localDateKey(instanceDue);
+      dueTime = this.dueTime || null;
+    }
+
+    // 实例提醒
+    let reminderPolicy = null;
+    let reminderTime = null;
+    const relativePolicy = this.reminderPolicy && this.reminderPolicy.mode === taskTime.REMINDER_MODES.RELATIVE
+      ? this.reminderPolicy
+      : null;
+
+    if (relativePolicy && scheduledStartAt) {
+      reminderPolicy = { mode: taskTime.REMINDER_MODES.RELATIVE, minutesBefore: relativePolicy.minutesBefore };
+      reminderTime = new Date(scheduledStartAt.getTime() - relativePolicy.minutesBefore * 60 * 1000);
+    } else {
+      // 系列级提醒：按模板提醒相对起始日期的日历日偏移及本地时刻重复（支持前一天）
+      let reminderTimeOfDay = null;
+      let reminderDayOffset = 0;
+      if (this.recurrence && this.recurrence.reminderTime) {
+        reminderTimeOfDay = this.recurrence.reminderTime;
+      } else if (this.reminderTime && templateStart) {
+        const reminderDate = new Date(this.reminderTime);
+        reminderTimeOfDay = taskTime.localTimeKey(reminderDate);
+        reminderDayOffset = taskTime.localDayOffset(templateStart, reminderDate);
+      } else if (this.reminderTime && !templateStart) {
+        reminderTimeOfDay = taskTime.localTimeKey(new Date(this.reminderTime));
+      }
+
+      if (reminderTimeOfDay) {
+        const [hours, minutes] = reminderTimeOfDay.split(':').map(Number);
+        reminderTime = new Date(occurrence);
+        reminderTime.setDate(reminderTime.getDate() + reminderDayOffset);
+        reminderTime.setHours(hours, minutes, 0, 0);
+        reminderPolicy = { mode: taskTime.REMINDER_MODES.ABSOLUTE, minutesBefore: null };
+      }
+    }
+
+    const instance = new Task(
       newId,
       this.content,
       'todo',
       new Date(),
-      instanceReminderTime,
+      reminderTime,
       {},
       this.listId,
       this.metadata,
       null, // 实例不包含重复规则
-      this.getSeriesId(), // 设置系列ID
-      occurrenceDate.toISOString(),
-      occurrenceDate, // 设置dueDate为occurrenceDate
-      this.dueTime // 保持原任务的dueTime
+      this.getSeriesId(),
+      occurrence,
+      dueDate, // 未设置截止则不生成
+      dueTime,
+      scheduledStartAt,
+      scheduledEndAt,
+      reminderPolicy
     );
+
+    return instance;
   }
 
   /**

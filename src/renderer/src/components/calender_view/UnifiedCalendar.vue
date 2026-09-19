@@ -111,8 +111,8 @@
                       :class="getTaskClasses(task)" @click.stop="handleTaskClick(task)"
                       @mouseenter="handleShowTooltip({ task, event: $event })" @mouseleave="handleHideTooltip">
                       <div class="task-content">{{ task.content }}</div>
-                      <div v-if="hasSpecificTime(task.reminderTime)" class="task-time">
-                        {{ formatTaskTime(task.reminderTime) }}
+                      <div v-if="taskHasSpecificTime(task)" class="task-time">
+                        {{ formatTaskTime(getTaskDisplayTime(task)) }}
                       </div>
                     </div>
                   </div>
@@ -155,8 +155,8 @@
                       :class="getTaskClasses(task)" @click.stop="handleTaskClick(task)"
                       @mouseenter="handleShowTooltip({ task, event: $event })" @mouseleave="handleHideTooltip">
                       <div class="task-content">{{ task.content }}</div>
-                      <div v-if="hasSpecificTime(task.reminderTime)" class="task-time">
-                        {{ formatTaskTime(task.reminderTime) }}
+                      <div v-if="taskHasSpecificTime(task)" class="task-time">
+                        {{ formatTaskTime(getTaskDisplayTime(task)) }}
                       </div>
                     </div>
                   </div>
@@ -241,9 +241,9 @@
               </span>
               <span class="day-task-content" :class="{ 'day-task-content-completed': task.status === 'done' }">{{
                 task.content }}</span>
-              <span v-if="hasSpecificTime(task.reminderTime)" class="day-task-time"
+              <span v-if="taskHasSpecificTime(task)" class="day-task-time"
                 :class="{ 'day-task-time-completed': task.status === 'done' }">
-                {{ formatTaskTime(task.reminderTime) }}
+                {{ formatTaskTime(getTaskDisplayTime(task)) }}
               </span>
             </label>
           </div>
@@ -261,6 +261,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useI18n } from 'vue-i18n'
+import { getMainDateInfo } from '@/utils/task-time-rules.js'
 
 const props = defineProps({
   tasks: {
@@ -364,6 +365,26 @@ const hasSpecificTime = (dateTime) => {
   return date.getHours() !== 0 || date.getMinutes() !== 0
 }
 
+// 任务主日期：优先安排开始，其次截止；只有提醒不产生日期项
+const getTaskMainDate = (task) => {
+  const info = getMainDateInfo(task)
+  return info ? new Date(`${info.date}T00:00:00`) : null
+}
+
+// 任务在日历中显示的具体时刻：安排开始时刻，或带时刻的截止
+const getTaskDisplayTime = (task) => {
+  if (task.scheduledStartAt) return new Date(task.scheduledStartAt)
+  if (task.dueDate && task.dueTime) return new Date(`${task.dueDate}T${task.dueTime}:00`)
+  return null
+}
+
+const isDeadlineOnlyTask = (task) => !task.scheduledStartAt && Boolean(task.dueDate)
+
+const taskHasSpecificTime = (task) => {
+  const displayTime = getTaskDisplayTime(task)
+  return Boolean(displayTime) && hasSpecificTime(displayTime)
+}
+
 const formatTaskDetails = (task) => {
   if (!task) return ''
 
@@ -391,15 +412,14 @@ const formatTaskDetails = (task) => {
     details.push(t('calendar.priorityLabel', { priority: priorityMap[task.priority] || task.priority }))
   }
 
-  // Reminder time
-  if (task.reminderTime) {
-    const reminderDate = new Date(task.reminderTime)
-    const dateStr = reminderDate.toLocaleDateString('zh-CN')
-    const timeStr = reminderDate.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  // 安排 / 截止时间
+  if (task.scheduledStartAt) {
+    const start = new Date(task.scheduledStartAt)
+    const dateStr = start.toLocaleDateString('zh-CN')
+    const timeStr = start.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     details.push(t('calendar.reminderTimeLabel', { date: dateStr, time: timeStr }))
+  } else if (task.dueDate) {
+    details.push(t('calendar.reminderTimeLabel', { date: task.dueDate, time: task.dueTime || '' }))
   }
 
   // Created time
@@ -541,34 +561,13 @@ const getTasksForDate = (date) => {
   if (!allTasks || allTasks.length === 0) return []
 
   return allTasks.filter(task => {
-    // 对于重复任务实例，检查occurrence_date或occurrenceDate
-    if (task.occurrence_date || task.occurrenceDate) {
-      try {
-        const occurrenceDate = new Date(task.occurrence_date || task.occurrenceDate)
-        if (isNaN(occurrenceDate.getTime())) return false
-        return isSameDay(occurrenceDate, date)
-      } catch (error) {
-        console.warn('Invalid occurrence date for task:', task.id, error)
-        return false
-      }
-    }
-    
-    // 对于普通任务，检查reminderTime
-    if (!task.reminderTime) return false
-
-    try {
-      const reminderDate = new Date(task.reminderTime)
-      if (isNaN(reminderDate.getTime())) return false
-
-      return isSameDay(reminderDate, date)
-    } catch (error) {
-      console.warn('Invalid reminder time for task:', task.id, error)
-      return false
-    }
+    // 主日期：优先安排开始，其次截止；只有提醒不占日历日期
+    const mainDate = getTaskMainDate(task)
+    if (!mainDate) return false
+    return isSameDay(mainDate, date)
   }).sort((a, b) => {
-    // 对于重复任务实例，使用occurrence_date或occurrenceDate排序
-    const timeA = (a.occurrence_date || a.occurrenceDate) ? new Date(a.occurrence_date || a.occurrenceDate).getTime() : new Date(a.reminderTime).getTime()
-    const timeB = (b.occurrence_date || b.occurrenceDate) ? new Date(b.occurrence_date || b.occurrenceDate).getTime() : new Date(b.reminderTime).getTime()
+    const timeA = getTaskDisplayTime(a)?.getTime() ?? (getTaskMainDate(a)?.getTime() ?? 0)
+    const timeB = getTaskDisplayTime(b)?.getTime() ?? (getTaskMainDate(b)?.getTime() ?? 0)
     return timeA - timeB
   })
 }
@@ -580,13 +579,13 @@ const getTasksForTimeSlot = (dayTasks, timeSlot) => {
   }
 
   return dayTasks.filter(task => {
-    if (!task.reminderTime) {
-      // Tasks without reminder time go to morning slot
+    const displayTime = getTaskDisplayTime(task)
+    if (!displayTime) {
+      // 没有具体时刻的任务（含日期型截止）放在上午
       return timeSlot.id === 'morning'
     }
 
-    const reminderDate = new Date(task.reminderTime)
-    const hour = reminderDate.getHours()
+    const hour = displayTime.getHours()
 
     // Handle cross-day case (night time slot)
     if (timeSlot.start > timeSlot.end) {
@@ -595,17 +594,9 @@ const getTasksForTimeSlot = (dayTasks, timeSlot) => {
 
     return hour >= timeSlot.start && hour < timeSlot.end
   }).sort((a, b) => {
-    // Sort by reminder time
-    if (a.reminderTime && b.reminderTime) {
-      return new Date(a.reminderTime) - new Date(b.reminderTime)
-    }
-
-    // Tasks with reminder time first
-    if (a.reminderTime && !b.reminderTime) return -1
-    if (!a.reminderTime && b.reminderTime) return 1
-
-    // Both without reminder time, sort by creation time
-    return new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    const timeA = getTaskDisplayTime(a)?.getTime() ?? new Date(a.createdAt || 0).getTime()
+    const timeB = getTaskDisplayTime(b)?.getTime() ?? new Date(b.createdAt || 0).getTime()
+    return timeA - timeB
   })
 }
 

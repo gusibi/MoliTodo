@@ -55,12 +55,12 @@
               <i class="fas fa-repeat"></i>
             </div>
             
-            <!-- 提醒时间 -->
-            <div class="flat-task-reminder-time" v-if="task.reminderTime" :class="{
-              'flat-task-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'
+            <!-- 安排 / 截止时间 -->
+            <div class="flat-task-reminder-time" v-if="formatTaskTimeInfo(task)" :class="{
+              'flat-task-time-overdue': isTaskTimeOverdue(task)
             }">
               <i class="fas fa-calendar"></i>
-              <span>{{ formatReminderTime(task.reminderTime) }}</span>
+              <span>{{ formatTaskTimeInfo(task) }}</span>
             </div>
 
             <!-- 进行时间 -->
@@ -120,6 +120,34 @@
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 import { ref } from 'vue'
+
+// 任务时间展示：优先安排开始，其次截止（有具体时刻显示时刻，否则只显示日期）
+const formatTaskTimeInfo = (task) => {
+  if (!task) return ''
+  if (task.scheduledStartAt) {
+    return formatReminderTime(task.scheduledStartAt)
+  }
+  if (task.dueDate) {
+    if (task.dueTime) {
+      return formatReminderTime(`${task.dueDate}T${task.dueTime}:00`)
+    }
+    const date = new Date(`${task.dueDate}T00:00:00`)
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+  }
+  return ''
+}
+
+const isTaskTimeOverdue = (task) => {
+  if (!task || task.status === 'done' || !task.dueDate) return false
+  let boundary
+  if (task.dueTime) {
+    boundary = new Date(`${task.dueDate}T${task.dueTime}:00`)
+  } else {
+    boundary = new Date(`${task.dueDate}T00:00:00`)
+    boundary.setDate(boundary.getDate() + 1)
+  }
+  return new Date() >= boundary
+}
 
 // 定义 props
 const props = defineProps({

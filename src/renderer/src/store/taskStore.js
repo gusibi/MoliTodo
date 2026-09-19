@@ -2,6 +2,18 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ReportService from '../../../infrastructure/ai/reportService.js'
+import {
+  isTaskToday,
+  isTaskPlanned,
+  isTaskInbox,
+  isTaskUnscheduled,
+  isOverdue as isTaskOverdue,
+  isMainDateToday,
+  isMainDateTomorrow,
+  isMainDateThisWeek,
+  localDateKey,
+  compareTasksForDate
+} from '../utils/task-time-rules.js'
 // 搜索功能通过 IPC 调用主进程
 
 export const useTaskStore = defineStore('task', () => {
@@ -108,78 +120,23 @@ export const useTaskStore = defineStore('task', () => {
   // 辅助函数：判断日期是否为今天
   const isToday = (date) => {
     if (!date) return false
-    const today = new Date()
-    const targetDate = new Date(date)
-    return today.toDateString() === targetDate.toDateString()
+    return localDateKey(date) === localDateKey(new Date())
   }
 
-  // 辅助函数：判断日期是否为今天
-  const isTodayTask = (task) => {
-    // 1. 提醒日期是今天的任务
-    if (isToday(task.reminderTime)) return true
+  // 辅助函数：判断任务是否属于今天（安排/截止/逾期/过去安排/进行中）
+  const isTodayTask = (task) => isTaskToday(task)
 
-    // 2. 今天创建的任务
-    if (isToday(task.createdAt)) return true
+  // 辅助函数：判断任务的主日期是否为今天
+  const isOnlyTodayTask = (task) => isMainDateToday(task)
 
-    // 3. 正在进行的任务
-    if (task.status === 'doing') return true
+  // 辅助函数：判断任务是否逾期
+  const isOverdueTask = (task) => isTaskOverdue(task)
 
-    // 4. 有提醒时间，且已经过期还未完成的任务
-    if (task.reminderTime && task.status !== 'done') {
-      const reminderDate = new Date(task.reminderTime)
-      const today = new Date()
-      // 如果提醒时间早于今天，说明已经过期
-      if (reminderDate < today && !isToday(task.reminderTime)) {
-        return true
-      }
-    }
+  // 辅助函数：判断任务主日期是否为明天
+  const isTomorrowTask = (task) => isMainDateTomorrow(task)
 
-    return false
-  }
-
-  // 辅助函数：判断任务是否只有提醒时间是今天
-  const isOnlyTodayTask = (task) => {
-    // 只筛选提醒时间是今天的任务
-    return isToday(task.reminderTime)
-  }
-
-  // 辅助函数：判断任务是否过期
-  const isOverdueTask = (task) => {
-    if (!task.reminderTime || task.status === 'done') return false
-    const reminderDate = new Date(task.reminderTime)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0) // 设置为今天的开始时间
-    return reminderDate < today
-  }
-
-  // 辅助函数：判断任务是否为明天
-  const isTomorrowTask = (task) => {
-    if (!task.reminderTime) return false
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const targetDate = new Date(task.reminderTime)
-    return tomorrow.toDateString() === targetDate.toDateString()
-  }
-
-  // 辅助函数：判断任务是否在本周
-  const isThisWeekTask = (task) => {
-    if (!task.reminderTime) return false
-    const today = new Date()
-    const targetDate = new Date(task.reminderTime)
-    
-    // 获取本周的开始和结束日期（周一到周日）
-    const startOfWeek = new Date(today)
-    const dayOfWeek = today.getDay()
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // 周日为0，需要特殊处理
-    startOfWeek.setDate(today.getDate() + diff)
-    startOfWeek.setHours(0, 0, 0, 0)
-    
-    const endOfWeek = new Date(startOfWeek)
-    endOfWeek.setDate(startOfWeek.getDate() + 6)
-    endOfWeek.setHours(23, 59, 59, 999)
-    
-    return targetDate >= startOfWeek && targetDate <= endOfWeek
-  }
+  // 辅助函数：判断任务主日期是否在本周
+  const isThisWeekTask = (task) => isMainDateThisWeek(task)
 
   // 辅助函数：获取状态显示文本
   const getStatusText = (status) => {
@@ -204,7 +161,7 @@ export const useTaskStore = defineStore('task', () => {
     // 根据分类过滤
     switch (category) {
       case 'inbox':
-        filteredTasks = filteredTasks.filter(task => task.status === 'todo' && !task.reminderTime)
+        filteredTasks = filteredTasks.filter(task => isTaskInbox(task))
         break
       case 'today':
         filteredTasks = filteredTasks.filter(task => isTodayTask(task))
@@ -223,7 +180,10 @@ export const useTaskStore = defineStore('task', () => {
         filteredTasks = filteredTasks.filter(task => task.status === 'paused')
         break
       case 'planned':
-        filteredTasks = filteredTasks.filter(task => !!task.reminderTime && task.status !== 'done')
+        filteredTasks = filteredTasks.filter(task => isTaskPlanned(task))
+        break
+      case 'unscheduled':
+        filteredTasks = filteredTasks.filter(task => isTaskUnscheduled(task))
         break
       case 'overdue':
         filteredTasks = filteredTasks.filter(task => isOverdueTask(task))
@@ -323,12 +283,9 @@ export const useTaskStore = defineStore('task', () => {
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
-        // 有提醒时间的任务优先
-        if (a.reminderTime && b.reminderTime) {
-          return new Date(a.reminderTime) - new Date(b.reminderTime)
-        }
-        if (a.reminderTime && !b.reminderTime) return -1
-        if (!a.reminderTime && b.reminderTime) return 1
+        // 按安排开始 / 截止时间排序
+        const timeOrder = compareTasksForDate(a, b)
+        if (timeOrder !== 0) return timeOrder
 
         // 都没有提醒时间，按创建时间排序（最新的在上方）
         return new Date(b.createdAt) - new Date(a.createdAt)
@@ -351,12 +308,9 @@ export const useTaskStore = defineStore('task', () => {
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
-        // 有提醒时间的任务优先
-        if (a.reminderTime && b.reminderTime) {
-          return new Date(a.reminderTime) - new Date(b.reminderTime)
-        }
-        if (a.reminderTime && !b.reminderTime) return -1
-        if (!a.reminderTime && b.reminderTime) return 1
+        // 按安排开始 / 截止时间排序
+        const timeOrder = compareTasksForDate(a, b)
+        if (timeOrder !== 0) return timeOrder
 
         // 按创建时间排序（最新的在上方）
         return new Date(b.createdAt) - new Date(a.createdAt)
@@ -415,19 +369,21 @@ export const useTaskStore = defineStore('task', () => {
     let filteredTasks = taskList.filter(task => {
       switch (category) {
         case 'inbox':
-          return task.status === 'todo' && !task.reminderTime
+          return isTaskInbox(task)
         case 'today':
-          // 今天视图：包含提醒日期是今天的任务、今天创建的任务、以及正在进行的任务
+          // 今天视图：安排/截止在今天、已逾期、过去安排未完成，或正在进行中
           return isTodayTask(task)
         case 'onlyToday':
-          // 只筛选提醒时间是今天的任务
+          // 主日期是今天的任务
           return isOnlyTodayTask(task) && task.status !== 'done'
         case 'doing':
           return task.status === 'doing'
         case 'paused':
           return task.status === 'paused'
         case 'planned':
-          return !!task.reminderTime && task.status !== 'done'
+          return isTaskPlanned(task)
+        case 'unscheduled':
+          return isTaskUnscheduled(task)
         case 'overdue':
           return isOverdueTask(task)
         case 'tomorrow':
@@ -499,12 +455,9 @@ export const useTaskStore = defineStore('task', () => {
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
-        // 有提醒时间的任务优先
-        if (a.reminderTime && b.reminderTime) {
-          return new Date(a.reminderTime) - new Date(b.reminderTime)
-        }
-        if (a.reminderTime && !b.reminderTime) return -1
-        if (!a.reminderTime && b.reminderTime) return 1
+        // 按安排开始 / 截止时间排序
+        const timeOrder = compareTasksForDate(a, b)
+        if (timeOrder !== 0) return timeOrder
 
         // 都没有提醒时间，按创建时间排序（最新的在上方）
         return new Date(b.createdAt) - new Date(a.createdAt)
@@ -527,12 +480,9 @@ export const useTaskStore = defineStore('task', () => {
         if (a.status === 'doing' && b.status !== 'doing') return -1
         if (a.status !== 'doing' && b.status === 'doing') return 1
 
-        // 有提醒时间的任务优先
-        if (a.reminderTime && b.reminderTime) {
-          return new Date(a.reminderTime) - new Date(b.reminderTime)
-        }
-        if (a.reminderTime && !b.reminderTime) return -1
-        if (!a.reminderTime && b.reminderTime) return 1
+        // 按安排开始 / 截止时间排序
+        const timeOrder = compareTasksForDate(a, b)
+        if (timeOrder !== 0) return timeOrder
 
         // 按创建时间排序（最新的在上方）
         return new Date(b.createdAt) - new Date(a.createdAt)
@@ -550,12 +500,13 @@ export const useTaskStore = defineStore('task', () => {
     const todayCount = showCompletedInToday.value ? todayTasks.length : todayTasks.filter(t => t.status !== 'done').length
 
     return {
-      inbox: currentTasks.filter(t => t.status === 'todo' && !t.reminderTime).length,
+      inbox: currentTasks.filter(t => isTaskInbox(t)).length,
       today: todayCount,
       onlyToday: currentTasks.filter(t => isOnlyTodayTask(t) && t.status !== 'done').length,
       doing: currentTasks.filter(t => t.status === 'doing').length,
       paused: currentTasks.filter(t => t.status === 'paused').length,
-      planned: currentTasks.filter(t => !!t.reminderTime && t.status !== 'done').length,
+      planned: currentTasks.filter(t => isTaskPlanned(t)).length,
+      unscheduled: currentTasks.filter(t => isTaskUnscheduled(t)).length,
       overdue: currentTasks.filter(t => isOverdueTask(t)).length,
       tomorrow: currentTasks.filter(t => isTomorrowTask(t) && t.status !== 'done').length,
       thisWeek: currentTasks.filter(t => isThisWeekTask(t) && t.status !== 'done').length,

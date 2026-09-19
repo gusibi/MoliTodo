@@ -1,4 +1,5 @@
 const Task = require('../entities/task');
+const taskTime = require('./task-time');
 const { AIService } = require('../../infrastructure/ai/ai-service');
 const { USER_GUIDE_TASKS } = require('../../utils/user-guide-tasks');
 
@@ -51,7 +52,7 @@ class TaskService {
    * @param {Object} taskData 完整任务数据（包含 metadata、recurrence 等）
    * @returns {Promise<Task>}
    */
-  async createTaskInList(content, listId = 0, reminderTime = null, taskData = {}) {
+  async createTaskInList(content, listId = 0, reminderTime = undefined, taskData = {}) {
     if (!content || content.trim().length === 0) {
       throw new Error('任务内容不能为空');
     }
@@ -60,45 +61,43 @@ class TaskService {
       throw new Error('清单ID必须是非负整数');
     }
 
-    // console.log("createTaskInList: content: ", content)
-    // console.log("createTaskInList: listId: ", listId)
-    // console.log("createTaskInList: reminderTime: ", reminderTime)
-    console.log("createTaskInList: taskData: ", taskData)
-    // 从 taskData 中提取各个字段
     const {
       metadata = {},
-      recurrence = null,
-      dueDate = null,
-      dueTime = null
+      recurrence = null
     } = taskData;
-
-    // 处理提醒时间：重复任务从 recurrence 中提取，普通任务使用传入的 reminderTime
-    let finalReminderTime = reminderTime;
-    if (recurrence && recurrence.reminderTime) {
-      finalReminderTime = this.calculateRecurringReminderTime(recurrence, reminderTime);
-      console.log("createTaskInList: finalReminderTime: ", finalReminderTime)
-    }
 
     const task = new Task(
       Task.generateId(),
       content.trim(),
       'todo',
       new Date(),
-      finalReminderTime,
+      null,
       {}, // timeTracking
       listId,
       metadata,
       recurrence
     );
-    // 设置到期日期和时间
-    if (dueDate) {
-      task.dueDate = dueDate;
+
+    // 统一应用时间字段（安排 / 截止 / 提醒），失败不保存
+    const timeUpdates = {};
+    for (const key of ['scheduledStartAt', 'scheduledEndAt', 'dueDate', 'dueTime', 'reminderPolicy']) {
+      if (Object.prototype.hasOwnProperty.call(taskData, key) && taskData[key] !== undefined) {
+        timeUpdates[key] = taskData[key];
+      }
     }
-    if (dueTime) {
-      task.dueTime = dueTime;
+    if (reminderTime !== undefined) {
+      timeUpdates.reminderTime = reminderTime;
+    }
+    this.applyTimeUpdate(task, timeUpdates);
+
+    // 旧重复系列的提醒时间：没有显式提醒时按系列规则生成第一次触发时间
+    if (recurrence && recurrence.reminderTime && !timeUpdates.reminderPolicy && reminderTime === undefined) {
+      const seriesReminder = this.calculateRecurringReminderTime(recurrence, null);
+      if (seriesReminder) {
+        task.reminderTime = seriesReminder;
+      }
     }
 
-    console.log("createTaskInList: save task ", task)
     const savedTask = await this.taskRepository.save(task);
 
     // 记录任务创建的状态日志
@@ -107,6 +106,129 @@ class TaskService {
     }
 
     return savedTask;
+  }
+
+  /**
+   * 统一的任务时间字段应用与校验。
+   * 未传字段保持原值，显式 null 表示清除；全部校验通过后才写入，保证原子性。
+   * @param {Task} task
+   * @param {Object} updates
+   * @returns {{warning: string|null}}
+   */
+  applyTimeUpdate(task, updates = {}) {
+    const has = (key) => Object.prototype.hasOwnProperty.call(updates, key) && updates[key] !== undefined;
+
+    // 计划安排（开始 / 结束）
+    let scheduledStartAt = task.scheduledStartAt;
+    let scheduledEndAt = task.scheduledEndAt;
+    if (has('scheduledStartAt') || has('scheduledEndAt')) {
+      let rawStart = has('scheduledStartAt') ? updates.scheduledStartAt : task.scheduledStartAt;
+      let rawEnd = has('scheduledEndAt') ? updates.scheduledEndAt : task.scheduledEndAt;
+      if (has('scheduledStartAt') && (rawStart === null || rawStart === '')) {
+        rawStart = null;
+        rawEnd = null; // 清除开始时同步清除结束
+      }
+      const normalized = taskTime.normalizeSchedule(rawStart, rawEnd);
+      scheduledStartAt = normalized.scheduledStartAt;
+      scheduledEndAt = normalized.scheduledEndAt;
+    }
+
+    // 截止（日期 / 时间）
+    let dueDate = task.dueDate;
+    let dueTime = task.dueTime;
+    const deadlineTouched = has('dueDate') || has('dueTime');
+    if (deadlineTouched) {
+      let rawDate = has('dueDate') ? updates.dueDate : task.dueDate;
+      let rawTime = has('dueTime') ? updates.dueTime : task.dueTime;
+      if (has('dueDate') && (rawDate === null || rawDate === '')) {
+        rawDate = null;
+        rawTime = null; // 清除日期同步清除时间
+      }
+      const normalized = taskTime.normalizeDeadline(rawDate, rawTime);
+      dueDate = normalized.dueDate;
+      dueTime = normalized.dueTime;
+    }
+
+    // 提醒
+    let reminderPolicy = task.reminderPolicy;
+    let reminderTime = task.reminderTime;
+    const hasPolicy = has('reminderPolicy');
+    const hasReminder = has('reminderTime');
+    const now = new Date();
+
+    if (hasPolicy && updates.reminderPolicy === null) {
+      reminderPolicy = null;
+      reminderTime = null;
+    } else if (hasPolicy) {
+      const explicitReminder = hasReminder ? updates.reminderTime : null;
+      const policyMode = updates.reminderPolicy.mode || updates.reminderPolicy.type;
+      const fallbackReminder = policyMode === taskTime.REMINDER_MODES.ABSOLUTE ? task.reminderTime : null;
+      const normalized = taskTime.normalizeReminderPolicy(
+        updates.reminderPolicy,
+        hasReminder ? explicitReminder : fallbackReminder,
+        scheduledStartAt
+      );
+
+      if (normalized.mode === taskTime.REMINDER_MODES.RELATIVE) {
+        reminderTime = new Date(scheduledStartAt.getTime() - normalized.minutesBefore * 60 * 1000);
+      } else if (normalized.mode === taskTime.REMINDER_MODES.ABSOLUTE) {
+        reminderTime = taskTime.toDate(hasReminder ? explicitReminder : task.reminderTime);
+        if (!reminderTime) {
+          throw new Error('提醒时间格式无效');
+        }
+        if (reminderTime <= now && !updates.recurrence) {
+          throw new Error('提醒时间不能是过去的时间');
+        }
+      } else {
+        reminderTime = null;
+      }
+      reminderPolicy = normalized;
+    } else if (hasReminder) {
+      if (updates.reminderTime === null || updates.reminderTime === '') {
+        reminderPolicy = { mode: taskTime.REMINDER_MODES.DISABLED, minutesBefore: null };
+        reminderTime = null;
+      } else {
+        const date = taskTime.toDate(updates.reminderTime);
+        if (!date) {
+          throw new Error('提醒时间格式无效');
+        }
+        if (date <= now && !updates.recurrence) {
+          throw new Error('提醒时间不能是过去的时间');
+        }
+        reminderPolicy = { mode: taskTime.REMINDER_MODES.ABSOLUTE, minutesBefore: null };
+        reminderTime = date;
+      }
+    } else if (task.reminderPolicy && task.reminderPolicy.mode === taskTime.REMINDER_MODES.RELATIVE) {
+      if (!scheduledStartAt) {
+        reminderPolicy = { mode: taskTime.REMINDER_MODES.DISABLED, minutesBefore: null };
+        reminderTime = null;
+      } else {
+        reminderTime = new Date(scheduledStartAt.getTime() - task.reminderPolicy.minutesBefore * 60 * 1000);
+      }
+    }
+
+    // 计划晚于截止：只提示，不修改
+    let warning = null;
+    if (scheduledStartAt && dueDate) {
+      const boundary = taskTime.deadlineBoundary(dueDate, dueTime);
+      if (boundary && scheduledStartAt.getTime() > boundary.getTime()) {
+        warning = '计划开始时间晚于截止时间';
+      }
+    }
+
+    task.scheduledStartAt = scheduledStartAt;
+    task.scheduledEndAt = scheduledEndAt;
+    task.dueDate = dueDate;
+    task.dueTime = dueTime;
+    if (deadlineTouched) {
+      task.deadlineInvalid = false;
+    }
+    task.reminderPolicy = reminderPolicy;
+    task.reminderTime = reminderTime;
+    task.timeWarning = warning;
+    task.updatedAt = new Date();
+
+    return { warning };
   }
 
   /**
@@ -183,44 +305,14 @@ class TaskService {
 
       const nextDate = nextOccurrences[0];
 
-      // 计算下一个实例的提醒时间
-      let nextReminderTime = null;
-      const reminderDate = new Date(nextDate);
-
-      // 使用 recurrence.reminderTime，如果没有则使用默认值 9:00
-      const reminderTimeStr = recurringTask.recurrence?.reminderTime || '9:00';
-      const [hours, minutes] = reminderTimeStr.split(':').map(Number);
-
-      // 将 reminderDate 与 reminderTime 的时间部分组合
-      reminderDate.setHours(hours, minutes, 0, 0);
-      nextReminderTime = reminderDate;
-      console.log('nextReminderTime: ', nextReminderTime)
-
-      // 设置 seriesId：优先使用 recurringTask.seriesId，否则使用 recurringTask.id
-      const seriesId = recurringTask.seriesId || recurringTask.id;
-
       // 设置 occurrenceDate：当天 0 点时间戳
       const occurrenceDate = new Date(nextDate);
       occurrenceDate.setHours(0, 0, 0, 0);
-      console.log("occurrenceDate: ------", occurrenceDate)
 
-      // 创建新的任务实例
-      const nextInstance = new Task({
-        id: Task.generateId(),
-        content: recurringTask.content,
-        status: 'todo',
-        createdAt: new Date(),
-        reminderTime: nextReminderTime,
-        timeTracking: {},
-        listId: recurringTask.listId,
-        metadata: { ...recurringTask.metadata },
-        recurrence: recurringTask.recurrence, // 保持重复规则
-        seriesId: seriesId, // 使用正确的 seriesId
-        occurrenceDate: occurrenceDate, // 使用当天 0 点时间戳
-        dueDate: recurringTask.dueDate, // 到期日期
-        dueTime: recurringTask.dueTime // 到期时间
-      });
-
+      // 按统一的实例生成规则创建下一个实例（安排 / 截止 / 提醒）
+      const nextInstance = recurringTask.createInstance(occurrenceDate, Task.generateId());
+      nextInstance.metadata = { ...recurringTask.metadata };
+      nextInstance.recurrence = recurringTask.recurrence; // 保持重复规则
       console.log("nextInstance: ------", nextInstance)
       const savedInstance = await this.taskRepository.save(nextInstance);
 
@@ -286,16 +378,13 @@ class TaskService {
       throw new Error('任务不存在');
     }
 
-    console.log("[updateTask] task service updateTask updates: ------", updates)
+    // 统一应用时间字段（安排 / 截止 / 提醒），任何校验失败都不会写入
+    this.applyTimeUpdate(task, updates);
 
-    if (task.reminderTime === null && updates.reminderTime === null && updates.recurrence && updates.recurrence != "") { // 如果重复配置有值, 尝试获取第一次的提醒时间
-      reminderTime = this.calculateRecurringReminderTime(updates.recurrence, updates.reminderTime);
-    }
     // 更新内容
     if (updates.content !== undefined) {
       task.updateContent(updates.content);
     }
-
 
     // 更新状态
     if (updates.status !== undefined) {
@@ -306,20 +395,6 @@ class TaskService {
       if (this.taskStatusLogService && oldStatus !== updates.status) {
         // 延迟记录，等任务保存成功后再记录
         this._pendingStatusLog = { taskId, oldStatus, newStatus: updates.status };
-      }
-    }
-
-    // 更新提醒时间
-    if (updates.reminderTime !== undefined) {
-      if (updates.reminderTime === null) {
-        task.clearReminder();
-      } else if (updates.recurrence && updates.recurrence != "") {
-        console.log("重复任务不校验, recurrence: ", updates.recurrence)
-        task.setReminder(new Date(updates.reminderTime), true, task.reminderTime);
-      } else {
-        // 统一处理：所有提醒时间都应该是 Date 对象或 ISO 字符串
-        // 传入原始提醒时间用于对比，避免对未变化的提醒时间进行过去时间验证
-        task.setReminder(new Date(updates.reminderTime), false, task.reminderTime);
       }
     }
 
@@ -340,16 +415,6 @@ class TaskService {
       } else {
         task.setRecurrence(updates.recurrence);
       }
-    }
-
-    if (updates.dueDate !== undefined) {
-      task.dueDate = updates.dueDate;
-      task.updatedAt = new Date();
-    }
-
-    if (updates.dueTime !== undefined) {
-      task.dueTime = updates.dueTime;
-      task.updatedAt = new Date();
     }
 
     // console.log("task service task: ------ final", task)
@@ -419,9 +484,7 @@ class TaskService {
     if (!task) {
       throw new Error('任务不存在');
     }
-    console.log("taskId: ${taskId}, reminderTime: ", reminderTime)
-    // 传入原始提醒时间用于对比，避免对未变化的提醒时间进行过去时间验证
-    task.setReminder(reminderTime, false, task.reminderTime);
+    this.applyTimeUpdate(task, { reminderTime });
     return await this.taskRepository.save(task);
   }
 
@@ -864,14 +927,13 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async updateRecurringTask(taskId, updates, recurrence = null) {
-    console.log("[updateRecurringTask] taskId: ", taskId, recurrence)
     // 如果有重复规则且包含提醒时间，重新计算提醒时间
     if (recurrence && recurrence.reminderTime) {
       updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);
-      // console.log("updateRecurringTask: calculated reminderTime:", updates.reminderTime);
+      // 重复任务允许提醒时间为已计算的触发点，不按新绝对提醒校验未来
+      updates.recurrence = recurrence;
     }
 
-    // console.log("updateRecurringTask: updates:", updates)
     const task = await this.updateTask(taskId, updates);
     if (recurrence) {
       task.setRecurrence(recurrence);

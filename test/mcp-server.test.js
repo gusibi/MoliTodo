@@ -73,7 +73,13 @@ test('MCP endpoint discovers and invokes all task tools', async (t) => {
   });
   await client.callTool({
     name: 'edit_task',
-    arguments: { task_id: 'task-1', content: '更新任务', reminder_at: null }
+    arguments: {
+      task_id: 'task-1',
+      content: '更新任务',
+      reminder_at: null,
+      scheduled_start_at: '2026-08-01T10:00:00+08:00',
+      reminder_policy: { mode: 'relative', minutesBefore: 10 }
+    }
   });
   await client.callTool({ name: 'start_task', arguments: { task_id: 'task-1' } });
   const result = await client.callTool({ name: 'stop_task', arguments: { task_id: 'task-1' } });
@@ -87,10 +93,18 @@ test('MCP endpoint discovers and invokes all task tools', async (t) => {
       reminderTime: '2026-08-01T09:00:00+08:00',
       dueDate: undefined,
       dueTime: undefined,
+      scheduledStartAt: undefined,
+      scheduledEndAt: undefined,
+      reminderPolicy: undefined,
       metadata: undefined,
       recurrence: undefined
     }],
-    ['updateTask', 'task-1', { content: '更新任务', reminderTime: null }],
+    ['updateTask', 'task-1', {
+      content: '更新任务',
+      reminderTime: null,
+      scheduledStartAt: '2026-08-01T10:00:00+08:00',
+      reminderPolicy: { mode: 'relative', minutesBefore: 10 }
+    }],
     ['startTask', 'task-1'],
     ['stopTask', 'task-1'],
     ['completeTask', 'task-1'],
