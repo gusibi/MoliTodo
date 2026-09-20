@@ -49,14 +49,14 @@
                 @keyup.escape="cancelStepEdit" ref="stepEditInput" />
               <span v-else class="step-content" :class="{ 'completed': step.status === 'done' }"
                 @dblclick="startStepEdit(step)">{{ step.content }}</span>
-              <button class="step-delete-btn" @click="removeStep(index)">
-                <i class="fas fa-times"></i>
+              <button class="step-delete-btn" :aria-label="t('tasks.deleteStep')" @click="requestRemoveStep(index, $event)">
+                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </button>
             </div>
           </div>
           <div class="step-add">
-            <button class="step-add-btn" @click="addStep">
-              <i class="fas fa-plus step-add-icon"></i>
+            <button class="step-add-btn" :aria-label="t('tasks.addStep')" @click="addStep">
+              <Plus class="h-icon-sm w-icon-sm step-add-icon" aria-hidden="true" />
             </button>
             <input v-model="newStepContent" type="text" placeholder="添加步骤" class="step-add-input"
               @keyup.enter="addStep" />
@@ -70,7 +70,7 @@
             <div class="task-option-item">
               <button class="task-option-btn" @click="toggleListPicker">
                 <div class="task-option-icon">
-                  <i class="fas fa-tag"></i>
+                  <Tag class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ getSelectedListName() }}</div>
@@ -90,7 +90,7 @@
                       :class="{ 'active': selectedListId === props.task.listId }"
                       @click="selectList(getCurrentTaskList())">
                       <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
-                        <i :class="`fas fa-${getCurrentTaskList()?.icon}`"></i>
+                        <ListIcon :name="getCurrentTaskList()?.icon" class="h-icon-sm w-icon-sm" />
                       </div>
                       <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
                     </button>
@@ -106,7 +106,7 @@
                   <button v-for="list in getOtherLists()" :key="list.id" class="list-option"
                     :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
                     <div class="list-icon" :style="{ color: list.color }">
-                      <i :class="`fas fa-${list.icon}`"></i>
+                      <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm" />
                     </div>
                     <span class="list-name">{{ list.name }}</span>
                   </button>
@@ -117,7 +117,7 @@
                   <button v-for="list in availableLists" :key="list.id" class="list-option"
                     :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
                     <div class="list-icon" :style="{ color: list.color }">
-                      <i :class="`fas fa-${list.icon}`"></i>
+                      <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm" />
                     </div>
                     <span class="list-name">{{ list.name }}</span>
                   </button>
@@ -130,14 +130,15 @@
             <div class="task-option-item" :class="{ 'active': selectedReminder }">
               <button class="task-option-btn" @click="toggleReminderPicker">
                 <div class="task-option-icon">
-                  <i class="fas fa-bell"></i>
+                  <Bell class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
                 </div>
               </button>
-              <button v-if="selectedReminder" class="task-option-delete" @click="clearReminder">
-                <i class="fas fa-times"></i>
+              <button v-if="selectedReminder" class="task-option-delete" :aria-label="t('tasks.clearReminder')"
+                @click="clearReminder">
+                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </button>
             </div>
 
@@ -146,13 +147,13 @@
               <div class="reminder-options">
                 <button v-if="selectedReminder || reminderPolicy?.mode === 'disabled'" class="reminder-option"
                   @click="disableReminder">
-                  <i class="fas fa-ban reminder-option-icon"></i>
+                  <Ban class="h-icon-sm w-icon-sm reminder-option-icon" aria-hidden="true" />
                   <span>不提醒</span>
                 </button>
                 <button v-for="option in reminderOptions" :key="option.id" class="reminder-option"
                   :class="{ 'reminder-option-active': isReminderOptionActive(option) }"
                   @click="selectReminderOption(option)">
-                  <i class="fas fa-clock reminder-option-icon"></i>
+                  <Clock class="h-icon-sm w-icon-sm reminder-option-icon" aria-hidden="true" />
                   <span>{{ option.label }}</span>
                 </button>
               </div>
@@ -165,14 +166,15 @@
               <button class="task-option-btn" ref="scheduleStartBtn"
                 @click="openPickerFor('scheduleStart', scheduleStartBtn)">
                 <div class="task-option-icon">
-                  <i class="fas fa-calendar-day"></i>
+                  <CalendarDays class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : t('tasks.addSchedule') }}</div>
                 </div>
               </button>
-              <button v-if="scheduleStart" class="task-option-delete" @click="clearSchedule">
-                <i class="fas fa-times"></i>
+              <button v-if="scheduleStart" class="task-option-delete" :aria-label="t('tasks.clearSchedule')"
+                @click="clearSchedule">
+                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </button>
             </div>
 
@@ -181,14 +183,15 @@
               <button class="task-option-btn" ref="scheduleEndBtn"
                 @click="openPickerFor('scheduleEnd', scheduleEndBtn)">
                 <div class="task-option-icon">
-                  <i class="fas fa-hourglass-half"></i>
+                  <Hourglass class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : t('tasks.addScheduleEnd') }}</div>
                 </div>
               </button>
-              <button v-if="scheduleEnd" class="task-option-delete" @click="clearScheduleEnd">
-                <i class="fas fa-times"></i>
+              <button v-if="scheduleEnd" class="task-option-delete" :aria-label="t('tasks.clearScheduleEnd')"
+                @click="clearScheduleEnd">
+                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -198,7 +201,7 @@
             <div class="task-option-item" :class="{ 'active': selectedDate }">
               <button class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
                 <div class="task-option-icon">
-                  <i class="fas fa-calendar-alt"></i>
+                  <CalendarClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : t('tasks.addDeadline') }}
@@ -214,15 +217,16 @@
                 :title="t('tasks.addDeadlineTime')">
                 加时间
               </button>
-              <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
-                <i class="fas fa-times"></i>
+              <button v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
+                @click="clearDateTime">
+                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           <!-- 时间模型提示（计划晚于截止 / 错过的相对提醒 / 无效旧截止） -->
           <div v-if="timeHintText" class="task-option-warning">
-            <i class="fas fa-triangle-exclamation"></i>
+            <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ timeHintText }}</span>
           </div>
           
@@ -255,7 +259,7 @@
             <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
               <div class="task-option-btn" @click="toggleRepeatPicker">
                 <div class="task-option-icon">
-                  <i class="fas fa-redo"></i>
+                  <Repeat2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">重复</div>
@@ -295,8 +299,8 @@
       <!-- 操作按钮区域 -->
       <div v-if="isAddingTask" class="task-actions">
         <div class="task-actions-left">
-          <button class="task-action-close" @click="handleCancelAdding">
-            <i class="fas fa-right-to-bracket"></i>
+          <button class="task-action-close" :aria-label="t('common.close')" @click="handleCancelAdding">
+            <LogIn class="h-icon-md w-icon-md" aria-hidden="true" />
           </button>
         </div>
 
@@ -305,12 +309,21 @@
         </div>
 
         <div class="task-actions-right">
-          <button v-if="props.isEditing" class="task-action-delete" @click="handleDeleteTask">
-            <i class="fas fa-trash"></i>
+          <button v-if="props.isEditing" class="task-action-delete" :aria-label="t('tasks.deleteTask')"
+            @click="handleDeleteTask">
+            <Trash2 class="h-icon-md w-icon-md" aria-hidden="true" />
           </button>
         </div>
       </div>
     </div>
+
+    <!-- 步骤删除确认 -->
+    <AlertDialog :open="stepDeleteOpen" :title="t('tasks.deleteStep')"
+      :description="t('tasks.confirmDeleteStep')" :cancel-label="t('common.cancel')"
+      :confirm-label="t('common.delete')" confirm-variant="destructive" :loading="stepDeleteLoading"
+      :error="stepDeleteError"
+      @update:open="(value) => { if (!value) stepDeleteOpen = false }" @confirm="confirmRemoveStep"
+      @cancel="cancelRemoveStep" />
   </div>
 </template>
 
@@ -319,9 +332,26 @@ import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } 
 import { useI18n } from 'vue-i18n'
 import { localeCode } from '../utils/locale-format.js'
 import { storeToRefs } from 'pinia'
+import {
+  Ban,
+  Bell,
+  CalendarClock,
+  CalendarDays,
+  Clock,
+  Hourglass,
+  LogIn,
+  Plus,
+  Repeat2,
+  Tag,
+  Trash2,
+  TriangleAlert,
+  X
+} from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useTheme } from '@/composables/useTheme'
 import RepeatSelector from './RepeatSelector.vue'
+import ListIcon from './ui/ListIcon.vue'
+import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
 
 // 导入 V-Calendar 样式文件
 import 'v-calendar/style.css'
@@ -589,27 +619,61 @@ const addStep = async () => {
   }
 }
 
-// 删除步骤
-const removeStep = async (index) => {
-  const step = steps.value[index]
+// 删除步骤：统一走 AlertDialog 确认，失败保留上下文可重试
+const stepDeleteOpen = ref(false)
+const stepDeleteIndex = ref(-1)
+const stepDeleteLoading = ref(false)
+const stepDeleteError = ref('')
+let stepDeleteTrigger = null
 
-  // 弹窗确认删除
-  if (!confirm('确定要删除这个步骤吗？')) {
+const requestRemoveStep = (index, event) => {
+  stepDeleteIndex.value = index
+  stepDeleteTrigger = event?.currentTarget || null
+  stepDeleteError.value = ''
+  stepDeleteLoading.value = false
+  stepDeleteOpen.value = true
+}
+
+const confirmRemoveStep = async () => {
+  if (stepDeleteLoading.value) return
+  const index = stepDeleteIndex.value
+  const step = steps.value[index]
+  if (!step) {
+    stepDeleteOpen.value = false
     return
   }
 
-  if (props.isEditing && props.task) {
-    // 编辑模式：使用API删除步骤
-    try {
-      await taskStore.deleteTaskStep(props.task.id, step.id)
-      steps.value.splice(index, 1)
-    } catch (error) {
-      console.error('删除步骤失败:', error)
+  stepDeleteLoading.value = true
+  stepDeleteError.value = ''
+  try {
+    if (props.isEditing && props.task) {
+      const result = await taskStore.deleteTaskStep(props.task.id, step.id)
+      if (!result || result.success === false) {
+        stepDeleteError.value = t('tasks.deleteFailed', { error: result?.error || '' })
+        return
+      }
     }
-  } else {
-    // 新建模式：本地删除步骤
     steps.value.splice(index, 1)
+    stepDeleteOpen.value = false
+    stepDeleteIndex.value = -1
+    nextTick(() => {
+      if (stepDeleteTrigger && document.contains(stepDeleteTrigger)) stepDeleteTrigger.focus()
+    })
+  } catch (error) {
+    console.error('删除步骤失败:', error)
+    stepDeleteError.value = t('tasks.deleteFailed', { error: error?.message || '' })
+  } finally {
+    stepDeleteLoading.value = false
   }
+}
+
+const cancelRemoveStep = () => {
+  stepDeleteOpen.value = false
+  stepDeleteIndex.value = -1
+  stepDeleteError.value = ''
+  nextTick(() => {
+    if (stepDeleteTrigger && document.contains(stepDeleteTrigger)) stepDeleteTrigger.focus()
+  })
 }
 
 // 切换步骤状态

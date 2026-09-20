@@ -13,7 +13,7 @@
     <div class="flat-task-list-content">
       <!-- 加载状态 -->
       <div v-if="loading" class="flat-task-list-loading-state">
-        <i class="fas fa-spinner fa-spin"></i>
+        <LoaderCircle class="h-icon-lg w-icon-lg animate-spin" aria-hidden="true" />
         <p>加载中...</p>
       </div>
 
@@ -43,11 +43,13 @@
           <div v-if="!isInListView" class="flat-task-group-header" @click.stop="toggleGroupCollapse(group.id)">
             <div class="flat-task-group-title">
               <div class="flat-task-group-left">
-                <i class="flat-task-group-collapse-icon"
-                  :class="collapsedGroups.has(group.id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'"
-                  :title="collapsedGroups.has(group.id) ? '展开' : '折叠'"></i>
+                <ChevronRight v-if="collapsedGroups.has(group.id)"
+                  class="flat-task-group-collapse-icon h-icon-sm w-icon-sm" :title="t('common.expand')"
+                  aria-hidden="true" />
+                <ChevronDown v-else class="flat-task-group-collapse-icon h-icon-sm w-icon-sm"
+                  :title="t('common.collapse')" aria-hidden="true" />
                 <div class="flat-task-group-info">
-                  <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
+                  <ListIcon :name="group.icon" :color="group.color" class="h-icon-sm w-icon-sm" />
                   <span :style="{ color: group.color }">{{ group.name }}</span>
                   <span class="flat-task-group-count">({{ group.tasks.length }})</span>
                 </div>
@@ -55,17 +57,22 @@
               <!-- 多选模式下显示三态选择按钮 - 放在最右边 -->
               <div v-if="isMultiSelectMode" class="flat-task-group-select-actions" @click.stop>
                 <!-- 删除按钮和已选数量放在左边 -->
-                <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
-                  @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
-                  <i class="fas fa-trash"></i>
-                </button>
+                <IconButton
+                  v-if="getGroupSelectedCount(group) > 0"
+                  size="icon-sm"
+                  class="flat-task-group-delete-btn"
+                  :label="t('lists.deleteSelectedTasks')"
+                  @click="openBatchDelete(group, $event)"
+                >
+                  <Trash2 class="h-icon-sm w-icon-sm" />
+                </IconButton>
                 <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
                   已选 {{ getGroupSelectedCount(group) }}
                 </span>
                 <!-- 全选按钮固定在最右边 -->
                 <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
                   @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
-                  <i :class="getGroupSelectIcon(group)"></i>
+                  <component :is="getGroupSelectIcon(group)" class="h-icon-sm w-icon-sm" />
                   <span>{{ getGroupSelectLabel(group) }}</span>
                 </button>
               </div>
@@ -76,24 +83,29 @@
           <div v-else-if="isInListView && groupedTasks.length > 1" class="flat-task-group-header-static">
             <div class="flat-task-group-title">
               <div class="flat-task-group-info">
-                <i :class="getListIconClass(group.icon)" :style="{ color: group.color }"></i>
+                <ListIcon :name="group.icon" :color="group.color" class="h-icon-sm w-icon-sm" />
                 <span>{{ group.name }}</span>
                 <span class="flat-task-group-count">({{ group.tasks.length }})</span>
               </div>
               <!-- 多选模式下显示三态选择按钮 - 放在最右边 -->
               <div v-if="isMultiSelectMode" class="flat-task-group-select-actions" @click.stop>
                 <!-- 删除按钮和已选数量放在左边 -->
-                <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
-                  @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
-                  <i class="fas fa-trash"></i>
-                </button>
+                <IconButton
+                  v-if="getGroupSelectedCount(group) > 0"
+                  size="icon-sm"
+                  class="flat-task-group-delete-btn"
+                  :label="t('lists.deleteSelectedTasks')"
+                  @click="openBatchDelete(group, $event)"
+                >
+                  <Trash2 class="h-icon-sm w-icon-sm" />
+                </IconButton>
                 <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
                   已选 {{ getGroupSelectedCount(group) }}
                 </span>
                 <!-- 全选按钮固定在最右边 -->
                 <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
                   @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
-                  <i :class="getGroupSelectIcon(group)"></i>
+                  <component :is="getGroupSelectIcon(group)" class="h-icon-sm w-icon-sm" />
                   <span>{{ getGroupSelectLabel(group) }}</span>
                 </button>
               </div>
@@ -105,17 +117,18 @@
             class="flat-task-group-header-compact">
             <div class="flat-task-group-select-actions" @click.stop>
               <!-- 删除按钮和已选数量放在左边 -->
-              <button v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-delete-btn"
-                @click="deleteGroupSelectedTasks(group)" title="删除选中任务">
-                <i class="fas fa-trash"></i>
-              </button>
+              <IconButton v-if="getGroupSelectedCount(group) > 0" size="icon-sm"
+                class="flat-task-group-delete-btn" :label="'删除选中任务'"
+                @click="requestBatchDelete(group, $event)">
+                <Trash2 class="h-icon-sm w-icon-sm" />
+              </IconButton>
               <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
                 已选 {{ getGroupSelectedCount(group) }}
               </span>
               <!-- 全选按钮固定在最右边 -->
               <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
                 @click="cycleGroupSelectState(group)" :title="getGroupSelectTooltip(group)">
-                <i :class="getGroupSelectIcon(group)"></i>
+                <component :is="getGroupSelectIcon(group)" class="h-icon-sm w-icon-sm" />
                 <span>{{ getGroupSelectLabel(group) }}</span>
               </button>
             </div>
@@ -126,11 +139,11 @@
             :class="{ 'flat-task-group-collapsed': !isInListView && collapsedGroups.has(group.id) }">
             <div v-for="task in group.tasks" :key="task.id" class="flat-task-item-wrapper">
               <FlatTaskItem :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
-                :is-editing="editingTaskId === task.id" :is-hovered="hoveredTaskId === task.id"
+                :data-task-id="task.id" :is-editing="editingTaskId === task.id" :is-hovered="hoveredTaskId === task.id"
                 :is-multi-select-mode="isMultiSelectMode" :show-select-checkbox="isGroupInSelectMode(group.id)"
                 :is-selected="selectedTaskIds.has(task.id)" @task-click="handleTaskClick"
                 @select-change="toggleTaskSelection(task.id)" @mouseenter="hoveredTaskId = task.id"
-                @mouseleave="hoveredTaskId = null" />
+                @mouseleave="hoveredTaskId = null" @delete-request="requestRowDelete" />
             </div>
           </ul>
         </div>
@@ -206,12 +219,28 @@
       :report-period="reportPeriod" :task-count="reportTaskCount" :is-generating="isGeneratingReport"
       :is-streaming="isStreamingReport" :stream-content="reportStreamContent" :error="reportError"
       @close="closeReportModal" @retry="retryReportGeneration" />
+
+    <!-- 任务删除确认（任务行入口） -->
+    <AlertDialog :open="rowDeleteOpen" :title="t('tasks.deleteTask')" :description="t('tasks.confirmDelete')"
+      :cancel-label="t('common.cancel')" :confirm-label="t('common.delete')" confirm-variant="destructive"
+      :loading="rowDeleteLoading" :error="rowDeleteError"
+      @update:open="(value) => { if (!value) rowDeleteOpen = false }" @confirm="confirmRowDelete"
+      @cancel="cancelRowDelete" />
+
+    <!-- 批量删除确认（清单分组入口） -->
+    <AlertDialog :open="batchDeleteOpen" :title="t('common.delete')"
+      :description="t('lists.batchDeleteConfirm', { count: batchDeleteTarget?.ids?.length || 0 })"
+      :cancel-label="t('common.cancel')" :confirm-label="t('common.delete')" confirm-variant="destructive"
+      :loading="batchDeleteLoading" :error="batchDeleteError"
+      @update:open="(value) => { if (!value) batchDeleteOpen = false }" @confirm="confirmBatchDelete"
+      @cancel="cancelBatchDelete" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { WandSparkles } from '@lucide/vue'
+import { ChevronDown, ChevronRight, LoaderCircle, Square, SquareCheck, SquareMinus, Trash2, WandSparkles } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
@@ -219,8 +248,11 @@ import AIModelPicker from './AIModelPicker.vue'
 import TimeFilter from './TimeFilter.vue'
 import TaskSelectionModal from './TaskSelectionModal.vue'
 import ReportModal from './ReportModal.vue'
-// ReportService 现在通过 taskStore 调用
-import { getListIconClass } from '@/utils/icon-utils'
+import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
+import IconButton from './ui/button/IconButton.vue'
+import ListIcon from './ui/ListIcon.vue'
+import { useDeleteConfirm } from '@/composables/useDeleteConfirm.js'
+import { isVirtualInstance } from '@/utils/today-agenda.js'
 
 // 定义 props
 const props = defineProps({
@@ -316,6 +348,7 @@ const timeUpdateTrigger = ref(0)
 
 // 使用任务存储
 const taskStore = useTaskStore()
+const { t } = useI18n()
 
 // 获取当前分类
 const currentCategory = computed(() => taskStore.currentCategory)
@@ -779,9 +812,9 @@ const getGroupSelectIcon = (group) => {
   const selectedCount = getGroupSelectedCount(group)
   const totalCount = group.tasks?.length || 0
 
-  if (mode === 'none') return 'fas fa-square'
-  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return 'fas fa-check-square'
-  return 'fas fa-minus-square'
+  if (mode === 'none') return Square
+  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return SquareCheck
+  return SquareMinus
 }
 
 // 获取分组选择按钮的文字
@@ -850,26 +883,22 @@ const getGroupSelectedCount = (group) => {
   return group.tasks.filter(task => selectedTaskIds.value.has(task.id)).length
 }
 
-// 删除分组中选中的任务（使用批量删除API）
-const deleteGroupSelectedTasks = async (group) => {
-  const groupSelectedIds = group.tasks
-    ?.filter(task => selectedTaskIds.value.has(task.id))
-    .map(task => task.id) || []
-
-  if (groupSelectedIds.length === 0) return
-
-  if (!confirm(`确定要删除选中的 ${groupSelectedIds.length} 个任务吗？此操作不可撤销。`)) {
-    return
-  }
-
-  try {
-    // 使用批量删除API
-    const result = await taskStore.deleteTasksBatch(groupSelectedIds)
-
-    if (result.success) {
-      // 从选中状态中移除已删除的任务
+// 批量删除：统一确认，确认后使用批量删除 API
+const {
+  open: batchDeleteOpen,
+  target: batchDeleteTarget,
+  loading: batchDeleteLoading,
+  error: batchDeleteError,
+  requestDelete: requestBatchDelete,
+  confirmDelete: confirmBatchDelete,
+  cancelDelete: cancelBatchDelete
+} = useDeleteConfirm({
+  performDelete: async ({ group, ids }) => {
+    const result = await taskStore.deleteTasksBatch([...ids])
+    if (result && result.success !== false) {
+      const deleted = new Set(ids)
       const newSelectedIds = new Set(selectedTaskIds.value)
-      groupSelectedIds.forEach(id => newSelectedIds.delete(id))
+      deleted.forEach(id => newSelectedIds.delete(id))
       selectedTaskIds.value = newSelectedIds
 
       // 如果该分组没有选中任务了，退出多选模式
@@ -878,12 +907,48 @@ const deleteGroupSelectedTasks = async (group) => {
         newMap.set(group.id, 'none')
         groupSelectModes.value = newMap
       }
-
-      console.log(`成功删除 ${result.deletedCount} 个任务`)
     }
-  } catch (error) {
-    console.error('批量删除任务失败:', error)
-  }
+    return result
+  },
+  fallbackFocus: () => quickAddInput.value?.focus()
+})
+
+const openBatchDelete = (group, event) => {
+  const ids = group.tasks
+    ?.filter(task => selectedTaskIds.value.has(task.id))
+    .map(task => task.id) || []
+  if (ids.length === 0) return
+  requestBatchDelete({ task: { group, ids }, trigger: event?.currentTarget || null })
+}
+
+// 任务行删除：统一确认，成功/取消后恢复焦点
+const {
+  open: rowDeleteOpen,
+  loading: rowDeleteLoading,
+  error: rowDeleteError,
+  requestDelete: requestRowDelete,
+  confirmDelete: confirmRowDelete,
+  cancelDelete: cancelRowDelete
+} = useDeleteConfirm({
+  performDelete: (task) => isVirtualInstance(task)
+    ? taskStore.deleteRecurringInstance(task.seriesId, task.occurrenceDate)
+    : taskStore.deleteTask(task.id),
+  captureNeighbor: captureNeighborKey,
+  resolveNeighbor: (key) => document
+    .querySelector(`[data-task-id="${cssEscape(key)}"]`)
+    ?.querySelector('input[type="checkbox"], button'),
+  fallbackFocus: () => quickAddInput.value?.focus()
+})
+
+// 记录相邻任务，成功删除后据此恢复焦点（触发控件随任务移除）
+function captureNeighborKey(trigger) {
+  const item = trigger?.closest?.('[data-task-id]')
+  if (!item) return null
+  const items = [...document.querySelectorAll('[data-task-id]')]
+  const index = items.indexOf(item)
+  if (index === -1) return null
+  const neighbor = items[index + 1] || items[index - 1]
+  return neighbor?.getAttribute('data-task-id') || null
 }
 
 // 清除所有选中和分组选择模式

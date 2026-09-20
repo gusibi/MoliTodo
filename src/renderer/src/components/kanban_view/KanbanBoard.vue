@@ -24,12 +24,12 @@
     <!-- 错误状态 -->
     <div v-else-if="error" class="kanban-error">
       <div class="kanban-error-content">
-        <i class="fas fa-exclamation-triangle kanban-error-icon"></i>
+        <TriangleAlert class="kanban-error-icon h-icon-lg w-icon-lg" aria-hidden="true" />
         <h3 class="kanban-error-title">{{ t('common.error') }}</h3>
         <p class="kanban-error-message">{{ error }}</p>
-        <button @click="error = null" class="kanban-error-button">
+        <Button variant="secondary" size="sm" class="kanban-error-button" @click="error = null">
           {{ t('common.retry') }}
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -47,6 +47,7 @@
         @add-task="handleAddTask"
         @card-click="handleCardClick"
         @card-edit="handleCardEdit"
+        @delete-request="handleDeleteRequest"
       />
 
       <!-- 进行中列 -->
@@ -61,6 +62,7 @@
         @add-task="handleAddTask"
         @card-click="handleCardClick"
         @card-edit="handleCardEdit"
+        @delete-request="handleDeleteRequest"
       />
 
       <!-- 暂停中列 -->
@@ -75,6 +77,7 @@
         @add-task="handleAddTask"
         @card-click="handleCardClick"
         @card-edit="handleCardEdit"
+        @delete-request="handleDeleteRequest"
       />
 
       <!-- 已完成列 -->
@@ -89,14 +92,27 @@
         @add-task="handleAddTask"
         @card-click="handleCardClick"
         @card-edit="handleCardEdit"
+        @delete-request="handleDeleteRequest"
       />
     </div>
+
+    <!-- 统一任务删除确认 -->
+    <AlertDialog :open="deleteDialogOpen" :title="t('tasks.deleteTask')" :description="t('tasks.confirmDelete')"
+      :cancel-label="t('common.cancel')" :confirm-label="t('common.delete')" confirm-variant="destructive"
+      :loading="deleteLoading" :error="deleteError"
+      @update:open="(value) => { if (!value) deleteDialogOpen = false }" @confirm="confirmDelete"
+      @cancel="cancelDelete" />
   </div>
 </template>
 
 <script setup>
 import { computed, ref, onUnmounted, onMounted } from 'vue'
+import { TriangleAlert } from '@lucide/vue'
 import KanbanColumn from './KanbanColumn.vue'
+import Button from '../ui/button/Button.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
+import { useDeleteConfirm, cssEscape } from '@/composables/useDeleteConfirm.js'
+import { useTaskStore } from '@/store/taskStore'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -125,10 +141,36 @@ const props = defineProps({
 const emit = defineEmits(['add-task', 'update-task', 'edit-task', 'show-edit-panel'])
 
 const { t } = useI18n()
+const taskStore = useTaskStore()
 
 const error = ref(null)
 const isUpdating = ref(false)
 const dragTimeout = ref(null)
+
+// 统一任务删除确认状态
+function captureNextCardKey(trigger) {
+  const card = trigger?.closest?.('[data-task-id]')
+  if (!card) return null
+  const cards = [...document.querySelectorAll('.kanban-card[data-task-id]')]
+  const index = cards.indexOf(card)
+  if (index === -1) return null
+  const neighbor = cards[index + 1] || cards[index - 1]
+  return neighbor?.getAttribute('data-task-id') || null
+}
+
+const {
+  open: deleteDialogOpen,
+  loading: deleteLoading,
+  error: deleteError,
+  requestDelete: handleDeleteRequest,
+  confirmDelete,
+  cancelDelete
+} = useDeleteConfirm({
+  performDelete: (task) => taskStore.deleteTask(task.id),
+  captureNeighbor: captureNextCardKey,
+  resolveNeighbor: (key) => document.querySelector(`.kanban-card[data-task-id="${cssEscape(key)}"]`),
+  fallbackFocus: () => document.querySelector('.kanban-board-container .kanban-add-task-button')?.focus()
+})
 
 // 时间更新定时器和响应式更新触发器
 let timeUpdateTimer = null

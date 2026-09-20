@@ -2,16 +2,17 @@
   <div v-if="visible" class="list-create-modal-overlay" @click="handleOverlayClick">
     <div class="list-create-dialog" @click.stop>
       <div class="list-create-dialog-header">
-        <button class="list-create-header-btn list-create-btn-cancel" @click="close">
-          <i class="icon-close"></i>
+        <button class="list-create-header-btn list-create-btn-cancel" aria-label="关闭" title="关闭" @click="close">
+          <X class="h-icon-md w-icon-md" aria-hidden="true" />
         </button>
         <h3>{{ isEditing ? '编辑清单' : '新建清单' }}</h3>
         <button 
           class="list-create-header-btn list-create-btn-confirm" 
+          aria-label="确认" title="确认"
           @click="confirm"
           :disabled="!canConfirm"
         >
-          <i class="icon-check"></i>
+          <Check class="h-icon-md w-icon-md" aria-hidden="true" />
         </button>
       </div>
       
@@ -47,7 +48,7 @@
               @click="selectColor(color)"
               :title="getColorName(color)"
             >
-              <i v-if="form.color === color" class="icon-check"></i>
+              <Check v-if="form.color === color" class="h-icon-sm w-icon-sm" aria-hidden="true" />
             </div>
             
             <!-- 自定义颜色 -->
@@ -59,7 +60,7 @@
                 @change="handleCustomColor"
                 title="自定义颜色"
               />
-              <i v-if="isCustomColor" class="icon-palette"></i>
+              <Palette v-if="isCustomColor" class="h-icon-sm w-icon-sm" aria-hidden="true" />
             </div>
           </div>
         </div>
@@ -76,7 +77,7 @@
               @click="selectIcon(icon)"
               :title="getIconName(icon)"
             >
-              <span :class="`icon-${icon}`" :style="{ color: form.color }"></span>
+              <ListIcon :name="icon" :color="form.color" class="h-icon-md w-icon-md" />
             </div>
           </div>
         </div>
@@ -87,7 +88,7 @@
           <div class="list-create-preview-container">
             <div class="list-create-preview-item">
               <div class="list-create-preview-icon" :style="{ color: form.color }">
-                <span :class="`icon-${form.icon}`"></span>
+                <ListIcon :name="form.icon" class="h-icon-md w-icon-md" />
               </div>
               <span class="list-create-preview-name">{{ form.name || '新列表' }}</span>
               <span class="list-create-preview-count">0</span>
@@ -101,9 +102,17 @@
 
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
+import { Check, Palette, X } from '@lucide/vue'
+import ListIcon from './ui/ListIcon.vue'
 
 export default {
   name: 'ListCreateDialog',
+  components: {
+    Check,
+    ListIcon,
+    Palette,
+    X
+  },
   props: {
     visible: {
       type: Boolean,

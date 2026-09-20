@@ -14,6 +14,7 @@
     "loading": "加载中...",
     "success": "成功",
     "error": "错误",
+    "retry": "重试",
     "warning": "警告",
     "info": "信息",
     "search": "搜索任务...",
@@ -34,6 +35,8 @@
     },
     "date": "日期",
     "optional": "可选",
+    "expand": "展开",
+    "collapse": "折叠",
     "unknownError": "未知错误"
   },
   "views": {
@@ -271,6 +274,11 @@
     "addSchedule": "添加安排时间",
     "addScheduleEnd": "添加结束时间（可选）",
     "addDeadline": "添加截止时间",
+    "addStep": "添加步骤",
+    "clearReminder": "清除提醒",
+    "clearSchedule": "清除安排时间",
+    "clearScheduleEnd": "清除结束时间",
+    "clearDeadline": "清除截止时间",
     "clearDeadlineTime": "清除截止时刻，仅保留日期",
     "addDeadlineTime": "为截止日期添加具体时刻",
     "scheduleStartLabel": "计划开始时间",
@@ -288,6 +296,7 @@
     "executionSteps": "执行步骤",
     "stepContent": "步骤内容",
     "deleteStep": "删除步骤",
+    "confirmDeleteStep": "确定要删除这个步骤吗？",
     "totalTasks": "共 {count} 个任务",
     "creating": "创建中...",
     "createAllTasks": "创建所有任务",
@@ -334,6 +343,8 @@
     "hasTasksWarning": "该清单中有 {count} 个任务，请选择处理方式：",
     "moveToDefault": "移动到默认清单",
     "deleteAllTasks": "同时删除所有任务",
+    "batchDeleteConfirm": "确定要删除选中的 {count} 个任务吗？此操作不可撤销。",
+    "deleteSelectedTasks": "删除选中任务",
     "copy": "副本"
   },
   "notifications": {

@@ -1,17 +1,15 @@
 <template>
   <div class="kanban-add-task">
     <!-- 添加按钮 -->
-    <div
+    <Button
       v-if="!showForm"
-      class="kanban-add-task-button"
+      variant="ghost"
+      class="kanban-add-task-button h-auto"
       @click="showAddForm"
-      tabindex="0"
-      @keydown.enter="showAddForm"
-      @keydown.space.prevent="showAddForm"
     >
-      <i class="fas fa-plus"></i>
+      <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
       <span>{{ t('kanban.addTask') }}</span>
-    </div>
+    </Button>
 
     <!-- 添加表单 -->
     <div v-else class="kanban-add-task-form">
@@ -26,19 +24,23 @@
         @blur="handleBlur"
       />
       <div class="kanban-add-task-actions">
-        <button
+        <Button
+          variant="default"
+          size="sm"
           class="kanban-add-task-submit"
-          @click="handleSubmit"
           :disabled="!taskContent.trim()"
+          @click="handleSubmit"
         >
           {{ t('kanban.add') }}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           class="kanban-add-task-cancel"
           @click="handleCancel"
         >
           {{ t('kanban.cancel') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -46,7 +48,9 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
+import { Plus } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
+import Button from '../ui/button/Button.vue'
 
 const props = defineProps({
   status: {

@@ -107,3 +107,26 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 ```
 
 日期时间写入现有「安排」字段（`scheduledStartAt`）；日期用 `DatePicker`，不在业务层自写日历。
+
+## 阶段 2 迁移记录（任务展示 / Inspector / 清单管理）
+
+- `FlatTaskItem` 的 Today 试点变体（`variant="today"`、`.flat-task-item--today`）已移除；正文层级、
+  ≥28×28 点击区域、hover/focus 显示操作等规则现在是所有视图共享的默认呈现。
+- 任务删除不再使用原生 `confirm`：`FlatTaskItem` 统一发出 `delete-request`，由宿主
+  （TodayOverview、FlatTaskList、MonthlyView）用 `AlertDialog` 确认并恢复焦点；看板卡片删除由
+  `KanbanBoard` 统一确认；列表/看板编辑器删除由 `TaskManager` 统一确认；步骤删除由
+  `TaskEditVertical` 自行确认。确认状态机（提交中防重复、失败保留可重试、取消与焦点恢复）由
+  `composables/useDeleteConfirm.js` 共享，各视图只提供删除动作与焦点落点。
+- E2E 覆盖：`e2e/task-views.spec.js` 验证列表批量删除、列表任务行删除、看板卡片删除、编辑器任务删除
+  与步骤删除的确认契约。
+- 已迁移到本地 Lucide / `ListIcon` 的活跃区域：普通列表、看板（列头、卡片、添加任务、错误态）、
+  日历（重复实例开关、日期任务弹层）、Inspector（选项图标、步骤、列表选择器）、清单创建弹窗
+  （图标选择器与预览）。
+- 清单图标选择器与展示共用 `list-icons.js` 映射；未知名称回退默认图标，不改写持久化数据。
+
+### 尚未迁移（后续阶段）
+
+- 设置页（Settings、DataSettings）仍使用原生 `confirm`，属于阶段 3。
+- 悬浮界面（`float_view/TaskPanel`）仍使用 Font Awesome 与 `getListIconClass`，属于阶段 4。
+- 日历事件表面（事件胶囊、日期弹层）与 `TaskPanel` 的完整视觉适配尚未完成。
+- 列表/看板/Inspector 中仍有历史自建文本按钮沿用原有 CSS；基础 Button 的全面替换留待后续阶段。

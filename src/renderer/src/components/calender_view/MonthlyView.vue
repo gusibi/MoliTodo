@@ -4,7 +4,7 @@
     <div class="w-80 min-w-80 bg-card border-r border-border flex flex-col overflow-hidden">
       <div class="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         <div v-if="allMonthTasks.length === 0" class="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
-          <i class="fas fa-calendar-check text-5xl mb-4 opacity-50"></i>
+          <CalendarCheck class="h-icon-lg w-icon-lg mb-4 opacity-50" aria-hidden="true" />
           <p class="text-sm">{{ t('calendar.noTasksThisMonth') }}</p>
         </div>
         
@@ -15,9 +15,11 @@
             v-for="task in pendingTasks"
             :key="task.id"
             :task="task"
+            :data-task-id="task.id"
             :search-query="searchQuery"
             :time-update-trigger="timeUpdateTrigger"
             @task-click="handleEditTask"
+            @delete-request="handleTaskDeleteRequest"
             class="mb-1"
           />
         </div>
@@ -29,9 +31,11 @@
             v-for="task in completedTasks"
             :key="task.id"
             :task="task"
+            :data-task-id="task.id"
             :search-query="searchQuery"
             :time-update-trigger="timeUpdateTrigger"
             @task-click="handleEditTask"
+            @delete-request="handleTaskDeleteRequest"
             class="mb-1 opacity-70"
           />
         </div>
@@ -53,14 +57,24 @@
         @date-range-change="handleDateRangeChange"
       />
     </div>
+
+    <!-- 统一任务删除确认 -->
+    <AlertDialog :open="deleteDialogOpen" :title="t('tasks.deleteTask')" :description="t('tasks.confirmDelete')"
+      :cancel-label="t('common.cancel')" :confirm-label="t('common.delete')" confirm-variant="destructive"
+      :loading="deleteLoading" :error="deleteError"
+      @update:open="(value) => { if (!value) deleteDialogOpen = false }" @confirm="confirmDelete"
+      @cancel="cancelDelete" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { CalendarCheck } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import UnifiedCalendar from './UnifiedCalendar.vue'
 import FlatTaskItem from '../FlatTaskItem.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
+import { useDeleteConfirm, cssEscape } from '@/composables/useDeleteConfirm.js'
 import { useI18n } from 'vue-i18n'
 import { getMainDateInfo, compareTasksForDate } from '@/utils/task-time-rules.js'
 
@@ -217,6 +231,33 @@ const handleHideTooltip = () => {
 const handleDateRangeChange = (dateRange) => {
   calendarDateRange.value = dateRange
 }
+
+// ---------- 统一任务删除确认 ----------
+
+function captureNextKey(trigger) {
+  const item = trigger?.closest?.('[data-task-id]')
+  if (!item) return null
+  const items = [...document.querySelectorAll('[data-task-id]')]
+  const index = items.indexOf(item)
+  if (index === -1) return null
+  const neighbor = items[index + 1] || items[index - 1]
+  return neighbor?.getAttribute('data-task-id') || null
+}
+
+const {
+  open: deleteDialogOpen,
+  loading: deleteLoading,
+  error: deleteError,
+  requestDelete: handleTaskDeleteRequest,
+  confirmDelete,
+  cancelDelete
+} = useDeleteConfirm({
+  performDelete: (task) => taskStore.deleteTask(task.id),
+  captureNeighbor: captureNextKey,
+  resolveNeighbor: (key) => document
+    .querySelector(`[data-task-id="${cssEscape(key)}"]`)
+    ?.querySelector('input[type="checkbox"], button')
+})
 
 // 启动时间更新定时器
 onMounted(() => {

@@ -67,7 +67,7 @@
             { 'active': taskStore.showRecurringInstances }
           ]"
            :title="taskStore.showRecurringInstances ? t('calendar.hideRecurringInstances') : t('calendar.showRecurringInstances')">
-            <i class="fas fa-repeat"></i>
+            <Repeat class="h-icon-sm w-icon-sm" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -225,11 +225,11 @@
       <div class="day-tasks-modal" @click.stop>
         <div class="day-tasks-modal-header">
           <div class="day-tasks-modal-title">
-            <i class="fas fa-tasks day-tasks-modal-icon"></i>
+            <ListChecks class="day-tasks-modal-icon h-icon-md w-icon-md" aria-hidden="true" />
             <h4 class="day-tasks-modal-title-text">{{ dayTasksModal.title }}</h4>
           </div>
-          <button @click="closeDayTasksModal" class="day-tasks-modal-close">
-            <i class="fas fa-times"></i>
+          <button @click="closeDayTasksModal" class="day-tasks-modal-close" :aria-label="t('common.close')">
+            <X class="h-icon-md w-icon-md" aria-hidden="true" />
           </button>
         </div>
 
@@ -237,7 +237,7 @@
           <div v-for="task in dayTasksModal.tasks" :key="task.id" class="day-task-item">
             <label class="day-task-label" @click="handleTaskClick(task)">
               <span class="day-task-checkbox" :class="getTaskStatusClasses(task)">
-                <i v-if="task.status === 'done'" class="fas fa-check"></i>
+                <Check v-if="task.status === 'done'" class="h-icon-sm w-icon-sm" aria-hidden="true" />
               </span>
               <span class="day-task-content" :class="{ 'day-task-content-completed': task.status === 'done' }">{{
                 task.content }}</span>
@@ -259,6 +259,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { Check, ListChecks, Repeat, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useI18n } from 'vue-i18n'
 import { getMainDateInfo } from '@/utils/task-time-rules.js'

@@ -182,6 +182,13 @@
       @close="showTaskDetailsModal = false" 
     />
 
+    <!-- 编辑器删除任务确认（列表 / 看板视图共用） -->
+    <AlertDialog :open="deleteDialogOpen" :title="t('tasks.deleteTask')" :description="t('tasks.confirmDelete')"
+      :cancel-label="t('common.cancel')" :confirm-label="t('common.delete')" confirm-variant="destructive"
+      :loading="deleteLoading" :error="deleteError"
+      @update:open="(value) => { if (!value) deleteDialogOpen = false }" @confirm="confirmDelete"
+      @cancel="cancelDelete" />
+
   </div>
 </template>
 
@@ -200,6 +207,8 @@ import TodayOverview from './today_view/TodayOverview.vue'
 import CategoryIcon from './ui/CategoryIcon.vue'
 import ListIcon from './ui/ListIcon.vue'
 import IconButton from './ui/button/IconButton.vue'
+import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
+import { useDeleteConfirm } from '@/composables/useDeleteConfirm.js'
 
 
 const { t, locale } = useI18n()
@@ -217,6 +226,19 @@ const viewMode = ref('list') // 'list', 'kanban', 或 'weekly'
 // 编辑面板相关状态
 const showEditPanel = ref(false)
 const selectedTask = ref(null)
+
+// 编辑器删除任务确认（列表 / 看板视图共用）
+const {
+  open: deleteDialogOpen,
+  loading: deleteLoading,
+  error: deleteError,
+  requestDelete,
+  confirmDelete,
+  cancelDelete
+} = useDeleteConfirm({
+  performDelete: (task) => taskStore.deleteTask(task.id),
+  onDeleted: onTaskDeleted
+})
 // 计算属性：根据当前分类和视图模式获取对应的显示已完成任务状态
 const showCompletedTasks = computed({
   get: () => {
@@ -352,23 +374,22 @@ const handleAddTask = async (taskData) => {
 }
 
 
-const handleDeleteTask = async (task) => {
-  if (confirm(t('tasks.confirmDelete'))) {
-    try {
-      await taskStore.deleteTask(task.id)
-      
-      // 删除成功后，自动选择列表中的第一个任务
-      const availableTasks = displayTasks.value.filter(t => t.status !== 'done')
-      if (availableTasks.length > 0) {
-        selectedTask.value = availableTasks[0]
-        showEditPanel.value = true
-      } else {
-        // 如果没有可用任务，隐藏编辑面板
-        handleHideEditPanel()
-      }
-    } catch (error) {
-      console.error('删除任务失败:', error)
-    }
+const handleDeleteTask = (task) => {
+  // 触发控件是编辑器里的删除按钮；取消后把焦点还给它
+  deleteRequest({ task, trigger: document.activeElement })
+}
+
+const deleteRequest = requestDelete
+
+function onTaskDeleted() {
+  // 删除成功后，自动选择列表中的第一个任务
+  const availableTasks = displayTasks.value.filter(t => t.status !== 'done')
+  if (availableTasks.length > 0) {
+    selectedTask.value = availableTasks[0]
+    showEditPanel.value = true
+  } else {
+    // 如果没有可用任务，隐藏编辑面板
+    handleHideEditPanel()
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div :class="[
+  <div ref="cardEl" :data-task-id="task.id" :class="[
     'kanban-card',
     `kanban-card--${task.status}`,
     {
@@ -30,34 +30,34 @@
       <div class="kanban-card-time-row">
         <!-- 重复任务图标 -->
         <div v-if="task.recurrence" class="kanban-card-recurring-icon">
-          <i class="fas fa-repeat"></i>
+          <Repeat class="h-icon-sm w-icon-sm" aria-hidden="true" />
         </div>
         
         <!-- 提醒时间 -->
         <div v-if="task.reminderTime" class="kanban-card-reminder-time" :class="{
           'kanban-card-time-overdue': new Date(task.reminderTime) < new Date() && task.status !== 'done'
         }">
-          <i class="fas fa-calendar"></i>
+          <Calendar class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ getFormattedReminderTime() }}</span>
         </div>
 
         <!-- 进行时间 -->
         <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="kanban-card-time kanban-card-time-doing">
-          <i class="fas fa-play"></i>
+          <Play class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ getFormattedDuration() }}</span>
         </div>
         <div v-else-if="task.status === 'doing' && isTaskOvertime(task)"
           class="kanban-card-time kanban-card-time-overtime">
-          <i class="fas fa-clock"></i>
+          <Clock class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ getFormattedDuration() }}</span>
         </div>
         <div v-else-if="task.status === 'paused'" class="kanban-card-time kanban-card-time-paused">
-          <i class="fas fa-pause"></i>
+          <Pause class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ getFormattedDuration() }}</span>
         </div>
         <div v-else-if="task.status === 'done' && task.totalDuration"
           class="kanban-card-time kanban-card-time-completed">
-          <i class="fas fa-check"></i>
+          <Check class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ getFormattedDuration() }}</span>
         </div>
       </div>
@@ -94,11 +94,11 @@
     <div v-if="showContextMenu" class="context-menu-overlay" @click="closeContextMenu">
       <div class="kanban-card-context-menu" :style="contextMenuStyle" @click.stop>
         <div class="context-menu-item" @click="handleContextEdit">
-          <i class="fas fa-edit"></i>
+          <Pencil class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>编辑</span>
         </div>
         <div class="context-menu-item context-menu-item-danger" @click="handleContextDelete">
-          <i class="fas fa-trash"></i>
+          <Trash2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>删除</span>
         </div>
       </div>
@@ -108,6 +108,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { Calendar, Check, Clock, Pause, Pencil, Play, Repeat, Trash2 } from '@lucide/vue'
 import { formatReminderTime, formatDuration, getCurrentDuration, isTaskOvertime } from '@/utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 
@@ -130,9 +131,10 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-start', 'drag-end', 'click', 'edit'])
+const emit = defineEmits(['drag-start', 'drag-end', 'click', 'edit', 'delete-request'])
 
 const isDragging = ref(false)
+const cardEl = ref(null)
 const taskStore = useTaskStore()
 
 // 右键菜单相关状态
@@ -275,10 +277,9 @@ const handleRestartTask = async () => {
   }
 }
 
-const handleDeleteTask = async () => {
-  if (confirm('确定要删除这个任务吗？')) {
-    await taskStore.deleteTask(props.task.id)
-  }
+const handleDeleteTask = () => {
+  // 删除统一由看板宿主处理，携带触发卡片以便取消/成功后恢复焦点
+  emit('delete-request', { task: props.task, trigger: cardEl.value })
 }
 
 const getFormattedContent = () => {

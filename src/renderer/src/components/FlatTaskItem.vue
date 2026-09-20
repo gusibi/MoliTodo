@@ -7,8 +7,7 @@
         'flat-task-item-editing': isEditing,
         'flat-task-item-hovered': isHovered,
         'flat-task-item-dragging': isDragging,
-        'flat-task-item-selected': isSelected,
-        'flat-task-item--today': isToday
+        'flat-task-item-selected': isSelected
       }"
       @click="handleTaskClick"
       @mouseenter="$emit('mouseenter')"
@@ -112,7 +111,7 @@
       </div>
 
       <!-- 任务右侧操作 - 单行水平对齐；紧凑外观不挤动正文 -->
-      <div class="flat-task-right" :class="{ 'flat-task-actions-reveal': isToday }">
+      <div class="flat-task-right flat-task-actions-reveal">
         <IconButton
           v-if="task.status === 'todo'"
           size="icon-sm"
@@ -251,11 +250,6 @@ const props = defineProps({
   badges: {
     type: Array,
     default: () => []
-  },
-  // 'default'：普通列表/看板/日历既有行为；'today'：Today 试点呈现与删除确认
-  variant: {
-    type: String,
-    default: 'default'
   }
 })
 
@@ -269,8 +263,6 @@ const emit = defineEmits([
   'drag-end',
   'delete-request'
 ])
-
-const isToday = computed(() => props.variant === 'today')
 
 // 使用 taskStore
 const taskStore = useTaskStore()
@@ -404,18 +396,9 @@ const handleRestartTask = async () => {
   }
 }
 
-const handleDeleteTask = async (event) => {
-  if (isToday.value) {
-    // Today 试点：删除统一走外部 AlertDialog，携带触发控件以便成功/取消后恢复焦点
-    emit('delete-request', { task: props.task, trigger: event?.currentTarget || null })
-    return
-  }
-  if (!confirm(t('tasks.confirmDelete'))) return
-  if (isVirtual.value) {
-    await taskStore.deleteRecurringInstance(props.task.seriesId, props.task.occurrenceDate)
-    return
-  }
-  await taskStore.deleteTask(props.task.id)
+const handleDeleteTask = (event) => {
+  // 删除统一走外部 AlertDialog，携带触发控件以便成功/取消后恢复焦点
+  emit('delete-request', { task: props.task, trigger: event?.currentTarget || null })
 }
 </script>
 

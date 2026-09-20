@@ -256,27 +256,6 @@
   transition: color 0.2s ease;
 }
 
-/* 图标字体定义 */
-.icon-list::before { content: "📋"; }
-.icon-inbox::before { content: "📥"; }
-.icon-star::before { content: "⭐"; }
-.icon-heart::before { content: "❤️"; }
-.icon-bookmark::before { content: "🔖"; }
-.icon-flag::before { content: "🚩"; }
-.icon-folder::before { content: "📁"; }
-.icon-briefcase::before { content: "💼"; }
-.icon-home::before { content: "🏠"; }
-.icon-user::before { content: "👤"; }
-.icon-calendar::before { content: "📅"; }
-.icon-clock::before { content: "🕐"; }
-.icon-target::before { content: "🎯"; }
-.icon-trophy::before { content: "🏆"; }
-.icon-book::before { content: "📚"; }
-.icon-music::before { content: "🎵"; }
-.icon-close::before { content: "✕"; }
-.icon-check::before { content: "✓"; }
-.icon-palette::before { content: "🎨"; }
-
 /* 预览区域 */
 .list-create-preview-container {
   padding: 1rem;

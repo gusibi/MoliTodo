@@ -5,7 +5,6 @@
       :search-query="searchQuery"
       :time-update-trigger="timeUpdateTrigger"
       :badges="badges"
-      variant="today"
       @task-click="(t) => $emit('task-click', t)"
       @delete-request="(payload) => $emit('delete-request', payload)"
     />

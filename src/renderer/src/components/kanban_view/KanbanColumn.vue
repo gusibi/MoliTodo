@@ -6,7 +6,8 @@
     <!-- 列头部 -->
     <div class="kanban-column-header">
       <div class="kanban-column-title">
-        <i :class="[columnConfig.icon, 'kanban-column-icon', `kanban-column-icon--${status}`]"></i>
+        <component :is="columnConfig.icon" class="kanban-column-icon h-icon-md w-icon-md"
+          :class="`kanban-column-icon--${status}`" aria-hidden="true" />
         <span>{{ columnConfig.title }}</span>
       </div>
       <div class="kanban-column-count">
@@ -22,13 +23,14 @@
           :time-update-trigger="timeUpdateTrigger"
           :is-editing="editingTaskId === task.id"
           @drag-start="handleCardDragStart"
-          @drag-end="handleCardDragEnd" @click="handleCardClick" @edit="handleCardEdit" />
+          @drag-end="handleCardDragEnd" @click="handleCardClick" @edit="handleCardEdit"
+          @delete-request="(payload) => emit('delete-request', payload)" />
       </TransitionGroup>
 
       <!-- 空状态 -->
       <div v-else class="kanban-column-empty">
         <div class="text-center">
-          <i :class="columnConfig.icon" class="text-2xl mb-2 opacity-50"></i>
+          <component :is="columnConfig.icon" class="h-icon-lg w-icon-lg mb-2 opacity-50" aria-hidden="true" />
           <p>{{ t('kanban.noTasks') }}</p>
         </div>
       </div>
@@ -41,6 +43,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { CircleCheck, CirclePause, CirclePlay, Inbox } from '@lucide/vue'
 import KanbanCard from './KanbanCard.vue'
 import KanbanAddTask from './KanbanAddTask.vue'
 import { useI18n } from 'vue-i18n'
@@ -73,7 +76,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['task-dropped', 'add-task', 'card-click', 'card-edit'])
+const emit = defineEmits(['task-dropped', 'add-task', 'card-click', 'card-edit', 'delete-request'])
 
 const { t } = useI18n()
 
@@ -84,22 +87,22 @@ const draggedTask = ref(null)
 const columnConfigs = {
   todo: {
     title: t('kanban.todo'),
-    icon: 'fas fa-inbox',
+    icon: Inbox,
     color: 'blue'
   },
   doing: {
     title: t('kanban.doing'),
-    icon: 'fas fa-play-circle',
+    icon: CirclePlay,
     color: 'orange'
   },
   paused: {
     title: t('kanban.paused'),
-    icon: 'fas fa-pause-circle',
+    icon: CirclePause,
     color: 'yellow'
   },
   done: {
     title: t('kanban.done'),
-    icon: 'fas fa-check-circle',
+    icon: CircleCheck,
     color: 'green'
   }
 }
