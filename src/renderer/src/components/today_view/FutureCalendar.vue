@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import { localeCode } from '../../utils/locale-format.js'
@@ -75,6 +75,28 @@ const { t, locale } = useI18n()
 const taskStore = useTaskStore()
 
 const MAX_DOTS = 3
+
+const monthsContainer = ref(null)
+
+// 月份窗口扩展后，把新加入的月份滚动到可见区域，
+// 避免"更晚月份"在折叠区域外扩展而看起来没有反应。
+function scrollToMonthEdge(edge) {
+  const container = monthsContainer.value
+  if (!container) return
+  const sections = container.querySelectorAll('.future-calendar-month')
+  if (!sections.length) return
+  const target = edge === 'first' ? sections[0] : sections[sections.length - 1]
+  target.scrollIntoView({ block: 'nearest' })
+}
+
+watch(
+  () => [props.monthWindow.startKey, props.monthWindow.endKey],
+  (next, prev) => {
+    if (!prev) return
+    if (next[0] < prev[0]) nextTick(() => scrollToMonthEdge('first'))
+    else if (next[1] > prev[1]) nextTick(() => scrollToMonthEdge('last'))
+  }
+)
 
 // 周一开头的网格：以任意一个已知周一为锚点生成星期标签（不依赖当前日期）
 const MONDAY_ANCHOR = new Date(2024, 0, 1) // 2024-01-01 是周一

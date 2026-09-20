@@ -347,6 +347,7 @@
     "unplannedEmpty": "No unplanned tasks",
     "overdue": "Overdue",
     "reschedule": "To reschedule",
+    "reminderExpired": "Expired reminders",
     "todaySection": "Today",
     "todayEmpty": "Nothing pending for today",
     "noSearchMatch": "No matching tasks in the current date range",
@@ -367,6 +368,7 @@
       "recurring": "Recurring",
       "dueToday": "Due today",
       "dueDateOnly": "Due this day",
+      "reminderExpired": "Reminder passed",
       "scheduledElsewhere": "Scheduled elsewhere"
     },
     "calendar": {

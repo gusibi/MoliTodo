@@ -163,6 +163,38 @@ test('分组：无日期 doing 任务进入今天且不进入未计划', () => {
   assert.equal(model.unplanned.length, 0);
 });
 
+test('分组：仅提醒且提醒已过进入已过期提醒，不进入未计划', () => {
+  const expired = plainTask({ id: 'rem1', reminderTime: `${YESTERDAY}T09:00:00` });
+  const future = plainTask({ id: 'rem2', reminderTime: `${DAY_AFTER}T09:00:00` });
+  const model = agenda.buildAgendaModel({
+    instances: [expired, future],
+    todayKey: TODAY,
+    browsingDates: [TODAY],
+    now: nowAt(TODAY)
+  });
+  assert.equal(model.reminderExpired.length, 1);
+  assert.equal(model.reminderExpired[0].id, 'rem1');
+  assert.equal(model.unplanned.length, 1);
+  assert.equal(model.unplanned[0].id, 'rem2');
+  // 已过期提醒计入今日待处理
+  assert.equal(model.todayPendingCount, 1);
+});
+
+test('分组：有安排或截止的任务不进入已过期提醒', () => {
+  const scheduled = plainTask({
+    id: 'rem3',
+    reminderTime: `${YESTERDAY}T09:00:00`,
+    scheduledStartAt: `${DAY_AFTER}T10:00:00`
+  });
+  const model = agenda.buildAgendaModel({
+    instances: [scheduled],
+    todayKey: TODAY,
+    browsingDates: [TODAY, DAY_AFTER],
+    now: nowAt(TODAY)
+  });
+  assert.equal(model.reminderExpired.length, 0);
+});
+
 test('分组：截止逾期与过去安排分开，逾期优先', () => {
   const overdueOnly = plainTask({ id: 'c1', dueDate: YESTERDAY });
   const pastScheduledOnly = plainTask({ id: 'c2', scheduledStartAt: `${YESTERDAY}T10:00:00` });

@@ -362,6 +362,7 @@
     "unplannedEmpty": "没有未计划的任务",
     "overdue": "已逾期",
     "reschedule": "待重新安排",
+    "reminderExpired": "已过期提醒",
     "todaySection": "今天",
     "todayEmpty": "今天暂无待处理任务",
     "noSearchMatch": "当前日期范围内没有匹配的任务",
@@ -382,6 +383,7 @@
       "recurring": "重复任务",
       "dueToday": "今天截止",
       "dueDateOnly": "当天截止",
+      "reminderExpired": "提醒已过期",
       "scheduledElsewhere": "安排在其他日期"
     },
     "calendar": {

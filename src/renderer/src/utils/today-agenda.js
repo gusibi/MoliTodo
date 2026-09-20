@@ -162,12 +162,26 @@ function mergeTaskWorld({ baseTasks = [], virtualInstances = [] }) {
 }
 
 /**
+ * 已过期提醒：设置了提醒且提醒时刻已过，但没有安排也没有截止的未完成任务。
+ * 提醒本身不承担日期归属（#13），这里只用于在 Today 中单独提示补排期。
+ */
+function isExpiredReminder(task, now = new Date()) {
+  if (!task || !task.reminderTime) return false;
+  if (taskTime.isCompleted(task)) return false;
+  if (taskTime.hasSchedule(task) || taskTime.hasDeadline(task)) return false;
+  const reminder = new Date(task.reminderTime);
+  if (Number.isNaN(reminder.getTime())) return false;
+  return reminder.getTime() <= now.getTime();
+}
+
+/**
  * 对实例做 Agenda 分组判定。
  * 优先级严格沿用 #13：截止逾期 > 过去安排 > 今天；doing 始终进入今天。
  *
  * 返回：
  * - { group: 'overdue' }
  * - { group: 'reschedule' }            过去安排未完成且未逾期
+ * - { group: 'reminderExpired' }       提醒已过且无安排/截止
  * - { group: 'today', reason }          reason: 'mainDate' | 'deadline' | 'doing'
  * - { group: 'unscheduled' }
  * - { group: 'date', dateKey }          未来或浏览中的日期区
@@ -189,6 +203,7 @@ function classifyForAgenda(task, todayKey, now = new Date()) {
   const planned = taskTime.hasSchedule(task) || taskTime.hasDeadline(task);
   if (!planned) {
     if (task.status === 'doing') return { group: 'today', reason: 'doing' };
+    if (isExpiredReminder(task, now)) return { group: 'reminderExpired' };
     return { group: 'unscheduled' };
   }
 
@@ -231,6 +246,7 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
   const unplanned = [];
   const overdue = [];
   const reschedule = [];
+  const reminderExpired = [];
   const today = [];
   const byDateKey = new Map();
   const todayCompleted = [];
@@ -250,6 +266,9 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
         break;
       case 'reschedule':
         reschedule.push(task);
+        break;
+      case 'reminderExpired':
+        reminderExpired.push(task);
         break;
       case 'today':
         today.push(task);
@@ -275,6 +294,7 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
 
   overdue.sort(compareExecTasks);
   reschedule.sort(compareExecTasks);
+  reminderExpired.sort(compareExecTasks);
   today.sort(compareExecTasks);
 
   // 执行分组收纳的任务在日期区显示定位链接
@@ -303,10 +323,11 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
     unplanned,
     overdue,
     reschedule,
+    reminderExpired,
     today,
     todayCompleted,
     dateSections,
-    todayPendingCount: overdue.length + reschedule.length + today.length
+    todayPendingCount: overdue.length + reschedule.length + reminderExpired.length + today.length
   };
 }
 
@@ -429,6 +450,7 @@ export {
   instanceKey,
   mergeTaskWorld,
   classifyForAgenda,
+  isExpiredReminder,
   buildAgendaModel,
   buildCalendarDots,
   mergeDayRanges,

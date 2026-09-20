@@ -411,3 +411,39 @@ test('真实重启应用后保存结果保留', async ({ app }) => {
     await relaunched.close().catch(() => {});
   }
 });
+
+test('更晚月份扩展月份并使新月份可见', async ({ window }) => {
+  await window.reload();
+  await waitForToday(window);
+
+  const before = await window.locator('.future-calendar-month').count();
+  await window.locator('.future-calendar-back-btn', { hasText: '更晚月份' }).click();
+  await expect(window.locator('.future-calendar-month')).toHaveCount(before + 1);
+
+  // 新加入的月份滚动到可见区域（此前折叠在下方，看起来"没有反应"）
+  await expect(window.locator('.future-calendar-month').last()).toBeInViewport();
+
+  // 更早月份同样可用
+  await window.locator('.future-calendar-back-btn', { hasText: '更早月份' }).click();
+  await expect(window.locator('.future-calendar-month')).toHaveCount(before + 2);
+});
+
+test('仅提醒且已过期的任务出现在已过期提醒分组', async ({ app, window }) => {
+  const ids = await seedTasks(app.electronApp, [{ content: '过期提醒任务' }]);
+  await app.electronApp.evaluate(async ({}, id) => {
+    const moli = global.__moliTodoApp;
+    const past = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    await moli.taskService.taskRepository.db.run('UPDATE tasks SET reminder_time = ? WHERE id = ?', [past, id]);
+  }, ids[0]);
+
+  await window.reload();
+  await waitForToday(window);
+
+  const section = window.locator('[data-agenda-section="reminderExpired"]');
+  await expect(section).toBeVisible();
+  await expect(section.getByText('过期提醒任务')).toBeVisible();
+
+  // 不计入未计划，且计入今日待处理
+  await expect(window.locator('[data-agenda-section="unplanned"] .agenda-section-count')).toHaveText('0');
+  await expect(window.locator('.task-manager-category-count')).toContainText('今日待处理 1 项');
+});

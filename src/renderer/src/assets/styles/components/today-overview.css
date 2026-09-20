@@ -91,6 +91,10 @@
   @apply text-destructive/80;
 }
 
+.agenda-section-reminder .agenda-section-header i {
+  @apply text-warning/80;
+}
+
 .agenda-section-icon-today {
   @apply text-primary;
 }

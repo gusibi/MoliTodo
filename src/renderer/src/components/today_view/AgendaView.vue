@@ -69,6 +69,24 @@
           </div>
         </section>
 
+        <!-- 已过期提醒：无安排/截止，提醒已过；点击可补排期 -->
+        <section v-if="model.reminderExpired.length" class="agenda-section agenda-section-reminder"
+          data-agenda-section="reminderExpired">
+          <div class="agenda-section-header">
+            <i class="fas fa-bell-slash"></i>
+            <span class="agenda-section-title">{{ $t('today.reminderExpired') }}</span>
+            <span class="agenda-section-count">{{ model.reminderExpired.length }}</span>
+          </div>
+          <div class="agenda-section-body">
+            <div v-for="task in model.reminderExpired" :key="taskKey(task)" class="agenda-card-wrapper"
+              :data-task-key="taskKey(task)">
+              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :badges="cardBadges(task, 'reminderExpired')" :show-schedule="true"
+                @task-click="(t) => $emit('task-click', t)" @schedule="handleScheduleClick(task)" />
+            </div>
+          </div>
+        </section>
+
         <!-- 今天（始终保留可定位 section） -->
         <section class="agenda-section agenda-section-today" :data-date-section="todayKey">
           <div class="agenda-section-header">
@@ -282,6 +300,7 @@ const searchNoMatch = computed(() => {
     model.unplanned.length === 0 &&
     model.overdue.length === 0 &&
     model.reschedule.length === 0 &&
+    model.reminderExpired.length === 0 &&
     model.today.length === 0 &&
     model.todayCompleted.length === 0 &&
     model.dateSections.every(
@@ -313,6 +332,9 @@ function cardBadges(task, group) {
   // 日期型 Deadline 在日期 section 中显示"当天截止"，不伪造具体时刻
   if (group === 'date' && task.dueDate && !task.dueTime) {
     badges.push({ text: t('today.badge.dueDateOnly'), tone: 'warning' })
+  }
+  if (group === 'reminderExpired') {
+    badges.push({ text: t('today.badge.reminderExpired'), tone: 'warning' })
   }
   if (group === 'today' && task.dueDate && !task.scheduledStartAt) {
     const dueKey = task.dueDate.slice(0, 10)
