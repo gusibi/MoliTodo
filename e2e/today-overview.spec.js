@@ -103,7 +103,7 @@ test('点击空日期定位到对应 section 且不污染新建时间', async ({
   const dialog = window.getByRole('dialog');
   await dialog.getByPlaceholder('任务').fill('随手记');
   await dialog.getByRole('button', { name: '创建任务' }).click();
-  await expect(window.getByText('已添加到未计划')).toBeVisible();
+  await expect(window.getByText('已添加到收件箱')).toBeVisible();
 
   // 未计划汇总默认折叠：点击反馈中的"查看"展开并定位
   await window.getByRole('button', { name: '查看' }).click();
@@ -706,4 +706,29 @@ test('没有任务的日期不显示空 section', async ({ app, window }) => {
   const todaySection = window.locator('.agenda-section-today');
   await expect(todaySection).toBeVisible();
   await expect(todaySection.getByText('今天的任务')).toBeVisible();
+});
+
+test('收件箱命名、逾期可折叠与今日星期几', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: '逾期任务', dueDate: localKey(new Date(Date.now() - 86400000)) }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 1. 未计划改名为收件箱
+  const unplanned = window.locator('[data-agenda-section="unplanned"]');
+  await expect(unplanned.locator('.agenda-section-title')).toContainText('收件箱');
+
+  // 2. 已逾期默认展开，可折叠再展开
+  const overdue = window.locator('[data-agenda-section="overdue"]');
+  const overdueToggle = overdue.locator('.agenda-section-header');
+  await expect(overdue.getByText('逾期任务')).toBeVisible();
+  await expect(overdueToggle).toHaveAttribute('aria-expanded', 'true');
+  await overdueToggle.click();
+  await expect(overdue.getByText('逾期任务')).toHaveCount(0);
+  await overdueToggle.click();
+  await expect(overdue.getByText('逾期任务')).toBeVisible();
+
+  // 3. 今天标题带星期几
+  await expect(window.locator('.agenda-section-today .agenda-section-title')).toContainText('周');
 });

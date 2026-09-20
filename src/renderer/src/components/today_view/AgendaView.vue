@@ -37,15 +37,18 @@
           </div>
         </section>
 
-        <!-- 已逾期（空则隐藏，克制标记） -->
+        <!-- 已逾期（空则隐藏；可折叠，默认展开） -->
         <section v-if="model.overdue.length" class="agenda-section agenda-section-overdue"
           data-agenda-section="overdue">
-          <div class="agenda-section-header">
+          <button type="button" class="agenda-section-header is-button" :aria-expanded="overdueExpanded"
+            @click="overdueExpanded = !overdueExpanded">
+            <ChevronDown v-if="overdueExpanded" class="h-icon-md w-icon-md" aria-hidden="true" />
+            <ChevronRight v-else class="h-icon-md w-icon-md" aria-hidden="true" />
             <AlertCircle class="agenda-section-icon-overdue h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.overdue') }}</span>
             <span class="agenda-section-count agenda-count-overdue">{{ model.overdue.length }}</span>
-          </div>
-          <div class="agenda-section-body">
+          </button>
+          <div v-if="overdueExpanded" class="agenda-section-body">
             <div v-for="task in model.overdue" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
@@ -96,7 +99,10 @@
         <section class="agenda-section agenda-section-today" :data-date-section="todayKey">
           <div class="agenda-section-header">
             <CalendarCheck class="agenda-section-icon-today h-icon-md w-icon-md" aria-hidden="true" />
-            <span class="agenda-section-title">{{ $t('today.todaySection') }}</span>
+            <span class="agenda-section-title">
+              {{ $t('today.todaySection') }}
+              <span class="agenda-section-friendly">{{ weekdayLabel(todayKey) }}</span>
+            </span>
             <span class="agenda-section-count">{{ model.today.length }}</span>
           </div>
           <div class="agenda-section-body">
@@ -271,6 +277,7 @@ const taskStore = useTaskStore()
 const scrollContainer = ref(null)
 const addButton = ref(null)
 const unplannedExpanded = ref(false)
+const overdueExpanded = ref(true)
 const unplannedFeedback = ref(false)
 const composerOpen = ref(false)
 
@@ -328,6 +335,12 @@ function formatDateTitle(key) {
     day: 'numeric',
     weekday: 'short'
   })
+}
+
+function weekdayLabel(key) {
+  const date = new Date(`${key}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString(localeCode(locale.value), { weekday: 'short' })
 }
 
 function friendlyDateLabel(key) {
