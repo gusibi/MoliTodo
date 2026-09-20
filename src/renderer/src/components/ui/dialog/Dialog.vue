@@ -3,7 +3,7 @@
     <DialogPortal>
       <DialogOverlay class="ui-overlay fixed inset-0 z-[100] bg-black/50" />
       <DialogContent
-        class="ui-dialog-content fixed left-1/2 top-1/2 z-[100] flex max-h-[85vh] w-[min(92vw,32rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-card shadow-lg outline-none"
+        class="ui-dialog-content fixed left-1/2 top-1/2 z-[100] flex max-h-[88vh] w-[min(94vw,44rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-card shadow-lg outline-none"
       >
         <div class="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
           <div class="min-w-0">

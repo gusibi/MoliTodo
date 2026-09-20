@@ -692,3 +692,18 @@ test('新建弹窗可选择清单、日期与具体时间并正确持久化', as
   expect(start.getHours()).toBe(10);
   expect(start.getMinutes()).toBe(30);
 });
+
+test('没有任务的日期不显示空 section', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '今天的任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 自动填充的未来日期没有任务时不渲染空白 section
+  const emptyKey = localKey(new Date(Date.now() + 5 * 86400000));
+  await expect(window.locator(`[data-date-section="${emptyKey}"]`)).toHaveCount(0);
+
+  // 有任务的今天分组仍显示
+  const todaySection = window.locator('.agenda-section-today');
+  await expect(todaySection).toBeVisible();
+  await expect(todaySection.getByText('今天的任务')).toBeVisible();
+});

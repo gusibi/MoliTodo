@@ -40,8 +40,8 @@
         >
           <CalendarCell v-for="date in weekDates" :key="date.toString()" :date="date">
             <CalendarCellTrigger
-              :day="date.day"
-              :month="date"
+              :day="date"
+              :month="month.value"
               class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[outside-view]:text-muted-foreground/40 data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[today]:font-semibold data-[today]:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[unavailable]:pointer-events-none data-[unavailable]:opacity-40"
             />
           </CalendarCell>

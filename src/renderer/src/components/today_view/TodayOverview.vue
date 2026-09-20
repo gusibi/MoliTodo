@@ -2,7 +2,8 @@
   <div class="today-overview" ref="rootEl" :class="{ 'is-narrow': isNarrow }">
     <!-- 左侧 Agenda -->
     <div class="today-overview-agenda">
-      <AgendaView ref="agendaRef" :model="agendaModel" :today-key="todayKey" :search-query="searchQuery"
+      <AgendaView ref="agendaRef" :model="agendaModel" :today-key="todayKey" :selected-key="selectedDateKey"
+        :search-query="searchQuery"
         :show-completed="showCompleted"
         :initial-loading="(!initialLoaded && loadingCount > 0) || (taskStore.loading && taskStore.tasks.length === 0)"
         :loading-more="loadingCount > 0" :has-error="hasLoadError" @task-click="handleEditTask" @load-more="loadMoreFuture"

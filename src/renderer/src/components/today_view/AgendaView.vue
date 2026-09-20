@@ -249,6 +249,7 @@ import { localeCode } from '../../utils/locale-format.js'
 const props = defineProps({
   model: { type: Object, required: true },
   todayKey: { type: String, required: true },
+  selectedKey: { type: String, default: '' },
   searchQuery: { type: String, default: '' },
   showCompleted: { type: Boolean, default: false },
   initialLoading: { type: Boolean, default: false },
@@ -286,7 +287,15 @@ function taskKey(task) {
 }
 
 const dateSectionsExceptToday = computed(() => {
-  return props.model.dateSections.filter((section) => section.dateKey !== props.todayKey)
+  return props.model.dateSections.filter((section) => {
+    if (section.dateKey === props.todayKey) return false
+    // 隐藏没有任务的日期，仅保留有内容或当前选中的日期，避免空白 section 堆积
+    const hasContent =
+      section.tasks.length > 0 ||
+      section.completedTasks.length > 0 ||
+      section.relocated.length > 0
+    return hasContent || section.dateKey === props.selectedKey
+  })
 })
 
 // 主日期为今天的已完成任务（开关打开时并入今天已完成区域展示）
