@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const agenda = require('../src/domain/services/today-agenda');
+const agenda = require('../src/renderer/src/utils/today-agenda.js');
 const taskTime = require('../src/domain/services/task-time');
 
 /**

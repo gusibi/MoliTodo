@@ -10,7 +10,7 @@ import {
   addDaysToKey,
   instanceKey,
   isVirtualInstance
-} from '../../../domain/services/today-agenda.js'
+} from '../utils/today-agenda.js'
 
 /**
  * Today 综合视图的页面级数据协调层（issue #14）。

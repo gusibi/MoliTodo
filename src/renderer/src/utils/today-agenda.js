@@ -7,11 +7,15 @@
  * - 日历日期点：主日期唯一计数
  * - 已加载日期范围的合并与缺口计算
  *
- * 时间语义全部来自 task-time（#13），本模块不重新解释时间字段。
+ * 时间语义全部来自渲染层规则 task-time-rules（#13），本模块不重新解释时间字段。
  * 纯函数，不依赖 Electron、数据库或任何运行时状态。
+ *
+ * 放在渲染层而非 src/domain：主进程使用 CommonJS，渲染层使用 ESM，
+ * Vite 开发服务器无法直接转换 src/domain 下的 CommonJS 源码，
+ * 因此渲染层页面协调逻辑统一放在 utils 下并复用 task-time-rules。
  */
 
-const taskTime = require('./task-time');
+import * as taskTime from './task-time-rules.js';
 
 const VIRTUAL_ID_PREFIX = 'recurringTask_';
 
@@ -415,7 +419,7 @@ function enumerateDateKeys(fromKey, toKey) {
   return keys;
 }
 
-module.exports = {
+export {
   VIRTUAL_ID_PREFIX,
   isVirtualInstance,
   isSeriesHead,

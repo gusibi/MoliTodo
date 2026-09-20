@@ -61,7 +61,7 @@ import { useTodayOverview } from '@/composables/useTodayOverview'
 import AgendaView from './AgendaView.vue'
 import FutureCalendar from './FutureCalendar.vue'
 import TaskEditVertical from '../TaskEditVertical.vue'
-import { isVirtualInstance } from '../../../../domain/services/today-agenda.js'
+import { isVirtualInstance } from '../../utils/today-agenda.js'
 
 /**
  * Today 综合视图：左侧 Agenda + 右侧 Future Calendar。

@@ -126,7 +126,7 @@
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 import { ref, computed } from 'vue'
-import { isVirtualInstance } from '../../../domain/services/today-agenda.js'
+import { isVirtualInstance } from '../utils/today-agenda.js'
 
 // 任务时间展示：优先安排（开始[-结束]），其次截止（有具体时刻显示时刻，否则只显示日期）
 const formatTaskTimeInfo = (task) => {
