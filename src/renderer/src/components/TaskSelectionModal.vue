@@ -1,157 +1,152 @@
 <template>
-  <div v-if="visible" class="task-selection-modal-overlay" @click="handleOverlayClick">
-    <div class="task-selection-modal" @click.stop>
-      <!-- 模态框头部 -->
-      <div class="task-selection-modal-header">
-        <div class="modal-title">
-          <i class="fas fa-tasks"></i>
-          <h3>选择要生成报告的任务</h3>
-        </div>
-        <button @click="closeModal" class="close-btn" title="关闭">
-          <i class="fas fa-times"></i>
-        </button>
+  <Dialog
+    :open="visible"
+    title="选择要生成报告的任务"
+    content-class="w-[min(94vw,52rem)]"
+    body-class="pb-5"
+    @update:open="(value) => { if (!value) closeModal() }"
+  >
+    <!-- 筛选信息 -->
+    <div class="filter-info">
+      <div class="filter-badge">
+        <component :is="getFilterIcon(filterType)" class="h-icon-sm w-icon-sm" aria-hidden="true" />
+        <span>{{ getFilterLabel(filterType) }}</span>
+      </div>
+      <div class="task-count">共 {{ tasks.length }} 个任务</div>
+    </div>
+    
+    <!-- 任务列表 -->
+    <div class="task-selection-content">
+      <div class="selection-header">
+        <label class="select-all-checkbox">
+          <input 
+            type="checkbox" 
+            :checked="isAllSelected"
+            :indeterminate="isPartiallySelected"
+            @change="toggleSelectAll"
+          />
+          <span class="checkmark"></span>
+          <span class="label-text">
+            {{ isAllSelected ? '取消全选' : '全选' }}
+            ({{ selectedTasks.length }}/{{ tasks.length }})
+          </span>
+        </label>
       </div>
       
-      <!-- 筛选信息 -->
-      <div class="filter-info">
-        <div class="filter-badge">
-          <i :class="getFilterIcon(filterType)"></i>
-          <span>{{ getFilterLabel(filterType) }}</span>
-        </div>
-        <div class="task-count">共 {{ tasks.length }} 个任务</div>
-      </div>
-      
-      <!-- 任务列表 -->
-      <div class="task-selection-content">
-        <div class="selection-header">
-          <label class="select-all-checkbox">
+      <div class="task-list">
+        <div 
+          v-for="task in tasks" 
+          :key="task.id" 
+          class="task-item"
+          :class="{ 'selected': selectedTaskIds.has(task.id) }"
+        >
+          <label class="task-checkbox">
             <input 
               type="checkbox" 
-              :checked="isAllSelected"
-              :indeterminate="isPartiallySelected"
-              @change="toggleSelectAll"
+              :checked="selectedTaskIds.has(task.id)"
+              @change="toggleTask(task.id)"
             />
             <span class="checkmark"></span>
-            <span class="label-text">
-              {{ isAllSelected ? '取消全选' : '全选' }}
-              ({{ selectedTasks.length }}/{{ tasks.length }})
-            </span>
           </label>
-        </div>
-        
-        <div class="task-list">
-          <div 
-            v-for="task in tasks" 
-            :key="task.id" 
-            class="task-item"
-            :class="{ 'selected': selectedTaskIds.has(task.id) }"
-          >
-            <label class="task-checkbox">
-              <input 
-                type="checkbox" 
-                :checked="selectedTaskIds.has(task.id)"
-                @change="toggleTask(task.id)"
-              />
-              <span class="checkmark"></span>
-            </label>
-            
-            <div class="task-info">
-              <div class="task-content">{{ task.content }}</div>
-              <div class="task-meta">
-                <span class="task-status" :class="`status-${task.status}`">
-                  {{ getTaskStatusText(task.status) }}
-                </span>
-                <span v-if="task.reminderTime" class="task-time">
-                  {{ formatTaskTime(task.reminderTime) }}
-                </span>
-                <span v-if="task.metadata?.steps?.length" class="task-steps">
-                  {{ task.metadata.steps.length }} 个步骤
-                </span>
-              </div>
+          
+          <div class="task-info">
+            <div class="task-content">{{ task.content }}</div>
+            <div class="task-meta">
+              <span class="task-status" :class="`status-${task.status}`">
+                {{ getTaskStatusText(task.status) }}
+              </span>
+              <span v-if="task.reminderTime" class="task-time">
+                {{ formatTaskTime(task.reminderTime) }}
+              </span>
+              <span v-if="task.metadata?.steps?.length" class="task-steps">
+                {{ task.metadata.steps.length }} 个步骤
+              </span>
             </div>
           </div>
         </div>
-        
-        <div v-if="tasks.length === 0" class="empty-state">
-          <i class="fas fa-inbox"></i>
-          <p>当前筛选条件下没有任务</p>
-        </div>
       </div>
       
-      <!-- 模态框底部操作 -->
-      <div class="task-selection-modal-actions">
-        <div class="selection-options">
-          <div class="left-controls">
-            <div class="ai-model-selector">
-              <div class="ai-model-dropdown" :class="{ 'open': showAIModelDropdown }">
-                <button 
-                  class="ai-model-button"
-                  @click="toggleAIModelDropdown"
-                  :disabled="!hasAvailableModels"
+      <div v-if="tasks.length === 0" class="empty-state">
+        <Inbox class="h-icon-lg w-icon-lg" aria-hidden="true" />
+        <p>当前筛选条件下没有任务</p>
+      </div>
+    </div>
+    
+    <!-- 模态框底部操作 -->
+    <div class="task-selection-modal-actions">
+      <div class="selection-options">
+        <div class="left-controls">
+          <div class="ai-model-selector">
+            <div class="ai-model-dropdown" :class="{ 'open': showAIModelDropdown }">
+              <button 
+                class="ai-model-button"
+                @click="toggleAIModelDropdown"
+                :disabled="!hasAvailableModels"
+              >
+                <div v-if="selectedAIModel" class="selected-model">
+                  <span class="model-name">{{ selectedAIModel.name }}</span>
+                  <span class="model-provider">{{ selectedAIModel.provider }}</span>
+                </div>
+                <div v-else class="no-model">
+                  {{ hasAvailableModels ? '选择 AI 模型' : '未配置 AI 模型' }}
+                </div>
+                <ChevronDown class="dropdown-icon h-icon-sm w-icon-sm" aria-hidden="true" />
+              </button>
+              
+              <div v-if="showAIModelDropdown" class="ai-model-list">
+                <div 
+                  v-for="model in availableAIModels" 
+                  :key="model.id"
+                  class="ai-model-item"
+                  :class="{ 'selected': selectedAIModel?.id === model.id }"
+                  @click="selectAIModel(model)"
                 >
-                  <div v-if="selectedAIModel" class="selected-model">
-                    <span class="model-name">{{ selectedAIModel.name }}</span>
-                    <span class="model-provider">{{ selectedAIModel.provider }}</span>
+                  <div class="ai-model-info">
+                    <div class="ai-model-name">{{ model.name }}</div>
+                    <div class="ai-model-provider">{{ model.provider }}</div>
                   </div>
-                  <div v-else class="no-model">
-                    {{ hasAvailableModels ? '选择 AI 模型' : '未配置 AI 模型' }}
+                  <div v-if="selectedAIModel?.id === model.id" class="ai-model-check">
+                    <Check class="h-icon-sm w-icon-sm" aria-hidden="true" />
                   </div>
-                  <i class="fas fa-chevron-down dropdown-icon"></i>
-                </button>
+                </div>
                 
-                <div v-if="showAIModelDropdown" class="ai-model-list">
-                  <div 
-                    v-for="model in availableAIModels" 
-                    :key="model.id"
-                    class="ai-model-item"
-                    :class="{ 'selected': selectedAIModel?.id === model.id }"
-                    @click="selectAIModel(model)"
-                  >
-                    <div class="ai-model-info">
-                      <div class="ai-model-name">{{ model.name }}</div>
-                      <div class="ai-model-provider">{{ model.provider }}</div>
-                    </div>
-                    <div v-if="selectedAIModel?.id === model.id" class="ai-model-check">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  <div v-if="!hasAvailableModels" class="no-models-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>请先在设置中配置 AI 模型</span>
-                  </div>
+                <div v-if="!hasAvailableModels" class="no-models-message">
+                  <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                  <span>请先在设置中配置 AI 模型</span>
                 </div>
               </div>
             </div>
-             <div class="report-type-selector">
-              <select v-model="selectedReportType" class="report-type-select">
-                <option value="daily">日报</option>
-                <option value="weekly">周报</option>
-              </select>
-            </div>
           </div>
-          
-          <div class="right-controls">
-            <button 
-              @click="confirmGeneration" 
-              class="confirm-btn"
-              :disabled="selectedTasks.length === 0 || !selectedAIModel"
-            >
-              <i class="fas fa-robot"></i>
-              生成报告
-            </button>
+           <div class="report-type-selector">
+            <select v-model="selectedReportType" class="report-type-select">
+              <option value="daily">日报</option>
+              <option value="weekly">周报</option>
+            </select>
           </div>
+        </div>
+        
+        <div class="right-controls">
+          <Button 
+            variant="default"
+            class="confirm-btn"
+            :disabled="selectedTasks.length === 0 || !selectedAIModel"
+            @click="confirmGeneration"
+          >
+            <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" />
+            生成报告
+          </Button>
         </div>
       </div>
     </div>
-  </div>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { Bot, Calendar, CalendarDays, CalendarPlus, Check, ChevronDown, Inbox, ListChecks, TriangleAlert } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
+import Dialog from './ui/dialog/Dialog.vue'
+import Button from './ui/button/Button.vue'
 
 // Props
 const props = defineProps({
@@ -226,15 +221,6 @@ watch(() => props.visible, (newVal) => {
 const closeModal = () => {
   console.log('[TaskSelectionModal] 关闭模态框')
   emit('close')
-}
-
-const handleOverlayClick = () => {
-  // 如果下拉菜单打开，先关闭下拉菜单
-  if (showAIModelDropdown.value) {
-    showAIModelDropdown.value = false
-  } else {
-    closeModal()
-  }
 }
 
 const toggleSelectAll = () => {
@@ -321,13 +307,13 @@ const loadAIModels = async () => {
 
 const getFilterIcon = (filterType) => {
   const iconMap = {
-    'all': 'fas fa-calendar',
-    'onlyToday': 'fas fa-calendar-day',
-    'tomorrow': 'fas fa-calendar-plus',
-    'thisWeek': 'fas fa-calendar-alt',
-    'overdue': 'fas fa-exclamation-triangle'
+    'all': Calendar,
+    'onlyToday': CalendarDays,
+    'tomorrow': CalendarPlus,
+    'thisWeek': ListChecks,
+    'overdue': TriangleAlert
   }
-  return iconMap[filterType] || 'fas fa-calendar'
+  return iconMap[filterType] || Calendar
 }
 
 const getFilterLabel = (filterType) => {

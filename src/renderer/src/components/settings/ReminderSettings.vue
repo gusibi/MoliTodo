@@ -43,23 +43,27 @@
             </div>
           </div>
           <div class="custom-reminder-actions">
-            <button class="custom-reminder-delete-btn" @click="deleteCustomReminder(index)" title="删除">
-              <i class="fas fa-trash"></i>
-            </button>
+            <IconButton size="icon-sm" class="custom-reminder-delete-btn" :label="$t('common.delete')"
+              @click="deleteCustomReminder(index)">
+              <Trash2 class="h-icon-sm w-icon-sm" />
+            </IconButton>
           </div>
         </div>
       </div>
 
-      <button class="setting-btn setting-btn-primary add-reminder-btn" @click="addCustomReminder">
-        <i class="fas fa-plus"></i>
+      <Button variant="default" class="setting-btn setting-btn-primary add-reminder-btn" @click="addCustomReminder">
+        <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
         添加新的提醒选项
-      </button>
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { Plus, Trash2 } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
+import Button from '../ui/button/Button.vue'
+import IconButton from '../ui/button/IconButton.vue'
 
 const props = defineProps({
   config: {

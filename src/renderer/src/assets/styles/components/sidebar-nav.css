@@ -136,33 +136,13 @@
   @apply h-px bg-border my-1;
 }
 
-/* 模态框 */
-.nav-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
-}
-
-.nav-delete-dialog {
-  @apply bg-card rounded-xl shadow-2xl w-96 max-w-[90vw];
-}
-
-.nav-dialog-header {
-  @apply p-5 pb-0;
-}
-
-.nav-dialog-header h3 {
-  @apply m-0 text-base font-semibold text-card-foreground;
-}
-
-.nav-dialog-body {
-  @apply p-4 px-5;
-}
-
-.nav-dialog-body p {
-  @apply m-0 mb-3 text-sm text-muted-foreground leading-relaxed;
+/* 删除确认内容：任务处理选择（宿主为统一 AlertDialog） */
+.nav-delete-options {
+  @apply mt-1;
 }
 
 .nav-warning-text {
-  @apply text-orange-500 font-medium;
+  @apply text-warning font-medium text-sm mb-3;
 }
 
 .nav-task-handling-options {
@@ -179,27 +159,6 @@
 
 .nav-danger-text {
   @apply text-destructive;
-}
-
-.nav-dialog-footer {
-  @apply px-5 pb-5 flex gap-3 justify-end;
-}
-
-.nav-btn-cancel,
-.nav-btn-danger {
-  @apply h-9 px-4 border-0 rounded-lg text-sm font-medium cursor-pointer transition-colors;
-}
-
-.nav-btn-cancel {
-  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-}
-
-.nav-btn-danger {
-  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
-}
-
-.nav-btn-danger:disabled {
-  @apply opacity-50 cursor-not-allowed hover:bg-destructive;
 }
 
 /* 滚动条样式 - 使用系统颜色，更窄 */

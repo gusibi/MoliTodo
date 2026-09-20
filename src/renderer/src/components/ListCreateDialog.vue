@@ -1,117 +1,118 @@
 <template>
-  <div v-if="visible" class="list-create-modal-overlay" @click="handleOverlayClick">
-    <div class="list-create-dialog" @click.stop>
-      <div class="list-create-dialog-header">
-        <button class="list-create-header-btn list-create-btn-cancel" aria-label="关闭" title="关闭" @click="close">
-          <X class="h-icon-md w-icon-md" aria-hidden="true" />
-        </button>
-        <h3>{{ isEditing ? '编辑清单' : '新建清单' }}</h3>
-        <button 
-          class="list-create-header-btn list-create-btn-confirm" 
-          aria-label="确认" title="确认"
-          @click="confirm"
-          :disabled="!canConfirm"
-        >
-          <Check class="h-icon-md w-icon-md" aria-hidden="true" />
-        </button>
+  <Dialog
+    :open="visible"
+    :title="isEditing ? '编辑清单' : '新建清单'"
+    content-class="w-[min(94vw,32rem)]"
+    body-class="pb-2"
+    :close-on-overlay="false"
+    @update:open="(value) => { if (!value) close() }"
+  >
+    <div class="list-create-dialog-body">
+      <!-- 清单名称 -->
+      <div class="list-create-form-group">
+        <label class="list-create-form-label" for="list-create-name">清单名称</label>
+        <input 
+          id="list-create-name"
+          ref="nameInput"
+          v-model="form.name"
+          type="text"
+          class="list-create-form-input"
+          :class="{ 'list-create-error': nameError }"
+          placeholder="输入清单名称"
+          maxlength="50"
+          @input="validateName"
+          @keyup.enter="confirm"
+        />
+        <div v-if="nameError" class="list-create-error-message">{{ nameError }}</div>
+        <div class="list-create-char-count">{{ form.name.length }}/50</div>
       </div>
       
-      <div class="list-create-dialog-body">
-        <!-- 清单名称 -->
-        <div class="list-create-form-group">
-          <label class="list-create-form-label">清单名称</label>
-          <input 
-            ref="nameInput"
-            v-model="form.name"
-            type="text"
-            class="list-create-form-input"
-            :class="{ 'list-create-error': nameError }"
-            placeholder="输入清单名称"
-            maxlength="50"
-            @input="validateName"
-            @keyup.enter="confirm"
-          />
-          <div v-if="nameError" class="list-create-error-message">{{ nameError }}</div>
-          <div class="list-create-char-count">{{ form.name.length }}/50</div>
-        </div>
-        
-        <!-- 颜色选择 -->
-        <div class="list-create-form-group">
-          <label class="list-create-form-label">选择颜色</label>
-          <div class="list-create-color-picker">
-            <div 
-              v-for="color in colorOptions" 
-              :key="color"
-              class="list-create-color-option"
-              :class="{ 'list-create-active': form.color === color }"
-              :style="{ backgroundColor: color }"
-              @click="selectColor(color)"
-              :title="getColorName(color)"
-            >
-              <Check v-if="form.color === color" class="h-icon-sm w-icon-sm" aria-hidden="true" />
-            </div>
-            
-            <!-- 自定义颜色 -->
-            <div class="list-create-color-option list-create-custom-color" :class="{ 'list-create-active': isCustomColor }">
-              <input 
-                type="color" 
-                v-model="form.color"
-                class="list-create-custom-color-input"
-                @change="handleCustomColor"
-                title="自定义颜色"
-              />
-              <Palette v-if="isCustomColor" class="h-icon-sm w-icon-sm" aria-hidden="true" />
-            </div>
+      <!-- 颜色选择 -->
+      <div class="list-create-form-group">
+        <label class="list-create-form-label">选择颜色</label>
+        <div class="list-create-color-picker">
+          <div 
+            v-for="color in colorOptions" 
+            :key="color"
+            class="list-create-color-option"
+            :class="{ 'list-create-active': form.color === color }"
+            :style="{ backgroundColor: color }"
+            @click="selectColor(color)"
+            :title="getColorName(color)"
+          >
+            <Check v-if="form.color === color" class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          </div>
+          
+          <!-- 自定义颜色 -->
+          <div class="list-create-color-option list-create-custom-color" :class="{ 'list-create-active': isCustomColor }">
+            <input 
+              type="color" 
+              v-model="form.color"
+              class="list-create-custom-color-input"
+              @change="handleCustomColor"
+              title="自定义颜色"
+            />
+            <Palette v-if="isCustomColor" class="h-icon-sm w-icon-sm" aria-hidden="true" />
           </div>
         </div>
-        
-        <!-- 图标选择 -->
-        <div class="list-create-form-group">
-          <label class="list-create-form-label">选择图标</label>
-          <div class="list-create-icon-picker">
-            <div 
-              v-for="icon in iconOptions" 
-              :key="icon"
-              class="list-create-icon-option"
-              :class="{ 'list-create-active': form.icon === icon }"
-              @click="selectIcon(icon)"
-              :title="getIconName(icon)"
-            >
-              <ListIcon :name="icon" :color="form.color" class="h-icon-md w-icon-md" />
-            </div>
+      </div>
+      
+      <!-- 图标选择 -->
+      <div class="list-create-form-group">
+        <label class="list-create-form-label">选择图标</label>
+        <div class="list-create-icon-picker">
+          <div 
+            v-for="icon in iconOptions" 
+            :key="icon"
+            class="list-create-icon-option"
+            :class="{ 'list-create-active': form.icon === icon }"
+            @click="selectIcon(icon)"
+            :title="getIconName(icon)"
+          >
+            <ListIcon :name="icon" :color="form.color" class="h-icon-md w-icon-md" />
           </div>
         </div>
-        
-        <!-- 预览区域 -->
-        <div class="list-create-form-group">
-          <label class="list-create-form-label">预览</label>
-          <div class="list-create-preview-container">
-            <div class="list-create-preview-item">
-              <div class="list-create-preview-icon" :style="{ color: form.color }">
-                <ListIcon :name="form.icon" class="h-icon-md w-icon-md" />
-              </div>
-              <span class="list-create-preview-name">{{ form.name || '新列表' }}</span>
-              <span class="list-create-preview-count">0</span>
+      </div>
+      
+      <!-- 预览区域 -->
+      <div class="list-create-form-group">
+        <label class="list-create-form-label">预览</label>
+        <div class="list-create-preview-container">
+          <div class="list-create-preview-item">
+            <div class="list-create-preview-icon" :style="{ color: form.color }">
+              <ListIcon :name="form.icon" class="h-icon-md w-icon-md" />
             </div>
+            <span class="list-create-preview-name">{{ form.name || '新列表' }}</span>
+            <span class="list-create-preview-count">0</span>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <Button variant="secondary" @click="close">{{ $t('common.cancel') }}</Button>
+      <Button variant="default" :disabled="!canConfirm" @click="confirm">
+        {{ isEditing ? '保存' : '创建' }}
+      </Button>
+    </template>
+  </Dialog>
 </template>
 
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
-import { Check, Palette, X } from '@lucide/vue'
+import { Check, Palette } from '@lucide/vue'
 import ListIcon from './ui/ListIcon.vue'
+import Dialog from './ui/dialog/Dialog.vue'
+import Button from './ui/button/Button.vue'
 
 export default {
   name: 'ListCreateDialog',
   components: {
+    Button,
     Check,
+    Dialog,
     ListIcon,
-    Palette,
-    X
+    Palette
   },
   props: {
     visible: {
@@ -270,10 +271,6 @@ export default {
       emit('close')
     }
     
-    const handleOverlayClick = () => {
-      close()
-    }
-    
     const confirm = () => {
       if (!validateName()) return
       
@@ -326,7 +323,6 @@ export default {
       getColorName,
       getIconName,
       close,
-      handleOverlayClick,
       confirm
     }
   }

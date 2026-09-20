@@ -1,0 +1,33 @@
+/* Vue Datepicker 主题适配：弹层 Teleport 到 body，需全局覆盖并映射到语义 token。
+   使用比库内 `.dp__theme_light/dark` 更具体的选择器，保证顺序无关。 */
+
+.dp__menu.dp__theme_light,
+.dp__menu.dp__theme_dark {
+  --dp-background-color: hsl(var(--popover));
+  --dp-text-color: hsl(var(--popover-foreground));
+  --dp-hover-color: hsl(var(--accent));
+  --dp-hover-text-color: hsl(var(--accent-foreground));
+  --dp-hover-icon-color: hsl(var(--accent-foreground));
+  --dp-primary-color: hsl(var(--primary));
+  --dp-primary-text-color: hsl(var(--primary-foreground));
+  --dp-secondary-color: hsl(var(--muted-foreground));
+  --dp-border-color: hsl(var(--border));
+  --dp-menu-border-color: hsl(var(--border));
+  --dp-border-color-hover: hsl(var(--ring));
+  --dp-border-color-focus: hsl(var(--ring));
+  --dp-disabled-color: hsl(var(--muted));
+  --dp-disabled-color-text: hsl(var(--muted-foreground));
+  --dp-scroll-bar-background: hsl(var(--muted));
+  --dp-scroll-bar-color: hsl(var(--border));
+  --dp-success-color: hsl(var(--success));
+  --dp-success-color-disabled: hsl(var(--muted));
+  --dp-icon-color: hsl(var(--muted-foreground));
+  --dp-danger-color: hsl(var(--destructive));
+  --dp-highlight-color: hsl(var(--primary) / 0.15);
+  --dp-range-between-dates-background-color: hsl(var(--accent));
+  --dp-range-between-dates-text-color: hsl(var(--accent-foreground));
+  --dp-range-between-border-color: hsl(var(--accent));
+  --dp-border-radius: var(--radius-md);
+  --dp-font-family: var(--font-sans);
+  box-shadow: var(--shadow-lg);
+}

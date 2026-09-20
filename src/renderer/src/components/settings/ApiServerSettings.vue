@@ -11,13 +11,11 @@
           <div class="setting-item-description">{{ t('settings.api.enableServiceDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button
-            class="setting-toggle"
-            :class="{ 'setting-toggle-active': apiConfig.enabled }"
-            @click="toggleService"
-          >
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch
+            :model-value="apiConfig.enabled"
+            :label="t('settings.api.enableService')"
+            @update:model-value="toggleService"
+          />
         </div>
       </div>
 
@@ -36,9 +34,9 @@
               class="setting-select setting-api-port-input"
               @change="savePort"
             />
-            <button class="setting-btn setting-btn-small" @click="refreshState">
+            <Button variant="secondary" size="sm" @click="refreshState">
               {{ t('settings.api.refreshStatus') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -101,6 +99,8 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Switch from '../ui/switch/Switch.vue'
+import Button from '../ui/button/Button.vue'
 
 const { t } = useI18n()
 
@@ -171,9 +171,8 @@ const syncServer = async () => {
   }
 }
 
-const toggleService = async () => {
+const toggleService = async (nextValue) => {
   try {
-    const nextValue = !apiConfig.value.enabled
     apiConfig.value.enabled = nextValue
     await updateConfig('apiServer.enabled', nextValue)
     await syncServer()

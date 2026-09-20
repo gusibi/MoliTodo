@@ -221,48 +221,38 @@
     </div>
 
     <!-- Day Tasks Modal -->
-    <div v-if="dayTasksModal.show" class="day-tasks-modal-overlay" @click="closeDayTasksModal">
-      <div class="day-tasks-modal" @click.stop>
-        <div class="day-tasks-modal-header">
-          <div class="day-tasks-modal-title">
-            <ListChecks class="day-tasks-modal-icon h-icon-md w-icon-md" aria-hidden="true" />
-            <h4 class="day-tasks-modal-title-text">{{ dayTasksModal.title }}</h4>
-          </div>
-          <button @click="closeDayTasksModal" class="day-tasks-modal-close" :aria-label="t('common.close')">
-            <X class="h-icon-md w-icon-md" aria-hidden="true" />
-          </button>
+    <Dialog :open="dayTasksModal.show" :title="dayTasksModal.title" content-class="w-[min(94vw,32rem)]"
+      @update:open="(value) => { if (!value) closeDayTasksModal() }">
+      <div class="day-tasks-modal-content">
+        <div v-for="task in dayTasksModal.tasks" :key="task.id" class="day-task-item">
+          <label class="day-task-label" @click="handleTaskClick(task)">
+            <span class="day-task-checkbox" :class="getTaskStatusClasses(task)">
+              <Check v-if="task.status === 'done'" class="h-icon-sm w-icon-sm" aria-hidden="true" />
+            </span>
+            <span class="day-task-content" :class="{ 'day-task-content-completed': task.status === 'done' }">{{
+              task.content }}</span>
+            <span v-if="taskHasSpecificTime(task)" class="day-task-time"
+              :class="{ 'day-task-time-completed': task.status === 'done' }">
+              {{ formatTaskTime(getTaskDisplayTime(task)) }}
+            </span>
+          </label>
         </div>
 
-        <div class="day-tasks-modal-content">
-          <div v-for="task in dayTasksModal.tasks" :key="task.id" class="day-task-item">
-            <label class="day-task-label" @click="handleTaskClick(task)">
-              <span class="day-task-checkbox" :class="getTaskStatusClasses(task)">
-                <Check v-if="task.status === 'done'" class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </span>
-              <span class="day-task-content" :class="{ 'day-task-content-completed': task.status === 'done' }">{{
-                task.content }}</span>
-              <span v-if="taskHasSpecificTime(task)" class="day-task-time"
-                :class="{ 'day-task-time-completed': task.status === 'done' }">
-                {{ formatTaskTime(getTaskDisplayTime(task)) }}
-              </span>
-            </label>
-          </div>
-
-          <div v-if="dayTasksModal.tasks.length === 0" class="day-tasks-modal-empty">
-            {{ t('calendar.noTasks') }}
-          </div>
+        <div v-if="dayTasksModal.tasks.length === 0" class="day-tasks-modal-empty">
+          {{ t('calendar.noTasks') }}
         </div>
       </div>
-    </div>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Check, ListChecks, Repeat, X } from '@lucide/vue'
+import { Check, Repeat } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useI18n } from 'vue-i18n'
 import { getMainDateInfo } from '@/utils/task-time-rules.js'
+import Dialog from '../ui/dialog/Dialog.vue'
 
 const props = defineProps({
   tasks: {

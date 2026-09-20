@@ -77,8 +77,12 @@
 
       <!-- 底部操作区 -->
       <div class="setting-actions">
-        <button class="setting-btn setting-btn-secondary" @click="resetToDefaults">{{ $t('settings.resetDefaults') }}</button>
-        <button class="setting-btn setting-btn-primary" @click="saveAllSettings">{{ $t('settings.saveSettings') }}</button>
+        <Button ref="resetBtn" variant="secondary" class="setting-btn setting-btn-secondary" @click="requestReset">
+          {{ $t('settings.resetDefaults') }}
+        </Button>
+        <Button variant="default" class="setting-btn setting-btn-primary" @click="saveAllSettings">
+          {{ $t('settings.saveSettings') }}
+        </Button>
       </div>
     </div>
 
@@ -90,17 +94,22 @@
     }">
       {{ message.text }}
     </div>
+
+    <!-- 恢复默认设置确认 -->
+    <AlertDialog :open="resetDialogOpen" :title="$t('settings.resetDefaults')"
+      :description="$t('settings.confirmReset')" :cancel-label="$t('common.cancel')"
+      :confirm-label="$t('settings.resetDefaults')" confirm-variant="destructive" :loading="resetLoading"
+      :error="resetError"
+      @update:open="(value) => { if (!value) resetDialogOpen = false }" @confirm="confirmReset"
+      @cancel="cancelReset" />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ThemeSwitcher from './ThemeSwitcher.vue'
-import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
+import { BarChart3, Bell, Bot, Database, Info, Palette, Plug, Settings as SettingsIcon } from '@lucide/vue'
 import AISettings from './AISettings.vue'
-import FloatingIconSettings from './FloatingIconSettings.vue'
-import LogoSelector from './LogoSelector.vue'
 import GeneralSettings from './GeneralSettings.vue'
 import AppearanceSettings from './AppearanceSettings.vue'
 import DataSettings from './DataSettings.vue'
@@ -109,9 +118,9 @@ import StatisticsSettings from './StatisticsSettings.vue'
 import AboutSettings from './AboutSettings.vue'
 import ApiServerSettings from './ApiServerSettings.vue'
 
-import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useTaskStore } from '@/store/taskStore'
-import { formatDuration } from '@/utils/task-utils.js'
+import Button from '../ui/button/Button.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
 
 // 使用 i18n 和 taskStore
 const { t, locale } = useI18n()
@@ -154,7 +163,6 @@ const config = reactive({
 
 const databaseStats = ref(null)
 const taskStats = ref(null)
-const availableSounds = ref(getAvailableSounds())
 const message = reactive({
   visible: false,
   text: '',
@@ -168,42 +176,42 @@ const settingsCategories = computed(() => [
   {
     id: 'general',
     name: t('settings.general'),
-    icon: h('i', { class: 'fas fa-cog' })
+    icon: SettingsIcon
   },
   {
     id: 'appearance',
     name: t('settings.appearance'),
-    icon: h('i', { class: 'fas fa-palette' })
+    icon: Palette
   },
   {
     id: 'data',
     name: t('settings.data'),
-    icon: h('i', { class: 'fas fa-database' })
+    icon: Database
   },
   {
     id: 'reminders',
     name: t('settings.reminders'),
-    icon: h('i', { class: 'fas fa-bell' })
+    icon: Bell
   },
   {
     id: 'ai',
     name: t('settings.aiTitle'),
-    icon: h('i', { class: 'fas fa-robot' })
+    icon: Bot
   },
   {
     id: 'api',
     name: t('settings.api.title'),
-    icon: h('i', { class: 'fas fa-plug' })
+    icon: Plug
   },
   {
     id: 'statistics',
     name: t('settings.statistics'),
-    icon: h('i', { class: 'fas fa-chart-bar' })
+    icon: BarChart3
   },
   {
     id: 'about',
     name: t('settings.aboutName'),
-    icon: h('i', { class: 'fas fa-info-circle' })
+    icon: Info
   }
 ])
 
@@ -278,19 +286,41 @@ const loadTaskStats = async () => {
 
 
 
-const resetToDefaults = async () => {
-  if (confirm(t('settings.confirmReset'))) {
-    try {
-      if (window.electronAPI && window.electronAPI.config) {
-        await window.electronAPI.config.reset()
-        await loadConfig()
-        showMessage(t('settings.resetSuccess'), 'success')
-      }
-    } catch (error) {
-      console.error('Failed to reset settings:', error)
-      showMessage(t('settings.resetFailed'), 'error')
+const resetBtn = ref(null)
+const resetDialogOpen = ref(false)
+const resetLoading = ref(false)
+const resetError = ref('')
+
+const requestReset = () => {
+  resetError.value = ''
+  resetLoading.value = false
+  resetDialogOpen.value = true
+}
+
+const confirmReset = async () => {
+  if (resetLoading.value) return
+  resetLoading.value = true
+  resetError.value = ''
+  try {
+    if (window.electronAPI && window.electronAPI.config) {
+      await window.electronAPI.config.reset()
+      await loadConfig()
+      resetDialogOpen.value = false
+      showMessage(t('settings.resetSuccess'), 'success')
     }
+  } catch (error) {
+    console.error('Failed to reset settings:', error)
+    resetError.value = t('settings.resetFailed')
+  } finally {
+    resetLoading.value = false
   }
+}
+
+const cancelReset = () => {
+  resetError.value = ''
+  nextTick(() => {
+    resetBtn.value?.focus?.()
+  })
 }
 
 const saveAllSettings = async () => {

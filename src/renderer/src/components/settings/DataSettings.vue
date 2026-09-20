@@ -12,9 +12,11 @@
         </div>
         <div class="setting-item-control">
           <div class="setting-button-group">
-            <button class="setting-btn setting-btn-primary" @click="exportData">导出数据</button>
-            <button class="setting-btn setting-btn-primary" @click="importData">导入数据</button>
-            <button class="setting-btn setting-btn-danger" @click="clearAllData">清除所有数据</button>
+            <Button variant="default" class="setting-btn setting-btn-primary" @click="exportData">导出数据</Button>
+            <Button variant="default" class="setting-btn setting-btn-primary" @click="importData">导入数据</Button>
+            <Button ref="clearBtn" variant="destructive" class="setting-btn setting-btn-danger" @click="requestClear">
+              清除所有数据
+            </Button>
           </div>
         </div>
       </div>
@@ -35,17 +37,40 @@
         <span class="setting-stats-value">{{ databaseStats.path }}</span>
       </div>
     </div>
+
+    <!-- 清除所有数据确认 -->
+    <AlertDialog :open="clearDialogOpen" :title="t('settings.dataClearTitle')"
+      :description="t('settings.dataClearConfirm')" :cancel-label="t('common.cancel')"
+      :confirm-label="t('settings.dataClearAction')" confirm-variant="destructive" :loading="clearLoading"
+      :error="clearError"
+      @update:open="(value) => { if (!value) clearDialogOpen = false }" @confirm="confirmClear"
+      @cancel="cancelClear" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
+import Button from '../ui/button/Button.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
 
+const { t } = useI18n()
 const taskStore = useTaskStore()
 const databaseStats = ref(null)
 
 const emit = defineEmits(['show-message'])
+
+const clearBtn = ref(null)
+const clearDialogOpen = ref(false)
+const clearLoading = ref(false)
+const clearError = ref('')
+
+const requestClear = () => {
+  clearError.value = ''
+  clearLoading.value = false
+  clearDialogOpen.value = true
+}
 
 // 方法
 const exportData = async () => {
@@ -86,26 +111,37 @@ const importData = async () => {
   }
 }
 
-const clearAllData = async () => {
+const confirmClear = async () => {
+  if (clearLoading.value) return
+  clearLoading.value = true
+  clearError.value = ''
   try {
-    if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
-      const result = await taskStore.clearAllData()
-      if (result.success) {
-        emit('show-message', '所有数据已清除，应用将重启', 'success')
-        // 重启应用
-        setTimeout(() => {
-          if (window.electronAPI && window.electronAPI.app) {
-            window.electronAPI.app.restart()
-          }
-        }, 2000)
-      } else {
-        emit('show-message', '清除失败: ' + result.error, 'error')
-      }
+    const result = await taskStore.clearAllData()
+    if (!result || result.success === false) {
+      clearError.value = '清除失败: ' + (result?.error || '')
+      return
     }
+    clearDialogOpen.value = false
+    emit('show-message', '所有数据已清除，应用将重启', 'success')
+    // 重启应用
+    setTimeout(() => {
+      if (window.electronAPI && window.electronAPI.app) {
+        window.electronAPI.app.restart()
+      }
+    }, 2000)
   } catch (error) {
     console.error('清除数据失败:', error)
-    emit('show-message', '清除数据失败', 'error')
+    clearError.value = '清除数据失败'
+  } finally {
+    clearLoading.value = false
   }
+}
+
+const cancelClear = () => {
+  clearError.value = ''
+  nextTick(() => {
+    clearBtn.value?.focus?.()
+  })
 }
 
 const loadDatabaseStats = async () => {

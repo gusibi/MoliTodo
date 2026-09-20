@@ -97,9 +97,18 @@ const getCSSVariableColor = (variable) => {
   if (typeof window !== 'undefined') {
     const style = getComputedStyle(document.documentElement)
     const hslValue = style.getPropertyValue(variable).trim()
-    return hslValue ? `hsl(${hslValue})` : '#3b82f6' // 默认蓝色
+    if (hslValue) return `hsl(${hslValue})`
+    // 未定义时回退到主题主色，避免硬编码单一主题的蓝色
+    const primary = style.getPropertyValue('--primary').trim()
+    return primary ? `hsl(${primary})` : 'currentColor'
   }
-  return '#3b82f6'
+  return 'currentColor'
+}
+
+// 图表字体沿用系统字体栈 token，跟随主题
+const getFontFamily = () => {
+  if (typeof window === 'undefined') return undefined
+  return getComputedStyle(document.documentElement).getPropertyValue('--font-sans').trim() || undefined
 }
 
 // 更新数据集颜色以使用主题系统
@@ -121,7 +130,9 @@ const updateDatasetColors = (datasets) => {
 }
 
 // 图表配置 - 避免响应式循环依赖
-const getChartOptions = () => ({
+const getChartOptions = () => {
+  const fontFamily = getFontFamily()
+  return {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -133,7 +144,8 @@ const getChartOptions = () => ({
       labels: {
         usePointStyle: true,
         padding: 20,
-        color: getCSSVariableColor('--foreground')
+        color: getCSSVariableColor('--foreground'),
+        font: { family: fontFamily }
       }
     },
     tooltip: {
@@ -144,6 +156,8 @@ const getChartOptions = () => ({
       bodyColor: getCSSVariableColor('--popover-foreground'),
       borderColor: getCSSVariableColor('--border'),
       borderWidth: 1,
+      titleFont: { family: fontFamily },
+      bodyFont: { family: fontFamily },
       callbacks: {
         title: function(context) {
           const date = new Date(context[0].label)
@@ -168,10 +182,12 @@ const getChartOptions = () => ({
       title: {
         display: true,
         text: '日期',
-        color: getCSSVariableColor('--muted-foreground')
+        color: getCSSVariableColor('--muted-foreground'),
+        font: { family: fontFamily }
       },
       ticks: {
         color: getCSSVariableColor('--muted-foreground'),
+        font: { family: fontFamily },
         callback: function(value/* index */, index, ticks) {
           // 通过scale提供的API获取标签，避免直接访问this.chart，减少解析器递归
           const rawLabel = this.getLabelForValue(value)
@@ -199,12 +215,14 @@ const getChartOptions = () => ({
       title: {
         display: true,
         text: '任务数量',
-        color: getCSSVariableColor('--muted-foreground')
+        color: getCSSVariableColor('--muted-foreground'),
+        font: { family: fontFamily }
       },
       beginAtZero: true,
       ticks: {
         maxTicksLimit: 10,
-        color: getCSSVariableColor('--muted-foreground')
+        color: getCSSVariableColor('--muted-foreground'),
+        font: { family: fontFamily }
       }
     }
   },
@@ -214,7 +232,8 @@ const getChartOptions = () => ({
     intersect: false
   },
   events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove']
-})
+  }
+}
 
 // 加载图表数据
 const loadChartData = async () => {
@@ -303,13 +322,35 @@ watch(selectedType, async () => {
   initChart()
 })
 
+// 主题切换后重新读取 CSS 变量，避免颜色停留在旧主题
+let themeObserver = null
+
+const applyThemeToChart = () => {
+  if (!chart.value) return
+  chart.value.data.datasets = updateDatasetColors(chart.value.data.datasets || [])
+  chart.value.options = getChartOptions()
+  chart.value.update()
+}
+
 // 生命周期
 onMounted(async () => {
   await loadChartData()
   initChart()
+
+  if (typeof MutationObserver !== 'undefined') {
+    themeObserver = new MutationObserver(applyThemeToChart)
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'data-theme']
+    })
+  }
 })
 
 onUnmounted(() => {
+  if (themeObserver) {
+    themeObserver.disconnect()
+    themeObserver = null
+  }
   destroyChart()
 })
 </script>

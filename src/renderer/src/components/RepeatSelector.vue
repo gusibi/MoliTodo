@@ -227,6 +227,7 @@
         <div class="reminder-time-input">
           <VueDatePicker
             v-model="reminderTimeValue"
+            :dark="isDark"
             :time-picker="true"
             :format="'HH:mm'"
             :preview-format="'HH:mm'"
@@ -259,6 +260,7 @@
           <div v-if="endConditionType === 'date'" class="end-condition-input">
             <VueDatePicker
               v-model="endDateValue"
+              :dark="isDark"
               :enable-time-picker="false"
               :format="'yyyy-MM-dd'"
               :preview-format="'yyyy-MM-dd'"
@@ -300,6 +302,9 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 const props = defineProps({
   modelValue: {

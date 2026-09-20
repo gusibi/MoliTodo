@@ -1,210 +1,230 @@
 <template>
-  <div v-if="visible" class="task-preview-modal-overlay">
-    <div class="task-preview-dialog" @click.stop>
-       <div class="task-preview-dialog-header">
-        <h3>{{ $t('ai.generatedTaskList') }}</h3>
-        <button class="task-preview-close-btn" @click="close" :title="$t('common.close')">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <!-- 原始输入内容展示 -->
-      <div v-if="originalInput" class="task-preview-original-input">
-        <div class="task-preview-original-label">{{ $t('ai.originalInput') }}：</div>
-        <div class="task-preview-original-content">{{ originalInput }}</div>
-        <button 
-          class="task-preview-copy-btn" 
-          :class="{
-            'copy-success': copyStatus === 'success',
-            'copy-error': copyStatus === 'error',
-            'copy-copying': copyStatus === 'copying'
-          }"
-          @click="copyOriginalInput"
-          :title="copyStatus === 'success' ? $t('ai.copySuccess') : copyStatus === 'error' ? $t('ai.copyFailed') : $t('ai.copyOriginalInput')"
-          :disabled="copyStatus === 'copying'"
-        >
-          <div v-if="copyStatus === 'success'" class="copy-icon-success"></div>
-          <div v-else-if="copyStatus === 'error'" class="copy-icon-error"></div>
-          <div v-else-if="copyStatus === 'copying'" class="copy-icon-loading"></div>
-          <div v-else class="copy-icon"></div>
-        </button>
+  <Dialog
+    :open="visible"
+    :title="$t('ai.generatedTaskList')"
+    content-class="w-[min(94vw,48rem)]"
+    body-class="pb-0"
+    :close-on-overlay="false"
+    @update:open="(value) => { if (!value) close() }"
+  >
+    <!-- 原始输入内容展示 -->
+    <div v-if="originalInput" class="task-preview-original-input">
+      <div class="task-preview-original-label">{{ $t('ai.originalInput') }}：</div>
+      <div class="task-preview-original-content">{{ originalInput }}</div>
+      <button 
+        class="task-preview-copy-btn" 
+        :class="{
+          'copy-success': copyStatus === 'success',
+          'copy-error': copyStatus === 'error',
+          'copy-copying': copyStatus === 'copying'
+        }"
+        @click="copyOriginalInput"
+        :title="copyStatus === 'success' ? $t('ai.copySuccess') : copyStatus === 'error' ? $t('ai.copyFailed') : $t('ai.copyOriginalInput')"
+        :disabled="copyStatus === 'copying'"
+      >
+        <div v-if="copyStatus === 'success'" class="copy-icon-success"></div>
+        <div v-else-if="copyStatus === 'error'" class="copy-icon-error"></div>
+        <div v-else-if="copyStatus === 'copying'" class="copy-icon-loading"></div>
+        <div v-else class="copy-icon"></div>
+      </button>
+    </div>
+    
+    <div class="task-preview-dialog-body">
+      <!-- AI生成内容显示区域 - 支持折叠 -->
+      <div v-if="isLoading || streamContent" class="task-preview-stream-content">
+        <div class="task-preview-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
+          <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          <span class="flex items-center gap-2">
+            <LoaderCircle v-if="isLoading" class="h-icon-sm w-icon-sm animate-spin" aria-hidden="true" />
+            {{ isLoading ? $t('ai.generatingTasks') : $t('ai.generationDetails') }}
+          </span>
+          <ChevronDown class="task-preview-stream-toggle h-icon-sm w-icon-sm"
+            :class="{ 'collapsed': isStreamCollapsed }" aria-hidden="true" />
+        </div>
+        <div v-show="!isStreamCollapsed" class="task-preview-stream-text">
+          <div v-if="isLoading && !streamContent" class="task-preview-waiting-text">
+            {{ $t('ai.waitingForResponse') }}
+          </div>
+          <div v-else>{{ streamContent }}</div>
+        </div>
       </div>
       
-      <div class="task-preview-dialog-body">
-        <!-- AI生成内容显示区域 - 支持折叠 -->
-        <div v-if="isLoading || streamContent" class="task-preview-stream-content">
-          <div class="task-preview-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
-            <i class="fas fa-robot"></i>
-            <span class="flex items-center gap-2">
-              <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-              {{ isLoading ? $t('ai.generatingTasks') : $t('ai.generationDetails') }}
-            </span>
-            <i :class="['fas', 'fa-chevron-down', 'task-preview-stream-toggle', { 'collapsed': isStreamCollapsed }]"></i>
-          </div>
-          <div v-show="!isStreamCollapsed" class="task-preview-stream-text">
-            <div v-if="isLoading && !streamContent" class="task-preview-waiting-text">
-              {{ $t('ai.waitingForResponse') }}
+      <!-- 任务列表 -->
+      <div v-if="taskList.length > 0" class="task-preview-list">
+        <!-- 任务项 -->
+        <div 
+          v-for="(task, index) in taskList" 
+          :key="index"
+          class="task-preview-item"
+        >
+          <!-- 第一行：任务内容 + 操作按钮 -->
+          <div class="task-preview-row task-preview-row-main">
+            <div class="task-preview-content-wrapper">
+              <input 
+                v-model="task.content"
+                type="text"
+                class="task-preview-input-main"
+                :placeholder="$t('tasks.taskName')"
+                maxlength="200"
+              />
             </div>
-            <div v-else>{{ streamContent }}</div>
+            <div class="task-preview-actions-wrapper">
+              <IconButton 
+                size="icon-sm"
+                variant="ghost"
+                class="task-preview-delete-btn"
+                :label="$t('tasks.deleteTask')"
+                @click="removeTask(index)"
+              >
+                <Trash2 class="h-icon-sm w-icon-sm" />
+              </IconButton>
+            </div>
           </div>
-        </div>
-        
-        <!-- 任务列表 -->
-        <div v-if="taskList.length > 0" class="task-preview-list">
-          <!-- 任务项 -->
-          <div 
-            v-for="(task, index) in taskList" 
-            :key="index"
-            class="task-preview-item"
-          >
-            <!-- 第一行：任务内容 + 操作按钮 -->
-            <div class="task-preview-row task-preview-row-main">
-              <div class="task-preview-content-wrapper">
-                <input 
-                  v-model="task.content"
-                  type="text"
-                  class="task-preview-input-main"
-                  :placeholder="$t('tasks.taskName')"
-                  maxlength="200"
-                />
+          
+          <!-- 第二行：安排 / 提醒 / 所属清单 -->
+          <div class="task-preview-row task-preview-row-meta">
+            <div class="task-preview-meta-item" v-if="task.scheduledStartAt || task.dueDate">
+              <label class="task-preview-meta-label">{{ $t('tasks.scheduleDeadline') }}</label>
+              <div class="task-preview-input-meta task-preview-time-text">{{ formatPreviewSchedule(task) }}</div>
+            </div>
+            <div class="task-preview-meta-item" v-if="task.reminderPolicy?.mode === 'relative'">
+              <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
+              <div class="task-preview-input-meta task-preview-time-text">
+                {{ task.reminderPolicy.minutesBefore > 0 ? $t('tasks.reminderBeforeMinutes', { minutes: task.reminderPolicy.minutesBefore }) : $t('tasks.reminderAtStart') }}
               </div>
-              <div class="task-preview-actions-wrapper">
-                <button 
-                  class="task-preview-delete-btn"
-                  @click="removeTask(index)"
-                  :title="$t('tasks.deleteTask')"
+            </div>
+            <div class="task-preview-meta-item" v-else>
+              <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
+              <input
+                v-model="task.reminderTime"
+                type="datetime-local"
+                class="task-preview-input-meta"
+              />
+            </div>
+            <div class="task-preview-meta-item">
+              <label class="task-preview-meta-label">{{ $t('tasks.belongToList') }}</label>
+              <select
+                v-model="task.listId"
+                class="task-preview-select-meta"
+              >
+                <option
+                  v-for="list in availableLists"
+                  :key="list.id"
+                  :value="list.id"
                 >
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
+                  {{ list.name }}
+                </option>
+              </select>
             </div>
-            
-            <!-- 第二行：安排 / 提醒 / 所属清单 -->
-            <div class="task-preview-row task-preview-row-meta">
-              <div class="task-preview-meta-item" v-if="task.scheduledStartAt || task.dueDate">
-                <label class="task-preview-meta-label">{{ $t('tasks.scheduleDeadline') }}</label>
-                <div class="task-preview-input-meta task-preview-time-text">{{ formatPreviewSchedule(task) }}</div>
-              </div>
-              <div class="task-preview-meta-item" v-if="task.reminderPolicy?.mode === 'relative'">
-                <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
-                <div class="task-preview-input-meta task-preview-time-text">
-                  {{ task.reminderPolicy.minutesBefore > 0 ? $t('tasks.reminderBeforeMinutes', { minutes: task.reminderPolicy.minutesBefore }) : $t('tasks.reminderAtStart') }}
+          </div>
+          
+          <!-- 第三行：备注 -->
+          <div class="task-preview-row task-preview-row-note">
+            <label class="task-preview-note-label">{{ $t('tasks.note') }}</label>
+            <textarea 
+              v-model="task.metadata.note"
+              class="task-preview-input-note task-preview-textarea-note"
+              :placeholder="$t('tasks.addNote')"
+              maxlength="1000"
+              rows="3"
+              @input="autoResizeTextarea"
+              ref="noteTextarea"
+            ></textarea>
+          </div>
+          
+          <!-- 第四行：步骤标题 -->
+          <div v-if="task.metadata.steps && task.metadata.steps.length > 0" class="task-preview-steps-header" @click="toggleSteps(index)">
+            <label class="task-preview-steps-label">
+              <ListOrdered class="h-icon-sm w-icon-sm" aria-hidden="true" />
+              {{ $t('tasks.executionSteps') }} ({{ task.metadata.steps.length }})
+            </label>
+            <ChevronDown class="task-preview-steps-toggle h-icon-sm w-icon-sm"
+              :class="{ 'collapsed': task.stepsCollapsed }" aria-hidden="true" />
+          </div>
+          
+          <!-- 第五行：步骤列表 -->
+          <div v-if="task.metadata.steps && task.metadata.steps.length > 0" v-show="!task.stepsCollapsed" class="task-preview-steps-list">
+              <div 
+                v-for="(step, stepIndex) in task.metadata.steps" 
+                :key="step.id"
+                class="task-preview-step-item"
+              >
+                <div class="task-preview-step-number">{{ stepIndex + 1 }}.</div>
+                <div class="task-preview-step-content-wrapper">
+                  <input 
+                    v-model="step.content"
+                    type="text"
+                    class="task-preview-step-input"
+                    :placeholder="$t('tasks.stepContent')"
+                    maxlength="200"
+                  />
                 </div>
-              </div>
-              <div class="task-preview-meta-item" v-else>
-                <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
-                <input
-                  v-model="task.reminderTime"
-                  type="datetime-local"
-                  class="task-preview-input-meta"
-                />
-              </div>
-              <div class="task-preview-meta-item">
-                <label class="task-preview-meta-label">{{ $t('tasks.belongToList') }}</label>
-                <select
-                  v-model="task.listId"
-                  class="task-preview-select-meta"
-                >
-                  <option
-                    v-for="list in availableLists"
-                    :key="list.id"
-                    :value="list.id"
+                <div class="task-preview-step-status-wrapper">
+                  <select 
+                    v-model="step.status"
+                    class="task-preview-step-status"
                   >
-                    {{ list.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            
-            <!-- 第三行：备注 -->
-            <div class="task-preview-row task-preview-row-note">
-              <label class="task-preview-note-label">{{ $t('tasks.note') }}</label>
-              <textarea 
-                v-model="task.metadata.note"
-                class="task-preview-input-note task-preview-textarea-note"
-                :placeholder="$t('tasks.addNote')"
-                maxlength="1000"
-                rows="3"
-                @input="autoResizeTextarea"
-                ref="noteTextarea"
-              ></textarea>
-            </div>
-            
-            <!-- 第四行：步骤标题 -->
-            <div v-if="task.metadata.steps && task.metadata.steps.length > 0" class="task-preview-steps-header" @click="toggleSteps(index)">
-              <label class="task-preview-steps-label">
-                <i class="fas fa-list-ol"></i>
-                {{ $t('tasks.executionSteps') }} ({{ task.metadata.steps.length }})
-              </label>
-              <i :class="['fas', 'fa-chevron-down', 'task-preview-steps-toggle', { 'collapsed': task.stepsCollapsed }]"></i>
-            </div>
-            
-            <!-- 第五行：步骤列表 -->
-            <div v-if="task.metadata.steps && task.metadata.steps.length > 0" v-show="!task.stepsCollapsed" class="task-preview-steps-list">
-                <div 
-                  v-for="(step, stepIndex) in task.metadata.steps" 
-                  :key="step.id"
-                  class="task-preview-step-item"
-                >
-                  <div class="task-preview-step-number">{{ stepIndex + 1 }}.</div>
-                  <div class="task-preview-step-content-wrapper">
-                    <input 
-                      v-model="step.content"
-                      type="text"
-                      class="task-preview-step-input"
-                      :placeholder="$t('tasks.stepContent')"
-                      maxlength="200"
-                    />
-                  </div>
-                  <div class="task-preview-step-status-wrapper">
-                    <select 
-                      v-model="step.status"
-                      class="task-preview-step-status"
-                    >
-                      <option value="todo">{{ $t('tasks.pending') }}</option>
-                      <option value="doing">{{ $t('tasks.inProgress') }}</option>
-                      <option value="done">{{ $t('tasks.completed') }}</option>
-                    </select>
-                  </div>
-                  <div class="task-preview-step-actions-wrapper">
-                    <button 
-                      class="task-preview-step-delete-btn"
-                      @click="removeStep(index, stepIndex)"
-                      :title="$t('tasks.deleteStep')"
-                    >
-                      <i class="fas fa-times"></i>
-                    </button>
-                  </div>
+                    <option value="todo">{{ $t('tasks.pending') }}</option>
+                    <option value="doing">{{ $t('tasks.inProgress') }}</option>
+                    <option value="done">{{ $t('tasks.completed') }}</option>
+                  </select>
+                </div>
+                <div class="task-preview-step-actions-wrapper">
+                  <IconButton 
+                    size="icon-sm"
+                    variant="ghost"
+                    class="task-preview-step-delete-btn"
+                    :label="$t('tasks.deleteStep')"
+                    @click="removeStep(index, stepIndex)"
+                  >
+                    <X class="h-icon-sm w-icon-sm" />
+                  </IconButton>
                 </div>
               </div>
-          </div>
-        </div>
-        
-        <div class="task-preview-footer">
-          <div class="task-preview-stats">
-            <span class="task-preview-count">{{ $t('tasks.totalTasks', { count: taskList.length }) }}</span>
-          </div>
-          <div class="task-preview-actions">
-            <button class="task-preview-btn task-preview-btn-secondary" @click="close">{{ $t('common.cancel') }}</button>
-            <button class="task-preview-btn task-preview-btn-primary" @click="createAllTasks" :disabled="!canCreate || isCreating">
-              <i v-if="isCreating" class="icon-loading"></i>
-              <span v-if="isCreating">{{ $t('tasks.creating') }}</span>
-              <span v-else>{{ $t('tasks.createAllTasks') }}</span>
-            </button>
-          </div>
+            </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <div class="task-preview-footer">
+        <div class="task-preview-stats">
+          <span class="task-preview-count">{{ $t('tasks.totalTasks', { count: taskList.length }) }}</span>
+        </div>
+        <div class="task-preview-actions">
+          <Button variant="secondary" @click="close">{{ $t('common.cancel') }}</Button>
+          <Button variant="default" :loading="isCreating" :disabled="!canCreate || isCreating" @click="createAllTasks">
+            {{ isCreating ? $t('tasks.creating') : $t('tasks.createAllTasks') }}
+          </Button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Bot, ChevronDown, ListOrdered, LoaderCircle, Trash2, X } from '@lucide/vue'
 import { localeCode } from '../utils/locale-format.js'
 import { useTaskStore } from '@/store/taskStore'
+import Dialog from './ui/dialog/Dialog.vue'
+import Button from './ui/button/Button.vue'
+import IconButton from './ui/button/IconButton.vue'
 
 export default {
   name: 'TaskPreviewModal',
+  components: {
+    Bot,
+    Button,
+    ChevronDown,
+    Dialog,
+    IconButton,
+    ListOrdered,
+    LoaderCircle,
+    Trash2,
+    X
+  },
   props: {
     visible: {
       type: Boolean,

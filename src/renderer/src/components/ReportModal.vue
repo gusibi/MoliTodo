@@ -1,105 +1,119 @@
 <template>
-  <div v-if="visible" class="report-modal-overlay" @click="handleOverlayClick">
-    <div class="report-modal" @click.stop>
-      <!-- 模态框头部 -->
-      <div class="report-modal-header">
-        <div class="report-modal-title">
-          <i class="fas fa-robot"></i>
-          <h3>AI生成报告</h3>
-          <span v-if="reportType" class="report-type-badge">{{ reportType === 'daily' ? '日报' : '周报' }}</span>
-        </div>
-        <button @click="closeModal" class="close-btn" title="关闭">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <!-- 警告信息 -->
-      <div class="report-warning">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>报告内容不会自动保存，请复制后再关闭</span>
-      </div>
-      
-      <!-- 报告内容区域 -->
-      <div class="report-modal-content">
-        <!-- AI生成过程展示区域 - 支持折叠 -->
-        <div v-if="isGenerating || streamContent" class="report-stream-content">
-          <div class="report-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
-            <i class="fas fa-robot"></i>
-            <span class="flex items-center gap-2">
-              <i v-if="isGenerating" class="fas fa-spinner fa-spin"></i>
-              {{ isGenerating ? 'AI正在生成报告...' : 'AI生成过程' }}
-            </span>
-            <i :class="['fas', 'fa-chevron-down', 'report-stream-toggle', { 'collapsed': isStreamCollapsed }]"></i>
-          </div>
-          <div v-show="!isStreamCollapsed" class="report-stream-text">
-            <div v-if="isGenerating && !streamContent" class="report-waiting-text">
-              等待AI响应中...
-            </div>
-            <div v-else class="report-stream-display" v-html="formattedStreamContent"></div>
-          </div>
-        </div>
-        
-        <!-- 错误状态 -->
-        <div v-else-if="error" class="report-error">
-          <i class="fas fa-exclamation-circle"></i>
-          <div class="error-content">
-            <h4>生成失败</h4>
-            <p>{{ error }}</p>
-            <button @click="retryGeneration" class="retry-btn">
-              <i class="fas fa-redo"></i>
-              重试
-            </button>
-          </div>
-        </div>
-        
-        <!-- 报告内容 -->
-        <div v-if="reportContent" class="report-content">
-          <!-- 最终报告内容 -->
-          <div class="report-text" v-html="formattedReportContent"></div>
-        </div>
-        
-        <!-- 空状态 -->
-        <div v-else-if="!isGenerating && !streamContent && !reportContent" class="report-empty">
-          <i class="fas fa-file-alt"></i>
-          <p>暂无报告内容</p>
-        </div>
-      </div>
-      
-      <!-- 模态框底部操作 -->
-      <div class="report-modal-actions">
-        <div class="report-info">
-          <span v-if="taskCount !== null" class="task-count">
-            <i class="fas fa-tasks"></i>
-            {{ taskCount }} 个任务
+  <Dialog
+    :open="visible"
+    title="AI生成报告"
+    content-class="w-[min(94vw,52rem)]"
+    body-class="pb-5"
+    @update:open="(value) => { if (!value) closeModal() }"
+  >
+    <template #header-actions>
+      <span v-if="reportType" class="report-type-badge">{{ reportType === 'daily' ? '日报' : '周报' }}</span>
+    </template>
+
+    <!-- 警告信息 -->
+    <div class="report-warning">
+      <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
+      <span>报告内容不会自动保存，请复制后再关闭</span>
+    </div>
+    
+    <!-- 报告内容区域 -->
+    <div class="report-modal-content">
+      <!-- AI生成过程展示区域 - 支持折叠 -->
+      <div v-if="isGenerating || streamContent" class="report-stream-content">
+        <div class="report-stream-header" @click="isStreamCollapsed = !isStreamCollapsed">
+          <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          <span class="flex items-center gap-2">
+            <LoaderCircle v-if="isGenerating" class="h-icon-sm w-icon-sm animate-spin" aria-hidden="true" />
+            {{ isGenerating ? 'AI正在生成报告...' : 'AI生成过程' }}
           </span>
-          <span v-if="reportPeriod" class="report-period">
-            <i class="fas fa-calendar"></i>
-            {{ reportPeriod }}
-          </span>
+          <ChevronDown class="report-stream-toggle h-icon-sm w-icon-sm"
+            :class="{ 'collapsed': isStreamCollapsed }" aria-hidden="true" />
         </div>
-        
-        <div class="action-buttons">
-          <button 
-            @click="copyToClipboard" 
-            class="copy-btn"
-            :disabled="!reportContent || isGenerating"
-            title="复制到剪贴板"
-          >
-            <i class="fas fa-copy"></i>
-            {{ copySuccess ? '已复制' : '复制内容' }}
-          </button>
-          <button @click="closeModal" class="close-action-btn">
-            关闭
-          </button>
+        <div v-show="!isStreamCollapsed" class="report-stream-text">
+          <div v-if="isGenerating && !streamContent" class="report-waiting-text">
+            等待AI响应中...
+          </div>
+          <div v-else class="report-stream-display" v-html="formattedStreamContent"></div>
         </div>
+      </div>
+      
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="report-error">
+        <CircleAlert class="h-icon-md w-icon-md" aria-hidden="true" />
+        <div class="error-content">
+          <h4>生成失败</h4>
+          <p>{{ error }}</p>
+          <Button variant="secondary" size="sm" class="retry-btn" @click="retryGeneration">
+            <RotateCcw class="h-icon-sm w-icon-sm" aria-hidden="true" />
+            重试
+          </Button>
+        </div>
+      </div>
+      
+      <!-- 报告内容 -->
+      <div v-if="reportContent" class="report-content">
+        <!-- 最终报告内容 -->
+        <div class="report-text" v-html="formattedReportContent"></div>
+      </div>
+      
+      <!-- 空状态 -->
+      <div v-else-if="!isGenerating && !streamContent && !reportContent" class="report-empty">
+        <FileText class="h-icon-lg w-icon-lg" aria-hidden="true" />
+        <p>暂无报告内容</p>
       </div>
     </div>
-  </div>
+    
+    <!-- 模态框底部操作 -->
+    <div class="report-modal-actions">
+      <div class="report-info">
+        <span v-if="taskCount !== null" class="task-count">
+          <ListChecks class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          {{ taskCount }} 个任务
+        </span>
+        <span v-if="reportPeriod" class="report-period">
+          <Calendar class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          {{ reportPeriod }}
+        </span>
+      </div>
+      
+      <div class="action-buttons">
+        <Button 
+          variant="default"
+          class="copy-btn"
+          :disabled="!reportContent || isGenerating"
+          title="复制到剪贴板"
+          @click="copyToClipboard"
+        >
+          <Copy class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          {{ copySuccess ? '已复制' : '复制内容' }}
+        </Button>
+        <Button variant="secondary" @click="closeModal">
+          关闭
+        </Button>
+      </div>
+    </div>
+
+    <p v-if="copyError" class="report-copy-error" role="alert">{{ copyError }}</p>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import {
+  Bot,
+  Calendar,
+  ChevronDown,
+  CircleAlert,
+  Copy,
+  FileText,
+  ListChecks,
+  LoaderCircle,
+  RotateCcw,
+  TriangleAlert
+} from '@lucide/vue'
 import { marked } from 'marked'
+import Dialog from './ui/dialog/Dialog.vue'
+import Button from './ui/button/Button.vue'
 
 // Props
 const props = defineProps({
@@ -146,6 +160,7 @@ const emit = defineEmits(['close', 'retry'])
 
 // 响应式数据
 const copySuccess = ref(false)
+const copyError = ref('')
 const loadingMessage = ref('正在准备数据...')
 const isStreamCollapsed = ref(false)
 
@@ -199,6 +214,7 @@ watch(() => props.visible, (newVal) => {
   if (newVal) {
     // 重置状态
     copySuccess.value = false
+    copyError.value = ''
     loadingMessage.value = '正在准备数据...'
     
     // 防止背景滚动
@@ -212,11 +228,6 @@ watch(() => props.visible, (newVal) => {
 // 方法
 const closeModal = () => {
   emit('close')
-}
-
-const handleOverlayClick = () => {
-  // 点击遮罩层关闭模态框
-  closeModal()
 }
 
 const retryGeneration = () => {
@@ -252,7 +263,7 @@ const copyToClipboard = async () => {
       }, 3000)
     } catch (fallbackError) {
       console.error('降级复制也失败:', fallbackError)
-      alert('复制失败，请手动选择文本复制')
+      copyError.value = '复制失败，请手动选择文本复制'
     }
   }
 }
@@ -298,18 +309,18 @@ onUnmounted(() => {
   @apply px-2 py-1 bg-primary/10 text-primary text-xs rounded-full;
 }
 
+.report-copy-error {
+  @apply mt-2 text-xs text-destructive;
+}
+
 .close-btn {
   @apply p-2 hover:bg-muted rounded-md transition-colors duration-200;
   @apply text-muted-foreground hover:text-foreground;
 }
 
 .report-warning {
-  @apply flex items-center gap-2 p-3 bg-yellow-50 border-l-4 border-yellow-400;
-  @apply text-yellow-800 text-sm;
-}
-
-[data-theme="dark"] .report-warning {
-  @apply bg-yellow-900/20 text-yellow-400 border-yellow-600;
+  @apply flex items-center gap-2 p-3 bg-warning/10 border-l-4 border-warning;
+  @apply text-warning text-sm;
 }
 
 .report-warning i {

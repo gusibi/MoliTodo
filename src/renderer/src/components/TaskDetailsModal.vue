@@ -1,92 +1,89 @@
 <template>
-  <div class="task-details-modal-overlay">
-    <div class="task-details-modal-container">
-      <!-- 模态框头部 -->
-      <div class="task-details-modal-header">
-        <h2 class="task-details-modal-title">任务详情数据库视图</h2>
-        <button @click="$emit('close')" class="task-details-modal-close-btn">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <!-- 表格容器 -->
-      <div class="task-details-table-container">
-        <table class="task-details-table">
-          <thead class="task-details-table-header">
-            <tr>
-              <th v-for="column in tableColumns" :key="column.key" class="task-details-table-th">
-                {{ column.label }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="task-details-table-body">
-            <tr v-for="task in paginatedTasks" :key="task.id" class="task-details-table-row">
-              <td v-for="column in tableColumns" :key="column.key" class="task-details-table-td">
-                <div class="task-details-cell-content">
-                  <span 
-                    v-if="!isComplexField(task[column.key])" 
-                    class="task-details-simple-value"
-                  >
-                    {{ formatSimpleValue(task[column.key]) }}
-                  </span>
-                  <button 
-                    v-else 
-                    @click="showFieldDetail(column.label, task[column.key])" 
-                    class="task-details-complex-btn"
-                  >
-                    <i class="fas fa-eye"></i>
-                    查看详情
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- 分页控件 -->
-      <div class="task-details-pagination">
-        <button 
-          @click="currentPage--" 
-          :disabled="currentPage <= 1" 
-          class="task-details-pagination-btn"
-        >
-          <i class="fas fa-chevron-left"></i>
-          上一页
-        </button>
-        <span class="task-details-pagination-info">
-          第 {{ currentPage }} 页，共 {{ totalPages }} 页 ({{ tasks.length }} 条记录)
-        </span>
-        <button 
-          @click="currentPage++" 
-          :disabled="currentPage >= totalPages" 
-          class="task-details-pagination-btn"
-        >
-          下一页
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
+  <Dialog
+    :open="true"
+    title="任务详情数据库视图"
+    content-class="w-[min(96vw,72rem)]"
+    body-class="pb-5"
+    :close-on-overlay="false"
+    @update:open="(value) => { if (!value) $emit('close') }"
+  >
+    <!-- 表格容器 -->
+    <div class="task-details-table-container">
+      <table class="task-details-table">
+        <thead class="task-details-table-header">
+          <tr>
+            <th v-for="column in tableColumns" :key="column.key" class="task-details-table-th">
+              {{ column.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="task-details-table-body">
+          <tr v-for="task in paginatedTasks" :key="task.id" class="task-details-table-row">
+            <td v-for="column in tableColumns" :key="column.key" class="task-details-table-td">
+              <div class="task-details-cell-content">
+                <span 
+                  v-if="!isComplexField(task[column.key])" 
+                  class="task-details-simple-value"
+                >
+                  {{ formatSimpleValue(task[column.key]) }}
+                </span>
+                <Button 
+                  v-else 
+                  variant="secondary"
+                  size="sm"
+                  class="task-details-complex-btn"
+                  @click="showFieldDetail(column.label, task[column.key])" 
+                >
+                  <Eye class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                  查看详情
+                </Button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- 字段详情模态框 -->
-    <div v-if="showFieldModal" class="task-details-field-modal-overlay">
-      <div class="task-details-field-modal-container">
-        <div class="task-details-field-modal-header">
-          <h3 class="task-details-field-modal-title">{{ fieldModalTitle }}</h3>
-          <button @click="closeFieldModal" class="task-details-modal-close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="task-details-field-modal-content">
-          <pre class="task-details-field-value">{{ fieldModalContent }}</pre>
-        </div>
-      </div>
+    <!-- 分页控件 -->
+    <div class="task-details-pagination">
+      <Button 
+        variant="secondary"
+        size="sm"
+        class="task-details-pagination-btn"
+        :disabled="currentPage <= 1"
+        @click="currentPage--"
+      >
+        <ChevronLeft class="h-icon-sm w-icon-sm" aria-hidden="true" />
+        上一页
+      </Button>
+      <span class="task-details-pagination-info">
+        第 {{ currentPage }} 页，共 {{ totalPages }} 页 ({{ tasks.length }} 条记录)
+      </span>
+      <Button 
+        variant="secondary"
+        size="sm"
+        class="task-details-pagination-btn"
+        :disabled="currentPage >= totalPages"
+        @click="currentPage++"
+      >
+        下一页
+        <ChevronRight class="h-icon-sm w-icon-sm" aria-hidden="true" />
+      </Button>
     </div>
-  </div>
+
+    <!-- 字段详情 -->
+    <Dialog :open="showFieldModal" :title="fieldModalTitle" content-class="w-[min(94vw,44rem)]"
+      @update:open="(value) => { if (!value) closeFieldModal() }">
+      <pre class="task-details-field-value">{{ fieldModalContent }}</pre>
+    </Dialog>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import { ChevronLeft, ChevronRight, Eye } from '@lucide/vue'
+import Dialog from './ui/dialog/Dialog.vue'
+import Button from './ui/button/Button.vue'
 
 const props = defineProps({
   tasks: {

@@ -294,7 +294,7 @@ const hideTooltip = () => {
   @apply flex gap-1;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgb(203 213 225) transparent;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 
 .activity-heatmap-grid::-webkit-scrollbar {
@@ -306,27 +306,12 @@ const hideTooltip = () => {
 }
 
 .activity-heatmap-grid::-webkit-scrollbar-thumb {
-  background-color: rgb(203 213 225);
+  background-color: hsl(var(--border));
   border-radius: 3px;
 }
 
 .activity-heatmap-grid::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(148 163 184);
-}
-
-/* 暗色模式滚动条 */
-@media (prefers-color-scheme: dark) {
-  .activity-heatmap-grid {
-    scrollbar-color: rgb(71 85 105) transparent;
-  }
-  
-  .activity-heatmap-grid::-webkit-scrollbar-thumb {
-    background-color: rgb(71 85 105);
-  }
-  
-  .activity-heatmap-grid::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(100 116 139);
-  }
+  background-color: hsl(var(--muted-foreground));
 }
 
 .activity-week-column {
@@ -361,25 +346,25 @@ const hideTooltip = () => {
   }
 }
 
-/* Activity levels */
+/* Activity levels - 使用主题 success 色阶，随五套主题与明暗模式变化 */
 .activity-level-0 {
   @apply bg-muted;
 }
 
 .activity-level-1 {
-  @apply bg-green-200 dark:bg-green-900/40;
+  @apply bg-success/25;
 }
 
 .activity-level-2 {
-  @apply bg-green-300 dark:bg-green-800/60;
+  @apply bg-success/45;
 }
 
 .activity-level-3 {
-  @apply bg-green-400 dark:bg-green-700/80;
+  @apply bg-success/70;
 }
 
 .activity-level-4 {
-  @apply bg-green-500 dark:bg-green-600;
+  @apply bg-success;
 }
 
 .activity-tooltip {

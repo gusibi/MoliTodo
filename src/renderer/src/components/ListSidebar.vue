@@ -4,7 +4,7 @@
 
   <!-- 清单项直接输出，不包装额外容器 -->
   <template v-for="list in sortedLists" :key="list.id">
-    <button type="button" class="nav-item"
+    <button type="button" class="nav-item" :data-list-id="list.id"
       :class="{ 
         active: currentListId === list.id, 
         'is-default': list.isDefault, 
@@ -48,49 +48,45 @@
       </div>
     </div>
 
-    <!-- 删除确认对话框 -->
-    <div v-if="showDeleteDialog" class="nav-modal-overlay" @click="closeDeleteDialog">
-      <div class="nav-delete-dialog" @click.stop>
-        <div class="nav-dialog-header">
-          <h3>{{ $t('lists.deleteTitle') }}</h3>
-        </div>
-        <div class="nav-dialog-body">
-          <p>{{ $t('lists.confirmDelete', { name: deletingList?.name }) }}</p>
-          <p v-if="getListTaskCount(deletingList?.id) > 0" class="nav-warning-text">
-            {{ $t('lists.hasTasksWarning', { count: getListTaskCount(deletingList?.id) }) }}
-          </p>
-          <div v-if="getListTaskCount(deletingList?.id) > 0" class="nav-task-handling-options">
-            <label class="nav-radio-option">
-              <input type="radio" v-model="taskHandling" value="move" />
-              <span>{{ $t('lists.moveToDefault') }}</span>
-            </label>
-            <label class="nav-radio-option">
-              <input type="radio" v-model="taskHandling" value="delete" />
-              <span class="nav-danger-text">{{ $t('lists.deleteAllTasks') }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="nav-dialog-footer">
-          <button class="nav-btn-cancel" @click="closeDeleteDialog">{{ $t('common.cancel') }}</button>
-          <button class="nav-btn-danger" @click="confirmDeleteList"
-            :disabled="getListTaskCount(deletingList?.id) > 0 && !taskHandling">{{ $t('lists.delete') }}</button>
+    <!-- 删除确认对话框：统一 AlertDialog，保留任务处理选择 -->
+    <AlertDialog :open="showDeleteDialog" :title="$t('lists.deleteTitle')"
+      :description="$t('lists.confirmDelete', { name: deletingList?.name })"
+      :cancel-label="$t('common.cancel')" :confirm-label="$t('lists.delete')" confirm-variant="destructive"
+      :loading="deleteListLoading" :error="deleteListError"
+      @update:open="(value) => { if (!value) closeDeleteDialog() }" @confirm="confirmDeleteList"
+      @cancel="closeDeleteDialog">
+      <div v-if="getListTaskCount(deletingList?.id) > 0" class="nav-delete-options">
+        <p class="nav-warning-text">
+          {{ $t('lists.hasTasksWarning', { count: getListTaskCount(deletingList?.id) }) }}
+        </p>
+        <div class="nav-task-handling-options">
+          <label class="nav-radio-option">
+            <input type="radio" v-model="taskHandling" value="move" />
+            <span>{{ $t('lists.moveToDefault') }}</span>
+          </label>
+          <label class="nav-radio-option">
+            <input type="radio" v-model="taskHandling" value="delete" />
+            <span class="nav-danger-text">{{ $t('lists.deleteAllTasks') }}</span>
+          </label>
         </div>
       </div>
-    </div>
+    </AlertDialog>
   </Teleport>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineExpose, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Copy, Pencil, Trash2 } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
 import ListIcon from './ui/ListIcon.vue'
+import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
 
 export default {
   name: 'ListSidebar',
   components: {
+    AlertDialog,
     ListCreateDialog,
     ListIcon
   },
@@ -107,6 +103,8 @@ export default {
     const showDeleteDialog = ref(false)
     const deletingList = ref(null)
     const taskHandling = ref('move')
+    const deleteListLoading = ref(false)
+    const deleteListError = ref('')
     
     // 拖拽相关响应式数据
     const dragOverListId = ref(null)
@@ -212,24 +210,50 @@ export default {
 
       deletingList.value = list
       taskHandling.value = 'move'
+      deleteListError.value = ''
+      deleteListLoading.value = false
       showDeleteDialog.value = true
       closeContextMenu()
     }
 
     const closeDeleteDialog = () => {
+      const listId = deletingList.value?.id
       showDeleteDialog.value = false
       deletingList.value = null
       taskHandling.value = 'move'
+      deleteListError.value = ''
+      nextTick(() => {
+        const el = listId != null
+          ? document.querySelector(`.nav-item[data-list-id="${listId}"]`)
+          : null
+        if (el) el.focus()
+      })
     }
 
     const confirmDeleteList = async () => {
-      if (!deletingList.value) return
+      if (!deletingList.value || deleteListLoading.value) return
 
+      deleteListLoading.value = true
+      deleteListError.value = ''
       try {
-        await taskStore.deleteList(deletingList.value.id, taskHandling.value)
-        closeDeleteDialog()
+        const result = await taskStore.deleteList(deletingList.value.id, taskHandling.value)
+        if (result && result.success === false) {
+          deleteListError.value = result.error || '删除清单失败'
+          return
+        }
+        showDeleteDialog.value = false
+        deletingList.value = null
+        taskHandling.value = 'move'
+        // 触发项随清单移除，焦点落到相邻清单项或首个清单入口
+        nextTick(() => {
+          const fallback = document.querySelector('.nav-item')
+          if (fallback) fallback.focus()
+        })
       } catch (error) {
         console.error('Failed to delete list:', error)
+        deleteListError.value = error?.message || '删除清单失败'
+      } finally {
+        deleteListLoading.value = false
       }
     }
 
@@ -298,6 +322,8 @@ export default {
       showDeleteDialog,
       deletingList,
       taskHandling,
+      deleteListLoading,
+      deleteListError,
       dragOverListId,
 
       // 计算属性

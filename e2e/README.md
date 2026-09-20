@@ -20,6 +20,9 @@ npm run test:e2e:today
 # 任务视图（列表 / 看板 / Inspector）危险操作契约
 npx playwright test e2e/task-views.spec.js
 
+# 设置与清单危险操作契约
+npx playwright test e2e/settings.spec.js
+
 # 单个场景
 npx playwright test e2e/today-overview.spec.js -g "今天截止但安排在明天"
 ```

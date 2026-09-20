@@ -61,6 +61,10 @@
     "appearance": "外观",
     "appearanceDescription": "自定义应用的外观和主题",
     "data": "数据管理",
+    "dataClearTitle": "清除所有数据",
+    "dataClearConfirm": "将永久删除全部任务与清单数据，且无法恢复；完成后应用会自动重启。",
+    "dataClearAction": "清除所有数据",
+    "floatingIconShow": "显示悬浮图标",
     "reminders": "提醒设置",
     "aiTitle": "AI 配置",
     "api": {

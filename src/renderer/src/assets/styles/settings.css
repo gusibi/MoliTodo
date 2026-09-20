@@ -99,26 +99,7 @@
   @apply flex-shrink-0;
 }
 
-/* 切换开关 */
-.setting-toggle {
-  @apply relative inline-flex h-6 w-11 items-center rounded-full;
-  @apply bg-input transition-colors duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
-  @apply cursor-pointer;
-}
-
-.setting-toggle.setting-toggle-active {
-  @apply bg-primary;
-}
-
-.setting-toggle-button {
-  @apply inline-block h-4 w-4 transform rounded-full bg-background transition-transform duration-200;
-  @apply translate-x-1;
-}
-
-.setting-toggle.setting-toggle-active .setting-toggle-button {
-  @apply translate-x-6;
-}
+/* 切换开关统一使用 components/ui/Switch，不再定义业务层开关样式 */
 
 /* 滑动条 */
 .setting-slider-group {

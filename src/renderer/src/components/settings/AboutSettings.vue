@@ -41,15 +41,16 @@
           </div>
         </div>
         <div class="setting-item-control">
-          <button 
+          <Button 
+            variant="default"
             class="setting-btn setting-btn-primary"
+            :loading="updateStatus === 'checking'"
             :disabled="updateStatus === 'checking'"
             @click="checkForUpdates"
           >
-            <i v-if="updateStatus === 'checking'" class="fas fa-spinner fa-spin"></i>
-            <i v-else class="fas fa-sync-alt"></i>
+            <RefreshCw v-if="updateStatus !== 'checking'" class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ updateStatus === 'checking' ? $t('settings.about.checking') : $t('settings.about.checkNow') }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -60,13 +61,14 @@
           <div class="setting-item-description">{{ $t('settings.about.downloadUpdateDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button 
+          <Button 
+            variant="default"
             class="setting-btn setting-btn-primary"
             @click="downloadUpdate"
           >
-            <i class="fas fa-download"></i>
+            <Download class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ $t('settings.about.download') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -81,13 +83,14 @@
           <div class="setting-item-description">{{ $t('settings.about.changelogDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button 
+          <Button 
+            variant="secondary"
             class="setting-btn setting-btn-secondary"
             @click="openChangelog"
           >
-            <i class="fas fa-external-link-alt"></i>
+            <ExternalLink class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ $t('settings.about.viewOnGitHub') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -97,18 +100,20 @@
       <h3 class="setting-group-title">{{ $t('settings.about.projectInfo') }}</h3>
       
       <div class="about-project-links">
-        <button class="about-project-link" @click="openLink('https://github.com/gusibi/MoliTodo')">
-          <i class="fab fa-github"></i>
+        <Button variant="outline" class="about-project-link" @click="openLink('https://github.com/gusibi/MoliTodo')">
+          <Code2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
           {{ $t('settings.about.githubRepo') }}
-        </button>
-        <button class="about-project-link" @click="openLink('https://github.com/gusibi/MoliTodo/issues')">
-          <i class="fas fa-bug"></i>
+        </Button>
+        <Button variant="outline" class="about-project-link"
+          @click="openLink('https://github.com/gusibi/MoliTodo/issues')">
+          <Bug class="h-icon-sm w-icon-sm" aria-hidden="true" />
           {{ $t('settings.about.reportIssue') }}
-        </button>
-        <button class="about-project-link" @click="openLink('https://github.com/gusibi/MoliTodo/releases')">
-          <i class="fas fa-tag"></i>
+        </Button>
+        <Button variant="outline" class="about-project-link"
+          @click="openLink('https://github.com/gusibi/MoliTodo/releases')">
+          <Tag class="h-icon-sm w-icon-sm" aria-hidden="true" />
           {{ $t('settings.about.releases') }}
-        </button>
+        </Button>
       </div>
       
       <div class="about-project-info">
@@ -128,6 +133,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Bug, Code2, Download, ExternalLink, RefreshCw, Tag } from '@lucide/vue'
+import Button from '../ui/button/Button.vue'
 
 const { t } = useI18n()
 

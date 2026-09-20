@@ -616,7 +616,7 @@ test('Today 新建弹窗可从下拉选择 AI 模型并进入 AI 预览', async 
 
   await dialog.getByRole('button', { name: '创建任务' }).click();
 
-  const preview = window.locator('.task-preview-modal-overlay');
+  const preview = window.getByRole('dialog', { name: 'AI 生成的任务列表' });
   await expect(preview).toBeVisible();
   await expect(preview).toContainText('共 1 个任务');
 });
@@ -652,7 +652,7 @@ test('列表视图复用同一 AI 模型下拉并可生成预览', async ({ app,
 
   await window.locator('.flat-task-list-textarea').fill('列表里生成任务');
   await window.locator('.flat-task-list-send-btn').click();
-  await expect(window.locator('.task-preview-modal-overlay')).toContainText('共 1 个任务');
+  await expect(window.getByRole('dialog', { name: 'AI 生成的任务列表' })).toContainText('共 1 个任务');
 });
 
 

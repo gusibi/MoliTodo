@@ -46,6 +46,10 @@
     "appearance": "Appearance",
     "appearanceDescription": "Customize application appearance and themes",
     "data": "Data Management",
+    "dataClearTitle": "Clear all data",
+    "dataClearConfirm": "This permanently deletes all task and list data and cannot be undone. The app will restart afterwards.",
+    "dataClearAction": "Clear all data",
+    "floatingIconShow": "Show floating icon",
     "reminders": "Reminders",
     "aiTitle": "AI Configuration",
     "api": {

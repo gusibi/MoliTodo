@@ -13,6 +13,7 @@
 @import './components/custom-titlebar.css';
 @import './components/ai-settings.css';
 @import './components/VCalendar.css';
+@import './components/vue-datepicker.css';
 
 /* Main CSS Entry Point */
 

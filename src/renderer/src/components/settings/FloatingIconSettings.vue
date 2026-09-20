@@ -9,13 +9,11 @@
         <div class="setting-item-description">在桌面显示任务管理悬浮图标</div>
       </div>
       <div class="setting-item-control">
-        <button 
-          class="setting-toggle" 
-          :class="{ 'setting-toggle-active': floatingIconConfig.visible }"
-          @click="toggleFloatingIcon"
-        >
-          <span class="setting-toggle-button"></span>
-        </button>
+        <Switch
+          :model-value="floatingIconConfig.visible"
+          :label="$t('settings.floatingIconShow')"
+          @update:model-value="toggleFloatingIcon"
+        />
       </div>
     </div>
 
@@ -65,6 +63,7 @@
 
 <script setup>
 import { reactive, defineEmits } from 'vue'
+import Switch from '../ui/switch/Switch.vue'
 
 // 定义 props
 const props = defineProps({
@@ -81,13 +80,14 @@ const emit = defineEmits(['update-config', 'show-message'])
 const floatingIconConfig = reactive(props.config.floatingIcon)
 
 // 方法
-const toggleFloatingIcon = async () => {
+const toggleFloatingIcon = async (value) => {
   try {
-    floatingIconConfig.visible = !floatingIconConfig.visible
-    await updateConfig('floatingIcon.visible', floatingIconConfig.visible)
-    emit('show-message', floatingIconConfig.visible ? '已显示悬浮图标' : '已隐藏悬浮图标', 'success')
+    floatingIconConfig.visible = value
+    await updateConfig('floatingIcon.visible', value)
+    emit('show-message', value ? '已显示悬浮图标' : '已隐藏悬浮图标', 'success')
   } catch (error) {
     console.error('切换悬浮图标失败:', error)
+    floatingIconConfig.visible = !value
     emit('show-message', '设置失败', 'error')
   }
 }

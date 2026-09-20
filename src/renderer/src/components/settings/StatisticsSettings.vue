@@ -16,9 +16,10 @@
 
     <!-- 刷新按钮 -->
     <div class="setting-stats-actions">
-      <button class="setting-btn setting-btn-primary" @click="refreshAllStats" :disabled="loading">
+      <Button variant="default" class="setting-btn setting-btn-primary" :loading="loading" :disabled="loading"
+        @click="refreshAllStats">
         {{ loading ? '重置中...' : '重置数据' }}
-      </button>
+      </Button>
 
     </div>
   </div>
@@ -29,6 +30,7 @@ import { ref, onMounted } from 'vue'
 import { useTaskStore } from '@/store/taskStore.js'
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap.vue'
 import DailyStatusTrendChart from '@/components/charts/DailyStatusTrendChart.vue'
+import Button from '../ui/button/Button.vue'
 
 // 使用 store
 const taskStore = useTaskStore()
@@ -118,17 +120,6 @@ const refreshAllStats = async () => {
     ])
   } finally {
     loading.value = false
-  }
-}
-
-const cleanupOldLogs = async () => {
-  try {
-    const result = await taskStore.cleanupOldLogs(90)
-    alert(`已清理 ${result} 条过期日志记录`)
-    await loadLogStats() // 重新加载日志统计
-  } catch (error) {
-    console.error('清理过期日志失败:', error)
-    alert('清理过期日志失败')
   }
 }
 

@@ -51,29 +51,28 @@
           <!-- 配置表单 -->
           <div v-if="expandedProvider === provider.id" class="ai-provider-config">
             <div v-if="provider.id === 'openai'" class="ai-config-form">
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.apiKey') }}</label>
-                <input 
+              <FormField class="setting-form-item" label="API Key" html-for="ai-openai-key">
+                <Input 
+                  id="ai-openai-key"
                   v-model="aiConfig.providers.openai.apiKey"
                   type="password"
-                  class="setting-form-input"
                   placeholder="sk-..."
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.baseUrl') }} ({{ t('common.optional') }})</label>
-                <input 
+              </FormField>
+              <FormField class="setting-form-item" :label="`${t('settings.ai.baseUrl')} (${t('common.optional')})`"
+                html-for="ai-openai-base">
+                <Input 
+                  id="ai-openai-base"
                   v-model="aiConfig.providers.openai.baseURL"
                   type="text"
-                  class="setting-form-input"
                   placeholder="https://api.openai.com/v1"
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
+              </FormField>
+              <FormField class="setting-form-item" :label="t('settings.ai.model')" html-for="ai-openai-model">
                 <select 
+                  id="ai-openai-model"
                   v-model="aiConfig.providers.openai.model"
                   class="setting-form-select"
                   @change="updateProviderConfig"
@@ -83,23 +82,22 @@
                   <option value="gpt-4-turbo">GPT-4 Turbo</option>
                   <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
                 </select>
-              </div>
+              </FormField>
             </div>
 
             <div v-if="provider.id === 'google'" class="ai-config-form">
-              <div class="setting-form-item">
-                <label class="setting-form-label">API Key</label>
-                <input 
+              <FormField class="setting-form-item" label="API Key" html-for="ai-google-key">
+                <Input 
+                  id="ai-google-key"
                   v-model="aiConfig.providers.google.apiKey"
                   type="password"
-                  class="setting-form-input"
                   placeholder="AIza..."
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
+              </FormField>
+              <FormField class="setting-form-item" :label="t('settings.ai.model')" html-for="ai-google-model">
                 <select 
+                  id="ai-google-model"
                   v-model="aiConfig.providers.google.model"
                   class="setting-form-select"
                   @change="updateProviderConfig"
@@ -108,23 +106,22 @@
                   <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                   <option value="gemini-pro">Gemini Pro</option>
                 </select>
-              </div>
+              </FormField>
             </div>
 
             <div v-if="provider.id === 'anthropic'" class="ai-config-form">
-              <div class="setting-form-item">
-                <label class="setting-form-label">API Key</label>
-                <input 
+              <FormField class="setting-form-item" label="API Key" html-for="ai-anthropic-key">
+                <Input 
+                  id="ai-anthropic-key"
                   v-model="aiConfig.providers.anthropic.apiKey"
                   type="password"
-                  class="setting-form-input"
                   placeholder="sk-ant-..."
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.model') }}</label>
+              </FormField>
+              <FormField class="setting-form-item" :label="t('settings.ai.model')" html-for="ai-anthropic-model">
                 <select 
+                  id="ai-anthropic-model"
                   v-model="aiConfig.providers.anthropic.model"
                   class="setting-form-select"
                   @change="updateProviderConfig"
@@ -133,33 +130,31 @@
                   <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
                   <option value="claude-3-opus-20240229">Claude 3 Opus</option>
                 </select>
-              </div>
+              </FormField>
             </div>
 
             <div v-if="provider.id === 'xai'" class="ai-config-form">
-              <div class="setting-form-item">
-                <label class="setting-form-label">API Key</label>
-                <input 
+              <FormField class="setting-form-item" label="API Key" html-for="ai-xai-key">
+                <Input 
+                  id="ai-xai-key"
                   v-model="aiConfig.providers.xai.apiKey"
                   type="password"
-                  class="setting-form-input"
                   placeholder="xai-..."
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.baseUrl') }}</label>
-                <input 
+              </FormField>
+              <FormField class="setting-form-item" :label="t('settings.ai.baseUrl')" html-for="ai-xai-base">
+                <Input 
+                  id="ai-xai-base"
                   v-model="aiConfig.providers.xai.baseURL"
                   type="text"
-                  class="setting-form-input"
                   placeholder="https://api.x.ai/v1"
                   @input="updateProviderConfig"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">模型</label>
+              </FormField>
+              <FormField class="setting-form-item" label="模型" html-for="ai-xai-model">
                 <select 
+                  id="ai-xai-model"
                   v-model="aiConfig.providers.xai.model"
                   class="setting-form-select"
                   @change="updateProviderConfig"
@@ -167,19 +162,20 @@
                   <option value="grok-beta">Grok Beta</option>
                   <option value="grok-vision-beta">Grok Vision Beta</option>
                 </select>
-              </div>
+              </FormField>
             </div>
 
             <!-- 测试连接按钮 -->
             <div class="ai-test-section">
-              <button 
+              <Button 
+                variant="default"
                 class="ai-test-button"
+                :loading="testingConnection"
                 :disabled="testingConnection || !isProviderConfigured(provider.id)"
                 @click="testConnection"
               >
-                <span v-if="testingConnection" class="ai-test-loading">{{ t('settings.ai.testing') }}</span>
-                <span v-else>{{ t('settings.ai.testConnection') }}</span>
-              </button>
+                {{ testingConnection ? t('settings.ai.testing') : t('settings.ai.testConnection') }}
+              </Button>
               <div v-if="customTestResults[provider.id]" class="ai-test-result" :class="customTestResults[provider.id].type">
                 {{ customTestResults[provider.id].message }}
               </div>
@@ -218,15 +214,15 @@
               ></div>
             </div>
             <div class="ai-provider-actions">
-              <button 
+              <IconButton 
+                size="icon-sm"
+                variant="ghost"
                 class="custom-provider-delete-btn"
+                :label="t('settings.ai.deleteConfig')"
                 @click.stop="deleteCustomProvider(index)"
-                :title="t('settings.ai.deleteConfig')"
               >
-                <svg class="w-4 h-4 dark:text-destructive dark:stroke-[2.5px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+                <Trash2 class="h-icon-sm w-icon-sm" />
+              </IconButton>
             </div>
             <div class="ai-provider-toggle">
               <svg 
@@ -245,58 +241,55 @@
           <!-- 自定义配置表单 -->
           <div v-if="expandedProvider === provider.id" class="ai-provider-config">
             <div class="ai-config-form">
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.configName') }}</label>
-                <input 
+              <FormField class="setting-form-item" :label="t('settings.ai.configName')" :html-for="`ai-custom-${provider.id}-name`">
+                <Input 
+                  :id="`ai-custom-${provider.id}-name`"
                   v-model="provider.name"
                   type="text"
-                  class="setting-form-input"
                   :placeholder="t('settings.ai.customConfigName')"
                   @input="updateCustomProviderConfig(provider.id, 'name', $event.target.value)"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">API Key</label>
-                <input 
+              </FormField>
+              <FormField class="setting-form-item" label="API Key" :html-for="`ai-custom-${provider.id}-key`">
+                <Input 
+                  :id="`ai-custom-${provider.id}-key`"
                   v-model="provider.apiKey"
                   type="password"
-                  class="setting-form-input"
                   placeholder="your-api-key"
                   @input="updateCustomProviderConfig(provider.id, 'apiKey', $event.target.value)"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">Base URL</label>
-                <input 
+              </FormField>
+              <FormField class="setting-form-item" label="Base URL" :html-for="`ai-custom-${provider.id}-base`">
+                <Input 
+                  :id="`ai-custom-${provider.id}-base`"
                   v-model="provider.baseURL"
                   type="text"
-                  class="setting-form-input"
                   placeholder="https://api.example.com/v1"
                   @input="updateCustomProviderConfig(provider.id, 'baseURL', $event.target.value)"
                 />
-              </div>
-              <div class="setting-form-item">
-                <label class="setting-form-label">{{ t('settings.ai.modelName') }}</label>
-                <input 
+              </FormField>
+              <FormField class="setting-form-item" :label="t('settings.ai.modelName')" :html-for="`ai-custom-${provider.id}-model`">
+                <Input 
+                  :id="`ai-custom-${provider.id}-model`"
                   v-model="provider.model"
                   type="text"
-                  class="setting-form-input"
                   placeholder="model-name"
                   @input="updateCustomProviderConfig(provider.id, 'model', $event.target.value)"
                 />
-              </div>
+              </FormField>
             </div>
 
             <!-- 测试连接按钮 -->
             <div class="ai-test-section">
-              <button 
+              <Button 
+                variant="default"
                 class="ai-test-button"
+                :loading="testingConnection"
                 :disabled="testingConnection || !isCustomProviderConfigured(provider)"
                 @click="testCustomConnection(provider)"
               >
-                <span v-if="testingConnection" class="ai-test-loading">{{ t('settings.ai.testing') }}</span>
-                <span v-else>{{ t('settings.ai.testConnection') }}</span>
-              </button>
+                {{ testingConnection ? t('settings.ai.testing') : t('settings.ai.testConnection') }}
+              </Button>
               <div v-if="customTestResults[provider.id]" class="ai-test-result" :class="customTestResults[provider.id].type">
                 {{ customTestResults[provider.id].message }}
               </div>
@@ -305,10 +298,10 @@
         </div>
         <!-- 添加新的自定义配置按钮 -->
         <div class="add-custom-provider">
-          <button class="add-custom-provider-btn" @click="addCustomProvider">
-            <span class="add-icon">+</span>
+          <Button variant="outline" class="add-custom-provider-btn" @click="addCustomProvider">
+            <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ t('settings.ai.addCustomProvider') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -323,13 +316,11 @@
           <div class="setting-item-description">{{ t('settings.ai.smartSuggestionsDesc') }}</div>
         </div>
         <div class="setting-item-control">
-          <button 
-            class="setting-toggle" 
-            :class="{ 'setting-toggle-active': aiConfig.features.taskSuggestions }"
-            @click="toggleFeature('taskSuggestions')"
-          >
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch 
+            :model-value="aiConfig.features.taskSuggestions"
+            :label="t('settings.ai.smartSuggestions')"
+            @update:model-value="(v) => toggleFeature('taskSuggestions', v)"
+          />
         </div>
       </div>
 
@@ -339,13 +330,11 @@
           <div class="setting-item-description">{{ t('settings.ai.autoCategoryDesc') }}</div>
         </div>
         <div class="setting-item-control">
-          <button 
-            class="setting-toggle" 
-            :class="{ 'setting-toggle-active': aiConfig.features.autoCategories }"
-            @click="toggleFeature('autoCategories')"
-          >
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch 
+            :model-value="aiConfig.features.autoCategories"
+            :label="t('settings.ai.autoCategory')"
+            @update:model-value="(v) => toggleFeature('autoCategories', v)"
+          />
         </div>
       </div>
 
@@ -355,13 +344,11 @@
           <div class="setting-item-description">{{ t('settings.ai.smartReminderDesc') }}</div>
         </div>
         <div class="setting-item-control">
-          <button 
-            class="setting-toggle" 
-            :class="{ 'setting-toggle-active': aiConfig.features.smartReminders }"
-            @click="toggleFeature('smartReminders')"
-          >
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch 
+            :model-value="aiConfig.features.smartReminders"
+            :label="t('settings.ai.smartReminder')"
+            @update:model-value="(v) => toggleFeature('smartReminders', v)"
+          />
         </div>
       </div>
     </div>
@@ -387,22 +374,26 @@
             @input="updateReportTemplate('daily', $event.target.value)"
           />
           <div class="template-actions">
-            <button 
+            <Button 
+              variant="secondary"
+              size="sm"
               class="template-action-btn reset-btn"
-              @click="resetTemplate('daily')"
               :title="t('settings.ai.resetToDefault')"
+              @click="resetTemplate('daily')"
             >
-              <i class="fas fa-undo"></i>
+              <RotateCcw class="h-icon-sm w-icon-sm" aria-hidden="true" />
               {{ t('settings.ai.resetDefault') }}
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="secondary"
+              size="sm"
               class="template-action-btn preview-btn"
-              @click="previewTemplate('daily')"
               :title="t('settings.ai.previewTemplate')"
+              @click="previewTemplate('daily')"
             >
-              <i class="fas fa-eye"></i>
+              <Eye class="h-icon-sm w-icon-sm" aria-hidden="true" />
               {{ t('settings.ai.preview') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -423,22 +414,26 @@
             @input="updateReportTemplate('weekly', $event.target.value)"
           />
           <div class="template-actions">
-            <button 
+            <Button 
+              variant="secondary"
+              size="sm"
               class="template-action-btn reset-btn"
-              @click="resetTemplate('weekly')"
               :title="t('settings.ai.resetToDefault')"
+              @click="resetTemplate('weekly')"
             >
-              <i class="fas fa-undo"></i>
+              <RotateCcw class="h-icon-sm w-icon-sm" aria-hidden="true" />
               {{ t('settings.ai.resetDefault') }}
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="secondary"
+              size="sm"
               class="template-action-btn preview-btn"
-              @click="previewTemplate('weekly')"
               :title="t('settings.ai.previewTemplate')"
+              @click="previewTemplate('weekly')"
             >
-              <i class="fas fa-eye"></i>
+              <Eye class="h-icon-sm w-icon-sm" aria-hidden="true" />
               {{ t('settings.ai.preview') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -446,7 +441,7 @@
       <!-- 模板帮助信息 -->
       <div class="template-help">
         <div class="template-help-header">
-          <i class="fas fa-info-circle"></i>
+          <Info class="h-icon-sm w-icon-sm" aria-hidden="true" />
           <span>{{ t('settings.ai.templateUsage') }}</span>
         </div>
         <div class="template-help-content">
@@ -454,6 +449,11 @@
         </div>
       </div>
     </div>
+
+    <!-- 模板预览 -->
+    <Dialog v-model:open="previewOpen" :title="t('settings.ai.templatePreview')">
+      <pre class="template-preview-content">{{ previewContent }}</pre>
+    </Dialog>
   </div>
 </template>
 
@@ -461,6 +461,13 @@
 import { ref, computed, onMounted, h, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
+import { Eye, Info, Plus, RotateCcw, Trash2 } from '@lucide/vue'
+import Switch from '../ui/switch/Switch.vue'
+import Button from '../ui/button/Button.vue'
+import IconButton from '../ui/button/IconButton.vue'
+import Dialog from '../ui/dialog/Dialog.vue'
+import FormField from '../ui/form-field/FormField.vue'
+import Input from '../ui/input/Input.vue'
 
 // 使用 i18n
 const { t } = useI18n()
@@ -599,8 +606,8 @@ const updateCustomProviderConfig = async (providerId, field, value) => {
   }
 }
 
-const toggleFeature = async (featureName) => {
-  aiConfig.features[featureName] = !aiConfig.features[featureName]
+const toggleFeature = async (featureName, value) => {
+  aiConfig.features[featureName] = value
   await saveConfig()
 }
 
@@ -655,6 +662,9 @@ const resetTemplate = async (templateType) => {
   await saveConfig()
 }
 
+const previewOpen = ref(false)
+const previewContent = ref('')
+
 const previewTemplate = (templateType) => {
   const template = aiConfig.reportTemplates[templateType] || 
     (templateType === 'daily' ? defaultDailyTemplate.value : defaultWeeklyTemplate.value)
@@ -672,14 +682,14 @@ const previewTemplate = (templateType) => {
   }
   
   // 替换占位符
-  let previewContent = template
+  let content = template
   Object.entries(previewData).forEach(([key, value]) => {
     const placeholder = new RegExp(`{{${key}}}`, 'g')
-    previewContent = previewContent.replace(placeholder, value)
+    content = content.replace(placeholder, value)
   })
-  
-  // 显示预览（这里可以后续实现一个预览模态框）
-  alert(`${t('settings.ai.templatePreview')}：\n\n${previewContent}`)
+
+  previewContent.value = content
+  previewOpen.value = true
 }
 
 const isProviderConfigured = (providerId) => {

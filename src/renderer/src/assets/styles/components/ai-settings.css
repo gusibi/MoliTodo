@@ -365,3 +365,8 @@
 [data-theme="dark"] .markdown-content code {
   @apply bg-muted/50 text-primary;
 }
+/* 模板预览内容 */
+.template-preview-content {
+  @apply whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs leading-relaxed text-foreground;
+  font-family: var(--font-mono);
+}

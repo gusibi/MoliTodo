@@ -66,6 +66,22 @@
 <DatePicker v-model="date" />
 ```
 
+### Switch / FormField
+
+设置开关与表单字段包装。
+
+```vue
+<Switch :model-value="config.autoStart" :label="$t('settings.autoStart')"
+  @update:model-value="toggleAutoStart" />
+
+<FormField label="API Key" html-for="openai-key" description="..." :error="keyError">
+  <Input id="openai-key" v-model="key" type="password" />
+</FormField>
+```
+
+- `Switch` 基于 Reka UI，用于「立即生效的配置项」；完成任务仍用任务语义的复选框。无可见标签时必须传 `label`。
+- `FormField` 只负责标签、帮助文字与错误的呈现与关联（`label[for]` / `role=alert`），不持有值或校验逻辑。
+
 ### ListIcon / CategoryIcon
 
 ```vue
@@ -130,3 +146,28 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 - 悬浮界面（`float_view/TaskPanel`）仍使用 Font Awesome 与 `getListIconClass`，属于阶段 4。
 - 日历事件表面（事件胶囊、日期弹层）与 `TaskPanel` 的完整视觉适配尚未完成。
 - 列表/看板/Inspector 中仍有历史自建文本按钮沿用原有 CSS；基础 Button 的全面替换留待后续阶段。
+
+## 阶段 3 迁移记录（业务弹层 / 日期 / 设置 / 统计）
+
+- 新增基础组件 `Switch`（Reka UI）与 `FormField`（标签 / 帮助 / 错误包装）。
+- 原生业务确认全部迁移到 `AlertDialog`：设置页「恢复默认设置」「清除所有数据」、清单删除自建弹窗
+  （保留「移动到默认清单 / 同时删除任务」单选）。活跃业务代码不再使用原生 `confirm`。
+- 业务弹层统一到共享 `Dialog`（Reka）：TaskPreviewModal、TaskDetailsModal、TaskSelectionModal、
+  ReportModal、ListCreateDialog、UnifiedCalendar 日期任务弹层获得焦点约束、Escape 关闭与遮罩关闭；
+  `Dialog` 扩展了 `contentClass` / `bodyClass` / `#header-actions` / `#footer` 与 `closeOnOverlay`。
+  编辑型弹层（TaskPreviewModal、TaskDetailsModal、ListCreateDialog）显式 `closeOnOverlay=false`，
+  避免遮罩点击丢弃未保存内容。
+- 设置页统一：`Switch` 替换历史 `.setting-toggle` 开关；AI 表单使用 `FormField` + `Input`（标签关联、
+  错误语义）；图标迁移到本地 Lucide；主要动作使用 `Button` / `IconButton`；AI 模板预览从 `alert`
+  改为 `Dialog`；统计页操作按钮使用 `Button`。
+- 图表：DailyStatusTrendChart 接入系统字体 token 并在主题切换后刷新颜色；ActivityHeatmap 色阶与
+  滚动条改用语义 token，移除对 `prefers-color-scheme` 的依赖。
+- 日期：Vue Datepicker 弹层通过 `vue-datepicker.css` 映射到语义 token 并传入 `:dark`；
+  v-calendar 与 `ui/DatePicker` 保持既有 token 适配。
+
+### 阶段 3 尚未完成 / 后续
+
+- 设置页原生 `<select>` 选择器保留为平台控件（已统一外观），未引入独立 Select 组件。
+- TaskSelectionModal 内的 AI 模型下拉仍为历史自建实现，未迁移到共享 DropdownMenu。
+- 迁移后部分历史弹层容器 CSS 已失去消费者，清理与全量 CDN 移除一并留待阶段 5。
+- 悬浮界面（阶段 4）与主窗口 Surface 定稿（阶段 5）未涉及。

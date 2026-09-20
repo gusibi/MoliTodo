@@ -11,10 +11,8 @@
           <div class="setting-item-description">{{ $t('settings.autoStartDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button class="setting-toggle" :class="{ 'setting-toggle-active': config.autoStart }"
-            @click="toggleAutoStart">
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch :model-value="config.autoStart" :label="$t('settings.autoStart')"
+            @update:model-value="toggleAutoStart" />
         </div>
       </div>
     </div>
@@ -27,10 +25,8 @@
           <div class="setting-item-description">{{ $t('settings.showNotificationsDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button class="setting-toggle" :class="{ 'setting-toggle-active': config.showNotifications }"
-            @click="toggleNotifications">
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch :model-value="config.showNotifications" :label="$t('settings.showNotifications')"
+            @update:model-value="toggleNotifications" />
         </div>
       </div>
 
@@ -40,10 +36,8 @@
           <div class="setting-item-description">{{ $t('settings.notificationSoundDescription') }}</div>
         </div>
         <div class="setting-item-control">
-          <button class="setting-toggle" :class="{ 'setting-toggle-active': config.notificationSound.enabled }"
-            @click="toggleNotificationSound">
-            <span class="setting-toggle-button"></span>
-          </button>
+          <Switch :model-value="config.notificationSound.enabled" :label="$t('settings.notificationSound')"
+            @update:model-value="toggleNotificationSound" />
         </div>
       </div>
 
@@ -60,9 +54,9 @@
                 {{ sound.label }}
               </option>
             </select>
-            <button class="setting-btn setting-btn-small" @click="testNotificationSound">
+            <Button variant="secondary" size="sm" @click="testNotificationSound">
               {{ $t('settings.testSound') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -115,6 +109,8 @@ import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { playNotificationSound, getAvailableSounds } from '@/utils/notificationSound.js'
 import { useLanguage } from '@/composables/useLanguage'
+import Switch from '../ui/switch/Switch.vue'
+import Button from '../ui/button/Button.vue'
 
 const { t, locale } = useI18n()
 const { switchLanguage } = useLanguage()
@@ -148,27 +144,28 @@ const languages = [
 const currentLanguage = computed(() => props.config.language || locale.value)
 
 // 方法
-const toggleAutoStart = async () => {
+const toggleAutoStart = async (value) => {
   try {
-    props.config.autoStart = !props.config.autoStart
+    props.config.autoStart = value
     if (window.electronAPI && window.electronAPI.app) {
-      await window.electronAPI.app.setAutoStart(props.config.autoStart)
+      await window.electronAPI.app.setAutoStart(value)
     }
-    await updateConfig('autoStart', props.config.autoStart)
+    await updateConfig('autoStart', value)
   } catch (error) {
     console.error('Failed to set auto start:', error)
+    props.config.autoStart = !value
     emit('show-message', t('settings.autoStartFailed'), 'error')
   }
 }
 
-const toggleNotifications = async () => {
-  props.config.showNotifications = !props.config.showNotifications
-  await updateConfig('showNotifications', props.config.showNotifications)
+const toggleNotifications = async (value) => {
+  props.config.showNotifications = value
+  await updateConfig('showNotifications', value)
 }
 
-const toggleNotificationSound = async () => {
-  props.config.notificationSound.enabled = !props.config.notificationSound.enabled
-  await updateConfig('notificationSound.enabled', props.config.notificationSound.enabled)
+const toggleNotificationSound = async (value) => {
+  props.config.notificationSound.enabled = value
+  await updateConfig('notificationSound.enabled', value)
 }
 
 const updateNotificationSound = async () => {
