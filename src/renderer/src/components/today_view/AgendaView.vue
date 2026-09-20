@@ -208,19 +208,29 @@
           :placeholder="$t('today.quickAddPlaceholder')" maxlength="200" ref="quickAddInput"
           @keydown.enter.prevent="addTask" />
         <div class="agenda-quick-add-controls">
-          <Button
+          <AIModelPicker
             v-if="taskStore.availableAIModels.length > 0"
-            variant="outline"
-            class="h-control-lg gap-1 px-2.5 text-muted-foreground"
-            :class="taskStore.isAIEnabled && aiEnabled
-              ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
-              : ''"
-            :title="$t('today.aiToggle')"
-            @click="toggleAI"
+            :models="taskStore.availableAIModels"
+            :selected-model="taskStore.selectedAIModel"
+            align="right"
+            @select="handleSelectAIModel"
+            v-slot="{ toggle, open, active, label }"
           >
-            <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
-            <span v-if="aiEnabled">{{ aiModelShortName }}</span>
-          </Button>
+            <Button
+              variant="outline"
+              class="h-control-lg gap-1 px-2.5 text-muted-foreground"
+              :class="active
+                ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+                : ''"
+              :title="$t('today.aiToggle')"
+              aria-haspopup="menu"
+              :aria-expanded="open"
+              @click="toggle"
+            >
+              <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
+              <span v-if="active">{{ label }}</span>
+            </Button>
+          </AIModelPicker>
           <Button
             variant="outline"
             class="h-control-lg gap-1 px-2.5 text-muted-foreground"
@@ -284,6 +294,7 @@ import {
 import { useTaskStore } from '@/store/taskStore'
 import AgendaTaskCard from './AgendaTaskCard.vue'
 import TaskPreviewModal from '../TaskPreviewModal.vue'
+import AIModelPicker from '../AIModelPicker.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
 import { isLegacyRecurringDateInstance } from '../../utils/task-time-rules.js'
@@ -318,7 +329,6 @@ const unplannedFeedback = ref(false)
 const newTaskContent = ref('')
 
 // AI 快速创建（沿用现有流式生成与预览链路）
-const aiEnabled = ref(false)
 const shouldSplitTask = ref(false)
 const showTaskPreview = ref(false)
 const previewTasks = ref([])
@@ -427,7 +437,7 @@ async function addTask() {
   const content = newTaskContent.value.trim()
   if (!content) return
 
-  if (aiEnabled.value && taskStore.selectedAIModel && taskStore.isAIEnabled) {
+  if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
     originalTaskInput.value = content
     previewTasks.value = []
     streamContent.value = ''
@@ -485,28 +495,10 @@ async function createNormalTask(content) {
   }
 }
 
-function toggleAI() {
-  if (!taskStore.isAIEnabled) {
-    taskStore.toggleAI()
-    ensureAIModelSelected()
-    aiEnabled.value = true
-    return
-  }
-  // 已启用：再次点击切换本地启用状态；若模型缺失则补齐，避免开关亮起却不生效
-  if (!aiEnabled.value) ensureAIModelSelected()
-  aiEnabled.value = !aiEnabled.value
+// 模型选择与启用由 store 统一处理；选择“不使用 AI”会清空模型并关闭 AI
+function handleSelectAIModel(model) {
+  taskStore.selectAIModel(model)
 }
-
-// Today 没有模型选择入口：启用 AI 时自动选中第一个可用模型
-function ensureAIModelSelected() {
-  if (!taskStore.selectedAIModel && taskStore.availableAIModels.length > 0) {
-    taskStore.selectAIModel(taskStore.availableAIModels[0])
-  }
-}
-
-const aiModelShortName = computed(() => {
-  return taskStore.selectedAIModel ? taskStore.selectedAIModel.name : 'AI'
-})
 
 function closeTaskPreview() {
   showTaskPreview.value = false

@@ -454,7 +454,9 @@
     "copyOriginalInput": "Copy original input",
     "generatingTasks": "AI is generating task list...",
     "generationDetails": "AI Generation Details",
-    "waitingForResponse": "Waiting for AI response..."
+    "waitingForResponse": "Waiting for AI response...",
+    "noModel": "Don't use AI",
+    "noModelHint": "Disable AI features"
   },
   "appearance": {
     "theme": "Theme",

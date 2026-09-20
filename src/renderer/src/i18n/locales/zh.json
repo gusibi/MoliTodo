@@ -469,7 +469,9 @@
     "copyOriginalInput": "复制原始输入",
     "generatingTasks": "AI正在生成任务列表...",
     "generationDetails": "AI生成详情",
-    "waitingForResponse": "等待AI响应中..."
+    "waitingForResponse": "等待AI响应中...",
+    "noModel": "不使用 AI",
+    "noModelHint": "禁用 AI 功能"
   },
   "appearance": {
     "theme": "主题",

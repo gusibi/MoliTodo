@@ -581,7 +581,7 @@ test('Header 图标按钮具有可访问名称', async ({ window }) => {
   await expect(window.getByRole('button', { name: '新建清单' })).toBeVisible();
 });
 
-test('Today 启用 AI 后快速添加进入 AI 预览（无需预先选择模型）', async ({ app, window }) => {
+test('Today 点击 AI 后可从下拉选择模型并进入 AI 预览', async ({ app, window }) => {
   // 在服务边界注入假 AI 配置与流式生成，不依赖真实密钥
   await app.electronApp.evaluate(() => {
     const moli = global.__moliTodoApp;
@@ -602,7 +602,15 @@ test('Today 启用 AI 后快速添加进入 AI 预览（无需预先选择模型
   const toggle = window.locator('button[title="使用 AI 生成任务"]');
   await expect(toggle).toBeVisible();
   await toggle.click();
-  // 启用后自动选中可用模型，开关不再是空转
+
+  // 下拉提供模型选择，而不是自动选中
+  const menu = window.getByRole('menu');
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitemradio', { name: /gpt-4o/ })).toBeVisible();
+  await expect(menu.getByRole('menuitemradio', { name: /不使用 AI/ })).toBeVisible();
+  await menu.getByRole('menuitemradio', { name: /gpt-4o/ }).click();
+
+  await expect(menu).toHaveCount(0);
   await expect(window.locator('.agenda-quick-add-controls')).toContainText('gpt-4o');
 
   await window.locator('.agenda-quick-add-input').fill('帮我规划旅行');
@@ -612,3 +620,38 @@ test('Today 启用 AI 后快速添加进入 AI 预览（无需预先选择模型
   await expect(preview).toBeVisible();
   await expect(preview).toContainText('共 1 个任务');
 });
+
+test('列表视图复用同一 AI 模型下拉并可生成预览', async ({ app, window }) => {
+  await app.electronApp.evaluate(() => {
+    const moli = global.__moliTodoApp;
+    moli.windowManager.configStore.set('ai.providers.openai', { apiKey: 'test-key', model: 'gpt-4o' });
+    moli.taskService.streamGenerateTaskList = async (content, aiModel, listId, onChunk) => {
+      onChunk?.('生成中');
+      return {
+        success: true,
+        message: 'ok',
+        tasks: [{ content: '列表 AI 任务', metadata: { note: '' } }]
+      };
+    };
+  });
+  await window.evaluate(() => localStorage.removeItem('taskStore-selectedAIModel'));
+  await window.reload();
+  await waitForToday(window);
+
+  // 切换到"全部"分类，使用列表视图快速添加
+  await window.getByRole('navigation').getByRole('button', { name: /全部/ }).click();
+  await expect(window.locator('.flat-task-list-container')).toBeVisible();
+
+  const toggle = window.locator('.flat-task-list-ai-toggle');
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  const menu = window.getByRole('menu');
+  await expect(menu).toBeVisible();
+  await menu.getByRole('menuitemradio', { name: /gpt-4o/ }).click();
+  await expect(toggle).toContainText('gpt-4o');
+
+  await window.locator('.flat-task-list-textarea').fill('列表里生成任务');
+  await window.locator('.flat-task-list-send-btn').click();
+  await expect(window.locator('.task-preview-modal-overlay')).toContainText('共 1 个任务');
+});
+

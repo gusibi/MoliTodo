@@ -149,58 +149,19 @@
               <!-- 左侧选项 -->
               <div class="flat-task-list-inline-options">
                 <!-- AI模型选择 -->
-                <div class="flat-task-list-ai-container" v-if="taskStore.availableAIModels.length > 0">
-                  <button class="flat-task-list-ai-toggle" :class="{ 'active': taskStore.isAIEnabled }"
-                    @click="toggleAI" ref="aiButton">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                        :fill="taskStore.isAIEnabled ? 'currentColor' : 'none'"
-                        :stroke="taskStore.isAIEnabled ? 'none' : 'currentColor'" stroke-width="2" />
-                    </svg>
-                    <span class="flat-task-list-ai-label">
-                      {{ taskStore.selectedAIModel ? taskStore.selectedAIModel.name : 'AI' }}
-                    </span>
+                <AIModelPicker
+                  v-if="taskStore.availableAIModels.length > 0"
+                  :models="taskStore.availableAIModels"
+                  :selected-model="taskStore.selectedAIModel"
+                  @select="taskStore.selectAIModel"
+                  v-slot="{ toggle, open, active, label }"
+                >
+                  <button class="flat-task-list-ai-toggle" :class="{ 'active': active }"
+                    aria-haspopup="menu" :aria-expanded="open" @click="toggle">
+                    <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                    <span class="flat-task-list-ai-label">{{ label }}</span>
                   </button>
-
-                  <!-- AI 模型下拉列表 -->
-                  <div v-if="showAIDropdown" class="flat-task-list-ai-dropdown" ref="aiDropdown">
-                    <div class="flat-task-list-ai-dropdown-list">
-                      <!-- 不使用 AI 选项 -->
-                      <div class="flat-task-list-ai-dropdown-item no-ai"
-                        :class="{ 'selected': !taskStore.selectedAIModel }" @click="selectAIModel(null)">
-                        <div class="flat-task-list-ai-model-info">
-                          <div class="flat-task-list-ai-model-name">不使用 AI</div>
-                          <div class="flat-task-list-ai-model-provider">禁用 AI 功能</div>
-                        </div>
-                        <div class="flat-task-list-ai-model-check">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                              stroke-linejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      <!-- AI 模型选项 -->
-                      <div v-for="model in taskStore.availableAIModels" :key="model.id"
-                        class="flat-task-list-ai-dropdown-item"
-                        :class="{ 'selected': taskStore.selectedAIModel?.id === model.id }"
-                        @click="selectAIModel(model)">
-                        <div class="flat-task-list-ai-model-info">
-                          <div class="flat-task-list-ai-model-name">{{ model.name }}</div>
-                          <div class="flat-task-list-ai-model-provider">{{ model.provider }}</div>
-                        </div>
-                        <div v-if="taskStore.selectedAIModel?.id === model.id" class="flat-task-list-ai-model-check">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                              stroke-linejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                </AIModelPicker>
 
                 <!-- 任务拆分选项 -->
                 <button @click="shouldSplitTask = !shouldSplitTask"
@@ -250,9 +211,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { WandSparkles } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
+import AIModelPicker from './AIModelPicker.vue'
 import TimeFilter from './TimeFilter.vue'
 import TaskSelectionModal from './TaskSelectionModal.vue'
 import ReportModal from './ReportModal.vue'
@@ -300,11 +263,6 @@ const selectedTaskIds = ref(new Set())
 const newTaskContent = ref('')
 const shouldSplitTask = ref(false)
 const quickAddInput = ref(null)
-
-// AI 相关响应式数据
-const showAIDropdown = ref(false)
-const aiButton = ref(null)
-const aiDropdown = ref(null)
 
 // TaskPreviewModal 相关状态
 const showTaskPreview = ref(false)
@@ -744,32 +702,6 @@ const focusAddTaskInput = () => {
   }
 }
 
-// AI 相关方法
-const toggleAI = () => {
-  if (taskStore.isAIEnabled) {
-    // 如果AI已启用，点击切换下拉列表显示状态
-    showAIDropdown.value = !showAIDropdown.value
-  } else {
-    // 如果AI未启用，启用AI并显示下拉列表
-    taskStore.toggleAI()
-    showAIDropdown.value = true
-  }
-}
-
-const selectAIModel = (model) => {
-  taskStore.selectAIModel(model)
-  showAIDropdown.value = false
-}
-
-const handleClickOutside = (event) => {
-  if (aiButton.value && aiButton.value.contains(event.target)) {
-    return
-  }
-  if (aiDropdown.value && !aiDropdown.value.contains(event.target)) {
-    showAIDropdown.value = false
-  }
-}
-
 // 获取快捷键文本
 const getShortcutText = (type = 'add') => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
@@ -1015,14 +947,12 @@ onMounted(async () => {
   startTimeUpdateTimer()
   await taskStore.loadAIModels()
   document.addEventListener('keydown', handleKeydown)
-  document.addEventListener('click', handleClickOutside)
 })
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
   stopTimeUpdateTimer()
   document.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('click', handleClickOutside)
 })
 
 

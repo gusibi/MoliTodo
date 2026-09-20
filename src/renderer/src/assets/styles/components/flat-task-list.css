@@ -78,10 +78,6 @@
   @apply text-xs font-medium;
 }
 
-.flat-task-list-ai-container {
-  @apply relative;
-}
-
 .flat-task-list-ai-toggle {
   @apply flex items-center gap-1.5 px-2 py-1 border border-border rounded-md bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 text-xs;
 }
@@ -100,75 +96,6 @@
 
 .flat-task-list-send-btn {
   @apply flex items-center justify-center w-7 h-7 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-all duration-200;
-}
-
-/* AI下拉菜单容器 */
-.flat-task-list-ai-section {
-  @apply relative;
-}
-
-
-
-/* AI Dropdown Styles */
-.flat-task-list-ai-dropdown {
-  @apply absolute left-0 bottom-full mb-2 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden;
-}
-
-.flat-task-list-ai-dropdown-header {
-  @apply px-3 py-2 text-sm font-medium text-foreground bg-muted border-b border-border;
-}
-
-.flat-task-list-ai-dropdown-list {
-  @apply max-h-48 overflow-y-auto;
-}
-
-.flat-task-list-ai-dropdown-item {
-  @apply flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors duration-200 hover:bg-accent border-l-2 border-transparent;
-}
-
-.flat-task-list-ai-dropdown-item.selected {
-  @apply bg-primary/20 text-primary border-l-primary font-medium;
-}
-
-.flat-task-list-ai-dropdown-item.no-ai {
-  @apply border-t border-border mt-1;
-}
-
-.flat-task-list-ai-dropdown-item.no-ai.selected {
-  @apply bg-muted/80 text-muted-foreground border-l-muted-foreground;
-}
-
-.flat-task-list-ai-model-info {
-  @apply flex flex-col gap-0.5;
-}
-
-.flat-task-list-ai-model-name {
-  @apply text-sm font-medium text-foreground;
-}
-
-.flat-task-list-ai-model-provider {
-  @apply text-xs text-muted-foreground;
-}
-
-.flat-task-list-ai-model-check {
-  @apply flex items-center justify-center w-4 h-4 text-primary;
-}
-
-/* AI Dropdown Scrollbar */
-.flat-task-list-ai-dropdown-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.flat-task-list-ai-dropdown-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.flat-task-list-ai-dropdown-list::-webkit-scrollbar-thumb {
-  @apply bg-border/60 rounded-full;
-}
-
-.flat-task-list-ai-dropdown-list::-webkit-scrollbar-thumb:hover {
-  @apply bg-border;
 }
 
 /* Task List Items */
