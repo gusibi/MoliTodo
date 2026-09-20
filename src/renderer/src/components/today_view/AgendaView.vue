@@ -488,10 +488,20 @@ async function createNormalTask(content) {
 function toggleAI() {
   if (!taskStore.isAIEnabled) {
     taskStore.toggleAI()
+    ensureAIModelSelected()
     aiEnabled.value = true
     return
   }
+  // 已启用：再次点击切换本地启用状态；若模型缺失则补齐，避免开关亮起却不生效
+  if (!aiEnabled.value) ensureAIModelSelected()
   aiEnabled.value = !aiEnabled.value
+}
+
+// Today 没有模型选择入口：启用 AI 时自动选中第一个可用模型
+function ensureAIModelSelected() {
+  if (!taskStore.selectedAIModel && taskStore.availableAIModels.length > 0) {
+    taskStore.selectAIModel(taskStore.availableAIModels[0])
+  }
 }
 
 const aiModelShortName = computed(() => {

@@ -580,3 +580,35 @@ test('Header 图标按钮具有可访问名称', async ({ window }) => {
   await expect(window.getByRole('button', { name: '设置' })).toBeVisible();
   await expect(window.getByRole('button', { name: '新建清单' })).toBeVisible();
 });
+
+test('Today 启用 AI 后快速添加进入 AI 预览（无需预先选择模型）', async ({ app, window }) => {
+  // 在服务边界注入假 AI 配置与流式生成，不依赖真实密钥
+  await app.electronApp.evaluate(() => {
+    const moli = global.__moliTodoApp;
+    moli.windowManager.configStore.set('ai.providers.openai', { apiKey: 'test-key', model: 'gpt-4o' });
+    moli.taskService.streamGenerateTaskList = async (content, aiModel, listId, onChunk) => {
+      onChunk?.('生成中');
+      return {
+        success: true,
+        message: 'ok',
+        tasks: [{ content: 'AI 识别任务', metadata: { note: '' } }]
+      };
+    };
+  });
+  await window.evaluate(() => localStorage.removeItem('taskStore-selectedAIModel'));
+  await window.reload();
+  await waitForToday(window);
+
+  const toggle = window.locator('button[title="使用 AI 生成任务"]');
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  // 启用后自动选中可用模型，开关不再是空转
+  await expect(window.locator('.agenda-quick-add-controls')).toContainText('gpt-4o');
+
+  await window.locator('.agenda-quick-add-input').fill('帮我规划旅行');
+  await window.locator('.agenda-quick-add-controls button[aria-label="发送"]').click();
+
+  const preview = window.locator('.task-preview-modal-overlay');
+  await expect(preview).toBeVisible();
+  await expect(preview).toContainText('共 1 个任务');
+});
