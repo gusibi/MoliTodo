@@ -248,7 +248,7 @@ import FloatingAddButton from '../FloatingAddButton.vue'
 import TaskComposer from '../TaskComposer.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
-import { isLegacyRecurringDateInstance } from '../../utils/task-time-rules.js'
+import { isLegacyRecurringDateInstance, localDateKey } from '../../utils/task-time-rules.js'
 import { addDaysToKey } from '../../utils/today-agenda.js'
 import { localeCode } from '../../utils/locale-format.js'
 
@@ -366,7 +366,9 @@ function cardBadges(task, group) {
     if (dueKey === props.todayKey) badges.push({ text: t('today.badge.dueToday'), tone: 'warning' })
   }
   if (group === 'today' && task.scheduledStartAt) {
-    const startKey = String(task.scheduledStartAt).slice(0, 10)
+    // scheduledStartAt 经 IPC 到达渲染层时是 Date 实例，需按本地日期键比较，
+    // 直接截断字符串会把本地时间格式误判为"其它日期"。
+    const startKey = localDateKey(task.scheduledStartAt)
     if (startKey !== props.todayKey) badges.push({ text: t('today.badge.scheduledElsewhere'), tone: 'muted' })
   }
   const list = taskStore.getListById(task.listId)

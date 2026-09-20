@@ -47,8 +47,15 @@
 }
 
 .agenda-scroll {
-  @apply flex-1 min-h-0 overflow-y-auto px-4 pt-3 pb-6;
-  scrollbar-width: thin;
+  /* 底部留出悬浮"新条目"按钮的空间，避免与"加载更多日期"等末尾内容重叠 */
+  @apply flex-1 min-h-0 overflow-y-auto px-4 pt-3 pb-20;
+  /* 隐藏滚动条但保留滚动能力 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.agenda-scroll::-webkit-scrollbar {
+  @apply hidden;
 }
 
 .agenda-state {
@@ -60,7 +67,7 @@
 }
 
 .agenda-section {
-  @apply mb-4;
+  @apply mb-3 rounded-xl border border-border/60 bg-card p-2 shadow;
 }
 
 .agenda-section-header {
@@ -231,11 +238,17 @@
 
 .future-calendar-months {
   @apply flex-1 min-h-0 overflow-y-auto pr-1;
-  scrollbar-width: thin;
+  /* 隐藏滚动条但保留滚动能力 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.future-calendar-months::-webkit-scrollbar {
+  @apply hidden;
 }
 
 .future-calendar-month {
-  @apply mb-4;
+  @apply mt-3 border-t border-border/50 pt-3 first:mt-0 first:border-t-0 first:pt-0;
 }
 
 .future-calendar-month-title {
