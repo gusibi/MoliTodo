@@ -91,7 +91,7 @@
   @apply text-destructive/80;
 }
 
-.agenda-section-reminder .agenda-section-header i {
+.agenda-section-reminder .agenda-section-header svg {
   @apply text-warning/80;
 }
 
@@ -152,20 +152,8 @@
   @apply flex justify-center py-2;
 }
 
-.agenda-load-more-btn {
-  @apply flex items-center gap-2 px-4 py-1.5 text-xs rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
-}
-
-.agenda-load-more-btn:disabled {
-  @apply opacity-60 cursor-not-allowed;
-}
-
 .agenda-error {
   @apply flex items-center justify-between gap-3 mx-2 my-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs;
-}
-
-.agenda-retry-btn {
-  @apply flex items-center gap-1 px-2 py-1 rounded border border-destructive/40 text-destructive hover:bg-destructive/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
 }
 
 /* ---------- 任务卡与徽标 ---------- */
@@ -175,7 +163,7 @@
 }
 
 .agenda-task-schedule-btn {
-  @apply absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 text-2xs rounded border border-border text-muted-foreground bg-background/90 hover:text-primary hover:border-primary/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  @apply absolute right-2 top-1/2 -translate-y-1/2 bg-background/90;
 }
 
 .flat-task-badge {
@@ -184,6 +172,10 @@
 
 .flat-task-badge-warning {
   @apply border-warning/40 text-warning;
+}
+
+.flat-task-badge-muted {
+  @apply border-transparent bg-muted/70;
 }
 
 .flat-task-badge-danger {
@@ -212,30 +204,12 @@
   @apply flex items-center gap-1;
 }
 
-.agenda-quick-add-btn {
-  @apply w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.agenda-ai-toggle,
-.agenda-ai-split {
-  @apply h-9 px-2.5 flex items-center gap-1 rounded-lg border border-border text-muted-foreground text-xs hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
-}
-
-.agenda-ai-toggle.active,
-.agenda-ai-split.active {
-  @apply text-primary border-primary/40 bg-primary/10;
-}
-
 .agenda-quick-add-feedback {
   @apply flex items-center gap-2 mt-2 px-3 py-1.5 rounded-lg bg-primary/10 text-xs text-primary;
 }
 
 .agenda-feedback-link {
   @apply font-medium underline underline-offset-2 hover:text-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded;
-}
-
-.agenda-feedback-close {
-  @apply ml-auto w-5 h-5 flex items-center justify-center rounded hover:bg-primary/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
 }
 
 .agenda-flash-enter-active,

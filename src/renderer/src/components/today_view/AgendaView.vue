@@ -4,14 +4,14 @@
       @wheel.passive="handleUserIntent" @touchstart.passive="handleUserIntent" @keydown="handleUserIntent">
       <!-- 初始加载 -->
       <div v-if="initialLoading" class="agenda-state">
-        <i class="fas fa-spinner fa-spin"></i>
+        <LoaderCircle class="h-icon-lg w-icon-lg animate-spin" aria-hidden="true" />
         <p>{{ $t('common.loading') }}</p>
       </div>
 
       <template v-else>
         <!-- 搜索无匹配：区别于"空日期"与"无未计划"的独立状态 -->
         <div v-if="searchNoMatch" class="agenda-state agenda-no-match" role="status">
-          <i class="fas fa-magnifying-glass"></i>
+          <Search class="h-icon-lg w-icon-lg" aria-hidden="true" />
           <p>{{ $t('today.noSearchMatch') }}</p>
         </div>
 
@@ -20,7 +20,8 @@
         <section class="agenda-section agenda-section-unplanned" data-agenda-section="unplanned">
           <button type="button" class="agenda-section-header is-button"
             :aria-expanded="unplannedExpanded" @click="toggleUnplanned">
-            <i class="fas" :class="unplannedExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            <ChevronDown v-if="unplannedExpanded" class="h-icon-md w-icon-md" aria-hidden="true" />
+            <ChevronRight v-else class="h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.unplanned') }}</span>
             <span class="agenda-section-count">{{ model.unplanned.length }}</span>
           </button>
@@ -29,6 +30,7 @@
             <div v-for="task in model.unplanned" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'unplanned')" :show-schedule="true"
                 @task-click="(t) => $emit('task-click', t)" @schedule="handleScheduleClick(task)" />
             </div>
@@ -39,7 +41,7 @@
         <section v-if="model.overdue.length" class="agenda-section agenda-section-overdue"
           data-agenda-section="overdue">
           <div class="agenda-section-header">
-            <i class="fas fa-exclamation-circle agenda-section-icon-overdue"></i>
+            <AlertCircle class="agenda-section-icon-overdue h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.overdue') }}</span>
             <span class="agenda-section-count agenda-count-overdue">{{ model.overdue.length }}</span>
           </div>
@@ -47,6 +49,7 @@
             <div v-for="task in model.overdue" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'overdue')" @task-click="(t) => $emit('task-click', t)" />
             </div>
           </div>
@@ -56,7 +59,7 @@
         <section v-if="model.reschedule.length" class="agenda-section agenda-section-reschedule"
           data-agenda-section="reschedule">
           <div class="agenda-section-header">
-            <i class="fas fa-history"></i>
+            <History class="h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.reschedule') }}</span>
             <span class="agenda-section-count">{{ model.reschedule.length }}</span>
           </div>
@@ -64,6 +67,7 @@
             <div v-for="task in model.reschedule" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'reschedule')" @task-click="(t) => $emit('task-click', t)" />
             </div>
           </div>
@@ -73,7 +77,7 @@
         <section v-if="model.reminderExpired.length" class="agenda-section agenda-section-reminder"
           data-agenda-section="reminderExpired">
           <div class="agenda-section-header">
-            <i class="fas fa-bell-slash"></i>
+            <BellOff class="h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.reminderExpired') }}</span>
             <span class="agenda-section-count">{{ model.reminderExpired.length }}</span>
           </div>
@@ -81,6 +85,7 @@
             <div v-for="task in model.reminderExpired" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'reminderExpired')" :show-schedule="true"
                 @task-click="(t) => $emit('task-click', t)" @schedule="handleScheduleClick(task)" />
             </div>
@@ -90,7 +95,7 @@
         <!-- 今天（始终保留可定位 section） -->
         <section class="agenda-section agenda-section-today" :data-date-section="todayKey">
           <div class="agenda-section-header">
-            <i class="fas fa-calendar-day agenda-section-icon-today"></i>
+            <CalendarCheck class="agenda-section-icon-today h-icon-md w-icon-md" aria-hidden="true" />
             <span class="agenda-section-title">{{ $t('today.todaySection') }}</span>
             <span class="agenda-section-count">{{ model.today.length }}</span>
           </div>
@@ -99,6 +104,7 @@
             <div v-for="task in model.today" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'today')" @task-click="(t) => $emit('task-click', t)" />
             </div>
             <template v-if="showCompleted && (model.todayCompleted.length || todayCompletedOnDate.length)">
@@ -108,11 +114,13 @@
               <div v-for="task in todayCompletedOnDate" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                   @task-click="(t) => $emit('task-click', t)" />
               </div>
               <div v-for="task in model.todayCompleted" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                   @task-click="(t) => $emit('task-click', t)" />
               </div>
             </template>
@@ -136,6 +144,7 @@
             <div v-for="task in section.tasks" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'date')" @task-click="(t) => $emit('task-click', t)" />
             </div>
 
@@ -145,6 +154,7 @@
               <div v-for="task in section.completedTasks" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
                   @task-click="(t) => $emit('task-click', t)" />
               </div>
             </template>
@@ -153,7 +163,7 @@
             <div v-if="section.relocated.length" class="agenda-relocated">
               <button type="button" class="agenda-relocated-link" :aria-expanded="relocatedMenuKey === section.dateKey"
                 @click="handleRelocatedClick(section)">
-                <i class="fas fa-crosshairs"></i>
+                <Crosshair class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 {{ $t('today.relocatedHint', { count: section.relocated.length }) }}
               </button>
               <div v-if="relocatedMenuKey === section.dateKey" class="agenda-relocated-menu" role="menu">
@@ -168,20 +178,25 @@
 
         <!-- 加载更多未来日期 -->
         <div class="agenda-load-more">
-          <button type="button" class="agenda-load-more-btn" :disabled="loadingMore" @click="handleLoadMore">
-            <i v-if="loadingMore" class="fas fa-spinner fa-spin"></i>
-            <i v-else class="fas fa-plus"></i>
+          <Button variant="outline" size="sm" :loading="loadingMore" @click="handleLoadMore">
+            <Plus v-if="!loadingMore" class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ $t('today.loadMore') }}</span>
-          </button>
+          </Button>
         </div>
         </template>
 
         <!-- 范围加载失败：保留已加载内容并提供重试 -->
         <div v-if="hasError" class="agenda-error" role="alert">
           <span>{{ $t('today.loadError') }}</span>
-          <button type="button" class="agenda-retry-btn" @click="$emit('retry')">
-            <i class="fas fa-rotate-right"></i> {{ $t('calendar.retry') }}
-          </button>
+          <Button
+            variant="outline"
+            size="sm"
+            class="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            @click="$emit('retry')"
+          >
+            <RotateCw class="h-icon-sm w-icon-sm" aria-hidden="true" />
+            <span>{{ $t('calendar.retry') }}</span>
+          </Button>
         </div>
       </template>
     </div>
@@ -193,19 +208,39 @@
           :placeholder="$t('today.quickAddPlaceholder')" maxlength="200" ref="quickAddInput"
           @keydown.enter.prevent="addTask" />
         <div class="agenda-quick-add-controls">
-          <button v-if="taskStore.availableAIModels.length > 0" type="button"
-            class="agenda-ai-toggle" :class="{ active: taskStore.isAIEnabled && aiEnabled }"
-            :title="$t('today.aiToggle')" @click="toggleAI">
-            <i class="fas fa-wand-magic-sparkles"></i>
+          <Button
+            v-if="taskStore.availableAIModels.length > 0"
+            variant="outline"
+            class="h-control-lg gap-1 px-2.5 text-muted-foreground"
+            :class="taskStore.isAIEnabled && aiEnabled
+              ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+              : ''"
+            :title="$t('today.aiToggle')"
+            @click="toggleAI"
+          >
+            <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span v-if="aiEnabled">{{ aiModelShortName }}</span>
-          </button>
-          <button type="button" class="agenda-ai-split" :class="{ active: shouldSplitTask }"
-            :title="$t('today.splitToggle')" @click="shouldSplitTask = !shouldSplitTask">
-            <i class="fas fa-list-ul"></i>
-          </button>
-          <button type="button" class="agenda-quick-add-btn" :disabled="!newTaskContent.trim()" @click="addTask">
-            <i class="fas fa-paper-plane"></i>
-          </button>
+          </Button>
+          <Button
+            variant="outline"
+            class="h-control-lg gap-1 px-2.5 text-muted-foreground"
+            :class="shouldSplitTask
+              ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+              : ''"
+            :title="$t('today.splitToggle')"
+            @click="shouldSplitTask = !shouldSplitTask"
+          >
+            <List class="h-icon-sm w-icon-sm" aria-hidden="true" />
+          </Button>
+          <IconButton
+            variant="default"
+            class="h-control-lg w-control-lg"
+            :disabled="!newTaskContent.trim()"
+            :label="$t('common.send')"
+            @click="addTask"
+          >
+            <Send class="h-icon-md w-icon-md" aria-hidden="true" />
+          </IconButton>
         </div>
       </div>
       <!-- 新任务进入未计划的反馈 -->
@@ -213,9 +248,9 @@
         <div v-if="unplannedFeedback" class="agenda-quick-add-feedback" role="status">
           <span>{{ $t('today.addedToUnplanned') }}</span>
           <button type="button" class="agenda-feedback-link" @click="viewUnplanned">{{ $t('today.viewUnplanned') }}</button>
-          <button type="button" class="agenda-feedback-close" :aria-label="$t('common.close')" @click="unplannedFeedback = false">
-            <i class="fas fa-times"></i>
-          </button>
+          <IconButton size="icon-sm" class="ml-auto" :label="$t('common.close')" @click="unplannedFeedback = false">
+            <X class="h-icon-sm w-icon-sm" />
+          </IconButton>
         </div>
       </Transition>
     </div>
@@ -229,9 +264,28 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {
+  AlertCircle,
+  BellOff,
+  CalendarCheck,
+  ChevronDown,
+  ChevronRight,
+  Crosshair,
+  History,
+  List,
+  LoaderCircle,
+  Plus,
+  RotateCw,
+  Search,
+  Send,
+  WandSparkles,
+  X
+} from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import AgendaTaskCard from './AgendaTaskCard.vue'
 import TaskPreviewModal from '../TaskPreviewModal.vue'
+import Button from '../ui/button/Button.vue'
+import IconButton from '../ui/button/IconButton.vue'
 import { isLegacyRecurringDateInstance } from '../../utils/task-time-rules.js'
 import { addDaysToKey } from '../../utils/today-agenda.js'
 import { localeCode } from '../../utils/locale-format.js'
@@ -250,7 +304,8 @@ const emit = defineEmits([
   'task-click',
   'load-more',
   'retry',
-  'active-date-change'
+  'active-date-change',
+  'delete-request'
 ])
 
 const { t, locale } = useI18n()
@@ -554,6 +609,10 @@ function locateTask(task) {
 
 function handleScheduleClick(task) {
   emit('task-click', task)
+}
+
+function forwardDeleteRequest(payload) {
+  emit('delete-request', payload)
 }
 
 function handleLoadMore() {

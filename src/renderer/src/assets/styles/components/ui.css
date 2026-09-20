@@ -1,0 +1,31 @@
+/* 基础组件共享样式：Portal 到 body 的内容无法使用 scoped 样式，集中在此 */
+
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.ui-overlay[data-state='open'] {
+  animation: ui-fade-in 150ms ease-out;
+}
+
+.ui-dialog-content[data-state='open'] {
+  animation: ui-pop-in 150ms ease-out;
+}
+
+/* prefers-reduced-motion 由 base.css 全局规则统一降级，这里不重复处理 */

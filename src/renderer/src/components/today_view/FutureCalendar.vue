@@ -3,18 +3,18 @@
     <div class="future-calendar-toolbar">
       <button class="future-calendar-back-btn" type="button" @click="$emit('expand-months', -1)"
         :title="$t('today.calendar.earlierMonths')">
-        <i class="fas fa-chevron-up"></i>
+        <ChevronUp class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('today.calendar.earlierMonths') }}</span>
       </button>
       <button class="future-calendar-back-btn today" type="button" @click="$emit('back-today')"
         :title="$t('today.calendar.backToday')">
-        <i class="fas fa-calendar-day"></i>
+        <CalendarCheck class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('today.calendar.backToday') }}</span>
       </button>
       <button class="future-calendar-back-btn" type="button" @click="$emit('expand-months', 1)"
         :title="$t('today.calendar.laterMonths')">
         <span>{{ $t('today.calendar.laterMonths') }}</span>
-        <i class="fas fa-chevron-down"></i>
+        <ChevronDown class="h-icon-sm w-icon-sm" aria-hidden="true" />
       </button>
     </div>
 
@@ -55,6 +55,7 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { CalendarCheck, ChevronDown, ChevronUp } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { localeCode } from '../../utils/locale-format.js'
 

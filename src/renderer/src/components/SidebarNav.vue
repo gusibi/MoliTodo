@@ -1,45 +1,21 @@
 <template>
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" :aria-label="$t('app.title')">
     <!-- 智能分类 -->
     <div class="nav-main-content">
       <div class="nav-section">
-        <div class="nav-item" :class="{ active: currentCategory === 'today' }" @click="switchCategory('today')">
-          <i class="fas fa-calendar-day"></i>
-          <span>{{ $t('categories.today') }}</span>
-          <span class="nav-count">{{ getCategoryCount('today') }}</span>
-        </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'planned' }" @click="switchCategory('planned')">
-          <i class="fas fa-calendar-week"></i>
-          <span>{{ $t('categories.planned') }}</span>
-          <span class="nav-count">{{ getCategoryCount('planned') }}</span>
-        </div>
-
-        <div class="nav-item" :class="{ active: currentCategory === 'doing' }" @click="switchCategory('doing')">
-          <i class="fas fa-play-circle"></i>
-          <span>{{ $t('categories.doing') }}</span>
-          <span class="nav-count">{{ getCategoryCount('doing') }}</span>
-        </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'paused' }" @click="switchCategory('paused')">
-          <i class="fas fa-pause-circle"></i>
-          <span>{{ $t('categories.paused') }}</span>
-          <span class="nav-count">{{ getCategoryCount('paused') }}</span>
-        </div>
-
-        <div class="nav-item" :class="{ active: currentCategory === 'all' }" @click="switchCategory('all')">
-          <i class="fas fa-list"></i>
-          <span>{{ $t('categories.all') }}</span>
-          <span class="nav-count">{{ getCategoryCount('all') }}</span>
-        </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'inbox' }" @click="switchCategory('inbox')">
-          <i class="fas fa-inbox"></i>
-          <span>{{ $t('categories.inbox') }}</span>
-          <span class="nav-count">{{ getCategoryCount('inbox') }}</span>
-        </div>
-        <div class="nav-item" :class="{ active: currentCategory === 'completed' }" @click="switchCategory('completed')">
-          <i class="fas fa-check-circle"></i>
-          <span>{{ $t('categories.completed') }}</span>
-          <span class="nav-count">{{ getCategoryCount('completed') }}</span>
-        </div>
+        <button
+          v-for="item in categoryItems"
+          :key="item.key"
+          type="button"
+          class="nav-item"
+          :class="{ active: currentCategory === item.key }"
+          :aria-current="currentCategory === item.key ? 'page' : undefined"
+          @click="switchCategory(item.key)"
+        >
+          <CategoryIcon :name="item.key" class="h-icon-md w-icon-md" />
+          <span>{{ $t(item.label) }}</span>
+          <span class="nav-count">{{ getCategoryCount(item.key) }}</span>
+        </button>
       </div>
 
       <div class="nav-section">
@@ -50,12 +26,12 @@
 
     <!-- 底部按钮区 -->
     <div class="nav-section-bottom nav-icon-buttons">
-      <div class="nav-icon-btn" @click="openSettings" :title="$t('settings.title')">
-        <i class="fas fa-cog"></i>
-      </div>
-      <div class="nav-icon-btn" @click="createNewList" :title="$t('lists.newList')">
-        <i class="fas fa-plus"></i>
-      </div>
+      <IconButton class="nav-icon-btn h-10 w-10" :label="$t('settings.title')" @click="openSettings">
+        <Settings class="h-icon-lg w-icon-lg" />
+      </IconButton>
+      <IconButton class="nav-icon-btn h-10 w-10" :label="$t('lists.newList')" @click="createNewList">
+        <Plus class="h-icon-lg w-icon-lg" />
+      </IconButton>
     </div>
   </nav>
 </template>
@@ -63,8 +39,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Plus, Settings } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import ListSidebar from './ListSidebar.vue'
+import CategoryIcon from './ui/CategoryIcon.vue'
+import IconButton from './ui/button/IconButton.vue'
 
 // Props
 const props = defineProps({
@@ -89,6 +68,17 @@ const taskStore = useTaskStore()
 // Refs
 const listSidebar = ref(null)
 
+// 分类导航项：图标由 CategoryIcon 统一映射
+const categoryItems = [
+  { key: 'today', label: 'categories.today' },
+  { key: 'planned', label: 'categories.planned' },
+  { key: 'doing', label: 'categories.doing' },
+  { key: 'paused', label: 'categories.paused' },
+  { key: 'all', label: 'categories.all' },
+  { key: 'inbox', label: 'categories.inbox' },
+  { key: 'completed', label: 'categories.completed' }
+]
+
 // Methods
 const switchCategory = (category) => {
   emit('category-change', category)
@@ -99,11 +89,10 @@ const openSettings = () => {
 }
 
 const createNewList = () => {
-  console.log("createNewList in SidebarNav clicked")
   if (listSidebar.value) {
     listSidebar.value.openCreateDialog()
   } else {
-    console.error("ListSidebar component instance is not available.")
+    console.error('ListSidebar component instance is not available.')
   }
 }
 

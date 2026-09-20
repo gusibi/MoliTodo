@@ -85,7 +85,7 @@
   --shadow-2xl: 0px 2px 0px 0px hsl(203 89% 53% / 0.00);
   
   /* Typography */
-  --font-sans: 'Open Sans', sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
 }

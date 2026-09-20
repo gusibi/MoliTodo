@@ -400,6 +400,10 @@
   @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-primary-foreground;
 }
 
+.flat-task-checkbox input[type="checkbox"]:focus-visible + .flat-checkbox-label {
+  @apply ring-2 ring-ring ring-offset-1 ring-offset-background;
+}
+
 /* Task Details */
 .flat-task-details {
   @apply flex-1 min-w-0 ;
@@ -494,47 +498,7 @@
   @apply bg-warning/10 text-warning;
 }
 
-/* Task Action Buttons */
-.flat-task-btn {
-  @apply inline-flex items-center justify-center w-7 h-4 border-0 rounded-md cursor-pointer transition-all duration-200 text-xs flex-shrink-0 opacity-100 bg-muted text-muted-foreground;
-}
-
-.flat-task-item:hover .flat-task-btn,
-.flat-task-item-editing .flat-task-btn {
-  @apply opacity-100;
-}
-
-.flat-task-btn:hover {
-  @apply bg-accent;
-}
-
-.flat-task-btn-start:hover {
-  @apply bg-success/10 text-success;
-}
-
-.flat-task-btn-pause:hover {
-  @apply bg-warning/10 text-warning;
-}
-
-.flat-task-btn-resume:hover {
-  @apply bg-success/10 text-success;
-}
-
-.flat-task-btn-complete:hover {
-  @apply bg-success/10 text-success;
-}
-
-.flat-task-btn-restart:hover {
-  @apply bg-destructive/10 text-destructive;
-}
-
-.flat-task-btn-edit:hover {
-  @apply bg-secondary text-secondary-foreground;
-}
-
-.flat-task-btn-delete:hover {
-  @apply bg-destructive/10 text-destructive;
-}
+/* Task Action Buttons - 使用基础组件 IconButton，尺寸与焦点规则由其统一提供 */
 
 /* Search Highlight */
 .flat-task-list-container :deep(mark) {
@@ -659,4 +623,48 @@
 
 .flat-task-item-selected:hover {
   @apply bg-primary/15;
+}
+
+/* ===== Today 任务行试点呈现（variant="today"） ===== */
+
+/* 正文层级：正文 14px / 描述 12px / 元信息 12px */
+.flat-task-item--today .flat-task-title {
+  @apply text-sm font-medium leading-snug;
+}
+
+.flat-task-item--today .flat-task-description {
+  @apply text-xs my-1 leading-relaxed;
+}
+
+.flat-task-item--today .flat-task-time-info {
+  @apply gap-1.5 mt-1.5;
+}
+
+.flat-task-item--today .flat-task-time,
+.flat-task-item--today .flat-task-reminder-time,
+.flat-task-item--today .flat-task-recurring-icon {
+  @apply text-xs px-1.5 py-0.5;
+}
+
+/* 勾选框点击区域不小于 28×28，图形仍为 16px */
+.flat-task-item--today .flat-task-checkbox {
+  @apply flex items-center justify-center w-control-sm h-control-sm -m-1.5;
+}
+
+.flat-task-item--today .flat-checkbox-label::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+}
+
+/* 次要操作在悬停、行内焦点或键盘聚焦时出现；始终保留空间，不挤动正文 */
+.flat-task-actions-reveal {
+  @apply opacity-0 transition-opacity duration-150;
+}
+
+.flat-task-item--today:hover .flat-task-actions-reveal,
+.flat-task-item--today:focus-within .flat-task-actions-reveal,
+.flat-task-item--today.flat-task-item-hovered .flat-task-actions-reveal {
+  @apply opacity-100;
 }

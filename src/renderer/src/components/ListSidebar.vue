@@ -4,23 +4,24 @@
 
   <!-- 清单项直接输出，不包装额外容器 -->
   <template v-for="list in sortedLists" :key="list.id">
-    <div class="nav-item"
+    <button type="button" class="nav-item"
       :class="{ 
         active: currentListId === list.id, 
         'is-default': list.isDefault, 
         'has-tasks': getListTaskCount(list.id) > 0,
         'drag-over': dragOverListId === list.id
       }"
+      :aria-current="currentListId === list.id ? 'page' : undefined"
       @click="selectList(list.id)" 
       @contextmenu.prevent="showListContextMenu(list, $event)"
       @dragover.prevent="handleDragOver($event, list.id)"
       @dragleave="handleDragLeave"
       @drop="handleDrop($event, list.id)">
-      <i :class="getListIconClass(list.icon)" :style="{ color: list.color }"></i>
+      <ListIcon :name="list.icon" :color="list.color" class="h-icon-md w-icon-md" />
       <span>{{ list.name }}</span>
       <span v-if="getListTaskCount(list.id) > 0" class="nav-count" :class="{ 'has-active': hasActiveTasks(list.id) }">{{
         getListTaskCount(list.id) }}</span>
-    </div>
+    </button>
   </template>
 
   <!-- 使用 Teleport 将弹出元素传送到 body -->
@@ -32,17 +33,17 @@
     <!-- 清单上下文菜单 -->
     <div v-if="showContextMenu" class="nav-context-menu" :style="contextMenuStyle" @click.stop>
       <div class="nav-context-item" @click="editList(contextMenuList)">
-        <i class="fas fa-edit"></i>
+        <Pencil class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('lists.rename') }}</span>
       </div>
       <div class="nav-context-item" @click="duplicateList(contextMenuList)">
-        <i class="fas fa-copy"></i>
+        <Copy class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('lists.duplicate') }}</span>
       </div>
       <div class="nav-context-divider"></div>
       <div class="nav-context-item danger" @click="deleteList(contextMenuList)"
         :class="{ disabled: contextMenuList?.isDefault }">
-        <i class="fas fa-trash"></i>
+        <Trash2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('lists.delete') }}</span>
       </div>
     </div>
@@ -82,14 +83,16 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Copy, Pencil, Trash2 } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import ListCreateDialog from './ListCreateDialog.vue'
-import { getListIconClass } from '@/utils/icon-utils'
+import ListIcon from './ui/ListIcon.vue'
 
 export default {
   name: 'ListSidebar',
   components: {
-    ListCreateDialog
+    ListCreateDialog,
+    ListIcon
   },
   setup() {
     const { t } = useI18n()
@@ -303,7 +306,6 @@ export default {
       sortedLists,
 
       // 方法
-      getListIconClass,
       selectList,
       getListTaskCount,
       hasActiveTasks,

@@ -77,17 +77,9 @@
   @apply ml-2 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-200 flex-shrink-0;
 }
 
-/* 按钮样式 */
+/* 按钮外观由基础组件 IconButton 与调用处工具类统一提供 */
 .task-manager-action-btn {
-  @apply w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-opacity-50;
-}
-
-.task-manager-action-btn.active {
-  @apply bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:border-primary/30;
-}
-
-.task-manager-action-btn i {
-  @apply text-sm;
+  @apply transition-colors duration-200;
 }
 
 /* 搜索区域样式 */
@@ -433,32 +425,6 @@
 }
 
 /* ========================================
-   按钮状态切换动画
-   ======================================== */
-
-.task-manager-action-btn {
-  @apply w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.task-manager-action-btn:hover {
-  @apply text-foreground bg-accent;
-  transform: translateY(-1px);
-}
-
-.task-manager-action-btn:active {
-  transform: translateY(0) scale(0.95);
-}
-
-.task-manager-action-btn.active {
-  @apply bg-primary/10 text-primary border-primary/20;
-}
-
-.task-manager-action-btn.active:hover {
-  @apply bg-primary/20 border-primary/30;
-}
-
-/* ========================================
    响应式设计
    ======================================== */
 
@@ -511,6 +477,6 @@
   @apply flex items-center gap-2 mx-7 mb-2 px-3 py-1.5 rounded-lg bg-muted/60 text-2xs text-muted-foreground;
 }
 
-.task-manager-search-scope-hint i {
+.task-manager-search-scope-hint svg {
   @apply text-primary/70;
 }

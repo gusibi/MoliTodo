@@ -6,7 +6,8 @@
         :show-completed="showCompleted"
         :initial-loading="(!initialLoaded && loadingCount > 0) || (taskStore.loading && taskStore.tasks.length === 0)"
         :loading-more="loadingCount > 0" :has-error="hasLoadError" @task-click="handleEditTask" @load-more="loadMoreFuture"
-        @retry="retryFailed" @active-date-change="handleActiveDateChange" />
+        @retry="retryFailed" @active-date-change="handleActiveDateChange"
+        @delete-request="requestTaskDelete" />
     </div>
 
     <!-- 右侧 Future Calendar（宽屏常驻） -->
@@ -17,10 +18,16 @@
     </aside>
 
     <!-- 窄屏：日历开关 -->
-    <button v-if="isNarrow" type="button" class="today-calendar-toggle" :title="$t('today.calendar.toggle')"
-      :aria-expanded="drawerOpen" ref="calendarToggleBtn" @click="openDrawer">
-      <i class="fas fa-calendar-week"></i>
-    </button>
+    <IconButton
+      v-if="isNarrow"
+      class="today-calendar-toggle"
+      :label="$t('today.calendar.toggle')"
+      :aria-expanded="drawerOpen"
+      ref="calendarToggleBtn"
+      @click="openDrawer"
+    >
+      <CalendarRange class="h-icon-md w-icon-md" />
+    </IconButton>
 
     <!-- 窄屏日历抽屉 -->
     <Teleport to="body">
@@ -30,10 +37,9 @@
             ref="drawerEl" @keydown.escape.stop.prevent="closeDrawer" @keydown.tab="handleDrawerTab">
             <div class="today-calendar-drawer-header">
               <span class="today-calendar-drawer-title">{{ $t('today.calendar.title') }}</span>
-              <button type="button" class="today-calendar-drawer-close" :aria-label="$t('common.close')"
-                @click="closeDrawer">
-                <i class="fas fa-times"></i>
-              </button>
+              <IconButton class="today-calendar-drawer-close" :label="$t('common.close')" @click="closeDrawer">
+                <X class="h-icon-md w-icon-md" />
+              </IconButton>
             </div>
             <FutureCalendar :month-window="monthWindow" :dots="calendarDots" :today-key="todayKey"
               :selected-key="selectedDateKey" @select-date="(key) => { handleSelectDate(key); closeDrawer() }"
@@ -47,20 +53,38 @@
     <Transition name="today-edit" appear>
       <div v-if="editorOpen" class="today-edit-panel">
         <TaskEditVertical :task="selectedTask" :is-editing="true" @update-task="handleUpdateTask"
-          @cancel-edit="closeEditor" @delete-task="handleDeleteTask" />
+          @cancel-edit="closeEditor" @delete-task="requestEditorDelete" />
       </div>
     </Transition>
+
+    <!-- 统一危险确认：任务行与编辑器删除共用同一流程 -->
+    <AlertDialog
+      :open="deleteDialogOpen"
+      :title="$t('tasks.deleteTask')"
+      :description="$t('tasks.confirmDelete')"
+      :cancel-label="$t('common.cancel')"
+      :confirm-label="$t('common.delete')"
+      confirm-variant="destructive"
+      :loading="deleteLoading"
+      :error="deleteError"
+      @update:open="(value) => { if (!value) deleteDialogOpen = false }"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { CalendarRange, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useTodayOverview } from '@/composables/useTodayOverview'
 import AgendaView from './AgendaView.vue'
 import FutureCalendar from './FutureCalendar.vue'
 import TaskEditVertical from '../TaskEditVertical.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
+import IconButton from '../ui/button/IconButton.vue'
 import { isVirtualInstance } from '../../utils/today-agenda.js'
 
 /**
@@ -252,19 +276,98 @@ async function handleUpdateTask(taskData) {
   }
 }
 
-async function handleDeleteTask(task) {
-  if (!confirm(t('tasks.confirmDelete'))) return
+// ---------- 统一删除确认 ----------
+
+const deleteDialogOpen = ref(false)
+const deleteTarget = ref(null)
+const deleteLoading = ref(false)
+const deleteError = ref('')
+let deleteTrigger = null
+let deleteNextTaskKey = null
+
+function cssEscape(value) {
+  if (window.CSS && window.CSS.escape) return window.CSS.escape(value)
+  return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+}
+
+// 记录相邻任务，成功删除后据此恢复焦点（触发控件随任务移除）
+function captureNextTaskKey(trigger) {
+  const wrapper = trigger?.closest?.('.agenda-card-wrapper')
+  if (!wrapper) return null
+  const wrappers = [...document.querySelectorAll('.agenda-card-wrapper')]
+  const index = wrappers.indexOf(wrapper)
+  if (index === -1) return null
+  const neighbor = wrappers[index + 1] || wrappers[index - 1]
+  return neighbor?.getAttribute('data-task-key') || null
+}
+
+function openDeleteDialog(task, trigger) {
+  deleteTarget.value = task
+  deleteTrigger = trigger || null
+  deleteNextTaskKey = captureNextTaskKey(trigger)
+  deleteError.value = ''
+  deleteLoading.value = false
+  deleteDialogOpen.value = true
+}
+
+// 任务行删除入口
+function requestTaskDelete({ task, trigger }) {
+  openDeleteDialog(task, trigger)
+}
+
+// 编辑器删除入口：与任务行共用同一确认流程
+function requestEditorDelete(task) {
+  openDeleteDialog(task, null)
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value || deleteLoading.value) return
+  const task = deleteTarget.value
+  deleteLoading.value = true
+  deleteError.value = ''
   try {
-    if (isVirtualInstance(task)) {
-      await taskStore.deleteRecurringInstance(task.seriesId, task.occurrenceDate)
-    } else {
-      await taskStore.deleteTask(task.id)
+    // store 方法以 { success, error } 汇报结果，不抛错；失败时保留弹窗与上下文
+    const result = isVirtualInstance(task)
+      ? await taskStore.deleteRecurringInstance(task.seriesId, task.occurrenceDate)
+      : await taskStore.deleteTask(task.id)
+
+    if (!result || result.success === false) {
+      deleteError.value = t('tasks.deleteFailed', { error: result?.error || '' })
+      return
     }
-    closeEditor()
+
+    deleteDialogOpen.value = false
+    deleteTarget.value = null
+    if (selectedTask.value && selectedTask.value.id === task.id) closeEditor()
+    restoreFocusAfterDelete()
   } catch (error) {
     console.error('[TodayOverview] 删除任务失败:', error)
-    alert(t('today.saveFailed', { error: error.message }))
+    deleteError.value = t('tasks.deleteFailed', { error: error?.message || '' })
+  } finally {
+    deleteLoading.value = false
   }
+}
+
+function cancelDelete() {
+  deleteTarget.value = null
+  deleteError.value = ''
+  nextTick(() => {
+    if (deleteTrigger && document.contains(deleteTrigger)) deleteTrigger.focus()
+  })
+}
+
+function restoreFocusAfterDelete() {
+  nextTick(() => {
+    const next = deleteNextTaskKey
+      ? document.querySelector(`.agenda-card-wrapper[data-task-key="${cssEscape(deleteNextTaskKey)}"]`)
+      : null
+    const focusable = next?.querySelector('input[type="checkbox"], button')
+    if (focusable) {
+      focusable.focus()
+      return
+    }
+    agendaRef.value?.focusQuickAdd?.()
+  })
 }
 
 // ---------- 计数与搜索范围上报 ----------

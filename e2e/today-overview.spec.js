@@ -447,3 +447,136 @@ test('仅提醒且已过期的任务出现在已过期提醒分组', async ({ ap
   await expect(window.locator('[data-agenda-section="unplanned"] .agenda-section-count')).toHaveText('0');
   await expect(window.locator('.task-manager-category-count')).toContainText('今日待处理 1 项');
 });
+
+/* ===== 统一删除确认（Today 试点阶段 0） ===== */
+
+// 展示已完成任务，返回目标卡片
+async function showCompletedCard(window, content) {
+  await window.locator('.task-manager-action-btn[title="显示已完成任务"]').click();
+  return window.locator('.flat-task-item', { hasText: content });
+}
+
+test('任务删除确认：取消不删除且焦点返回触发控件', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: '待删除任务', dueDate: localKey(new Date()), status: 'done' }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  const card = await showCompletedCard(window, '待删除任务');
+  const deleteBtn = card.getByRole('button', { name: '删除任务' });
+  await deleteBtn.click();
+
+  const dialog = window.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('确定要删除这个任务吗');
+
+  await dialog.getByRole('button', { name: '取消' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(card).toBeVisible();
+  await expect(deleteBtn).toBeFocused();
+});
+
+test('任务删除确认：Escape 取消不删除', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: 'Escape 保留任务', dueDate: localKey(new Date()), status: 'done' }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  const card = await showCompletedCard(window, 'Escape 保留任务');
+  await card.getByRole('button', { name: '删除任务' }).click();
+  await expect(window.getByRole('alertdialog')).toBeVisible();
+
+  await window.keyboard.press('Escape');
+  await expect(window.getByRole('alertdialog')).toHaveCount(0);
+  await expect(card).toBeVisible();
+});
+
+test('任务删除确认：确认后删除并持久化，焦点回到有效位置', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: '确认删除任务', dueDate: localKey(new Date()), status: 'done' }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  const card = await showCompletedCard(window, '确认删除任务');
+  await card.getByRole('button', { name: '删除任务' }).click();
+  const dialog = window.getByRole('alertdialog');
+  await dialog.getByRole('button', { name: '删除', exact: true }).click();
+
+  await expect(window.getByRole('alertdialog')).toHaveCount(0);
+  await expect(window.locator('.flat-task-item', { hasText: '确认删除任务' })).toHaveCount(0);
+
+  const persisted = await app.electronApp.evaluate(async () => {
+    const tasks = await global.__moliTodoApp.taskService.getAllTasks();
+    return tasks.map((t) => t.content);
+  });
+  expect(persisted).not.toContain('确认删除任务');
+
+  // 无相邻任务时焦点回到 Agenda 新建入口
+  await expect(window.locator('.agenda-quick-add-input')).toBeFocused();
+});
+
+test('任务删除失败：显示错误、任务保留并可重试', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: '删除会失败', dueDate: localKey(new Date()), status: 'done' }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 在服务边界注入一次失败，不增加生产测试开关
+  await app.electronApp.evaluate(() => {
+    const moli = global.__moliTodoApp;
+    const original = moli.taskService.deleteTask.bind(moli.taskService);
+    moli.__restoreDeleteTask = () => { moli.taskService.deleteTask = original; };
+    let failed = false;
+    moli.taskService.deleteTask = async (id) => {
+      if (!failed) {
+        failed = true;
+        throw new Error('injected delete failure');
+      }
+      return original(id);
+    };
+  });
+
+  const card = await showCompletedCard(window, '删除会失败');
+  await card.getByRole('button', { name: '删除任务' }).click();
+  const dialog = window.getByRole('alertdialog');
+  await dialog.getByRole('button', { name: '删除', exact: true }).click();
+
+  // 失败：弹窗保留、显示错误、任务仍在
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('alert')).toContainText('删除失败');
+  await expect(card).toBeVisible();
+
+  // 重试成功
+  await dialog.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(window.getByRole('alertdialog')).toHaveCount(0);
+  await expect(window.locator('.flat-task-item', { hasText: '删除会失败' })).toHaveCount(0);
+
+  await app.electronApp.evaluate(() => global.__moliTodoApp.__restoreDeleteTask?.());
+});
+
+test('Sidebar 导航使用可访问的当前项语义并能切换分类', async ({ window }) => {
+  await window.reload();
+  await waitForToday(window);
+
+  const nav = window.getByRole('navigation');
+  const todayItem = nav.getByRole('button', { name: /今天/ });
+  await expect(todayItem).toHaveAttribute('aria-current', 'page');
+
+  await nav.getByRole('button', { name: /全部/ }).click();
+  await expect(nav.getByRole('button', { name: /全部/ })).toHaveAttribute('aria-current', 'page');
+  await expect(window.locator('.task-manager-category-name')).toContainText('全部');
+});
+
+test('Header 图标按钮具有可访问名称', async ({ window }) => {
+  await window.reload();
+  await waitForToday(window);
+
+  await expect(window.getByRole('button', { name: '搜索任务...' })).toBeVisible();
+  await expect(window.getByRole('button', { name: '显示已完成任务' })).toBeVisible();
+  await expect(window.getByRole('button', { name: '设置' })).toBeVisible();
+  await expect(window.getByRole('button', { name: '新建清单' })).toBeVisible();
+});

@@ -20,9 +20,10 @@
 
 /* 导航项 */
 .nav-item {
-  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
+  @apply flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg cursor-pointer text-left;
   @apply text-sidebar-foreground hover:bg-sidebar-accent;
   @apply transition-colors duration-150;
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background;
 }
 
 /* 暗色主题下的导航项优化 */
@@ -52,9 +53,8 @@
 }
 
 /* 导航项图标 */
-.nav-item i {
-  @apply w-5 h-5 mr-3 text-current flex-shrink-0;
-  @apply flex items-center justify-center;
+.nav-item svg {
+  @apply mr-3 text-current flex-shrink-0;
 }
 
 /* 导航项文本 */
@@ -97,12 +97,8 @@
 }
 
 .nav-icon-btn {
-  @apply w-10 h-10 flex items-center justify-center rounded-lg cursor-pointer;
+  @apply rounded-lg;
   @apply text-sidebar-foreground hover:bg-sidebar-accent transition-colors;
-}
-
-.nav-icon-btn i {
-  @apply text-base;
 }
 
 /* 清单项特殊样式 */

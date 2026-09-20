@@ -1,17 +1,32 @@
 <template>
   <div class="agenda-task-card">
-    <FlatTaskItem :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
-      :badges="badges" @task-click="(t) => $emit('task-click', t)" />
-    <button v-if="showSchedule" type="button" class="agenda-task-schedule-btn"
-      :title="$t('today.scheduleAction')" @click.stop="$emit('schedule')">
-      <i class="fas fa-calendar-plus"></i>
+    <FlatTaskItem
+      :task="task"
+      :search-query="searchQuery"
+      :time-update-trigger="timeUpdateTrigger"
+      :badges="badges"
+      variant="today"
+      @task-click="(t) => $emit('task-click', t)"
+      @delete-request="(payload) => $emit('delete-request', payload)"
+    />
+    <Button
+      v-if="showSchedule"
+      type="button"
+      variant="outline"
+      size="sm"
+      class="agenda-task-schedule-btn"
+      @click.stop="$emit('schedule')"
+    >
+      <CalendarPlus class="h-icon-sm w-icon-sm" aria-hidden="true" />
       <span>{{ $t('today.scheduleAction') }}</span>
-    </button>
+    </Button>
   </div>
 </template>
 
 <script setup>
+import { CalendarPlus } from '@lucide/vue'
 import FlatTaskItem from '../FlatTaskItem.vue'
+import Button from '../ui/button/Button.vue'
 
 defineProps({
   task: { type: Object, required: true },
@@ -21,5 +36,5 @@ defineProps({
   showSchedule: { type: Boolean, default: false }
 })
 
-defineEmits(['task-click', 'schedule'])
+defineEmits(['task-click', 'schedule', 'delete-request'])
 </script>

@@ -1,45 +1,58 @@
 <template>
   <div class="flat-task-item-wrapper">
-    <li class="flat-task-item" :class="{
-      'flat-task-item-completed': task.status === 'done',
-      'flat-task-item-editing': isEditing,
-      'flat-task-item-hovered': isHovered,
-      'flat-task-item-dragging': isDragging,
-      'flat-task-item-selected': isSelected
-    }" 
-    @click="handleTaskClick" 
-    @mouseenter="$emit('mouseenter')" 
-    @mouseleave="$emit('mouseleave')"
-    draggable="true"
-    @dragstart="handleDragStart"
-    @dragend="handleDragEnd">
-
-      <!-- 状态指示小红点 -->
-      <div class="flat-task-status-indicator" :class="{
-        'flat-task-status-todo': task.status === 'todo',
-        'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
-        'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
-        'flat-task-status-paused': task.status === 'paused',
-        'flat-task-status-done': task.status === 'done'
-      }">
-      </div>
+    <li
+      class="flat-task-item"
+      :class="{
+        'flat-task-item-completed': task.status === 'done',
+        'flat-task-item-editing': isEditing,
+        'flat-task-item-hovered': isHovered,
+        'flat-task-item-dragging': isDragging,
+        'flat-task-item-selected': isSelected,
+        'flat-task-item--today': isToday
+      }"
+      @click="handleTaskClick"
+      @mouseenter="$emit('mouseenter')"
+      @mouseleave="$emit('mouseleave')"
+      draggable="true"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd"
+    >
+      <!-- 状态指示小红点（装饰性，语义由文案与图标承担） -->
+      <div
+        class="flat-task-status-indicator"
+        aria-hidden="true"
+        :class="{
+          'flat-task-status-todo': task.status === 'todo',
+          'flat-task-status-doing': task.status === 'doing' && !isTaskOvertime(task),
+          'flat-task-status-overtime': task.status === 'doing' && isTaskOvertime(task),
+          'flat-task-status-paused': task.status === 'paused',
+          'flat-task-status-done': task.status === 'done'
+        }"
+      ></div>
 
       <!-- 任务左侧部分（包含勾选框和文本） -->
       <div class="flat-task-left">
         <!-- 多选模式下且显示选择复选框时 -->
         <div v-if="showSelectCheckbox" class="flat-task-select-checkbox" @click.stop>
-          <input 
-            type="checkbox" 
-            :id="`select-task-${task.id}`" 
+          <input
+            :id="`select-task-${task.id}`"
+            type="checkbox"
             :checked="isSelected"
+            :aria-label="task.content"
             @change="$emit('select-change')"
           />
           <label :for="`select-task-${task.id}`" class="flat-select-checkbox-label"></label>
         </div>
-        <!-- 圆形勾选框 - 默认显示完成状态 -->
+        <!-- 圆形勾选框 - 默认显示完成状态（保持任务完成语义） -->
         <div v-else class="flat-task-checkbox">
-          <input type="checkbox" :id="`flat-task-${task.id}`" :checked="task.status === 'done'"
-            @change="handleToggleComplete" @click.stop />
+          <input
+            :id="`flat-task-${task.id}`"
+            type="checkbox"
+            :checked="task.status === 'done'"
+            :aria-label="task.status === 'done' ? $t('tasks.markIncomplete') : $t('tasks.markComplete')"
+            @change="handleToggleComplete"
+            @click.stop
+          />
           <label :for="`flat-task-${task.id}`" class="flat-checkbox-label" @click.stop></label>
         </div>
 
@@ -52,83 +65,113 @@
           <div class="flat-task-time-info">
             <!-- 重复任务图标（模板或实例） -->
             <div v-if="task.recurrence || task.seriesId" class="flat-task-recurring-icon">
-              <i class="fas fa-repeat"></i>
+              <Repeat class="h-icon-sm w-icon-sm" />
             </div>
-            
+
             <!-- 安排 / 截止时间 -->
-            <div class="flat-task-reminder-time" v-if="formatTaskTimeInfo(task)" :class="{
-              'flat-task-time-overdue': isTaskTimeOverdue(task)
-            }">
-              <i class="fas fa-calendar"></i>
+            <div
+              class="flat-task-reminder-time"
+              v-if="formatTaskTimeInfo(task)"
+              :class="{ 'flat-task-time-overdue': isTaskTimeOverdue(task) }"
+            >
+              <Calendar class="h-icon-sm w-icon-sm" />
               <span>{{ formatTaskTimeInfo(task) }}</span>
             </div>
 
             <!-- 附加徽标（分组原因 / 重复任务等） -->
-            <span v-for="(badge, index) in badges" :key="index" class="flat-task-badge"
-              :class="badge.tone ? `flat-task-badge-${badge.tone}` : ''">
+            <span
+              v-for="(badge, index) in badges"
+              :key="index"
+              class="flat-task-badge"
+              :class="badge.tone ? `flat-task-badge-${badge.tone}` : ''"
+            >
               {{ badge.text }}
             </span>
 
             <!-- 进行时间 -->
             <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="flat-task-time flat-task-time-doing">
-              <i class="fas fa-play"></i>
+              <Play class="h-icon-sm w-icon-sm" />
               <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
             <div v-else-if="task.status === 'doing' && isTaskOvertime(task)"
               class="flat-task-time flat-task-time-overtime">
-              <i class="fas fa-clock"></i>
+              <Clock class="h-icon-sm w-icon-sm" />
               <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
             </div>
             <div v-else-if="task.status === 'paused'" class="flat-task-time flat-task-time-paused">
-              <i class="fas fa-pause"></i>
+              <Pause class="h-icon-sm w-icon-sm" />
               <span>{{ formatDuration(task.totalDuration || 0) }}</span>
             </div>
             <div v-else-if="task.status === 'done' && task.totalDuration"
               class="flat-task-time flat-task-time-completed">
-              <i class="fas fa-check"></i>
+              <Check class="h-icon-sm w-icon-sm" />
               <span>{{ formatDuration(task.totalDuration) }}</span>
             </div>
-
           </div>
         </div>
       </div>
 
-      <!-- 任务右侧标签和操作 - 单行水平对齐 -->
-      <div class="flat-task-right">
-        <!-- 任务操作按钮 -->
-        <button v-if="task.status === 'todo'" class="flat-task-btn flat-task-btn-start" @click.stop="handleStartTask"
-          title="开始">
-          <i class="fas fa-play"></i>
-        </button>
-        <button v-if="task.status === 'doing'" class="flat-task-btn flat-task-btn-pause" @click.stop="handlePauseTask"
-          title="暂停">
-          <i class="fas fa-pause"></i>
-        </button>
-        <button v-if="task.status === 'paused'" class="flat-task-btn flat-task-btn-resume"
-          @click.stop="handleResumeTask" title="继续">
-          <i class="fas fa-play"></i>
-        </button>
-        <button v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-restart"
-          @click.stop="handleRestartTask" title="重新开始">
-          <i class="fas fa-redo"></i>
-        </button>
-        <button v-if="task.status === 'done'" class="flat-task-btn flat-task-btn-delete" @click.stop="handleDeleteTask"
-          title="删除">
-          <i class="fas fa-trash"></i>
-        </button>
+      <!-- 任务右侧操作 - 单行水平对齐；紧凑外观不挤动正文 -->
+      <div class="flat-task-right" :class="{ 'flat-task-actions-reveal': isToday }">
+        <IconButton
+          v-if="task.status === 'todo'"
+          size="icon-sm"
+          class="text-muted-foreground hover:bg-success/10 hover:text-success"
+          :label="$t('tasks.start')"
+          @click.stop="handleStartTask"
+        >
+          <Play class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton
+          v-if="task.status === 'doing'"
+          size="icon-sm"
+          class="text-muted-foreground hover:bg-warning/10 hover:text-warning"
+          :label="$t('tasks.pause')"
+          @click.stop="handlePauseTask"
+        >
+          <Pause class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton
+          v-if="task.status === 'paused'"
+          size="icon-sm"
+          class="text-muted-foreground hover:bg-success/10 hover:text-success"
+          :label="$t('tasks.resume')"
+          @click.stop="handleResumeTask"
+        >
+          <Play class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton
+          v-if="task.status === 'done'"
+          size="icon-sm"
+          class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          :label="$t('tasks.restart')"
+          @click.stop="handleRestartTask"
+        >
+          <RotateCcw class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton
+          v-if="task.status === 'done'"
+          size="icon-sm"
+          class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          :label="$t('tasks.deleteTask')"
+          @click.stop="handleDeleteTask($event)"
+        >
+          <Trash2 class="h-icon-sm w-icon-sm" />
+        </IconButton>
       </div>
     </li>
   </div>
 </template>
 
 <script setup>
-
+import { Calendar, Check, Clock, Pause, Play, Repeat, RotateCcw, Trash2 } from '@lucide/vue'
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isVirtualInstance } from '../utils/today-agenda.js'
 import { localeCode } from '../utils/locale-format.js'
+import IconButton from './ui/button/IconButton.vue'
 
 const { t, locale } = useI18n()
 
@@ -208,6 +251,11 @@ const props = defineProps({
   badges: {
     type: Array,
     default: () => []
+  },
+  // 'default'：普通列表/看板/日历既有行为；'today'：Today 试点呈现与删除确认
+  variant: {
+    type: String,
+    default: 'default'
   }
 })
 
@@ -218,8 +266,11 @@ const emit = defineEmits([
   'mouseenter',
   'mouseleave',
   'drag-start',
-  'drag-end'
+  'drag-end',
+  'delete-request'
 ])
+
+const isToday = computed(() => props.variant === 'today')
 
 // 使用 taskStore
 const taskStore = useTaskStore()
@@ -250,12 +301,12 @@ const handleDragStart = (event) => {
     currentListId: props.task.listId
   }))
   event.dataTransfer.effectAllowed = 'move'
-  
+
   // 发送拖拽开始事件
   emit('drag-start', props.task)
 }
 
-const handleDragEnd = (event) => {
+const handleDragEnd = () => {
   isDragging.value = false
   // 发送拖拽结束事件
   emit('drag-end', props.task)
@@ -266,8 +317,6 @@ const getCurrentDurationWithTrigger = (task) => {
   props.timeUpdateTrigger // 触发响应式更新
   return getCurrentDuration(task)
 }
-
-
 
 // 获取高亮内容
 const getHighlightedContent = (task) => {
@@ -282,8 +331,6 @@ const getHighlightedNote = (task) => {
   const regex = new RegExp(`(${props.searchQuery})`, 'gi')
   return task.metadata.note.replace(regex, '<mark>$1</mark>')
 }
-
-
 
 // 事件处理函数
 const handleTaskClick = () => {
@@ -357,8 +404,13 @@ const handleRestartTask = async () => {
   }
 }
 
-const handleDeleteTask = async () => {
-  if (!confirm('确定要删除这个任务吗？')) return
+const handleDeleteTask = async (event) => {
+  if (isToday.value) {
+    // Today 试点：删除统一走外部 AlertDialog，携带触发控件以便成功/取消后恢复焦点
+    emit('delete-request', { task: props.task, trigger: event?.currentTarget || null })
+    return
+  }
+  if (!confirm(t('tasks.confirmDelete'))) return
   if (isVirtual.value) {
     await taskStore.deleteRecurringInstance(props.task.seriesId, props.task.occurrenceDate)
     return

@@ -17,6 +17,7 @@
     "warning": "警告",
     "info": "信息",
     "search": "搜索任务...",
+    "send": "发送",
     "status": {
       "todo": "待办",
       "doing": "进行中",
@@ -257,6 +258,10 @@
     "deleteTask": "删除任务",
     "markComplete": "标记完成",
     "markIncomplete": "标记未完成",
+    "start": "开始",
+    "pause": "暂停",
+    "resume": "继续",
+    "restart": "重新开始",
     "reminderTime": "提醒时间",
     "scheduleDeadline": "安排 / 截止",
     "deadlinePrefix": "截止 {time}",
@@ -287,6 +292,7 @@
     "creating": "创建中...",
     "createAllTasks": "创建所有任务",
     "confirmDelete": "确定要删除这个任务吗？",
+    "deleteFailed": "删除失败：{error}",
     "hideCompleted": "隐藏已完成任务",
     "showCompleted": "显示已完成任务"
   },

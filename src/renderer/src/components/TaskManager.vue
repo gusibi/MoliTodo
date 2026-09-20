@@ -11,7 +11,9 @@
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
         <div class="task-manager-category-title" @click="handleEasterEggClick">
-          <i :class="getCurrentIcon()" class="task-manager-category-icon" :style="getCurrentIconStyle()"></i>
+          <ListIcon v-if="currentList" :name="currentList.icon" :color="currentList.color"
+            :size="20" class="task-manager-category-icon" />
+          <CategoryIcon v-else :name="currentCategory" :size="20" class="task-manager-category-icon" />
           <h1 class="task-manager-category-name">{{ getCurrentTitle() }}</h1>
           <span v-if="isTodayBranch && todayPendingCount !== null" class="task-manager-category-count">
             {{ $t('today.pendingCount', { count: todayPendingCount }) }}
@@ -25,53 +27,61 @@
           <div class="task-manager-search-container">
             <!-- 搜索框 -->
             <div v-if="showSearchBox" class="task-manager-inline-search">
-              <i class="fas fa-search task-manager-inline-search-icon"></i>
+              <Search class="task-manager-inline-search-icon h-icon-sm w-icon-sm" aria-hidden="true" />
               <input v-model="searchQuery" type="text" :placeholder="$t('common.search')" @keyup.escape="toggleSearch"
                 @keydown.enter="performSearch" @input="handleSearchInput" @blur="handleSearchBlur" ref="searchInput"
                 class="task-manager-inline-search-input" />
-              <button v-if="searchQuery" class="task-manager-inline-clear" @click="clearSearch">
-                <i class="fas fa-times"></i>
-              </button>
+              <IconButton v-if="searchQuery" size="icon-sm" class="task-manager-inline-clear h-icon-lg w-icon-lg"
+                :label="$t('common.close')" @click="clearSearch">
+                <X class="h-icon-sm w-icon-sm" />
+              </IconButton>
             </div>
 
             <!-- 搜索按钮 -->
-            <button v-else @click="toggleSearch" class="task-manager-action-btn" :title="$t('common.search')">
-              <i class="fas fa-search"></i>
-            </button>
+            <IconButton v-else variant="outline" class="task-manager-action-btn h-control-lg w-control-lg text-muted-foreground"
+              :label="$t('common.search')" @click="toggleSearch">
+              <Search class="h-icon-md w-icon-md" />
+            </IconButton>
           </div>
 
           <!-- 列表视图按钮 -->
-          <button v-if="supportsMultipleViews" @click="setViewMode('list')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'list' }]" :title="$t('views.listView')">
-            <i class="fas fa-list"></i>
-          </button>
+          <IconButton v-if="supportsMultipleViews" variant="outline"
+            class="task-manager-action-btn h-control-lg w-control-lg text-muted-foreground"
+            :class="viewMode === 'list' ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : ''"
+            :label="$t('views.listView')" @click="setViewMode('list')">
+            <List class="h-icon-md w-icon-md" />
+          </IconButton>
 
           <!-- 看板视图按钮 -->
-          <button v-if="supportsMultipleViews" @click="setViewMode('kanban')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'kanban' }]" :title="$t('views.kanbanView')">
-            <i class="fas fa-columns"></i>
-          </button>
-
-
+          <IconButton v-if="supportsMultipleViews" variant="outline"
+            class="task-manager-action-btn h-control-lg w-control-lg text-muted-foreground"
+            :class="viewMode === 'kanban' ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : ''"
+            :label="$t('views.kanbanView')" @click="setViewMode('kanban')">
+            <Columns3 class="h-icon-md w-icon-md" />
+          </IconButton>
 
           <!-- 月视图按钮 -->
-          <button v-if="supportsMonthlyView" @click="setViewMode('monthly')"
-            :class="['task-manager-action-btn', { 'active': viewMode === 'monthly' }]" :title="$t('views.monthlyView')">
-            <i class="fas fa-calendar-alt"></i>
-          </button>
+          <IconButton v-if="supportsMonthlyView" variant="outline"
+            class="task-manager-action-btn h-control-lg w-control-lg text-muted-foreground"
+            :class="viewMode === 'monthly' ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : ''"
+            :label="$t('views.monthlyView')" @click="setViewMode('monthly')">
+            <CalendarDays class="h-icon-md w-icon-md" />
+          </IconButton>
 
           <!-- 显示/隐藏已完成任务按钮 -->
-          <button v-if="showCompletedTasksButton" @click="toggleCompletedTasks"
-            :class="['task-manager-action-btn', { 'active': showCompletedTasks }]"
-            :title="showCompletedTasks ? $t('tasks.hideCompleted') : $t('tasks.showCompleted')">
-            <i class="fas fa-check-circle"></i>
-          </button>
+          <IconButton v-if="showCompletedTasksButton" variant="outline"
+            class="task-manager-action-btn h-control-lg w-control-lg text-muted-foreground"
+            :class="showCompletedTasks ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : ''"
+            :label="showCompletedTasks ? $t('tasks.hideCompleted') : $t('tasks.showCompleted')"
+            @click="toggleCompletedTasks">
+            <CircleCheck class="h-icon-md w-icon-md" />
+          </IconButton>
         </div>
       </div>
 
       <!-- 搜索范围说明：页面搜索不是全库搜索 -->
       <div v-if="isTodayBranch && searchQuery" class="task-manager-search-scope-hint">
-        <i class="fas fa-info-circle"></i>
+        <Info class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{
           searchScope
             ? $t('today.searchScope', { from: searchScope.from, to: searchScope.to })
@@ -178,6 +188,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { CalendarDays, CircleCheck, Columns3, Info, List, Search, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './calender_view/MonthlyView.vue'
@@ -186,7 +197,9 @@ import TaskEditVertical from './TaskEditVertical.vue'
 import KanbanBoard from './kanban_view/KanbanBoard.vue'
 import TaskDetailsModal from './TaskDetailsModal.vue'
 import TodayOverview from './today_view/TodayOverview.vue'
-import { getListIconClass } from '@/utils/icon-utils'
+import CategoryIcon from './ui/CategoryIcon.vue'
+import ListIcon from './ui/ListIcon.vue'
+import IconButton from './ui/button/IconButton.vue'
 
 
 const { t, locale } = useI18n()
@@ -470,19 +483,6 @@ const getCategoryName = (category) => {
   return categoryNames[category] || t('categories.unknown')
 }
 
-const getCategoryIcon = (category) => {
-  const categoryIcons = {
-    inbox: 'fas fa-inbox',
-    today: 'fas fa-calendar-day',
-    doing: 'fas fa-play-circle',
-    paused: 'fas fa-pause-circle',
-    planned: 'fas fa-calendar-week',
-    all: 'fas fa-list',
-    completed: 'fas fa-check-circle'
-  }
-  return categoryIcons[category] || 'fas fa-folder'
-}
-
 const getCategoryCount = (category) => {
   return taskStore.getCategoryCount(category)
 }
@@ -493,20 +493,6 @@ const getCurrentTitle = () => {
     return currentList.value.name
   }
   return getCategoryName(currentCategory.value)
-}
-
-const getCurrentIcon = () => {
-  if (currentList.value !== null && currentList.value) {
-    return getListIconClass(currentList.value.icon)
-  }
-  return getCategoryIcon(currentCategory.value)
-}
-
-const getCurrentIconStyle = () => {
-  if (currentListId.value !== null && currentList.value) {
-    return { color: currentList.value.color }
-  }
-  return {}
 }
 
 // 彩蛋功能：连续点击5次显示任务详情表格

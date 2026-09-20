@@ -17,6 +17,7 @@
     "warning": "Warning",
     "info": "Info",
     "search": "Search tasks...",
+    "send": "Send",
     "status": {
       "todo": "To Do",
       "doing": "In Progress",
@@ -242,6 +243,10 @@
     "deleteTask": "Delete Task",
     "markComplete": "Mark Complete",
     "markIncomplete": "Mark Incomplete",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "restart": "Restart",
     "reminderTime": "Reminder Time",
     "scheduleDeadline": "Schedule / Deadline",
     "deadlinePrefix": "Due {time}",
@@ -272,6 +277,7 @@
     "creating": "Creating...",
     "createAllTasks": "Create All Tasks",
     "confirmDelete": "Are you sure you want to delete this task?",
+    "deleteFailed": "Delete failed: {error}",
     "hideCompleted": "Hide completed tasks",
     "showCompleted": "Show completed tasks"
   },

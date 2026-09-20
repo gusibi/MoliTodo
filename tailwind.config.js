@@ -73,6 +73,36 @@ module.exports = {
       },
       borderRadius: {
         DEFAULT: 'var(--radius)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+      },
+      height: {
+        'control-sm': 'var(--control-h-sm)',
+        'control-md': 'var(--control-h-md)',
+        'control-lg': 'var(--control-h-lg)',
+        'icon-sm': 'var(--icon-sm)',
+        'icon-md': 'var(--icon-md)',
+        'icon-lg': 'var(--icon-lg)',
+      },
+      width: {
+        'control-sm': 'var(--control-h-sm)',
+        'control-md': 'var(--control-h-md)',
+        'control-lg': 'var(--control-h-lg)',
+        'icon-sm': 'var(--icon-sm)',
+        'icon-md': 'var(--icon-md)',
+        'icon-lg': 'var(--icon-lg)',
+      },
+      minHeight: {
+        'control-sm': 'var(--control-h-sm)',
+        'control-md': 'var(--control-h-md)',
+        'control-lg': 'var(--control-h-lg)',
+      },
+      minWidth: {
+        'control-sm': 'var(--control-h-sm)',
+        'control-md': 'var(--control-h-md)',
+        'control-lg': 'var(--control-h-lg)',
       },
       boxShadow: {
         sm: 'var(--shadow-sm)',
