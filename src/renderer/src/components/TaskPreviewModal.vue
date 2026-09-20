@@ -81,13 +81,13 @@
             <!-- 第二行：安排 / 提醒 / 所属清单 -->
             <div class="task-preview-row task-preview-row-meta">
               <div class="task-preview-meta-item" v-if="task.scheduledStartAt || task.dueDate">
-                <label class="task-preview-meta-label">安排 / 截止</label>
+                <label class="task-preview-meta-label">{{ $t('tasks.scheduleDeadline') }}</label>
                 <div class="task-preview-input-meta task-preview-time-text">{{ formatPreviewSchedule(task) }}</div>
               </div>
               <div class="task-preview-meta-item" v-if="task.reminderPolicy?.mode === 'relative'">
                 <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
                 <div class="task-preview-input-meta task-preview-time-text">
-                  {{ task.reminderPolicy.minutesBefore > 0 ? `提前 ${task.reminderPolicy.minutesBefore} 分钟` : '开始时' }}
+                  {{ task.reminderPolicy.minutesBefore > 0 ? $t('tasks.reminderBeforeMinutes', { minutes: task.reminderPolicy.minutesBefore }) : $t('tasks.reminderAtStart') }}
                 </div>
               </div>
               <div class="task-preview-meta-item" v-else>
@@ -200,6 +200,7 @@
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { localeCode } from '../utils/locale-format.js'
 import { useTaskStore } from '@/store/taskStore'
 
 export default {
@@ -224,7 +225,7 @@ export default {
   },
   emits: ['close', 'created'],
   setup(props, { emit }) {
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const taskStore = useTaskStore()
     const isCreating = ref(false)
     const copyStatus = ref('idle') // 'idle', 'copying', 'success', 'error'
@@ -446,18 +447,21 @@ export default {
     
     // 展示 AI 生成的安排 / 截止信息
     const formatPreviewSchedule = (task) => {
+      const code = localeCode(locale.value)
       const parts = []
       if (task.scheduledStartAt) {
         const start = new Date(task.scheduledStartAt)
-        let text = `开始 ${start.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+        let text = t('tasks.scheduleStartPrefix', {
+          time: start.toLocaleString(code, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        })
         if (task.scheduledEndAt) {
           const end = new Date(task.scheduledEndAt)
-          text += ` – ${end.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+          text += ` – ${end.toLocaleString(code, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
         }
         parts.push(text)
       }
       if (task.dueDate) {
-        parts.push(`截止 ${task.dueDate}${task.dueTime ? ' ' + task.dueTime : ''}`)
+        parts.push(t('tasks.deadlinePrefix', { time: `${task.dueDate}${task.dueTime ? ' ' + task.dueTime : ''}` }))
       }
       return parts.join('　')
     }

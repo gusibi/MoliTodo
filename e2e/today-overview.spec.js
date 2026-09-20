@@ -1,4 +1,6 @@
 const { test, expect, seedTasks } = require('./fixtures');
+const { _electron } = require('@playwright/test');
+const path = require('path');
 
 /**
  * issue #14 Today 综合视图必需 E2E 场景。
@@ -45,7 +47,12 @@ test('今天截止但安排在明天：只显示一张卡片，日历点仍在�
   // 明天日期 section 显示定位链接而非重复卡片
   const tomorrowSection = window.locator(`[data-date-section="${tomorrowKey}"]`);
   await expect(tomorrowSection).toBeVisible();
-  await expect(tomorrowSection.locator('.agenda-relocated-link')).toBeVisible();
+  const relocatedLink = tomorrowSection.locator('.agenda-relocated-link');
+  await expect(relocatedLink).toBeVisible();
+
+  // 点击定位链接：跳回执行分组并短暂强调目标卡片
+  await relocatedLink.click();
+  await expect(window.locator('.agenda-card-highlight')).toBeVisible();
 
   // 日历点仍在明天
   const dot = window.locator(`.future-calendar-day[data-date-key="${tomorrowKey}"] .future-calendar-dot`);
@@ -280,5 +287,127 @@ test('通过真实编辑器保存内容后 Agenda 同步更新', async ({ app, w
   expect(persisted).toContain('改名后');
 });
 
+test('点击过去日期定位到对应 section', async ({ window }) => {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 1);
+  // 仅在当前月内存在过去日期时验证（日历月份窗口从当前月开始）
+  if (past.getMonth() !== today.getMonth()) {
+    test.skip(true, '今天当月没有可点击的过去日期');
+    return;
+  }
+  const pastKey = localKey(past);
+
+  await window.reload();
+  await waitForToday(window);
+
+  await window.locator(`.future-calendar-day[data-date-key="${pastKey}"]`).click();
+  await expect(window.locator(`[data-date-section="${pastKey}"]`)).toBeVisible();
+  await expect(window.locator(`.future-calendar-day[data-date-key="${pastKey}"]`)).toHaveClass(/is-selected/);
+});
+
+test('取消完成后任务回到今天且计数恢复', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '可取消完成', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const header = window.locator('.task-manager-category-count');
+  await expect(header).toContainText('今日待处理 1 项');
+
+  // 完成：从今天执行区消失
+  await window.locator('.flat-task-item', { hasText: '可取消完成' }).locator('label.flat-checkbox-label').click();
+  await expect(header).toContainText('今日待处理 0 项');
+
+  // 打开已完成开关，找到已完成卡片并取消完成
+  await window.locator('.task-manager-action-btn[title="显示已完成任务"]').click();
+  const completedCard = window.locator('.flat-task-item', { hasText: '可取消完成' });
+  await expect(completedCard).toBeVisible();
+  await completedCard.locator('label.flat-checkbox-label').click();
+
+  // 重新归组：回到今天待处理，计数恢复
+  await expect(header).toContainText('今日待处理 1 项');
+});
+
+test('单次重复实例编辑后仅保留一张卡片且内容同步', async ({ app, window }) => {
+  // 重复系列：今天 10:00 开始，每天重复
+  await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    const start = new Date();
+    start.setHours(10, 0, 0, 0);
+    await moli.taskService.createTaskInList('重复实例任务', 0, null, {
+      scheduledStartAt: start.toISOString(),
+      recurrence: { type: 'daily', interval: 1, startDate: start.toISOString() }
+    });
+  });
+  await window.reload();
+  await waitForToday(window);
+
+  const cards = window.locator('.agenda-section-today .flat-task-item', { hasText: '重复实例任务' });
+  await expect(cards).toHaveCount(1);
+
+  // 点击虚拟实例：先物化为真实实例再打开编辑器
+  await cards.first().click();
+  const titleInput = window.locator('.today-edit-panel .task-title-input');
+  await expect(titleInput).toBeVisible();
+  await titleInput.fill('重复实例任务（已改）');
+  await titleInput.blur();
+  await window.locator('.task-action-close').click();
+
+  // 物化后今天仍只有一张卡片，且内容同步
+  await expect(window.locator('.agenda-section-today .flat-task-item', { hasText: '重复实例任务（已改）' })).toHaveCount(1);
+});
+
+test('窄屏抽屉 Escape 关闭且焦点返回触发按钮', async ({ window }) => {
+  await window.reload();
+  await waitForToday(window);
+  await window.setViewportSize({ width: 900, height: 700 });
+
+  const toggle = window.locator('.today-calendar-toggle');
+  await toggle.click();
+  await expect(window.locator('.today-calendar-drawer')).toBeVisible();
+  await window.keyboard.press('Escape');
+  await expect(window.locator('.today-calendar-drawer')).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+});
+
+test('prefers-reduced-motion 下日期定位仍可用', async ({ window }) => {
+  await window.emulateMedia({ reducedMotion: 'reduce' });
+  await window.reload();
+  await waitForToday(window);
+
+  const target = new Date();
+  target.setDate(target.getDate() + 3);
+  const targetKey = localKey(target);
+  await window.locator(`.future-calendar-day[data-date-key="${targetKey}"]`).click();
+  await expect(window.locator(`[data-date-section="${targetKey}"]`)).toBeVisible();
+});
 
 
+
+
+
+test('真实重启应用后保存结果保留', async ({ app }) => {
+  const { electronApp, userDataDir } = app;
+  await seedTasks(electronApp, [{ content: '重启保留任务', dueDate: localKey(new Date()) }]);
+
+  // 关闭应用后以同一用户数据目录重新启动（真实重启，非窗口 reload）
+  await electronApp.close().catch(() => {});
+  const relaunched = await _electron.launch({
+    args: ['.'],
+    cwd: path.join(__dirname, '..'),
+    env: { ...process.env, NODE_ENV: 'test', MOLI_E2E_USER_DATA: userDataDir }
+  });
+  try {
+    let page = null;
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      page = relaunched.windows().find((w) => w.url().includes('task-manager'));
+      if (page) break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    await page.waitForSelector('.today-overview', { timeout: 30000 });
+    await expect(page.locator('.flat-task-item', { hasText: '重启保留任务' })).toBeVisible();
+  } finally {
+    await relaunched.close().catch(() => {});
+  }
+});

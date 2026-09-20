@@ -168,7 +168,7 @@
                   <i class="fas fa-calendar-day"></i>
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : '添加安排时间' }}</div>
+                  <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : t('tasks.addSchedule') }}</div>
                 </div>
               </button>
               <button v-if="scheduleStart" class="task-option-delete" @click="clearSchedule">
@@ -184,7 +184,7 @@
                   <i class="fas fa-hourglass-half"></i>
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : '添加结束时间（可选）' }}</div>
+                  <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : t('tasks.addScheduleEnd') }}</div>
                 </div>
               </button>
               <button v-if="scheduleEnd" class="task-option-delete" @click="clearScheduleEnd">
@@ -201,17 +201,17 @@
                   <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加截止时间' }}
+                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : t('tasks.addDeadline') }}
                   </div>
                 </div>
               </button>
               <!-- 日期型截止与日期+时间截止的切换 -->
               <button v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
-                title="清除截止时刻，仅保留日期">
+                :title="t('tasks.clearDeadlineTime')">
                 仅日期
               </button>
               <button v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
-                title="为截止日期添加具体时刻">
+                :title="t('tasks.addDeadlineTime')">
                 加时间
               </button>
               <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
@@ -316,6 +316,8 @@
 
 <script setup>
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { localeCode } from '../utils/locale-format.js'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '@/store/taskStore'
 import { useTheme } from '@/composables/useTheme'
@@ -341,6 +343,7 @@ const emit = defineEmits(['add-task', 'update-task', 'cancel-edit', 'delete-task
 
 // 使用 taskStore
 const taskStore = useTaskStore()
+const { t, locale } = useI18n()
 const { customReminderOptions: storeCustomReminderOptions, lists } = storeToRefs(taskStore)
 
 // 使用主题
@@ -462,10 +465,10 @@ const openPickerFor = (mode, btnEl) => {
 // 选择器标题与最小日期：仅“新绝对提醒”限制不能选过去
 const datePickerTitle = computed(() => {
   switch (datePickerMode.value) {
-    case 'scheduleStart': return '计划开始时间'
+    case 'scheduleStart': return t('tasks.scheduleStartLabel')
     case 'scheduleEnd': return '计划结束时间'
-    case 'reminderAbsolute': return '自定义提醒时间'
-    default: return '截止时间'
+    case 'reminderAbsolute': return t('tasks.customReminder')
+    default: return t('tasks.deadlineLabel')
   }
 })
 
@@ -824,7 +827,7 @@ const clearReminder = async () => {
 
 
 
-// 安排时间显示：今天 / 明天 / N月N日 + 开始时刻（结束单独展示）
+// 安排时间显示：今天 / 明天 / 本地日期 + 开始时刻（结束单独展示）
 const formatScheduleText = () => {
   if (!scheduleStart.value) return ''
   const start = new Date(scheduleStart.value)
@@ -837,9 +840,10 @@ const formatScheduleText = () => {
   const startStr = getLocalDateString(start)
   const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
 
-  if (startStr === todayStr) return `今天 ${timeStr}`
-  if (startStr === tomorrowStr) return `明天 ${timeStr}`
-  return `${start.getMonth() + 1}月${start.getDate()}日 ${timeStr}`
+  if (startStr === todayStr) return t('tasks.startsToday', { time: timeStr })
+  if (startStr === tomorrowStr) return t('tasks.startsTomorrow', { time: timeStr })
+  const dateText = start.toLocaleDateString(localeCode(locale.value), { month: 'short', day: 'numeric' })
+  return `${dateText} ${timeStr}`
 }
 
 // 结束时间显示：同日只显示时刻，跨日显示完整日期
@@ -850,9 +854,10 @@ const formatScheduleEndText = () => {
   const timeStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
 
   if (start && getLocalDateString(start) === getLocalDateString(end)) {
-    return `结束于 ${timeStr}`
+    return t('tasks.endsAt', { time: timeStr })
   }
-  return `结束于 ${end.getMonth() + 1}月${end.getDate()}日 ${timeStr}`
+  const dateText = end.toLocaleDateString(localeCode(locale.value), { month: 'short', day: 'numeric' })
+  return t('tasks.endsAt', { time: `${dateText} ${timeStr}` })
 }
 
 // 选择列表
@@ -949,7 +954,7 @@ const handleDateTimeChange = async (newValue) => {
     if (!newValue) return
     const start = newValue instanceof Date ? newValue : new Date(newValue)
     if (scheduleEnd.value && start.getTime() > new Date(scheduleEnd.value).getTime()) {
-      alert('计划结束时间早于新的开始时间，请先调整或清除结束时间')
+      alert(t('tasks.scheduleEndBeforeNewStart'))
       return
     }
     scheduleStart.value = start
@@ -961,7 +966,7 @@ const handleDateTimeChange = async (newValue) => {
     if (!newValue) return
     const end = newValue instanceof Date ? newValue : new Date(newValue)
     if (scheduleStart.value && end.getTime() < new Date(scheduleStart.value).getTime()) {
-      alert('计划结束时间不能早于计划开始时间')
+      alert(t('tasks.scheduleEndBeforeStart'))
       return
     }
     scheduleEnd.value = end
@@ -973,7 +978,7 @@ const handleDateTimeChange = async (newValue) => {
     if (!newValue) return
     const reminderTime = newValue instanceof Date ? newValue : new Date(newValue)
     if (reminderTime.getTime() <= Date.now()) {
-      alert('提醒时间不能设置为过去的时间，请重新选择')
+      alert(t('tasks.reminderInPast'))
       return
     }
     await saveAbsoluteReminder(reminderTime)
@@ -1091,9 +1096,9 @@ const saveAbsoluteReminder = async (reminderTime) => {
 const reminderOptions = computed(() => {
   const options = []
   if (scheduleStart.value) {
-    options.push({ id: 'relative-0', kind: 'relative', minutesBefore: 0, label: '开始时' })
+    options.push({ id: 'relative-0', kind: 'relative', minutesBefore: 0, label: t('tasks.reminderAtStart') })
     for (const minutes of [5, 10, 30, 60]) {
-      options.push({ id: `relative-${minutes}`, kind: 'relative', minutesBefore: minutes, label: `提前 ${minutes} 分钟` })
+      options.push({ id: `relative-${minutes}`, kind: 'relative', minutesBefore: minutes, label: t('tasks.reminderBeforeMinutes', { minutes }) })
     }
   }
   options.push({ id: 'absolute-custom', kind: 'absolute', label: '自定义时间…' })
@@ -1181,7 +1186,7 @@ const syncReminderFromResult = (result) => {
 
 const relativePolicyLabel = (policy) => {
   const minutes = policy.minutesBefore || 0
-  return minutes > 0 ? `提前 ${minutes} 分钟` : '开始时'
+  return minutes > 0 ? t('tasks.reminderBeforeMinutes', { minutes }) : t('tasks.reminderAtStart')
 }
 
 // 时间提示：无效旧截止 > 服务端警告（计划晚于截止 / 错过的相对提醒）

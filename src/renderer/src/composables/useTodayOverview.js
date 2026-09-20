@@ -8,23 +8,24 @@ import {
   missingDaySpans,
   enumerateDateKeys,
   addDaysToKey,
-  instanceKey,
-  isVirtualInstance
+  dateToKey,
+  instanceKey
 } from '../utils/today-agenda.js'
+import { getMainDateInfo } from '../utils/task-time-rules.js'
 
 /**
  * Today 综合视图的页面级数据协调层（issue #14）。
  *
  * 职责：协调 Agenda 日期范围与 Future Calendar 月份范围的重复实例查询、
  * 按实例身份合并基础任务与虚拟实例、驱动分组/日期点模型与刷新。
- * 业务时间语义全部来自领域层 today-agenda / task-time（#13），
+ * 业务时间语义全部来自渲染层规则 today-agenda / task-time-rules（#13），
  * 本层只管理请求、状态与响应式。
  */
 export function useTodayOverview() {
   const taskStore = useTaskStore()
 
   // ---------- 日期与范围状态 ----------
-  const todayKey = ref(localTodayKey())
+  const todayKey = ref(dateToKey(new Date()))
   const modelClock = ref(new Date()) // 分组评估时钟，跨午夜时刷新
   const futureDays = ref(7) // Agenda 初始加载今天起 7 天（含首尾）
   const extraSpans = ref([]) // 导航到初始范围之外的日期时按需加载的区间（过去 / 远期）
@@ -38,22 +39,11 @@ export function useTodayOverview() {
 
   let requestEpoch = 0
 
-  function localTodayKey() {
-    const now = new Date()
-    const pad = (v) => String(v).padStart(2, '0')
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  }
-
   function defaultMonthWindow() {
     const now = new Date()
     const start = new Date(now.getFullYear(), now.getMonth(), 1)
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 1)
-    return { startKey: keyOf(start), endKey: monthEndKey(keyOf(endMonth).slice(0, 7)) }
-  }
-
-  function keyOf(date) {
-    const pad = (v) => String(v).padStart(2, '0')
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+    return { startKey: dateToKey(start), endKey: monthEndKey(dateToKey(endMonth).slice(0, 7)) }
   }
 
   // ---------- 范围协调 ----------
@@ -194,23 +184,23 @@ export function useTodayOverview() {
   function monthEndKey(month) {
     const [y, m] = month.split('-').map(Number)
     const end = new Date(y, m, 0)
-    return keyOf(end)
+    return dateToKey(end)
   }
 
   function expandMonths(direction) {
     if (direction < 0) {
       const [y, m] = monthKeyOf(monthWindow.value.startKey).split('-').map(Number)
       const prev = new Date(y, m - 2, 1)
-      monthWindow.value = { startKey: keyOf(prev), endKey: monthWindow.value.endKey }
+      monthWindow.value = { startKey: dateToKey(prev), endKey: monthWindow.value.endKey }
     } else {
       const [y, m] = monthKeyOf(monthWindow.value.endKey).split('-').map(Number)
       const next = new Date(y, m, 1)
-      monthWindow.value = { startKey: monthWindow.value.startKey, endKey: monthEndKey(keyOf(next).slice(0, 7)) }
+      monthWindow.value = { startKey: monthWindow.value.startKey, endKey: monthEndKey(dateToKey(next).slice(0, 7)) }
     }
   }
 
   function resetToToday() {
-    todayKey.value = localTodayKey()
+    todayKey.value = dateToKey(new Date())
     extraSpans.value = []
     futureDays.value = 7
     monthWindow.value = defaultMonthWindow()
@@ -234,11 +224,22 @@ export function useTodayOverview() {
 
   const searchQuery = computed(() => taskStore.searchQuery.trim())
 
+  // 搜索覆盖范围：今日执行集合、未计划集合与当前已查询日期范围（含日历可见月份）的并集。
+  // 无主日期的任务（未计划 / doing）始终在范围内；有主日期的任务需落在已查询区间内。
+  const searchableWorld = computed(() => {
+    const ranges = loadedRanges.value
+    return world.value.filter((task) => {
+      const main = getMainDateInfo(task)
+      if (!main || !main.date) return true
+      return ranges.some((range) => main.date >= range.startKey && main.date <= range.endKey)
+    })
+  })
+
   const filteredWorld = computed(() => {
     const query = searchQuery.value
     if (!query) return world.value
     const lower = query.toLowerCase()
-    return world.value.filter((task) => {
+    return searchableWorld.value.filter((task) => {
       const content = task.content ? task.content.toLowerCase() : ''
       const note = task.metadata?.note ? String(task.metadata.note).toLowerCase() : ''
       return content.includes(lower) || note.includes(lower)
@@ -292,7 +293,7 @@ export function useTodayOverview() {
   let midnightTimer = null
 
   function checkMidnight() {
-    const key = localTodayKey()
+    const key = dateToKey(new Date())
     modelClock.value = new Date()
     if (key !== todayKey.value) {
       todayKey.value = key
@@ -334,6 +335,17 @@ export function useTodayOverview() {
     ensureRanges()
   })
 
+  // 清空搜索时恢复搜索前的日期范围（搜索期间为定位结果按需扩展的区间被回收）
+  let extraSpansBeforeSearch = null
+  watch(searchQuery, (query) => {
+    if (query && extraSpansBeforeSearch === null) {
+      extraSpansBeforeSearch = extraSpans.value.map((span) => ({ ...span }))
+    } else if (!query && extraSpansBeforeSearch !== null) {
+      extraSpans.value = extraSpansBeforeSearch
+      extraSpansBeforeSearch = null
+    }
+  })
+
   return {
     // 状态
     todayKey,
@@ -357,9 +369,6 @@ export function useTodayOverview() {
     expandMonths,
     resetToToday,
     refreshAfterMutation,
-    retryFailed,
-
-    // 工具
-    isVirtualInstance
+    retryFailed
   }
 }

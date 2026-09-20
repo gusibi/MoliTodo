@@ -56,6 +56,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
+import { localeCode } from '../../utils/locale-format.js'
 
 /**
  * Future Calendar：当前月起连续月份窗口的任务分布。
@@ -75,23 +76,21 @@ const taskStore = useTaskStore()
 
 const MAX_DOTS = 3
 
+// 周一开头的网格：以任意一个已知周一为锚点生成星期标签（不依赖当前日期）
+const MONDAY_ANCHOR = new Date(2024, 0, 1) // 2024-01-01 是周一
+
 const weekdayLabels = computed(() => {
-  const base = new Date(2026, 8, 7) // 2026-09-07 是周一
   const labels = []
   for (let i = 0; i < 7; i += 1) {
-    const date = new Date(base)
-    date.setDate(base.getDate() + i)
-    labels.push(date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'zh-CN', { weekday: 'narrow' }))
+    const date = new Date(MONDAY_ANCHOR)
+    date.setDate(MONDAY_ANCHOR.getDate() + i)
+    labels.push(date.toLocaleDateString(localeCode(locale.value), { weekday: 'narrow' }))
   }
   return labels
 })
 
 function pad2(value) {
   return String(value).padStart(2, '0')
-}
-
-function keyOf(date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
 function listColor(listId) {
@@ -108,7 +107,7 @@ const months = computed(() => {
     const year = cursor.getFullYear()
     const month = cursor.getMonth()
     const monthKey = `${year}-${pad2(month + 1)}`
-    const label = cursor.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'zh-CN', {
+    const label = cursor.toLocaleDateString(localeCode(locale.value), {
       year: 'numeric',
       month: 'long'
     })
@@ -149,7 +148,7 @@ const months = computed(() => {
 
 function dayAriaLabel(cell) {
   const date = new Date(`${cell.key}T00:00:00`)
-  const dateText = date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'zh-CN', {
+  const dateText = date.toLocaleDateString(localeCode(locale.value), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

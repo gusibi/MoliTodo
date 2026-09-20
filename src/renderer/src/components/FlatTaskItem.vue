@@ -126,29 +126,35 @@
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { isVirtualInstance } from '../utils/today-agenda.js'
+import { localeCode } from '../utils/locale-format.js'
+
+const { t, locale } = useI18n()
 
 // 任务时间展示：优先安排（开始[-结束]），其次截止（有具体时刻显示时刻，否则只显示日期）
 const formatTaskTimeInfo = (task) => {
   if (!task) return ''
+  const code = localeCode(locale.value)
   if (task.scheduledStartAt) {
     let text = formatReminderTime(task.scheduledStartAt)
     if (task.scheduledEndAt) {
       const end = new Date(task.scheduledEndAt)
       const start = new Date(task.scheduledStartAt)
       const sameDay = start.toDateString() === end.toDateString()
+      const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
       text += sameDay
-        ? ` – ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
-        : ` – ${end.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+        ? ` – ${endTime}`
+        : ` – ${end.toLocaleDateString(code, { month: 'short', day: 'numeric' })} ${endTime}`
     }
     return text
   }
   if (task.dueDate) {
     if (task.dueTime) {
-      return `截止 ${formatReminderTime(`${task.dueDate}T${task.dueTime}:00`)}`
+      return t('tasks.deadlinePrefix', { time: formatReminderTime(`${task.dueDate}T${task.dueTime}:00`) })
     }
     const date = new Date(`${task.dueDate}T00:00:00`)
-    return `截止 ${date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}`
+    return t('tasks.deadlinePrefix', { time: date.toLocaleDateString(code, { month: 'short', day: 'numeric' }) })
   }
   return ''
 }

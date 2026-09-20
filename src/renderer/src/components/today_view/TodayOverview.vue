@@ -26,8 +26,8 @@
     <Teleport to="body">
       <Transition name="today-drawer">
         <div v-if="drawerOpen" class="today-calendar-drawer-backdrop" @click.self="closeDrawer">
-          <div class="today-calendar-drawer" role="dialog" :aria-label="$t('today.calendar.title')"
-            ref="drawerEl" @keydown.escape.stop.prevent="closeDrawer">
+          <div class="today-calendar-drawer" role="dialog" aria-modal="true" :aria-label="$t('today.calendar.title')"
+            ref="drawerEl" @keydown.escape.stop.prevent="closeDrawer" @keydown.tab="handleDrawerTab">
             <div class="today-calendar-drawer-header">
               <span class="today-calendar-drawer-title">{{ $t('today.calendar.title') }}</span>
               <button type="button" class="today-calendar-drawer-close" :aria-label="$t('common.close')"
@@ -143,6 +143,24 @@ function openDrawer() {
 function closeDrawer() {
   drawerOpen.value = false
   calendarToggleBtn.value?.focus()
+}
+
+// 焦点约束：Tab / Shift+Tab 在抽屉内循环，关闭后焦点返回触发按钮
+function handleDrawerTab(event) {
+  const drawer = drawerEl.value
+  if (!drawer) return
+  const focusables = [...drawer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => !el.disabled && el.offsetParent !== null)
+  if (!focusables.length) return
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
 }
 
 // ---------- 日期导航 ----------

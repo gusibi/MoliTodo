@@ -131,12 +131,20 @@
               </div>
             </template>
 
-            <!-- 被执行分组收纳的定位链接 -->
-            <button v-if="section.relocated.length" type="button" class="agenda-relocated-link"
-              @click="locateRelocated(section)">
-              <i class="fas fa-crosshairs"></i>
-              {{ $t('today.relocatedHint', { count: section.relocated.length }) }}
-            </button>
+            <!-- 被执行分组收纳的定位链接：多个目标时列出任务标题供选择 -->
+            <div v-if="section.relocated.length" class="agenda-relocated">
+              <button type="button" class="agenda-relocated-link" :aria-expanded="relocatedMenuKey === section.dateKey"
+                @click="handleRelocatedClick(section)">
+                <i class="fas fa-crosshairs"></i>
+                {{ $t('today.relocatedHint', { count: section.relocated.length }) }}
+              </button>
+              <div v-if="relocatedMenuKey === section.dateKey" class="agenda-relocated-menu" role="menu">
+                <button v-for="task in section.relocated" :key="taskKey(task)" type="button" role="menuitem"
+                  class="agenda-relocated-menu-item" @click="locateTask(task)">
+                  {{ task.content }}
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -207,6 +215,8 @@ import { useTaskStore } from '@/store/taskStore'
 import AgendaTaskCard from './AgendaTaskCard.vue'
 import TaskPreviewModal from '../TaskPreviewModal.vue'
 import { isLegacyRecurringDateInstance } from '../../utils/task-time-rules.js'
+import { addDaysToKey } from '../../utils/today-agenda.js'
+import { localeCode } from '../../utils/locale-format.js'
 
 const props = defineProps({
   model: { type: Object, required: true },
@@ -220,7 +230,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   'task-click',
-  'add-task',
   'load-more',
   'retry',
   'active-date-change'
@@ -281,13 +290,9 @@ const searchNoMatch = computed(() => {
   )
 })
 
-function pad2(value) {
-  return String(value).padStart(2, '0')
-}
-
 function formatDateTitle(key) {
   const date = new Date(`${key}T00:00:00`)
-  return date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'zh-CN', {
+  return date.toLocaleDateString(localeCode(locale.value), {
     month: 'long',
     day: 'numeric',
     weekday: 'short'
@@ -296,11 +301,7 @@ function formatDateTitle(key) {
 
 function friendlyDateLabel(key) {
   if (key === props.todayKey) return t('common.time.today')
-  const tomorrow = new Date(`${props.todayKey}T00:00:00`)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  if (key === `${tomorrow.getFullYear()}-${pad2(tomorrow.getMonth() + 1)}-${pad2(tomorrow.getDate())}`) {
-    return t('common.time.tomorrow')
-  }
+  if (key === addDaysToKey(props.todayKey, 1)) return t('common.time.tomorrow')
   return ''
 }
 
@@ -504,18 +505,29 @@ function scrollToGroup(group) {
   target.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
 }
 
-// 定位链接：指向执行分组中已有的任务卡片
-function locateRelocated(section) {
-  const overdueIds = new Set(props.model.overdue.map(taskKey))
-  const keys = section.relocated.map(taskKey)
-  if (keys.every((key) => overdueIds.has(key))) {
+// 定位链接：指向执行分组中已有的任务卡片。
+// 单个目标直接定位；多个目标列出任务标题供选择，不复制卡片。
+const relocatedMenuKey = ref('')
+
+function handleRelocatedClick(section) {
+  if (section.relocated.length === 1) {
+    locateTask(section.relocated[0])
+    return
+  }
+  relocatedMenuKey.value = relocatedMenuKey.value === section.dateKey ? '' : section.dateKey
+}
+
+function locateTask(task) {
+  relocatedMenuKey.value = ''
+  const key = taskKey(task)
+  if (props.model.overdue.some((t) => taskKey(t) === key)) {
     scrollToGroup('overdue')
-  } else if (keys.every((key) => props.model.reschedule.some((t) => taskKey(t) === key))) {
+  } else if (props.model.reschedule.some((t) => taskKey(t) === key)) {
     scrollToGroup('reschedule')
   } else {
     scrollToGroup('today')
   }
-  highlightTasks(keys)
+  highlightTasks([key])
 }
 
 function handleScheduleClick(task) {

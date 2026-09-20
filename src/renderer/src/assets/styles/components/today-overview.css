@@ -128,6 +128,18 @@
   @apply self-start text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-2 py-1 mt-1;
 }
 
+.agenda-relocated {
+  @apply relative flex flex-col items-start;
+}
+
+.agenda-relocated-menu {
+  @apply mt-1 ml-2 flex flex-col gap-0.5 rounded-md border border-border bg-popover p-1 shadow-md max-w-full;
+}
+
+.agenda-relocated-menu-item {
+  @apply text-left text-xs text-foreground rounded px-2 py-1 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring truncate;
+}
+
 .agenda-relocated-link i {
   @apply mr-1;
 }
