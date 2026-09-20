@@ -4,6 +4,18 @@ class TaskUseCases {
     this.listService = listService;
     this.notificationService = notificationService;
     this.onReminder = onReminder;
+
+    // 服务内部生成重复实例后，通过该钩子注册提醒
+    if (
+      taskService &&
+      typeof taskService.setNotificationScheduler === 'function' &&
+      notificationService &&
+      typeof notificationService.scheduleTaskReminder === 'function'
+    ) {
+      taskService.setNotificationScheduler((task) => {
+        notificationService.scheduleTaskReminder(task, onReminder, { skipPast: true });
+      });
+    }
   }
 
   async listProjects() {
@@ -78,9 +90,15 @@ class TaskUseCases {
     }
 
     const task = await this.taskService.updateTask(taskId, normalized);
-    if (updates.reminderTime !== undefined || updates.scheduledStartAt !== undefined || updates.reminderPolicy !== undefined) {
+    const reminderTouched =
+      updates.reminderTime !== undefined ||
+      updates.scheduledStartAt !== undefined ||
+      updates.reminderPolicy !== undefined ||
+      updates.status !== undefined;
+    if (reminderTouched) {
       this.notificationService.cancelTaskReminder(taskId);
-      if (task.reminderTime) {
+      const completed = task.status === 'done' || task.completed === true;
+      if (task.reminderTime && !completed) {
         this.scheduleReminder(task);
       }
     }

@@ -5,6 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "test": "node --test test/*.test.js",
+    "test:e2e": "npm run build:renderer && playwright test",
+    "test:e2e:today": "npm run build:renderer && playwright test e2e/today-overview.spec.js",
     "dev": "npm run rebuild && node dev-start.js",
     "dev:renderer": "vite --config src/renderer/vite.config.js",
     "dev:clean": "npm run rebuild && npm run dev",
@@ -31,6 +33,7 @@
   "author": "MoliTodo Team",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@vitejs/plugin-vue": "^4.6.2",
     "autoprefixer": "^10.4.21",
     "concurrently": "^7.6.0",

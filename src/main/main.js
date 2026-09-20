@@ -1,7 +1,13 @@
 const { app } = require('electron');
+const path = require('path');
 const WindowManager = require('./window-manager');
 const IpcHandlers = require('./ipc-handlers');
 const LocalApiServer = require('./local-api-server');
+
+// E2E 测试：使用独立用户数据目录与临时数据库，绝不读写开发者或用户真实数据
+if (process.env.MOLI_E2E_USER_DATA) {
+  app.setPath('userData', process.env.MOLI_E2E_USER_DATA);
+}
 
 // 导入业务层
 const FileTaskRepository = require('../infrastructure/persistence/file-task-repository');
@@ -70,6 +76,15 @@ class MoliTodoApp {
       });
       this.ipcHandlers.initialize();
 
+      // 恢复已持久化任务的提醒调度（旧绝对提醒保持既有恢复行为）
+      await this.ipcHandlers.restoreReminderSchedules();
+
+      // E2E 测试：暴露应用实例以便测试夹具注入任务，并直接打开任务管理窗口
+      if (process.env.MOLI_E2E_USER_DATA) {
+        global.__moliTodoApp = this;
+        this.windowManager.createTaskManagerWindow();
+      }
+
       // 设置应用事件
       this.setupAppEvents();
 
@@ -80,7 +95,10 @@ class MoliTodoApp {
         try {
           // 检测首次启动并创建用户引导任务
           await this.handleFirstLaunchSetup();
-          
+
+          // 任务时间模型升级的一次性说明
+          await this.showTimeModelUpgradeNotice();
+
           // 初始化任务状态日志
           if (this.taskStatusLogService) {
             console.log('开始初始化任务状态日志...');
@@ -208,6 +226,12 @@ class MoliTodoApp {
    */
   async handleFirstLaunchSetup() {
     try {
+      // E2E 测试使用干净数据库，不注入引导任务
+      if (process.env.MOLI_E2E_USER_DATA) {
+        this.windowManager.markFirstLaunchCompleted();
+        return;
+      }
+
       // 检测是否为首次启动
       if (!this.windowManager.isFirstLaunch()) {
         console.log('[FirstLaunch] 非首次启动，跳过用户引导任务创建');
@@ -227,11 +251,44 @@ class MoliTodoApp {
 
       // 标记首次启动完成
       this.windowManager.markFirstLaunchCompleted();
-      
+
     } catch (error) {
       console.error('[FirstLaunch] 首次启动设置失败:', error);
       // 即使失败也要标记首次启动完成，避免重复尝试
       this.windowManager.markFirstLaunchCompleted();
+    }
+  }
+
+  /**
+   * 任务时间模型升级的一次性提示：
+   * 旧版本中仅有提醒的任务会自动占据日历日期，升级后不再如此。
+   * 提醒本身不受影响；老用户存在这类任务时提示一次。
+   */
+  async showTimeModelUpgradeNotice() {
+    try {
+      if (!this.windowManager || !this.windowManager.configStore) return;
+      if (this.windowManager.configStore.get('timeModelUpgradeNoticeShown', false)) return;
+      // 新用户没有旧展示习惯，无需提示
+      if (this.windowManager.isFirstLaunch()) return;
+
+      this.windowManager.configStore.set('timeModelUpgradeNoticeShown', true);
+
+      const tasks = await this.taskService.getAllTasks();
+      const affected = tasks.filter((task) => {
+        if (!task.reminderTime || task.status === 'done') return false;
+        return !task.scheduledStartAt && !task.dueDate;
+      });
+      if (!affected.length) return;
+
+      const { Notification } = require('electron');
+      if (!Notification.isSupported()) return;
+      const notice = new Notification({
+        title: '任务时间模型已升级',
+        body: `你有 ${affected.length} 个仅设置提醒的任务：提醒仍然有效，但不再自动显示在日历日期上。可在编辑任务时补充"安排"或"截止"。`
+      });
+      notice.show();
+    } catch (error) {
+      console.error('时间模型升级提示失败:', error);
     }
   }
 

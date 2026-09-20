@@ -206,8 +206,7 @@
 
 /* 任务视图容器 - 列表视图使用 flex 布局实现左锚定右收缩 */
 .task-manager-views-flex {
-  display: flex !important;
-  flex-direction: row;
+  display: flex !important;  flex-direction: row;
 }
 
 /* 看板视图包装器 */
@@ -499,4 +498,19 @@
     @apply max-w-none;
     width: 100%;
   }
+}
+/* ---------- Today 综合视图（issue #14）---------- */
+
+/* Today 分支自管滚动（Agenda 独立滚动容器），外层不参与滚动 */
+.task-list-container.is-today-overview {
+  @apply h-full overflow-hidden;
+}
+
+/* 搜索范围说明条 */
+.task-manager-search-scope-hint {
+  @apply flex items-center gap-2 mx-7 mb-2 px-3 py-1.5 rounded-lg bg-muted/60 text-2xs text-muted-foreground;
+}
+
+.task-manager-search-scope-hint i {
+  @apply text-primary/70;
 }

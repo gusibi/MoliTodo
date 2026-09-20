@@ -216,6 +216,18 @@ class TaskService {
       }
     }
 
+    // 相对提醒计算结果已过：不补发通知，仅提示错过，改期后会重新计算
+    if (
+      reminderPolicy &&
+      reminderPolicy.mode === taskTime.REMINDER_MODES.RELATIVE &&
+      reminderTime &&
+      reminderTime.getTime() <= now.getTime()
+    ) {
+      warning = warning
+        ? `${warning}；该次提醒已错过，改期后将按新安排重新计算`
+        : '该次提醒已错过，改期后将按新安排重新计算';
+    }
+
     task.scheduledStartAt = scheduledStartAt;
     task.scheduledEndAt = scheduledEndAt;
     task.dueDate = dueDate;
@@ -229,6 +241,26 @@ class TaskService {
     task.updatedAt = new Date();
 
     return { warning };
+  }
+
+  /**
+   * 设置通知调度钩子：由外层（IpcHandlers / UseCases）注入，
+   * 用于服务内部生成重复实例后注册提醒。
+   * @param {Function} scheduleFn (task) => void
+   */
+  setNotificationScheduler(scheduleFn) {
+    this._scheduleNotification = scheduleFn;
+  }
+
+  _notifySchedule(task) {
+    if (typeof this._scheduleNotification !== 'function') return;
+    if (!task || !task.reminderTime) return;
+    if (task.status === 'done' || task.status === 'deleted') return;
+    try {
+      this._scheduleNotification(task);
+    } catch (error) {
+      console.warn('注册任务提醒失败:', error && error.message);
+    }
   }
 
   /**
@@ -315,6 +347,7 @@ class TaskService {
       nextInstance.recurrence = recurringTask.recurrence; // 保持重复规则
       console.log("nextInstance: ------", nextInstance)
       const savedInstance = await this.taskRepository.save(nextInstance);
+      this._notifySchedule(savedInstance);
 
       // 记录任务创建的状态日志
       if (this.taskStatusLogService) {
@@ -874,9 +907,36 @@ class TaskService {
    */
   async expandRecurringTasks(startDate, endDate, listId = null) {
     const recurringTasks = await this.getRecurringTasks(listId);
-    console.log("expandRecurringTasks recurringTasks: ", recurringTasks)
     const RecurringTaskService = require('./recurring-task-service');
-    return RecurringTaskService.expandRecurringTasks(recurringTasks, startDate, endDate);
+    const instances = RecurringTaskService.expandRecurringTasks(recurringTasks, startDate, endDate);
+    return this.mergeOverrideInstances(recurringTasks, instances);
+  }
+
+  /**
+   * 合并覆盖实例：某次发生已有物化记录（完成 / 单独编辑 / 删除标记）时，
+   * 不再返回该日期的虚拟实例，避免同一实例重复展示。
+   * @param {Task[]} recurringTasks 重复任务模板
+   * @param {Task[]} instances 展开出的虚拟实例
+   * @returns {Promise<Task[]>}
+   */
+  async mergeOverrideInstances(recurringTasks, instances) {
+    if (!instances.length) return instances;
+
+    const RecurringTaskService = require('./recurring-task-service');
+    const overrideKeys = new Set();
+    for (const recurringTask of recurringTasks) {
+      const overrides = await this.taskRepository.findOverrideInstances(recurringTask.id);
+      for (const override of overrides) {
+        const key = RecurringTaskService.instanceKey(recurringTask.id, override.occurrenceDate);
+        if (key) overrideKeys.add(key);
+      }
+    }
+    if (!overrideKeys.size) return instances;
+
+    return instances.filter((instance) => {
+      const key = RecurringTaskService.instanceKey(instance.seriesId, instance.occurrenceDate);
+      return !key || !overrideKeys.has(key);
+    });
   }
 
   /**
@@ -927,10 +987,24 @@ class TaskService {
    * @returns {Promise<Task>}
    */
   async updateRecurringTask(taskId, updates, recurrence = null) {
-    // 如果有重复规则且包含提醒时间，重新计算提醒时间
+    // 如果有重复规则且包含提醒时间，重新计算提醒时间。
+    // 已使用相对 / 关闭 / 默认策略（或本次更新正在设置这些策略）的系列
+    // 以策略为准，不用系列提醒时间覆盖，避免静默改写成绝对提醒。
     if (recurrence && recurrence.reminderTime) {
-      updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);
-      // 重复任务允许提醒时间为已计算的触发点，不按新绝对提醒校验未来
+      const existing = await this.taskRepository.findById(taskId);
+      const updatesPolicyMode = updates.reminderPolicy && (updates.reminderPolicy.mode || updates.reminderPolicy.type);
+      const modernPolicy =
+        updatesPolicyMode === taskTime.REMINDER_MODES.RELATIVE ||
+        updatesPolicyMode === taskTime.REMINDER_MODES.DISABLED ||
+        updatesPolicyMode === taskTime.REMINDER_MODES.DEFAULT ||
+        (existing &&
+          existing.reminderPolicy &&
+          existing.reminderPolicy.mode !== taskTime.REMINDER_MODES.ABSOLUTE);
+
+      if (!modernPolicy) {
+        updates.reminderTime = this.calculateRecurringReminderTime(recurrence, updates.reminderTime);
+        // 重复任务允许提醒时间为已计算的触发点，不按新绝对提醒校验未来
+      }
       updates.recurrence = recurrence;
     }
 
@@ -956,27 +1030,19 @@ class TaskService {
       // 如果存在，直接完成该实例
       await this.completeTask(existingInstance.id);
     } else {
-      // 如果不存在，创建一个已完成的覆盖实例
+      // 如果不存在，按统一实例规则物化（保留安排 / 截止 / 提醒）后标记完成
       const recurringTask = await this.taskRepository.findById(seriesId);
       if (!recurringTask) {
         throw new Error('重复任务不存在');
       }
 
-      const overrideInstance = new Task(
-        Task.generateId(),
-        recurringTask.content,
-        'done',
-        new Date(),
-        null,
-        {}, // timeTracking
-        recurringTask.listId,
-        recurringTask.metadata,
-        null, // recurrence
-        seriesId,
-        occurrenceDate
-      );
+      const occurrence = taskTime.toDate(occurrenceDate);
+      if (!occurrence) {
+        throw new Error('实例日期无效');
+      }
 
-      overrideInstance.markAsCompleted();
+      const overrideInstance = recurringTask.createInstance(occurrence, Task.generateId());
+      overrideInstance.completeTask();
       await this.taskRepository.save(overrideInstance);
     }
 
@@ -1032,36 +1098,45 @@ class TaskService {
    */
   async updateRecurringInstance(seriesId, occurrenceDate, updates) {
     // 查找是否已存在该实例的覆盖记录
-    let existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
+    const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
 
     if (existingInstance) {
-      // 如果存在，更新该实例
-      await this.updateTask(existingInstance.id, updates);
-    } else {
-      // 如果不存在，创建一个覆盖实例
-      const recurringTask = await this.taskRepository.findById(seriesId);
-      if (!recurringTask) {
-        throw new Error('重复任务不存在');
-      }
-
-      const overrideInstance = new Task(
-        Task.generateId(),
-        updates.content || recurringTask.content,
-        updates.status || 'todo',
-        new Date(),
-        updates.reminderTime || null,
-        {}, // timeTracking
-        updates.listId !== undefined ? updates.listId : recurringTask.listId,
-        { ...recurringTask.metadata, ...updates.metadata },
-        null, // recurrence
-        seriesId,
-        occurrenceDate
-      );
-
-      await this.taskRepository.save(overrideInstance);
+      // 如果存在，更新该实例（走统一的时间字段校验）
+      const task = await this.updateTask(existingInstance.id, updates);
+      return { success: true, task };
     }
 
-    return { success: true };
+    // 如果不存在，按统一实例规则物化一个覆盖实例，保留安排 / 截止 / 提醒，
+    // 再应用本次更新；任何校验失败都不会保存。
+    const recurringTask = await this.taskRepository.findById(seriesId);
+    if (!recurringTask) {
+      throw new Error('重复任务不存在');
+    }
+
+    const occurrence = taskTime.toDate(occurrenceDate);
+    if (!occurrence) {
+      throw new Error('实例日期无效');
+    }
+
+    const overrideInstance = recurringTask.createInstance(occurrence, Task.generateId());
+
+    if (updates.content !== undefined) {
+      overrideInstance.updateContent(updates.content);
+    }
+    if (updates.status !== undefined) {
+      overrideInstance.updateStatus(updates.status);
+    }
+    if (updates.listId !== undefined) {
+      overrideInstance.moveToList(updates.listId);
+    }
+    if (updates.metadata !== undefined) {
+      overrideInstance.updateMetadata(updates.metadata);
+    }
+    this.applyTimeUpdate(overrideInstance, updates);
+
+    const savedInstance = await this.taskRepository.save(overrideInstance);
+    this._notifySchedule(savedInstance);
+    return { success: true, task: savedInstance };
   }
 
   /**

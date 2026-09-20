@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { app } = require('electron');
 const Task = require('../../domain/entities/task');
+const taskTime = require('../../domain/services/task-time');
 const DatabaseMigration = require('./database-migration');
 
 /**
@@ -424,7 +425,7 @@ class SqliteTaskRepository {
       metadata,
       recurrence,
       row.series_id || null,
-      row.occurrence_date ? new Date(row.occurrence_date) : null,
+      row.occurrence_date ? taskTime.toDate(row.occurrence_date) : null,
       row.due_date || null,
       row.due_time || null,
       row.scheduled_start_at ? new Date(row.scheduled_start_at) : null,
@@ -1391,20 +1392,16 @@ class SqliteTaskRepository {
 
   /**
    * 查找特定日期的覆盖实例
+   * 兼容历史存储格式（YYYY-MM-DD 与 ISO 时间字符串），按本地发生日期匹配
    * @param {string} seriesId 系列任务ID
-   * @param {string} occurrenceDate 实例日期 (YYYY-MM-DD)
+   * @param {string} occurrenceDate 实例日期
    * @returns {Promise<Task|null>}
    */
   async findOverrideInstance(seriesId, occurrenceDate) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const row = await this.db.get(
-      'SELECT * FROM tasks WHERE series_id = ? AND occurrence_date = ?',
-      [seriesId, occurrenceDate]
-    );
-    return row ? this.rowToTask(row) : null;
+    const instances = await this.findOverrideInstances(seriesId);
+    const targetKey = taskTime.localDateKey(occurrenceDate);
+    if (!targetKey) return null;
+    return instances.find((task) => taskTime.localDateKey(task.occurrenceDate) === targetKey) || null;
   }
 
   /**

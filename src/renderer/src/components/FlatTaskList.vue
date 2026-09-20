@@ -640,6 +640,9 @@ const addTask = async () => {
                 listId: task.listId || taskStore.currentListId,
                 dueDate: task.dueDate || null,
                 dueTime: task.dueTime || null,
+                scheduledStartAt: task.scheduledStartAt || null,
+                scheduledEndAt: task.scheduledEndAt || null,
+                reminderPolicy: task.reminderPolicy || null,
                 reminderTime: task.reminderTime || null,
                 metadata: task.metadata || { note: '' }
               }))

@@ -225,7 +225,7 @@ class AIService {
       "深入分析用户提供的目标，理解其核心需求。",
       "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
       "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
-      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
+      "根据上下文信息（如当前日期、时间描述）区分“什么时候做”（安排）与“最晚何时完成”（截止），仅对用户明确表达的时间生成对应字段，不猜测、不伪造。",
       "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
     ]
   },
@@ -259,48 +259,50 @@ class AIService {
   },
   "output_format_and_examples": {
     "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
+    "task_fields": {
+      "content": "任务内容（必填）",
+      "scheduledStartAt": "计划开始时间，ISO 8601 含时区偏移；仅当用户给出明确的开始时刻才写",
+      "scheduledEndAt": "计划结束时间，仅当用户给出结束时刻或时间段才写",
+      "dueDate": "截止日期 YYYY-MM-DD；用户表达'某日前完成/提交'才写，没有明确截止时刻就不写 dueTime",
+      "dueTime": "截止时刻 HH:mm，仅当用户明确给出截止时刻才写",
+      "reminderPolicy": "提醒策略，仅当用户明确要求提醒才写：相对开始用 {\"mode\":\"relative\",\"minutesBefore\":N}，绝对时间用 {\"mode\":\"absolute\"}",
+      "reminderTime": "绝对提醒时间（ISO 8601），仅 reminderPolicy.mode=absolute 时写",
+      "listId": "所属清单 ID，没有特定信息沿用示例值",
+      "metadata": "对象：{ note: 备注, steps: 步骤数组 }"
+    },
     "example_1_complex": {
       "input_goal": "今天下午完成 AI 生成任务功能",
       "output": {
         "task_list": [
           {
             "content": "后端：设计并实现 AI 模型调用接口",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "需要考虑认证和速率限制" }
           },
           {
             "content": "前端：开发任务生成按钮和交互逻辑",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "" }
           },
           {
             "content": "联调前后端接口并完成测试",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "" }
           }
         ],
-        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务，并安排在今天下午18:00前完成。"
+        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务。用户未提供具体的开始或截止时刻，未擅自添加时间，可在预览中补充安排或截止。"
       }
     },
     "example_2_complex": {
-      "input_goal": "明天要完成第一版产品宣传网站的上线",
+      "input_goal": "明天下午2点到5点上线第一版产品宣传网站",
       "output": {
         "task_list": [
-          { "content": "完成网站首页的 UI 设计稿", "dueDate": "2025-08-25", "dueTime": "12:00", "reminderTime": "2025-08-25T11:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "重点突出产品核心卖点" } },
-          { "content": "编写网站所需的宣传文案", "dueDate": "2025-08-25", "dueTime": "15:00", "reminderTime": "2025-08-25T14:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "" } },
-          { "content": "开发网站前端页面并部署到测试环境", "dueDate": "2025-08-25", "dueTime": "20:00", "reminderTime": "2025-08-25T19:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "确保移动端兼容性" } },
-          { "content": "最终测试并正式上线网站", "dueDate": "2025-08-25", "dueTime": "23:00", "reminderTime": "2025-08-25T22:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "检查域名解析和 SSL 证书" } }
+          { "content": "完成网站首页的 UI 设计稿", "scheduledStartAt": "2025-08-25T14:00:00+08:00", "scheduledEndAt": "2025-08-25T15:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "重点突出产品核心卖点" } },
+          { "content": "编写网站所需的宣传文案", "scheduledStartAt": "2025-08-25T14:00:00+08:00", "scheduledEndAt": "2025-08-25T15:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "" } },
+          { "content": "开发网站前端页面并部署到测试环境", "scheduledStartAt": "2025-08-25T15:00:00+08:00", "scheduledEndAt": "2025-08-25T16:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "确保移动端兼容性" } },
+          { "content": "最终测试并正式上线网站", "scheduledStartAt": "2025-08-25T16:00:00+08:00", "scheduledEndAt": "2025-08-25T17:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "检查域名解析和 SSL 证书" } }
         ],
-        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，并安排在明天完成。"
+        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，按明天下午2点到5点的时间段依次安排。"
       }
     },
     "example_3_simple": {
@@ -315,6 +317,35 @@ class AIService {
           }
         ],
         "output_description": "已为您创建任务“去看电影”，时间是今天下午3点。"
+      }
+    },
+    "example_4_deadline": {
+      "input_goal": "周五前提交季度报告",
+      "output": {
+        "task_list": [
+          {
+            "content": "提交季度报告",
+            "dueDate": "2025-08-29",
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您创建任务“提交季度报告”，截止日期为本周五；未给出具体时刻，按日期型截止处理。"
+      }
+    },
+    "example_5_reminder": {
+      "input_goal": "明天10点开会，提前10分钟提醒",
+      "output": {
+        "task_list": [
+          {
+            "content": "开会",
+            "scheduledStartAt": "2025-08-25T10:00:00+08:00",
+            "reminderPolicy": { "mode": "relative", "minutesBefore": 10 },
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您创建任务“开会”，安排在明天10点，并设置提前10分钟提醒。"
       }
     }
   }
@@ -505,7 +536,10 @@ class AIService {
         if (start) {
           scheduledStartAt = start.toISOString();
           const end = taskTime.toDate(rawScheduleEnd);
-          if (end) scheduledEndAt = end.toISOString();
+          if (end) {
+            // 结束早于开始视为无效，仅保留开始
+            scheduledEndAt = end.getTime() >= start.getTime() ? end.toISOString() : null;
+          }
         }
       }
 
@@ -521,10 +555,32 @@ class AIService {
       }
 
       const rawPolicy = task.reminderPolicy || task.reminder_policy || null;
-      const rawReminder = task.reminderTime || task.reminder_at || null;
-      let reminderPolicy = rawPolicy;
+      let rawReminder = task.reminderTime || task.reminder_at || null;
+      let reminderTimeValue = rawReminder || null;
+      let reminderPolicy = rawPolicy
+        ? { ...rawPolicy, mode: rawPolicy.mode || rawPolicy.type }
+        : null;
       if (!reminderPolicy && rawReminder) {
         reminderPolicy = { mode: 'absolute', minutesBefore: null };
+      }
+      // 防御：绝对策略必须带提醒时间，相对策略必须有安排开始，否则丢弃策略
+      if (reminderPolicy && reminderPolicy.mode === 'absolute' && !rawReminder) {
+        reminderPolicy = null;
+      }
+      if (reminderPolicy && reminderPolicy.mode === 'relative' && !scheduledStartAt) {
+        reminderPolicy = null;
+      }
+      // 相对策略不携带绝对提醒时间，避免歧义输入
+      if (reminderPolicy && reminderPolicy.mode === 'relative') {
+        reminderTimeValue = null;
+      }
+      // 绝对提醒已过期时丢弃（新设置绝对提醒必须在未来），避免整批创建失败
+      if (reminderPolicy && reminderPolicy.mode === 'absolute' && reminderTimeValue) {
+        const parsedReminder = taskTime.toDate(reminderTimeValue);
+        if (!parsedReminder || parsedReminder.getTime() <= Date.now()) {
+          reminderPolicy = null;
+          reminderTimeValue = null;
+        }
       }
 
       const normalizedTask = {
@@ -536,8 +592,8 @@ class AIService {
         reminderPolicy,
         metadata: task.metadata || { note: '' }
       };
-      if (rawReminder) {
-        normalizedTask.reminderTime = rawReminder;
+      if (reminderTimeValue) {
+        normalizedTask.reminderTime = reminderTimeValue;
       }
       return normalizedTask;
     });
@@ -558,7 +614,7 @@ class AIService {
       "深入分析用户提供的目标，理解其核心需求。",
       "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
       "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
-      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
+      "根据上下文信息（如当前日期、时间描述）区分“什么时候做”（安排）与“最晚何时完成”（截止），仅对用户明确表达的时间生成对应字段，不猜测、不伪造。",
       "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
     ]
   },
@@ -592,48 +648,50 @@ class AIService {
   },
   "output_format_and_examples": {
     "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
+    "task_fields": {
+      "content": "任务内容（必填）",
+      "scheduledStartAt": "计划开始时间，ISO 8601 含时区偏移；仅当用户给出明确的开始时刻才写",
+      "scheduledEndAt": "计划结束时间，仅当用户给出结束时刻或时间段才写",
+      "dueDate": "截止日期 YYYY-MM-DD；用户表达'某日前完成/提交'才写，没有明确截止时刻就不写 dueTime",
+      "dueTime": "截止时刻 HH:mm，仅当用户明确给出截止时刻才写",
+      "reminderPolicy": "提醒策略，仅当用户明确要求提醒才写：相对开始用 {\"mode\":\"relative\",\"minutesBefore\":N}，绝对时间用 {\"mode\":\"absolute\"}",
+      "reminderTime": "绝对提醒时间（ISO 8601），仅 reminderPolicy.mode=absolute 时写",
+      "listId": "所属清单 ID，没有特定信息沿用示例值",
+      "metadata": "对象：{ note: 备注, steps: 步骤数组 }"
+    },
     "example_1_complex": {
       "input_goal": "今天下午完成 AI 生成任务功能",
       "output": {
         "task_list": [
           {
             "content": "后端：设计并实现 AI 模型调用接口",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "需要考虑认证和速率限制" }
           },
           {
             "content": "前端：开发任务生成按钮和交互逻辑",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "" }
           },
           {
             "content": "联调前后端接口并完成测试",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { "note": "" }
           }
         ],
-        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务，并安排在今天下午18:00前完成。"
+        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务。用户未提供具体的开始或截止时刻，未擅自添加时间，可在预览中补充安排或截止。"
       }
     },
     "example_2_complex": {
-      "input_goal": "明天要完成第一版产品宣传网站的上线",
+      "input_goal": "明天下午2点到5点上线第一版产品宣传网站",
       "output": {
         "task_list": [
-          { "content": "完成网站首页的 UI 设计稿", "dueDate": "2025-08-25", "dueTime": "12:00", "reminderTime": "2025-08-25T11:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "重点突出产品核心卖点" } },
-          { "content": "编写网站所需的宣传文案", "dueDate": "2025-08-25", "dueTime": "15:00", "reminderTime": "2025-08-25T14:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "" } },
-          { "content": "开发网站前端页面并部署到测试环境", "dueDate": "2025-08-25", "dueTime": "20:00", "reminderTime": "2025-08-25T19:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "确保移动端兼容性" } },
-          { "content": "最终测试并正式上线网站", "dueDate": "2025-08-25", "dueTime": "23:00", "reminderTime": "2025-08-25T22:00:00.000Z", "listId": 1755532210104, "metadata": { "note": "检查域名解析和 SSL 证书" } }
+          { "content": "完成网站首页的 UI 设计稿", "scheduledStartAt": "2025-08-25T14:00:00+08:00", "scheduledEndAt": "2025-08-25T15:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "重点突出产品核心卖点" } },
+          { "content": "编写网站所需的宣传文案", "scheduledStartAt": "2025-08-25T14:00:00+08:00", "scheduledEndAt": "2025-08-25T15:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "" } },
+          { "content": "开发网站前端页面并部署到测试环境", "scheduledStartAt": "2025-08-25T15:00:00+08:00", "scheduledEndAt": "2025-08-25T16:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "确保移动端兼容性" } },
+          { "content": "最终测试并正式上线网站", "scheduledStartAt": "2025-08-25T16:00:00+08:00", "scheduledEndAt": "2025-08-25T17:00:00+08:00", "listId": 1755532210104, "metadata": { "note": "检查域名解析和 SSL 证书" } }
         ],
-        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，并安排在明天完成。"
+        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，按明天下午2点到5点的时间段依次安排。"
       }
     },
     "example_3_simple": {
@@ -648,6 +706,35 @@ class AIService {
           }
         ],
         "output_description": "已为您创建任务“去看电影”，时间是今天下午3点。"
+      }
+    },
+    "example_4_deadline": {
+      "input_goal": "周五前提交季度报告",
+      "output": {
+        "task_list": [
+          {
+            "content": "提交季度报告",
+            "dueDate": "2025-08-29",
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您创建任务“提交季度报告”，截止日期为本周五；未给出具体时刻，按日期型截止处理。"
+      }
+    },
+    "example_5_reminder": {
+      "input_goal": "明天10点开会，提前10分钟提醒",
+      "output": {
+        "task_list": [
+          {
+            "content": "开会",
+            "scheduledStartAt": "2025-08-25T10:00:00+08:00",
+            "reminderPolicy": { "mode": "relative", "minutesBefore": 10 },
+            "listId": 1755532210105,
+            "metadata": { "note": "" }
+          }
+        ],
+        "output_description": "已为您创建任务“开会”，安排在明天10点，并设置提前10分钟提醒。"
       }
     }
   }
@@ -669,7 +756,7 @@ class AIService {
       "深入分析用户提供的目标，理解其核心需求。",
       "能够判断用户目标的复杂性，并决定是直接创建单个任务还是进行多任务拆解。",
       "将复杂的目标拆解为一系列具体的、可执行的、符合逻辑顺序的子任务（atomic tasks）。",
-      "根据上下文信息（如当前日期、时间描述）智能推断任务的截止日期和时间。",
+      "根据上下文信息（如当前日期、时间描述）区分“什么时候做”（安排）与“最晚何时完成”（截止），仅对用户明确表达的时间生成对应字段，不猜测、不伪造。",
       "严格按照指定的 JSON 格式生成结果，不添加任何额外的解释性文字。"
     ]
   },
@@ -703,15 +790,23 @@ class AIService {
   },
   "output_format_and_examples": {
     "description": "输出应包含 'task_list' 和 'output_description' 两个键。",
+    "task_fields": {
+      "content": "任务内容（必填）",
+      "scheduledStartAt": "计划开始时间，ISO 8601 含时区偏移；仅当用户给出明确的开始时刻才写",
+      "scheduledEndAt": "计划结束时间，仅当用户给出结束时刻或时间段才写",
+      "dueDate": "截止日期 YYYY-MM-DD；用户表达'某日前完成/提交'才写，没有明确截止时刻就不写 dueTime",
+      "dueTime": "截止时刻 HH:mm，仅当用户明确给出截止时刻才写",
+      "reminderPolicy": "提醒策略，仅当用户明确要求提醒才写：相对开始用 {\"mode\":\"relative\",\"minutesBefore\":N}，绝对时间用 {\"mode\":\"absolute\"}",
+      "reminderTime": "绝对提醒时间（ISO 8601），仅 reminderPolicy.mode=absolute 时写",
+      "listId": "所属清单 ID，没有特定信息沿用示例值",
+      "metadata": "对象：{ note: 备注, steps: 步骤数组 }"
+    },
     "example_1_complex": {
       "input_goal": "今天下午完成 AI 生成任务功能",
       "output": {
         "task_list": [
           {
             "content": "今天下午完成 AI 生成任务功能",
-            "dueDate": "2025-08-24",
-            "dueTime": "18:00",
-            "reminderTime": "2025-08-24T17:00:00.000Z",
             "listId": 1755532210103,
             "metadata": { 
                 "note": "需要考虑认证和速率限制", 
@@ -723,14 +818,14 @@ class AIService {
             }
           }
         ],
-        "output_description": "已为您将“完成AI生成任务功能”拆解为3个可执行任务，并安排在今天下午18:00前完成。"
+        "output_description": "已为您将“完成AI生成任务功能”拆解为3个执行步骤。用户未提供具体时刻，未擅自添加时间，可稍后补充安排。"
       }
     },
     "example_2_complex": {
       "input_goal": "明天要完成第一版产品宣传网站的上线,今天下午3点去看电影",
       "output": {
         "task_list": [
-          { "content": "明天要完成第一版产品宣传网站的上线", "dueDate": "2025-08-25", "dueTime": "12:00", "reminderTime": "2025-08-25T11:00:00.000Z", "listId": 1755532210104, 
+          { "content": "明天要完成第一版产品宣传网站的上线", "dueDate": "2025-08-25", "listId": 1755532210104, 
             "metadata": { 
                 "note": "重点突出产品核心卖点,检查域名解析和 SSL 证书,确保移动端兼容性",
                 "steps": [
@@ -746,7 +841,7 @@ class AIService {
             "metadata": { "note": "" }
           }
         ],
-        "output_description": "已将“上线产品宣传网站”规划为4个关键步骤，并安排在明天完成。"
+        "output_description": "已将“上线产品宣传网站”规划为4个执行步骤，按日期型截止安排在明天完成；“看电影”安排在今天下午3点。"
       }
     }
     }

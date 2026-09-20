@@ -50,6 +50,10 @@ debug.log
 .kiro/
 .trae/
 molist/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # ====================== #
 # 其他

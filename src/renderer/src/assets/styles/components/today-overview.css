@@ -1,0 +1,399 @@
+/* Today 综合视图（Agenda + Future Calendar）样式 */
+
+/* ---------- 布局 ---------- */
+
+.today-overview {
+  @apply flex h-full min-h-0 w-full bg-background relative overflow-hidden;
+}
+
+.today-overview-agenda {
+  @apply flex-1 min-w-0 min-h-0 flex flex-col;
+  flex-basis: 56%;
+  max-width: 60%;
+}
+
+.today-overview-calendar {
+  @apply flex-none min-h-0 border-l border-border/50 flex flex-col;
+  flex-basis: 44%;
+  max-width: 44%;
+}
+
+/* 中等内容区宽度时可微调比例（约 60/40） */
+@media (max-width: 1180px) {
+  .today-overview-agenda {
+    flex-basis: 60%;
+    max-width: 62%;
+  }
+  .today-overview-calendar {
+    flex-basis: 40%;
+    max-width: 42%;
+  }
+}
+
+/* 窄窗口：Agenda 为主，日历收进抽屉 */
+.today-overview.is-narrow {
+  @apply block;
+}
+
+.today-overview.is-narrow .today-overview-agenda {
+  max-width: 100%;
+  flex-basis: auto;
+}
+
+/* ---------- Agenda ---------- */
+
+.agenda-view {
+  @apply flex flex-col h-full min-h-0 relative;
+}
+
+.agenda-scroll {
+  @apply flex-1 min-h-0 overflow-y-auto px-4 pt-3 pb-6;
+  scrollbar-width: thin;
+}
+
+.agenda-state {
+  @apply flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground;
+}
+
+.agenda-no-match {
+  @apply py-12;
+}
+
+.agenda-section {
+  @apply mb-4;
+}
+
+.agenda-section-header {
+  @apply flex items-center gap-2 py-2 px-2 rounded-md select-none;
+}
+
+.agenda-section-header.is-button {
+  @apply w-full text-left cursor-pointer hover:bg-accent/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md;
+}
+
+.agenda-section-title {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.agenda-section-friendly {
+  @apply text-xs font-normal text-muted-foreground ml-1;
+}
+
+.agenda-section-count {
+  @apply text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5;
+}
+
+.agenda-count-overdue {
+  @apply bg-destructive/10 text-destructive;
+}
+
+.agenda-section-icon-overdue {
+  @apply text-destructive/80;
+}
+
+.agenda-section-icon-today {
+  @apply text-primary;
+}
+
+.agenda-section-body {
+  @apply pl-2 pr-1 flex flex-col gap-1.5;
+}
+
+.agenda-empty-inline {
+  @apply text-xs text-muted-foreground/80 py-2 pl-3;
+}
+
+.agenda-card-wrapper {
+  @apply rounded-lg transition-shadow;
+}
+
+.agenda-card-wrapper.agenda-card-highlight {
+  animation: agenda-highlight-fade 1.6s ease-out;
+}
+
+@keyframes agenda-highlight-fade {
+  0% { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.45); }
+  100% { box-shadow: 0 0 0 3px hsl(var(--primary) / 0); }
+}
+
+.agenda-card-wrapper:has(.flat-task-item-completed) {
+  @apply opacity-70;
+}
+
+.agenda-completed-label {
+  @apply text-xs text-muted-foreground mt-2 pl-3;
+}
+
+.agenda-relocated-link {
+  @apply self-start text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-2 py-1 mt-1;
+}
+
+.agenda-relocated-link i {
+  @apply mr-1;
+}
+
+.agenda-load-more {
+  @apply flex justify-center py-2;
+}
+
+.agenda-load-more-btn {
+  @apply flex items-center gap-2 px-4 py-1.5 text-xs rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.agenda-load-more-btn:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.agenda-error {
+  @apply flex items-center justify-between gap-3 mx-2 my-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs;
+}
+
+.agenda-retry-btn {
+  @apply flex items-center gap-1 px-2 py-1 rounded border border-destructive/40 text-destructive hover:bg-destructive/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+/* ---------- 任务卡与徽标 ---------- */
+
+.agenda-task-card {
+  @apply relative;
+}
+
+.agenda-task-schedule-btn {
+  @apply absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 text-2xs rounded border border-border text-muted-foreground bg-background/90 hover:text-primary hover:border-primary/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.flat-task-badge {
+  @apply inline-flex items-center px-1.5 py-0.5 rounded text-2xs border border-border/70 text-muted-foreground whitespace-nowrap;
+}
+
+.flat-task-badge-warning {
+  @apply border-warning/40 text-warning;
+}
+
+.flat-task-badge-danger {
+  @apply border-destructive/40 text-destructive;
+}
+
+.flat-task-badge-list {
+  @apply border-transparent bg-muted/70;
+}
+
+/* ---------- 快速添加 ---------- */
+
+.agenda-quick-add {
+  @apply flex-none border-t border-border/50 bg-background px-4 py-2;
+}
+
+.agenda-quick-add-row {
+  @apply flex items-center gap-2;
+}
+
+.agenda-quick-add-input {
+  @apply flex-1 min-w-0 bg-transparent border border-border rounded-lg px-3 h-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition;
+}
+
+.agenda-quick-add-controls {
+  @apply flex items-center gap-1;
+}
+
+.agenda-quick-add-btn {
+  @apply w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.agenda-ai-toggle,
+.agenda-ai-split {
+  @apply h-9 px-2.5 flex items-center gap-1 rounded-lg border border-border text-muted-foreground text-xs hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.agenda-ai-toggle.active,
+.agenda-ai-split.active {
+  @apply text-primary border-primary/40 bg-primary/10;
+}
+
+.agenda-quick-add-feedback {
+  @apply flex items-center gap-2 mt-2 px-3 py-1.5 rounded-lg bg-primary/10 text-xs text-primary;
+}
+
+.agenda-feedback-link {
+  @apply font-medium underline underline-offset-2 hover:text-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded;
+}
+
+.agenda-feedback-close {
+  @apply ml-auto w-5 h-5 flex items-center justify-center rounded hover:bg-primary/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.agenda-flash-enter-active,
+.agenda-flash-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.agenda-flash-enter-from,
+.agenda-flash-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* ---------- Future Calendar ---------- */
+
+.future-calendar {
+  @apply flex flex-col h-full min-h-0 py-3 px-3;
+}
+
+.future-calendar-toolbar {
+  @apply flex items-center justify-between gap-1 pb-2;
+}
+
+.future-calendar-back-btn {
+  @apply flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.future-calendar-back-btn.today {
+  @apply text-primary border-primary/40 hover:bg-primary/10 hover:text-primary;
+}
+
+.future-calendar-months {
+  @apply flex-1 min-h-0 overflow-y-auto pr-1;
+  scrollbar-width: thin;
+}
+
+.future-calendar-month {
+  @apply mb-4;
+}
+
+.future-calendar-month-title {
+  @apply text-xs font-semibold text-foreground mb-2 px-1 sticky top-0 bg-background py-1 z-[1];
+}
+
+.future-calendar-grid {
+  @apply grid grid-cols-7 gap-0.5;
+}
+
+.future-calendar-weekday {
+  @apply text-center text-2xs text-muted-foreground py-1;
+}
+
+.future-calendar-cell {
+  @apply flex justify-center;
+}
+
+.future-calendar-day {
+  @apply w-full min-h-[34px] flex flex-col items-center justify-start pt-0.5 rounded-md text-xs text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-[1];
+}
+
+.future-calendar-day.is-other-month {
+  @apply text-muted-foreground/40;
+}
+
+.future-calendar-day.is-past {
+  @apply text-muted-foreground/70;
+}
+
+.future-calendar-day.is-today .future-calendar-day-num {
+  @apply ring-1 ring-primary rounded-full px-1.5 text-primary font-semibold;
+}
+
+.future-calendar-day.is-selected {
+  @apply bg-primary/15;
+}
+
+.future-calendar-day.is-selected.is-today {
+  @apply bg-primary/20;
+}
+
+.future-calendar-dots {
+  @apply flex items-center gap-0.5 mt-0.5 h-2;
+}
+
+.future-calendar-dot {
+  @apply w-1.5 h-1.5 rounded-full;
+}
+
+.future-calendar-dot.is-completed {
+  @apply opacity-40;
+}
+
+.future-calendar-more {
+  @apply text-2xs text-muted-foreground leading-none;
+}
+
+/* ---------- 窄屏日历抽屉 ---------- */
+
+.today-calendar-toggle {
+  @apply absolute top-2 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm;
+}
+
+.today-calendar-drawer-backdrop {
+  @apply fixed inset-0 z-[90] bg-black/30 backdrop-blur-[1px];
+}
+
+.today-calendar-drawer {
+  @apply absolute top-0 right-0 h-full w-[320px] max-w-[85vw] bg-background border-l border-border shadow-2xl flex flex-col;
+}
+
+.today-calendar-drawer-header {
+  @apply flex items-center justify-between px-4 py-3 border-b border-border/50;
+}
+
+.today-calendar-drawer-title {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.today-calendar-drawer-close {
+  @apply w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+}
+
+.today-calendar-drawer .future-calendar {
+  @apply pt-2;
+}
+
+.today-drawer-enter-active,
+.today-drawer-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.today-drawer-enter-from,
+.today-drawer-leave-to {
+  opacity: 0;
+}
+
+.today-drawer-enter-from .today-calendar-drawer,
+.today-drawer-leave-to .today-calendar-drawer {
+  transform: translateX(100%);
+}
+
+/* ---------- 编辑面板 ---------- */
+
+.today-edit-panel {
+  @apply absolute top-0 right-0 h-full w-[420px] max-w-[70%] z-30 bg-background border-l border-border shadow-xl overflow-y-auto;
+}
+
+.today-edit-enter-active {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.today-edit-leave-active {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+.today-edit-enter-from,
+.today-edit-leave-to {
+  transform: translateX(24px);
+  opacity: 0;
+}
+
+/* 减少动态效果：日期定位等使用即时过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .agenda-card-wrapper.agenda-card-highlight {
+    animation: none;
+    @apply ring-2 ring-primary/50;
+  }
+
+  .agenda-flash-enter-active,
+  .agenda-flash-leave-active,
+  .today-drawer-enter-active,
+  .today-drawer-leave-active,
+  .today-edit-enter-active,
+  .today-edit-leave-active {
+    transition: none;
+  }
+}

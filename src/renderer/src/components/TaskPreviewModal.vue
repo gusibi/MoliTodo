@@ -78,11 +78,21 @@
               </div>
             </div>
             
-            <!-- 第二行：提醒时间 + 所属清单 -->
+            <!-- 第二行：安排 / 提醒 / 所属清单 -->
             <div class="task-preview-row task-preview-row-meta">
-              <div class="task-preview-meta-item">
+              <div class="task-preview-meta-item" v-if="task.scheduledStartAt || task.dueDate">
+                <label class="task-preview-meta-label">安排 / 截止</label>
+                <div class="task-preview-input-meta task-preview-time-text">{{ formatPreviewSchedule(task) }}</div>
+              </div>
+              <div class="task-preview-meta-item" v-if="task.reminderPolicy?.mode === 'relative'">
                 <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
-                <input 
+                <div class="task-preview-input-meta task-preview-time-text">
+                  {{ task.reminderPolicy.minutesBefore > 0 ? `提前 ${task.reminderPolicy.minutesBefore} 分钟` : '开始时' }}
+                </div>
+              </div>
+              <div class="task-preview-meta-item" v-else>
+                <label class="task-preview-meta-label">{{ $t('tasks.reminderTime') }}</label>
+                <input
                   v-model="task.reminderTime"
                   type="datetime-local"
                   class="task-preview-input-meta"
@@ -90,12 +100,12 @@
               </div>
               <div class="task-preview-meta-item">
                 <label class="task-preview-meta-label">{{ $t('tasks.belongToList') }}</label>
-                <select 
+                <select
                   v-model="task.listId"
                   class="task-preview-select-meta"
                 >
-                  <option 
-                    v-for="list in availableLists" 
+                  <option
+                    v-for="list in availableLists"
                     :key="list.id"
                     :value="list.id"
                   >
@@ -308,7 +318,13 @@ export default {
             listId: task.listId,
             dueDate: task.dueDate || null,
             dueTime: task.dueTime || null,
-            reminderTime: formatDateTimeForSave(task.reminderTime),
+            scheduledStartAt: task.scheduledStartAt || null,
+            scheduledEndAt: task.scheduledEndAt || null,
+            reminderPolicy: task.reminderPolicy || null,
+            // 相对策略不携带绝对提醒时间，避免歧义输入
+            reminderTime: task.reminderPolicy?.mode === 'relative'
+              ? null
+              : formatDateTimeForSave(task.reminderTime),
             metadata: {
               note: task.metadata?.note || '',
               steps: task.metadata?.steps || []
@@ -428,6 +444,24 @@ export default {
       textarea.style.height = newHeight + 'px'
     }
     
+    // 展示 AI 生成的安排 / 截止信息
+    const formatPreviewSchedule = (task) => {
+      const parts = []
+      if (task.scheduledStartAt) {
+        const start = new Date(task.scheduledStartAt)
+        let text = `开始 ${start.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+        if (task.scheduledEndAt) {
+          const end = new Date(task.scheduledEndAt)
+          text += ` – ${end.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+        }
+        parts.push(text)
+      }
+      if (task.dueDate) {
+        parts.push(`截止 ${task.dueDate}${task.dueTime ? ' ' + task.dueTime : ''}`)
+      }
+      return parts.join('　')
+    }
+
     return {
       taskList,
       availableLists,
@@ -443,6 +477,7 @@ export default {
       copyStatus,
       isStreamGenerating,
       isStreamCollapsed,
+      formatPreviewSchedule,
       noteTextarea,
       autoResizeTextarea
     }

@@ -50,8 +50,8 @@
 
           <!-- 时间信息 -->
           <div class="flat-task-time-info">
-            <!-- 重复任务图标 -->
-            <div v-if="task.recurrence" class="flat-task-recurring-icon">
+            <!-- 重复任务图标（模板或实例） -->
+            <div v-if="task.recurrence || task.seriesId" class="flat-task-recurring-icon">
               <i class="fas fa-repeat"></i>
             </div>
             
@@ -62,6 +62,12 @@
               <i class="fas fa-calendar"></i>
               <span>{{ formatTaskTimeInfo(task) }}</span>
             </div>
+
+            <!-- 附加徽标（分组原因 / 重复任务等） -->
+            <span v-for="(badge, index) in badges" :key="index" class="flat-task-badge"
+              :class="badge.tone ? `flat-task-badge-${badge.tone}` : ''">
+              {{ badge.text }}
+            </span>
 
             <!-- 进行时间 -->
             <div v-if="task.status === 'doing' && !isTaskOvertime(task)" class="flat-task-time flat-task-time-doing">
@@ -119,20 +125,30 @@
 
 import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { isVirtualInstance } from '../../../domain/services/today-agenda.js'
 
-// 任务时间展示：优先安排开始，其次截止（有具体时刻显示时刻，否则只显示日期）
+// 任务时间展示：优先安排（开始[-结束]），其次截止（有具体时刻显示时刻，否则只显示日期）
 const formatTaskTimeInfo = (task) => {
   if (!task) return ''
   if (task.scheduledStartAt) {
-    return formatReminderTime(task.scheduledStartAt)
+    let text = formatReminderTime(task.scheduledStartAt)
+    if (task.scheduledEndAt) {
+      const end = new Date(task.scheduledEndAt)
+      const start = new Date(task.scheduledStartAt)
+      const sameDay = start.toDateString() === end.toDateString()
+      text += sameDay
+        ? ` – ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+        : ` – ${end.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+    }
+    return text
   }
   if (task.dueDate) {
     if (task.dueTime) {
-      return formatReminderTime(`${task.dueDate}T${task.dueTime}:00`)
+      return `截止 ${formatReminderTime(`${task.dueDate}T${task.dueTime}:00`)}`
     }
     const date = new Date(`${task.dueDate}T00:00:00`)
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+    return `截止 ${date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}`
   }
   return ''
 }
@@ -182,6 +198,10 @@ const props = defineProps({
   isSelected: {
     type: Boolean,
     default: false
+  },
+  badges: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -197,6 +217,19 @@ const emit = defineEmits([
 
 // 使用 taskStore
 const taskStore = useTaskStore()
+
+// 虚拟重复实例：操作需路由到重复实例接口（先物化再执行状态机）
+const isVirtual = computed(() => isVirtualInstance(props.task))
+
+// 物化当前虚拟实例并返回真实任务行
+const materializeVirtual = async () => {
+  const result = await taskStore.updateRecurringInstance(
+    props.task.seriesId,
+    props.task.occurrenceDate,
+    {}
+  )
+  return result && result.success ? result.task : null
+}
 
 // 拖拽相关响应式数据
 const isDragging = ref(false)
@@ -254,6 +287,11 @@ const handleTaskClick = () => {
 // 任务操作方法 - 直接调用 taskStore
 const handleToggleComplete = async () => {
   try {
+    if (isVirtual.value) {
+      // 虚拟重复实例：取消完成不存在（虚拟实例总是未完成）
+      await taskStore.completeRecurringInstance(props.task.seriesId, props.task.occurrenceDate)
+      return
+    }
     if (props.task.status === 'done') {
       // 如果已完成，重新开始任务
       await taskStore.updateTask(props.task.id, { status: 'todo', completedAt: null })
@@ -268,7 +306,11 @@ const handleToggleComplete = async () => {
 
 const handleStartTask = async () => {
   try {
-    console.log('开始任务 - 当前状态:', props.task.status, '任务ID:', props.task.id)
+    if (isVirtual.value) {
+      const materialized = await materializeVirtual()
+      if (materialized) await taskStore.startTask(materialized.id)
+      return
+    }
     await taskStore.startTask(props.task.id)
   } catch (error) {
     console.error('开始任务失败:', error)
@@ -277,7 +319,11 @@ const handleStartTask = async () => {
 
 const handlePauseTask = async () => {
   try {
-    console.log('暂停任务 - 当前状态:', props.task.status, '任务ID:', props.task.id)
+    if (isVirtual.value) {
+      const materialized = await materializeVirtual()
+      if (materialized) await taskStore.pauseTask(materialized.id)
+      return
+    }
     await taskStore.pauseTask(props.task.id)
   } catch (error) {
     console.error('暂停任务失败:', error)
@@ -286,8 +332,7 @@ const handlePauseTask = async () => {
 
 const handleResumeTask = async () => {
   try {
-    console.log('继续任务 - 当前状态:', props.task.status, '任务ID:', props.task.id)
-    await taskStore.startTask(props.task.id) // resume 实际上就是重新开始
+    await handleStartTask()
   } catch (error) {
     console.error('继续任务失败:', error)
   }
@@ -307,9 +352,12 @@ const handleRestartTask = async () => {
 }
 
 const handleDeleteTask = async () => {
-  if (confirm('确定要删除这个任务吗？')) {
-    await taskStore.deleteTask(props.task.id)
+  if (!confirm('确定要删除这个任务吗？')) return
+  if (isVirtual.value) {
+    await taskStore.deleteRecurringInstance(props.task.seriesId, props.task.occurrenceDate)
+    return
   }
+  await taskStore.deleteTask(props.task.id)
 }
 </script>
 

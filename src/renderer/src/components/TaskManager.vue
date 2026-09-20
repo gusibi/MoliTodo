@@ -2,7 +2,8 @@
   <div class="task-manager">
     <!-- 左侧边栏 - 导航 -->
     <aside class="task-manager-sidebar">
-      <SidebarNav :current-category="currentCategory" @category-change="switchCategory" @open-settings="openSettings" />
+      <SidebarNav :current-category="currentCategory" :today-count-override="todayPendingCount"
+        @category-change="switchCategory" @open-settings="openSettings" />
     </aside>
 
     <!-- 主要内容区域 -->
@@ -12,7 +13,10 @@
         <div class="task-manager-category-title" @click="handleEasterEggClick">
           <i :class="getCurrentIcon()" class="task-manager-category-icon" :style="getCurrentIconStyle()"></i>
           <h1 class="task-manager-category-name">{{ getCurrentTitle() }}</h1>
-          <span class="task-manager-category-count">{{ $t('tasks.totalTasks', { count: getCurrentCount() }) }}</span>
+          <span v-if="isTodayBranch && todayPendingCount !== null" class="task-manager-category-count">
+            {{ $t('today.pendingCount', { count: todayPendingCount }) }}
+          </span>
+          <span v-else class="task-manager-category-count">{{ $t('tasks.totalTasks', { count: getCurrentCount() }) }}</span>
         </div>
 
         <!-- 右侧按钮组 -->
@@ -65,20 +69,35 @@
         </div>
       </div>
 
+      <!-- 搜索范围说明：页面搜索不是全库搜索 -->
+      <div v-if="isTodayBranch && searchQuery" class="task-manager-search-scope-hint">
+        <i class="fas fa-info-circle"></i>
+        <span>{{
+          searchScope
+            ? $t('today.searchScope', { from: searchScope.from, to: searchScope.to })
+            : $t('today.searchScopeLoading')
+        }}</span>
+      </div>
+
       <!-- 任务视图组件容器 - 可滚动区域 -->
       <div class="task-manager-views-container flex-1 min-h-0 relative" :class="{
-        'overflow-auto': viewMode !== 'monthly' && viewMode !== 'kanban' && !showEditPanel,
-        'overflow-hidden': viewMode === 'monthly' || viewMode === 'kanban',
+        'overflow-auto': viewMode !== 'monthly' && viewMode !== 'kanban' && !showEditPanel && !isTodayBranch,
+        'overflow-hidden': viewMode === 'monthly' || viewMode === 'kanban' || isTodayBranch,
         'task-manager-views-flex': viewMode === 'list'
       }">
+        <!-- Today 综合视图：Agenda + Future Calendar，自管滚动 -->
+        <div v-if="isTodayBranch" key="today-overview" class="task-list-container is-today-overview">
+          <TodayOverview @pending-count-change="handlePendingCountChange" @scope-change="handleScopeChange" />
+        </div>
+
         <!-- 视图切换过渡动画 -->
-        <Transition name="view-fade" mode="out-in" appear>
+        <Transition v-else name="view-fade" mode="out-in" appear>
           <!-- 列表视图 -->
           <div v-if="viewMode === 'list'" key="list" class="task-list-container" :class="{ 'with-edit-panel': showEditPanel }">
             <FlatTaskList :tasks="displayTasks" :loading="loading" :search-query="searchQuery"
               :editing-task-id="selectedTask?.id"
               @add-task="handleAddTask" @update-task="handleUpdateTask" @edit-task="handleEditTask"
-              @show-tooltip="showTooltip" @hide-tooltip="hideTooltip" 
+              @show-tooltip="showTooltip" @hide-tooltip="hideTooltip"
               @show-edit-panel="handleShowEditPanel" @hide-edit-panel="handleHideEditPanel" />
           </div>
 
@@ -166,6 +185,7 @@ import SidebarNav from './SidebarNav.vue'
 import TaskEditVertical from './TaskEditVertical.vue'
 import KanbanBoard from './kanban_view/KanbanBoard.vue'
 import TaskDetailsModal from './TaskDetailsModal.vue'
+import TodayOverview from './today_view/TodayOverview.vue'
 import { getListIconClass } from '@/utils/icon-utils'
 
 
@@ -233,6 +253,26 @@ const displayTasks = computed(() => {
 const currentCategory = computed(() => taskStore.currentCategory)
 const currentListId = computed(() => taskStore.currentListId)
 const currentList = computed(() => taskStore.currentList)
+
+// Today 综合视图分支（Agenda + Future Calendar）
+const isTodayBranch = computed(() => currentCategory.value === 'today')
+const todayPendingCount = ref(null)
+const searchScope = ref(null)
+
+const handlePendingCountChange = (count) => {
+  todayPendingCount.value = count
+}
+
+const handleScopeChange = (scope) => {
+  searchScope.value = scope
+}
+
+watch(isTodayBranch, (active) => {
+  if (!active) {
+    todayPendingCount.value = null
+    searchScope.value = null
+  }
+})
 
 // 计算属性：判断当前分类是否支持多种视图
 const supportsMultipleViews = computed(() => {

@@ -125,7 +125,7 @@
               </div>
             </div>
           </div>
-          <!-- 提醒设置 -->
+          <!-- 提醒设置（附属：策略化提醒） -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': selectedReminder }">
               <button class="task-option-btn" @click="toggleReminderPicker">
@@ -141,53 +141,108 @@
               </button>
             </div>
 
-            <!-- 提醒选择器下拉 -->
+            <!-- 提醒选择器下拉：相对开始 / 自定义绝对时间 -->
             <div v-if="showReminderPicker" class="task-option-dropdown">
               <div class="reminder-options">
-                <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option"
-                  @click="selectCustomReminder(reminder)">
+                <button v-if="selectedReminder || reminderPolicy?.mode === 'disabled'" class="reminder-option"
+                  @click="disableReminder">
+                  <i class="fas fa-ban reminder-option-icon"></i>
+                  <span>不提醒</span>
+                </button>
+                <button v-for="option in reminderOptions" :key="option.id" class="reminder-option"
+                  :class="{ 'reminder-option-active': isReminderOptionActive(option) }"
+                  @click="selectReminderOption(option)">
                   <i class="fas fa-clock reminder-option-icon"></i>
-                  <span>{{ reminder.label }}</span>
+                  <span>{{ option.label }}</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- 截止日期 -->
+          <!-- 安排时间（一级入口：计划开始 / 结束） -->
+          <div class="task-option-section">
+            <div class="task-option-item" :class="{ 'active': scheduleStart }">
+              <button class="task-option-btn" ref="scheduleStartBtn"
+                @click="openPickerFor('scheduleStart', scheduleStartBtn)">
+                <div class="task-option-icon">
+                  <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : '添加安排时间' }}</div>
+                </div>
+              </button>
+              <button v-if="scheduleStart" class="task-option-delete" @click="clearSchedule">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <!-- 结束时间：只在设置开始后出现 -->
+            <div v-if="scheduleStart" class="task-option-item task-option-subitem" :class="{ 'active': scheduleEnd }">
+              <button class="task-option-btn" ref="scheduleEndBtn"
+                @click="openPickerFor('scheduleEnd', scheduleEndBtn)">
+                <div class="task-option-icon">
+                  <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="task-option-content">
+                  <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : '添加结束时间（可选）' }}</div>
+                </div>
+              </button>
+              <button v-if="scheduleEnd" class="task-option-delete" @click="clearScheduleEnd">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 截止日期（一级入口） -->
           <div class="task-option-section" ref="datePickerSection">
             <div class="task-option-item" :class="{ 'active': selectedDate }">
-              <button class="task-option-btn" ref="datePickerBtn" @click="toggleDatePicker">
+              <button class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
                 <div class="task-option-icon">
                   <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加提醒时间' }}
+                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : '添加截止时间' }}
                   </div>
                 </div>
               </button>
-              
+              <!-- 日期型截止与日期+时间截止的切换 -->
+              <button v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
+                title="清除截止时刻，仅保留日期">
+                仅日期
+              </button>
+              <button v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
+                title="为截止日期添加具体时刻">
+                加时间
+              </button>
               <button v-if="selectedDate" class="task-option-delete" @click="clearDateTime">
                 <i class="fas fa-times"></i>
               </button>
             </div>
+          </div>
+
+          <!-- 时间模型提示（计划晚于截止 / 错过的相对提醒 / 无效旧截止） -->
+          <div v-if="timeHintText" class="task-option-warning">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>{{ timeHintText }}</span>
           </div>
           
           <!-- 日期选择器 Portal - 固定定位在最上层 -->
           <Teleport to="body">
             <div v-if="showDatePicker" class="date-picker-overlay">
               <div class="date-picker-backdrop" @click="showDatePicker = false"></div>
-              <div 
-                class="date-picker-popup-fixed" 
+              <div
+                class="date-picker-popup-fixed"
                 :style="datePickerStyle"
                 @click.stop
               >
+                <div class="date-picker-title">{{ datePickerTitle }}</div>
                 <v-date-picker
                   v-model="dateTimeValue"
                   mode="dateTime"
                   is24hr
                   :minute-increment="5"
                   :is-dark="isDark"
-                  :min-date="new Date()"
+                  :min-date="pickerMinDate"
                   @update:modelValue="handleDateTimeChange"
                   class="v-calendar"
                 ></v-date-picker>
@@ -318,10 +373,22 @@ const selectedDate = ref('')
 const selectedTime = ref('')
 const dateTimeValue = ref(null)
 const showDatePicker = ref(false)
+// 日期选择器用途：截止 / 安排开始 / 安排结束 / 自定义绝对提醒
+const datePickerMode = ref('deadline')
+
+// 安排相关状态
+const scheduleStart = ref(null)
+const scheduleEnd = ref(null)
+const scheduleStartBtn = ref(null)
+const scheduleEndBtn = ref(null)
+
+// 时间模型提示（计划晚于截止 / 错过的相对提醒）
+const timeWarning = ref('')
 
 // 提醒相关状态
 const selectedReminder = ref(null)
 const showReminderPicker = ref(false)
+const reminderPolicy = ref(null)
 
 // 列表选择相关状态
 const selectedListId = ref(null)
@@ -350,32 +417,59 @@ const datePickerStyle = computed(() => {
   }
 })
 
-// 切换日期选择器并计算位置
-const toggleDatePicker = () => {
-  if (showDatePicker.value) {
+// 切换日期选择器并计算位置（按用途初始化选择器当前值）
+const openPickerFor = (mode, btnEl) => {
+  if (showDatePicker.value && datePickerMode.value === mode) {
     showDatePicker.value = false
     return
   }
-  
-  // 计算按钮位置
-  if (datePickerBtn.value) {
-    const rect = datePickerBtn.value.getBoundingClientRect()
+
+  datePickerMode.value = mode
+  if (mode === 'deadline') {
+    dateTimeValue.value = selectedDate.value && selectedTime.value
+      ? new Date(`${selectedDate.value}T${selectedTime.value}:00`)
+      : null
+  } else if (mode === 'scheduleStart') {
+    dateTimeValue.value = scheduleStart.value ? new Date(scheduleStart.value) : null
+  } else if (mode === 'scheduleEnd') {
+    dateTimeValue.value = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  } else if (mode === 'reminderAbsolute') {
+    dateTimeValue.value = null
+    showReminderPicker.value = false
+  }
+
+  // 计算按钮位置（模板传入的是 ref 对象）
+  const anchorBtn = (btnEl && (btnEl.value || btnEl)) || datePickerBtn.value
+  if (anchorBtn) {
+    const rect = anchorBtn.getBoundingClientRect()
     const pickerHeight = 380 // 预估的选择器高度
     const spaceBelow = window.innerHeight - rect.bottom
     const spaceAbove = rect.top
-    
+
     // 优先在下方显示，空间不足时在上方
     const showAbove = spaceBelow < pickerHeight && spaceAbove > spaceBelow
-    
+
     datePickerPosition.value = {
       top: showAbove ? rect.top : rect.bottom + 8,
       left: Math.max(8, Math.min(rect.left, window.innerWidth - 320)), // 确保不超出屏幕
       showAbove
     }
   }
-  
+
   showDatePicker.value = true
 }
+
+// 选择器标题与最小日期：仅“新绝对提醒”限制不能选过去
+const datePickerTitle = computed(() => {
+  switch (datePickerMode.value) {
+    case 'scheduleStart': return '计划开始时间'
+    case 'scheduleEnd': return '计划结束时间'
+    case 'reminderAbsolute': return '自定义提醒时间'
+    default: return '截止时间'
+  }
+})
+
+const pickerMinDate = computed(() => (datePickerMode.value === 'reminderAbsolute' ? new Date() : null))
 
 // 获取本地日期字符串（避免时区问题）
 const getLocalDateString = (date) => {
@@ -417,6 +511,10 @@ const resetAllStates = () => {
   dateTimeValue.value = null
   showDatePicker.value = false
   selectedReminder.value = null
+  reminderPolicy.value = null
+  scheduleStart.value = null
+  scheduleEnd.value = null
+  timeWarning.value = ''
   selectedRecurrence.value = null
   showReminderPicker.value = false
   showListPicker.value = false
@@ -706,14 +804,17 @@ const clearDateTime = () => {
   showDatePicker.value = false
 }
 
-// 清除提醒
+// 清除提醒（显式关闭，改期不会自动恢复通知）
 const clearReminder = async () => {
   selectedReminder.value = null
+  reminderPolicy.value = { mode: 'disabled', minutesBefore: null }
 
   // 如果是编辑模式，自动保存提醒时间清除
   if (props.isEditing && props.task) {
     try {
-      await taskStore.updateTaskReminder(props.task.id, null)
+      await taskStore.updateTask(props.task.id, {
+        reminderPolicy: { mode: 'disabled', minutesBefore: null }
+      })
       console.log('提醒已清除并自动保存')
     } catch (error) {
       console.error('自动保存提醒清除失败:', error)
@@ -723,72 +824,35 @@ const clearReminder = async () => {
 
 
 
-// 选择自定义提醒
-const selectCustomReminder = async (reminderOption) => {
-  const now = new Date()
-  let reminderTime = null
-  let displayText = reminderOption.label
+// 安排时间显示：今天 / 明天 / N月N日 + 开始时刻（结束单独展示）
+const formatScheduleText = () => {
+  if (!scheduleStart.value) return ''
+  const start = new Date(scheduleStart.value)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
 
-  if (reminderOption.type === 'relative') {
-    let milliseconds = 0
-    switch (reminderOption.unit) {
-      case 'minutes':
-        milliseconds = reminderOption.value * 60 * 1000
-        break
-      case 'hours':
-        milliseconds = reminderOption.value * 60 * 60 * 1000
-        break
-      case 'days':
-        milliseconds = reminderOption.value * 24 * 60 * 60 * 1000
-        break
-    }
-    reminderTime = new Date(now.getTime() + milliseconds)
-  } else if (reminderOption.type === 'absolute') {
-    const targetDate = new Date(now)
-    targetDate.setDate(now.getDate() + reminderOption.dayOffset)
-    const [hours, minutes] = reminderOption.time.split(':').map(Number)
-    targetDate.setHours(hours, minutes, 0, 0)
+  const todayStr = getLocalDateString(today)
+  const tomorrowStr = getLocalDateString(tomorrow)
+  const startStr = getLocalDateString(start)
+  const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
 
-    if (reminderOption.dayOffset === 0 && targetDate <= now) {
-      targetDate.setDate(now.getDate() + 1)
-    }
-    reminderTime = targetDate
+  if (startStr === todayStr) return `今天 ${timeStr}`
+  if (startStr === tomorrowStr) return `明天 ${timeStr}`
+  return `${start.getMonth() + 1}月${start.getDate()}日 ${timeStr}`
+}
+
+// 结束时间显示：同日只显示时刻，跨日显示完整日期
+const formatScheduleEndText = () => {
+  if (!scheduleEnd.value) return ''
+  const end = new Date(scheduleEnd.value)
+  const start = scheduleStart.value ? new Date(scheduleStart.value) : null
+  const timeStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+
+  if (start && getLocalDateString(start) === getLocalDateString(end)) {
+    return `结束于 ${timeStr}`
   }
-
-  if (reminderTime && reminderTime <= now) {
-    alert('提醒时间不能设置为过去的时间，请重新选择')
-    return
-  }
-
-  const cleanReminderOption = {
-    id: reminderOption.id,
-    label: reminderOption.label,
-    type: reminderOption.type,
-    value: reminderOption.value,
-    unit: reminderOption.unit,
-    time: reminderOption.time,
-    dayOffset: reminderOption.dayOffset
-  }
-
-  selectedReminder.value = {
-    value: 'custom',
-    label: displayText,
-    config: cleanReminderOption,
-    reminderTime: reminderTime ? reminderTime.toISOString() : null
-  }
-
-  showReminderPicker.value = false
-
-  // 如果是编辑模式，自动保存提醒时间
-  if (props.isEditing && props.task) {
-    try {
-      const reminderTimeISO = reminderTime ? reminderTime.toISOString() : null
-      await taskStore.updateTaskReminder(props.task.id, reminderTimeISO)
-      console.log('自定义提醒时间已自动保存:', reminderTimeISO)
-    } catch (error) {
-      console.error('自动保存自定义提醒时间失败:', error)
-    }
-  }
+  return `结束于 ${end.getMonth() + 1}月${end.getDate()}日 ${timeStr}`
 }
 
 // 选择列表
@@ -879,25 +943,63 @@ const getMinTimeForDatePicker = () => {
   return { hours: 0, minutes: 0 }
 }
 
-// 处理日期时间变化（一级入口：截止）
+// 处理日期时间变化：按选择器用途分流（截止 / 安排开始 / 安排结束 / 绝对提醒）
 const handleDateTimeChange = async (newValue) => {
+  if (datePickerMode.value === 'scheduleStart') {
+    if (!newValue) return
+    const start = newValue instanceof Date ? newValue : new Date(newValue)
+    if (scheduleEnd.value && start.getTime() > new Date(scheduleEnd.value).getTime()) {
+      alert('计划结束时间早于新的开始时间，请先调整或清除结束时间')
+      return
+    }
+    scheduleStart.value = start
+    await saveSchedule()
+    return
+  }
+
+  if (datePickerMode.value === 'scheduleEnd') {
+    if (!newValue) return
+    const end = newValue instanceof Date ? newValue : new Date(newValue)
+    if (scheduleStart.value && end.getTime() < new Date(scheduleStart.value).getTime()) {
+      alert('计划结束时间不能早于计划开始时间')
+      return
+    }
+    scheduleEnd.value = end
+    await saveSchedule()
+    return
+  }
+
+  if (datePickerMode.value === 'reminderAbsolute') {
+    if (!newValue) return
+    const reminderTime = newValue instanceof Date ? newValue : new Date(newValue)
+    if (reminderTime.getTime() <= Date.now()) {
+      alert('提醒时间不能设置为过去的时间，请重新选择')
+      return
+    }
+    await saveAbsoluteReminder(reminderTime)
+    showDatePicker.value = false
+    return
+  }
+
+  // 截止时间
   if (newValue) {
     const date = newValue instanceof Date ? newValue : new Date(newValue)
     selectedDate.value = getLocalDateString(date)
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     selectedTime.value = `${hours}:${minutes}`
-    
+
     // 选择后不自动关闭日期选择器，方便用户调整时间
     // showDatePicker.value = false
 
     // 如果是编辑模式，自动保存截止时间
     if (props.isEditing && props.task) {
       try {
-        await taskStore.updateTask(props.task.id, {
+        const result = await taskStore.updateTask(props.task.id, {
           dueDate: selectedDate.value,
           dueTime: selectedTime.value
         })
+        applyTimeWarning(result)
         console.log('截止时间已自动保存:', selectedDate.value, selectedTime.value)
       } catch (error) {
         console.error('自动保存截止时间失败:', error)
@@ -917,6 +1019,181 @@ const handleDateTimeChange = async (newValue) => {
       }
     }
   }
+}
+
+// 截止改为日期型（清除时刻，保留日期）
+const makeDeadlineDateOnly = async () => {
+  if (!selectedDate.value) return
+  selectedTime.value = ''
+  if (props.isEditing && props.task) {
+    try {
+      await taskStore.updateTask(props.task.id, {
+        dueDate: selectedDate.value,
+        dueTime: null
+      })
+      console.log('截止已改为仅日期:', selectedDate.value)
+    } catch (error) {
+      console.error('截止改为日期型失败:', error)
+    }
+  }
+}
+
+// 保存计划安排（开始 / 结束一起提交，服务端原子校验）
+const saveSchedule = async () => {
+  if (!(props.isEditing && props.task)) return
+  try {
+    const result = await taskStore.updateTask(props.task.id, {
+      scheduledStartAt: scheduleStart.value ? new Date(scheduleStart.value).toISOString() : null,
+      scheduledEndAt: scheduleEnd.value ? new Date(scheduleEnd.value).toISOString() : null
+    })
+    applyTimeWarning(result)
+    // 相对提醒跟随开始时间变化，禁用时同步本地显示
+    syncReminderFromResult(result)
+    console.log('计划安排已自动保存')
+  } catch (error) {
+    console.error('自动保存计划安排失败:', error)
+    alert(error?.message || '计划安排保存失败')
+  }
+}
+
+// 清除安排（同步清除结束；相对提醒转关闭）
+const clearSchedule = async () => {
+  scheduleStart.value = null
+  scheduleEnd.value = null
+  showDatePicker.value = false
+  await saveSchedule()
+}
+
+// 只清除结束时间
+const clearScheduleEnd = async () => {
+  scheduleEnd.value = null
+  showDatePicker.value = false
+  await saveSchedule()
+}
+
+// 保存绝对提醒
+const saveAbsoluteReminder = async (reminderTime) => {
+  if (!(props.isEditing && props.task)) return
+  try {
+    const result = await taskStore.updateTask(props.task.id, {
+      reminderPolicy: { mode: 'absolute', minutesBefore: null },
+      reminderTime: reminderTime.toISOString()
+    })
+    applyTimeWarning(result)
+    syncReminderFromResult(result)
+  } catch (error) {
+    console.error('保存自定义提醒失败:', error)
+    alert(error?.message || '提醒设置失败')
+  }
+}
+
+// 提醒选项：开始时 / 提前 N 分钟（需要先有安排）；自定义绝对时间始终可用
+const reminderOptions = computed(() => {
+  const options = []
+  if (scheduleStart.value) {
+    options.push({ id: 'relative-0', kind: 'relative', minutesBefore: 0, label: '开始时' })
+    for (const minutes of [5, 10, 30, 60]) {
+      options.push({ id: `relative-${minutes}`, kind: 'relative', minutesBefore: minutes, label: `提前 ${minutes} 分钟` })
+    }
+  }
+  options.push({ id: 'absolute-custom', kind: 'absolute', label: '自定义时间…' })
+  return options
+})
+
+const isReminderOptionActive = (option) => {
+  const policy = reminderPolicy.value
+  if (!policy) return false
+  if (option.kind === 'relative') {
+    return policy.mode === 'relative' && (policy.minutesBefore || 0) === option.minutesBefore
+  }
+  return policy.mode === 'absolute' || (!policy && selectedReminder.value)
+}
+
+// 选择提醒选项
+const selectReminderOption = async (option) => {
+  if (option.kind === 'absolute') {
+    openPickerFor('reminderAbsolute', null)
+    return
+  }
+  if (!(props.isEditing && props.task)) return
+  try {
+    const result = await taskStore.updateTask(props.task.id, {
+      reminderPolicy: { mode: 'relative', minutesBefore: option.minutesBefore }
+    })
+    applyTimeWarning(result)
+    syncReminderFromResult(result)
+    showReminderPicker.value = false
+  } catch (error) {
+    console.error('保存相对提醒失败:', error)
+    alert(error?.message || '提醒设置失败')
+  }
+}
+
+// 关闭提醒（显式 disabled 策略）
+const disableReminder = async () => {
+  showReminderPicker.value = false
+  selectedReminder.value = null
+  reminderPolicy.value = { mode: 'disabled', minutesBefore: null }
+  if (props.isEditing && props.task) {
+    try {
+      await taskStore.updateTask(props.task.id, {
+        reminderPolicy: { mode: 'disabled', minutesBefore: null }
+      })
+      console.log('提醒已关闭')
+    } catch (error) {
+      console.error('关闭提醒失败:', error)
+    }
+  }
+}
+
+// 从保存结果同步提醒显示（相对提醒的触发时间由服务端推导）
+const syncReminderFromResult = (result) => {
+  const task = result?.task
+  if (!task) return
+  reminderPolicy.value = task.reminderPolicy || null
+  if (task.reminderPolicy?.mode === 'relative') {
+    selectedReminder.value = {
+      value: 'relative',
+      label: relativePolicyLabel(task.reminderPolicy),
+      config: task.reminderPolicy
+    }
+  } else if (task.reminderPolicy?.mode === 'disabled') {
+    selectedReminder.value = null
+  } else if (task.reminderTime) {
+    const reminderDate = new Date(task.reminderTime)
+    selectedReminder.value = {
+      value: 'custom',
+      label: `${getLocalDateString(reminderDate)} ${reminderDate.toTimeString().slice(0, 5)}`,
+      reminderTime: task.reminderTime
+    }
+  } else {
+    selectedReminder.value = null
+  }
+  // 清除安排可能把相对提醒转为关闭
+  if (!task.scheduledStartAt) {
+    scheduleStart.value = null
+    scheduleEnd.value = null
+  } else {
+    scheduleStart.value = new Date(task.scheduledStartAt)
+    scheduleEnd.value = task.scheduledEndAt ? new Date(task.scheduledEndAt) : null
+  }
+}
+
+const relativePolicyLabel = (policy) => {
+  const minutes = policy.minutesBefore || 0
+  return minutes > 0 ? `提前 ${minutes} 分钟` : '开始时'
+}
+
+// 时间提示：无效旧截止 > 服务端警告（计划晚于截止 / 错过的相对提醒）
+const timeHintText = computed(() => {
+  if (props.task?.deadlineInvalid) {
+    return '截止数据无效，请重新设置截止时间'
+  }
+  return timeWarning.value || ''
+})
+
+const applyTimeWarning = (result) => {
+  timeWarning.value = result?.task?.timeWarning || ''
 }
 
 // 格式化选中的日期
@@ -1182,7 +1459,23 @@ const loadTaskData = () => {
     dateTimeValue.value = null
   }
 
-  if (props.task.reminderTime) {
+  // 计划安排（开始 / 结束）
+  scheduleStart.value = props.task.scheduledStartAt ? new Date(props.task.scheduledStartAt) : null
+  scheduleEnd.value = props.task.scheduledEndAt ? new Date(props.task.scheduledEndAt) : null
+  timeWarning.value = props.task.timeWarning || ''
+
+  // 提醒策略：相对 / 绝对 / 关闭 / 旧绝对（无策略）
+  const policy = props.task.reminderPolicy || null
+  reminderPolicy.value = policy
+  if (policy && policy.mode === 'relative') {
+    selectedReminder.value = {
+      value: 'relative',
+      label: relativePolicyLabel(policy),
+      config: policy
+    }
+  } else if (policy && policy.mode === 'disabled') {
+    selectedReminder.value = null
+  } else if (props.task.reminderTime) {
     const reminderDate = new Date(props.task.reminderTime)
     if (props.task.reminderConfig) {
       selectedReminder.value = {

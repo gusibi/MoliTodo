@@ -234,6 +234,29 @@
   @apply bg-destructive/10 text-destructive;
 }
 
+/* 结束时间等次级入口：缩进弱化 */
+.task-edit-vertical .task-option-subitem {
+  @apply ml-6;
+}
+
+/* 截止“仅日期 / 加时间”切换的小按钮 */
+.task-edit-vertical .task-option-mini {
+  @apply border border-border rounded px-1.5 py-0.5 mr-1 bg-transparent cursor-pointer text-[10px] leading-none text-muted-foreground flex-shrink-0 transition-all duration-200;
+}
+
+.task-edit-vertical .task-option-mini:hover {
+  @apply bg-primary/10 text-primary border-primary/30;
+}
+
+/* 时间模型提示行 */
+.task-edit-vertical .task-option-warning {
+  @apply flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px];
+}
+
+.task-edit-vertical .task-option-warning i {
+  @apply w-3.5 h-3.5 flex-shrink-0;
+}
+
 /* iOS风格开关 */
 .task-edit-vertical .task-option-switch {
   @apply flex-shrink-0 ml-2;
@@ -305,8 +328,18 @@
   @apply bg-accent;
 }
 
+.task-edit-vertical .reminder-option.reminder-option-active {
+  @apply bg-primary/10 text-primary;
+}
+
 .task-edit-vertical .reminder-option-icon {
   @apply w-4 h-4 text-muted-foreground flex-shrink-0;
+}
+
+/* 日期选择器弹层标题 */
+.task-edit-vertical .date-picker-title,
+.date-picker-popup-fixed .date-picker-title {
+  @apply px-3 pt-2 pb-1 text-xs font-medium text-foreground;
 }
 
 /* 日期选择器 */

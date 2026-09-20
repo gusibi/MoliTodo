@@ -10,6 +10,30 @@ class IpcHandlers {
     this.windowManager = windowManager;
     this.taskStatusLogService = taskStatusLogService;
     this.localApiServer = localApiServer;
+
+    // 服务内部生成重复实例后，通过该钩子注册提醒
+    if (typeof this.taskService.setNotificationScheduler === 'function') {
+      this.taskService.setNotificationScheduler((task) => {
+        this.notificationService.scheduleTaskReminder(
+          task,
+          (remindedTask) => this.handleTaskReminder(remindedTask),
+          { skipPast: true }
+        );
+      });
+    }
+  }
+
+  /**
+   * 应用启动后恢复已持久化任务的提醒调度。
+   * 旧绝对提醒保持既有恢复行为；相对提醒过期时只跳过。
+   */
+  async restoreReminderSchedules() {
+    try {
+      const tasks = await this.taskService.getAllTasks();
+      this.notificationService.restoreReminders(tasks, (task) => this.handleTaskReminder(task));
+    } catch (error) {
+      console.error('恢复任务提醒调度失败:', error);
+    }
   }
 
   // 根据 IPC 事件获取发送请求的窗口
@@ -246,13 +270,15 @@ class IpcHandlers {
         updates.reminderTime !== undefined ||
         updates.scheduledStartAt !== undefined ||
         updates.scheduledEndAt !== undefined ||
-        updates.reminderPolicy !== undefined
+        updates.reminderPolicy !== undefined ||
+        updates.status !== undefined
       ) {
         // 先取消现有的提醒
         this.notificationService.cancelTaskReminder(taskId);
 
-        // 如果设置了新的提醒时间，则重新调度
-        if (task.reminderTime) {
+        // 任务完成（或非完成状态且仍有提醒）时重新调度
+        const completed = task.status === 'done' || task.completed === true;
+        if (task.reminderTime && !completed) {
           this.notificationService.scheduleTaskReminder(task, (task) => {
             this.handleTaskReminder(task);
           });
@@ -523,6 +549,16 @@ class IpcHandlers {
     ipcMain.handle('task:expandRecurring', async (event, { startDate, endDate, listId = null }) => {
       try {
         const tasks = await this.taskService.expandRecurringTasks(new Date(startDate), new Date(endDate), listId);
+        // 为展开实例注册提醒（虚拟实例的过期提醒一律跳过，不补发）
+        for (const instance of tasks) {
+          if (instance.reminderTime && instance.status !== 'done' && instance.status !== 'deleted') {
+            this.notificationService.scheduleTaskReminder(
+              instance,
+              (task) => this.handleTaskReminder(task),
+              { skipPast: true }
+            );
+          }
+        }
         return { success: true, tasks };
       } catch (error) {
         console.error('展开重复任务失败:', error);
@@ -534,6 +570,14 @@ class IpcHandlers {
     ipcMain.handle('task:updateRecurring', async (event, { taskId, updates, recurrence }) => {
       try {
         const task = await this.taskService.updateRecurringTask(taskId, updates, recurrence);
+        this.notificationService.cancelTaskReminder(taskId);
+        if (task.reminderTime && task.status !== 'done') {
+          this.notificationService.scheduleTaskReminder(
+            task,
+            (remindedTask) => this.handleTaskReminder(remindedTask),
+            { skipPast: true }
+          );
+        }
         this.broadcastTaskUpdates();
         return { success: true, task };
       } catch (error) {
@@ -545,9 +589,16 @@ class IpcHandlers {
     // 完成重复任务实例
     ipcMain.handle('task:completeRecurringInstance', async (event, { seriesId, occurrenceDate }) => {
       try {
-        const task = await this.taskService.completeRecurringInstance(seriesId, occurrenceDate);
+        const result = await this.taskService.completeRecurringInstance(seriesId, occurrenceDate);
+        // 同时取消该实例虚拟身份与覆盖记录上的提醒
+        const RecurringTaskService = require('../domain/services/recurring-task-service');
+        const virtualId = RecurringTaskService.virtualInstanceId(seriesId, occurrenceDate);
+        if (virtualId) this.notificationService.cancelTaskReminder(virtualId);
+        if (result && result.task && result.task.id) {
+          this.notificationService.cancelTaskReminder(result.task.id);
+        }
         this.broadcastTaskUpdates();
-        return { success: true, task };
+        return { success: true, ...result };
       } catch (error) {
         console.error('完成重复任务实例失败:', error);
         return { success: false, error: error.message };
@@ -558,6 +609,9 @@ class IpcHandlers {
     ipcMain.handle('task:deleteRecurringInstance', async (event, { seriesId, occurrenceDate }) => {
       try {
         const success = await this.taskService.deleteRecurringInstance(seriesId, occurrenceDate);
+        const RecurringTaskService = require('../domain/services/recurring-task-service');
+        const virtualId = RecurringTaskService.virtualInstanceId(seriesId, occurrenceDate);
+        if (virtualId) this.notificationService.cancelTaskReminder(virtualId);
         this.broadcastTaskUpdates();
         return { success };
       } catch (error) {
@@ -569,9 +623,23 @@ class IpcHandlers {
     // 更新重复任务实例
     ipcMain.handle('task:updateRecurringInstance', async (event, { seriesId, occurrenceDate, updates }) => {
       try {
-        const task = await this.taskService.updateRecurringInstance(seriesId, occurrenceDate, updates);
+        const result = await this.taskService.updateRecurringInstance(seriesId, occurrenceDate, updates);
+        // 取消虚拟身份上的提醒，物化实例的提醒按新时间注册
+        const RecurringTaskService = require('../domain/services/recurring-task-service');
+        const virtualId = RecurringTaskService.virtualInstanceId(seriesId, occurrenceDate);
+        if (virtualId) this.notificationService.cancelTaskReminder(virtualId);
+        if (result && result.task) {
+          this.notificationService.cancelTaskReminder(result.task.id);
+          if (result.task.reminderTime && result.task.status !== 'done') {
+            this.notificationService.scheduleTaskReminder(
+              result.task,
+              (task) => this.handleTaskReminder(task),
+              { skipPast: true }
+            );
+          }
+        }
         this.broadcastTaskUpdates();
-        return { success: true, task };
+        return { success: true, ...result };
       } catch (error) {
         console.error('更新重复任务实例失败:', error);
         return { success: false, error: error.message };

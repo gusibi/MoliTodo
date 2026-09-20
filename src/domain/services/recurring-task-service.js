@@ -3,8 +3,27 @@
  * 负责重复任务的核心业务逻辑，包括重复规则计算、实例生成等
  */
 const Task = require('../entities/task');
+const taskTime = require('./task-time');
 
 class RecurringTaskService {
+  /**
+   * 虚拟实例 ID：按系列与本地发生日期构造，用于前端识别与通知取消。
+   * 使用本地日期键，避免 UTC 换算导致跨时区错位。
+   */
+  static virtualInstanceId(seriesId, date) {
+    const dateKey = taskTime.localDateKey(date);
+    return dateKey ? `recurringTask_${seriesId}_${dateKey}` : null;
+  }
+
+  /**
+   * 实例合并键：系列 + 本地发生日期，用于虚拟实例与覆盖实例去重。
+   */
+  static instanceKey(seriesId, occurrenceDate) {
+    if (!seriesId || !occurrenceDate) return null;
+    const dateKey = taskTime.localDateKey(occurrenceDate);
+    return dateKey ? `${seriesId}|${dateKey}` : null;
+  }
+
   /**
    * 根据重复规则和日期范围展开重复任务实例
    * @param {Task} recurringTask 重复任务
@@ -156,7 +175,7 @@ class RecurringTaskService {
       }
       
       if (current >= startDate) {
-        const instanceId = `recurringTask_${recurringTask.id}_${current.toISOString().split('T')[0]}`;
+        const instanceId = this.virtualInstanceId(recurringTask.id, current);
         const instance = recurringTask.createInstance(new Date(current), instanceId);
         instances.push(instance);
         instanceCount++;
@@ -204,7 +223,7 @@ class RecurringTaskService {
             break;
           }
           
-          const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+          const instanceId = this.virtualInstanceId(recurringTask.id, instanceDate);
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
           instanceCount++;
@@ -255,7 +274,7 @@ class RecurringTaskService {
             break;
           }
           
-          const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+          const instanceId = this.virtualInstanceId(recurringTask.id, instanceDate);
           const instance = recurringTask.createInstance(instanceDate, instanceId);
           instances.push(instance);
           instanceCount++;
@@ -314,7 +333,7 @@ class RecurringTaskService {
               return instances;
             }
             
-            const instanceId = `recurringTask_${recurringTask.id}_${instanceDate.toISOString().split('T')[0]}`;
+            const instanceId = this.virtualInstanceId(recurringTask.id, instanceDate);
             const instance = recurringTask.createInstance(new Date(instanceDate), instanceId);
             instances.push(instance);
             instanceCount++;

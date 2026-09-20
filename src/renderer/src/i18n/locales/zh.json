@@ -25,6 +25,7 @@
     },
     "time": {
       "today": "今天",
+      "tomorrow": "明天",
       "yesterday": "昨天",
       "todayAt": "今天 {time}",
       "tomorrowAt": "明天 {time}",
@@ -333,6 +334,45 @@
     "achievements": "主要成就",
     "learnings": "学习收获",
     "improvements": "改进建议"
+  },
+  "today": {
+    "pendingCount": "今日待处理 {count} 项",
+    "searchScope": "搜索范围：今日 + 未计划 + 已加载日期（{from} ~ {to}），不是全库搜索",
+    "searchScopeLoading": "正在确定搜索覆盖的日期范围…",
+    "unplanned": "未计划",
+    "unplannedEmpty": "没有未计划的任务",
+    "overdue": "已逾期",
+    "reschedule": "待重新安排",
+    "todaySection": "今天",
+    "todayEmpty": "今天暂无待处理任务",
+    "noSearchMatch": "当前日期范围内没有匹配的任务",
+    "completedToday": "今天已完成 {count} 项",
+    "completedOnDate": "当天已完成 {count} 项",
+    "relocatedHint": "另有 {count} 项在执行分组中",
+    "emptyDate": "当天暂无任务",
+    "loadMore": "加载更多日期",
+    "loadError": "部分日期加载失败",
+    "scheduleAction": "安排",
+    "quickAddPlaceholder": "添加任务，记录想法（默认不带时间）…",
+    "aiToggle": "使用 AI 生成任务",
+    "splitToggle": "拆分任务",
+    "addedToUnplanned": "已添加到未计划",
+    "viewUnplanned": "查看",
+    "saveFailed": "保存失败：{error}",
+    "badge": {
+      "recurring": "重复任务",
+      "dueToday": "今天截止",
+      "dueDateOnly": "当天截止",
+      "scheduledElsewhere": "安排在其他日期"
+    },
+    "calendar": {
+      "title": "未来日历",
+      "toggle": "显示 / 隐藏日历",
+      "earlierMonths": "更早月份",
+      "laterMonths": "更晚月份",
+      "backToday": "回到今天",
+      "dayTaskCount": "{date}，{count} 项任务"
+    }
   },
   "calendar": {
     "title": "日历",

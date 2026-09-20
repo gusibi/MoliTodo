@@ -122,6 +122,9 @@ const tableColumns = [
   { key: 'metadata', label: 'metadata (元数据)' },
   { key: 'dueDate', label: 'dueDate (到期日期)' },
   { key: 'dueTime', label: 'dueTime (到期时间)' },
+  { key: 'scheduledStartAt', label: 'scheduledStartAt (计划开始)' },
+  { key: 'scheduledEndAt', label: 'scheduledEndAt (计划结束)' },
+  { key: 'reminderPolicy', label: 'reminderPolicy (提醒策略)' },
   { key: 'recurrence', label: 'recurrence (重复规则)' },
   { key: 'seriesId', label: 'seriesId (系列ID)' },
   { key: 'occurrenceDate', label: 'occurrenceDate (发生日期)' }

@@ -25,6 +25,7 @@
     },
     "time": {
       "today": "Today",
+      "tomorrow": "Tomorrow",
       "yesterday": "Yesterday",
       "todayAt": "Today {time}",
       "tomorrowAt": "Tomorrow {time}",
@@ -318,6 +319,45 @@
     "achievements": "Key Achievements",
     "learnings": "Learnings",
     "improvements": "Improvement Suggestions"
+  },
+  "today": {
+    "pendingCount": "{count} to do today",
+    "searchScope": "Search scope: today + unplanned + loaded dates ({from} ~ {to}), not the whole library",
+    "searchScopeLoading": "Determining date coverage of search…",
+    "unplanned": "Unplanned",
+    "unplannedEmpty": "No unplanned tasks",
+    "overdue": "Overdue",
+    "reschedule": "To reschedule",
+    "todaySection": "Today",
+    "todayEmpty": "Nothing pending for today",
+    "noSearchMatch": "No matching tasks in the current date range",
+    "completedToday": "{count} completed today",
+    "completedOnDate": "{count} completed on this day",
+    "relocatedHint": "{count} more in execution groups",
+    "emptyDate": "No tasks on this day",
+    "loadMore": "Load more dates",
+    "loadError": "Some dates failed to load",
+    "scheduleAction": "Schedule",
+    "quickAddPlaceholder": "Add a task, capture an idea (no time by default)…",
+    "aiToggle": "Generate tasks with AI",
+    "splitToggle": "Split task",
+    "addedToUnplanned": "Added to unplanned",
+    "viewUnplanned": "View",
+    "saveFailed": "Save failed: {error}",
+    "badge": {
+      "recurring": "Recurring",
+      "dueToday": "Due today",
+      "dueDateOnly": "Due this day",
+      "scheduledElsewhere": "Scheduled elsewhere"
+    },
+    "calendar": {
+      "title": "Future calendar",
+      "toggle": "Show / hide calendar",
+      "earlierMonths": "Earlier months",
+      "laterMonths": "Later months",
+      "backToday": "Back to today",
+      "dayTaskCount": "{date}, {count} tasks"
+    }
   },
   "calendar": {
      "title": "Calendar",

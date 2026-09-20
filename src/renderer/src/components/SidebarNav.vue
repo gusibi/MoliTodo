@@ -71,6 +71,11 @@ const props = defineProps({
   currentCategory: {
     type: String,
     required: true
+  },
+  // Today 页面协调层提供的去重执行计数；与页面 Header 同源
+  todayCountOverride: {
+    type: Number,
+    default: null
   }
 })
 
@@ -102,8 +107,11 @@ const createNewList = () => {
   }
 }
 
-// 使用 taskStore 的统一计数方法
+// 使用 taskStore 的统一计数方法；Today 使用页面协调层提供的去重计数
 const getCategoryCount = (category) => {
+  if (category === 'today' && props.todayCountOverride !== null && props.todayCountOverride !== undefined) {
+    return props.todayCountOverride
+  }
   return taskStore.getCategoryCount(category)
 }
 </script>

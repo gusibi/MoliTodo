@@ -10,7 +10,14 @@ const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 
 function toDate(value) {
   if (value === null || value === undefined || value === '') return null
-  const date = value instanceof Date ? value : new Date(value)
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+  // 日期型字符串按本地午夜解析：new Date('YYYY-MM-DD') 会得到 UTC 午夜，
+  // 在西半球时区会被归属到前一天。
+  if (isDateOnly(value)) {
+    const match = DATE_ONLY_PATTERN.exec(value.trim())
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  }
+  const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
 }
 
@@ -211,6 +218,8 @@ export function compareTasksForDate(a, b) {
     }
     if (task.dueDate) {
       const boundary = deadlineBoundary(task.dueDate, task.dueTime)
+      // 同一日期内按截止时刻排序；rank 已保证截止任务排在安排任务之后，
+      // 这里减一天只用于保留时刻的相对顺序。
       if (task.dueTime && boundary) return boundary.getTime() - 24 * 60 * 60 * 1000
       return Number.MAX_SAFE_INTEGER
     }
