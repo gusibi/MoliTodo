@@ -46,6 +46,26 @@
 契约：初始焦点在取消；遮罩点击不关闭、不确认；等待或失败时 Escape 取消；提交中禁用取消与 Escape；
 `confirm` 只发出业务意图，由调用方在成功后关闭并恢复焦点。普通编辑使用 Dialog，不要复用本组件。
 
+### Dialog / Input / Textarea
+
+普通编辑弹窗与表单控件。Dialog 基于 Reka Dialog（标题、关闭、焦点约束、滚动），危险操作不要用它。
+
+```vue
+<Dialog v-model:open="open" :title="$t('tasks.createTask')">
+  <Input v-model="content" placeholder="任务" />
+  <Textarea v-model="note" placeholder="备注" />
+</Dialog>
+```
+
+### Popover / Calendar / DatePicker
+
+交互式浮层与日期选择。Calendar 基于 Reka Calendar，DatePicker 组合 Popover + Calendar，
+对外只使用本地日期字符串（`YYYY-MM-DD`），不暴露库内部 DateValue。
+
+```vue
+<DatePicker v-model="date" />
+```
+
 ### ListIcon / CategoryIcon
 
 ```vue
@@ -75,3 +95,15 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 
 `components/ui` 的浮层动效定义在 `assets/styles/components/ui.css`。全局 `prefers-reduced-motion`
 规则会将其降级，无需逐组件处理。
+
+## 共享业务组件：新建任务入口
+
+`components/TaskComposer.vue` 是公共「新建任务」弹窗（标题/任务内容、备注、清单、日期时间、AI 模型），
+自包含数据行为，其他页面直接引入即可复用。`components/FloatingAddButton.vue` 是配套的底部悬浮入口：
+
+```vue
+<FloatingAddButton @click="composerOpen = true" />
+<TaskComposer v-model:open="composerOpen" @created="onCreated" />
+```
+
+日期时间写入现有「安排」字段（`scheduledStartAt`）；日期用 `DatePicker`，不在业务层自写日历。

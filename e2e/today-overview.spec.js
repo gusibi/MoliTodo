@@ -99,9 +99,10 @@ test('点击空日期定位到对应 section 且不污染新建时间', async ({
   await expect(section.locator('.agenda-empty-inline')).toBeVisible();
 
   // 选中日期后新建任务仍默认无时间（进入未计划）
-  const input = window.locator('.agenda-quick-add-input');
-  await input.fill('随手记');
-  await input.press('Enter');
+  await window.locator('.agenda-floating-add button').click();
+  const dialog = window.getByRole('dialog');
+  await dialog.getByPlaceholder('任务').fill('随手记');
+  await dialog.getByRole('button', { name: '创建任务' }).click();
   await expect(window.getByText('已添加到未计划')).toBeVisible();
 
   // 未计划汇总默认折叠：点击反馈中的"查看"展开并定位
@@ -233,9 +234,12 @@ test('滚动 Agenda 时日历同步当前日期', async ({ app, window }) => {
   const later = new Date();
   later.setDate(later.getDate() + 2);
   const laterKey = localKey(later);
-  await seedTasks(app.electronApp, [
-    { content: '两天后的任务', scheduledStartAt: offsetKey(2), scheduledEndAt: null }
-  ]);
+  // 预置跨多天的任务，保证 Agenda 有足够内容可滚动到顶部
+  const seeded = [];
+  for (let day = 2; day <= 10; day += 1) {
+    seeded.push({ content: `第 ${day} 天任务`, scheduledStartAt: offsetKey(day), scheduledEndAt: null });
+  }
+  await seedTasks(app.electronApp, seeded);
   await window.reload();
   await waitForToday(window);
 
@@ -515,7 +519,7 @@ test('任务删除确认：确认后删除并持久化，焦点回到有效位�
   expect(persisted).not.toContain('确认删除任务');
 
   // 无相邻任务时焦点回到 Agenda 新建入口
-  await expect(window.locator('.agenda-quick-add-input')).toBeFocused();
+  await expect(window.locator('.agenda-floating-add button')).toBeFocused();
 });
 
 test('任务删除失败：显示错误、任务保留并可重试', async ({ app, window }) => {
@@ -581,7 +585,7 @@ test('Header 图标按钮具有可访问名称', async ({ window }) => {
   await expect(window.getByRole('button', { name: '新建清单' })).toBeVisible();
 });
 
-test('Today 点击 AI 后可从下拉选择模型并进入 AI 预览', async ({ app, window }) => {
+test('Today 新建弹窗可从下拉选择 AI 模型并进入 AI 预览', async ({ app, window }) => {
   // 在服务边界注入假 AI 配置与流式生成，不依赖真实密钥
   await app.electronApp.evaluate(() => {
     const moli = global.__moliTodoApp;
@@ -599,22 +603,18 @@ test('Today 点击 AI 后可从下拉选择模型并进入 AI 预览', async ({ 
   await window.reload();
   await waitForToday(window);
 
-  const toggle = window.locator('button[title="使用 AI 生成任务"]');
-  await expect(toggle).toBeVisible();
-  await toggle.click();
+  await window.locator('.agenda-floating-add button').click();
+  const dialog = window.getByRole('dialog');
+  await dialog.getByPlaceholder('任务').fill('帮我规划旅行');
 
-  // 下拉提供模型选择，而不是自动选中
+  // 弹窗内提供模型下拉选择
+  await dialog.getByRole('button', { name: 'AI' }).click();
   const menu = window.getByRole('menu');
   await expect(menu).toBeVisible();
   await expect(menu.getByRole('menuitemradio', { name: /gpt-4o/ })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: /不使用 AI/ })).toBeVisible();
   await menu.getByRole('menuitemradio', { name: /gpt-4o/ }).click();
 
-  await expect(menu).toHaveCount(0);
-  await expect(window.locator('.agenda-quick-add-controls')).toContainText('gpt-4o');
-
-  await window.locator('.agenda-quick-add-input').fill('帮我规划旅行');
-  await window.locator('.agenda-quick-add-controls button[aria-label="发送"]').click();
+  await dialog.getByRole('button', { name: '创建任务' }).click();
 
   const preview = window.locator('.task-preview-modal-overlay');
   await expect(preview).toBeVisible();
@@ -655,3 +655,40 @@ test('列表视图复用同一 AI 模型下拉并可生成预览', async ({ app,
   await expect(window.locator('.task-preview-modal-overlay')).toContainText('共 1 个任务');
 });
 
+
+test('新建弹窗可选择清单、日期与具体时间并正确持久化', async ({ app, window }) => {
+  await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    await moli.listService.createList('旅行清单', '#007AFF', 'star');
+  });
+  await window.reload();
+  await waitForToday(window);
+
+  await window.locator('.agenda-floating-add button').click();
+  const dialog = window.getByRole('dialog');
+  await dialog.getByPlaceholder('任务').fill('订机票');
+  await dialog.getByRole('button', { name: '旅行清单' }).click();
+  await dialog.getByRole('button', { name: '明天' }).click();
+  await dialog.getByRole('button', { name: '具体时间' }).click();
+  await dialog.locator('input[type="time"]').fill('10:30');
+  await dialog.getByRole('button', { name: '创建任务' }).click();
+
+  // 任务出现在明天的日期 section，并显示具体时间
+  const tomorrowKey = localKey(new Date(Date.now() + 86400000));
+  const section = window.locator(`[data-date-section="${tomorrowKey}"]`);
+  await expect(section.getByText('订机票')).toBeVisible();
+  await expect(section.getByText('10:30')).toBeVisible();
+
+  // 持久化结果：清单归属与安排时间正确
+  const saved = await app.electronApp.evaluate(async () => {
+    const tasks = await global.__moliTodoApp.taskService.getAllTasks();
+    const task = tasks.find((t) => t.content === '订机票');
+    return task ? { listId: task.listId, scheduledStartAt: task.scheduledStartAt } : null;
+  });
+  expect(saved).not.toBeNull();
+  expect(saved.listId).not.toBe(0);
+  expect(saved.scheduledStartAt).toBeTruthy();
+  const start = new Date(saved.scheduledStartAt);
+  expect(start.getHours()).toBe(10);
+  expect(start.getMinutes()).toBe(30);
+});

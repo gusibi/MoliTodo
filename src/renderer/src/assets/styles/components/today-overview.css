@@ -186,26 +186,14 @@
   @apply border-transparent bg-muted/70;
 }
 
-/* ---------- 快速添加 ---------- */
+/* ---------- 新建入口（底部悬浮按钮） ---------- */
 
-.agenda-quick-add {
-  @apply flex-none border-t border-border/50 bg-background px-4 py-2;
-}
-
-.agenda-quick-add-row {
-  @apply flex items-center gap-2;
-}
-
-.agenda-quick-add-input {
-  @apply flex-1 min-w-0 bg-transparent border border-border rounded-lg px-3 h-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition;
-}
-
-.agenda-quick-add-controls {
-  @apply flex items-center gap-1;
+.agenda-floating-add {
+  @apply absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2;
 }
 
 .agenda-quick-add-feedback {
-  @apply flex items-center gap-2 mt-2 px-3 py-1.5 rounded-lg bg-primary/10 text-xs text-primary;
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-xs text-primary shadow-sm;
 }
 
 .agenda-feedback-link {

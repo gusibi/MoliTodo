@@ -201,59 +201,8 @@
       </template>
     </div>
 
-    <!-- 快速添加（固定在 Agenda 底部，不跨日历） -->
-    <div class="agenda-quick-add">
-      <div class="agenda-quick-add-row">
-        <input v-model="newTaskContent" type="text" class="agenda-quick-add-input"
-          :placeholder="$t('today.quickAddPlaceholder')" maxlength="200" ref="quickAddInput"
-          @keydown.enter.prevent="addTask" />
-        <div class="agenda-quick-add-controls">
-          <AIModelPicker
-            v-if="taskStore.availableAIModels.length > 0"
-            :models="taskStore.availableAIModels"
-            :selected-model="taskStore.selectedAIModel"
-            align="right"
-            @select="handleSelectAIModel"
-            v-slot="{ toggle, open, active, label }"
-          >
-            <Button
-              variant="outline"
-              class="h-control-lg gap-1 px-2.5 text-muted-foreground"
-              :class="active
-                ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
-                : ''"
-              :title="$t('today.aiToggle')"
-              aria-haspopup="menu"
-              :aria-expanded="open"
-              @click="toggle"
-            >
-              <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              <span v-if="active">{{ label }}</span>
-            </Button>
-          </AIModelPicker>
-          <Button
-            variant="outline"
-            class="h-control-lg gap-1 px-2.5 text-muted-foreground"
-            :class="shouldSplitTask
-              ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
-              : ''"
-            :title="$t('today.splitToggle')"
-            @click="shouldSplitTask = !shouldSplitTask"
-          >
-            <List class="h-icon-sm w-icon-sm" aria-hidden="true" />
-          </Button>
-          <IconButton
-            variant="default"
-            class="h-control-lg w-control-lg"
-            :disabled="!newTaskContent.trim()"
-            :label="$t('common.send')"
-            @click="addTask"
-          >
-            <Send class="h-icon-md w-icon-md" aria-hidden="true" />
-          </IconButton>
-        </div>
-      </div>
-      <!-- 新任务进入未计划的反馈 -->
+    <!-- 新建入口：底部悬浮按钮，打开公共任务弹窗 -->
+    <div class="agenda-floating-add">
       <Transition name="agenda-flash">
         <div v-if="unplannedFeedback" class="agenda-quick-add-feedback" role="status">
           <span>{{ $t('today.addedToUnplanned') }}</span>
@@ -263,11 +212,10 @@
           </IconButton>
         </div>
       </Transition>
+      <FloatingAddButton ref="addButton" @click="openComposer" />
     </div>
 
-    <!-- AI 任务预览弹窗（复用现有链路） -->
-    <TaskPreviewModal :visible="showTaskPreview" :tasks="previewTasks" :original-input="originalTaskInput"
-      :stream-content="streamContent" @close="closeTaskPreview" @created="handleTasksCreated" />
+    <TaskComposer v-model:open="composerOpen" @created="handleTaskCreated" />
   </div>
 </template>
 
@@ -282,19 +230,16 @@ import {
   ChevronRight,
   Crosshair,
   History,
-  List,
   LoaderCircle,
   Plus,
   RotateCw,
   Search,
-  Send,
-  WandSparkles,
   X
 } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import AgendaTaskCard from './AgendaTaskCard.vue'
-import TaskPreviewModal from '../TaskPreviewModal.vue'
-import AIModelPicker from '../AIModelPicker.vue'
+import FloatingAddButton from '../FloatingAddButton.vue'
+import TaskComposer from '../TaskComposer.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
 import { isLegacyRecurringDateInstance } from '../../utils/task-time-rules.js'
@@ -323,17 +268,10 @@ const { t, locale } = useI18n()
 const taskStore = useTaskStore()
 
 const scrollContainer = ref(null)
-const quickAddInput = ref(null)
+const addButton = ref(null)
 const unplannedExpanded = ref(false)
 const unplannedFeedback = ref(false)
-const newTaskContent = ref('')
-
-// AI 快速创建（沿用现有流式生成与预览链路）
-const shouldSplitTask = ref(false)
-const showTaskPreview = ref(false)
-const previewTasks = ref([])
-const originalTaskInput = ref('')
-const streamContent = ref('')
+const composerOpen = ref(false)
 
 // 进行中任务计时刷新
 let timeUpdateTimer = null
@@ -431,87 +369,16 @@ function scrollBehavior() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 }
 
-// ---------- 快速添加 ----------
+// ---------- 新建任务弹窗 ----------
 
-async function addTask() {
-  const content = newTaskContent.value.trim()
-  if (!content) return
-
-  if (taskStore.selectedAIModel && taskStore.isAIEnabled) {
-    originalTaskInput.value = content
-    previewTasks.value = []
-    streamContent.value = ''
-    showTaskPreview.value = true
-    newTaskContent.value = ''
-    try {
-      await taskStore.streamGenerateTaskList(
-        content,
-        (chunk) => { streamContent.value = chunk },
-        (finalResult) => {
-          if (finalResult.success && finalResult.tasks) {
-            previewTasks.value = finalResult.tasks.map((task) => ({
-              ...task,
-              listId: task.listId || taskStore.currentListId,
-              dueDate: task.dueDate || null,
-              dueTime: task.dueTime || null,
-              reminderTime: task.reminderTime || null,
-              metadata: task.metadata || { note: '' }
-            }))
-          } else {
-            showTaskPreview.value = false
-            newTaskContent.value = content
-            createNormalTask(content)
-          }
-        },
-        (error) => {
-          console.error('[AgendaView] AI 生成任务失败:', error.error || error)
-          showTaskPreview.value = false
-          newTaskContent.value = content
-          createNormalTask(content)
-        },
-        shouldSplitTask.value
-      )
-    } catch (error) {
-      console.error('[AgendaView] AI 生成任务异常:', error)
-      showTaskPreview.value = false
-      newTaskContent.value = content
-      createNormalTask(content)
-    }
-    return
-  }
-
-  await createNormalTask(content)
+function openComposer() {
+  composerOpen.value = true
 }
 
-// 新任务默认不带时间：选中日历日期不自动填入 Schedule
-async function createNormalTask(content) {
-  const taskData = { content }
-  if (taskStore.currentListId !== null) taskData.listId = taskStore.currentListId
-  const result = await taskStore.createTask(taskData)
-  if (result && result.success) {
-    newTaskContent.value = ''
+function handleTaskCreated(task) {
+  // 仅未计划任务提示“已添加到未计划”；带安排/截止的任务直接进入对应日期分组
+  if (task && !task.scheduledStartAt && !task.dueDate) {
     unplannedFeedback.value = true
-    quickAddInput.value?.focus()
-  }
-}
-
-// 模型选择与启用由 store 统一处理；选择“不使用 AI”会清空模型并关闭 AI
-function handleSelectAIModel(model) {
-  taskStore.selectAIModel(model)
-}
-
-function closeTaskPreview() {
-  showTaskPreview.value = false
-  previewTasks.value = []
-  originalTaskInput.value = ''
-  streamContent.value = ''
-}
-
-function handleTasksCreated(result) {
-  if (result.success) {
-    taskStore.getAllTasks()
-  } else {
-    console.error('[AgendaView] AI 任务创建失败:', result.message)
   }
 }
 
@@ -664,7 +531,7 @@ defineExpose({
   highlightTasks,
   viewUnplanned,
   refreshObserverNow,
-  focusQuickAdd: () => quickAddInput.value?.focus()
+  focusAddButton: () => addButton.value?.focus()
 })
 
 onMounted(async () => {

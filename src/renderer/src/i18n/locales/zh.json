@@ -294,7 +294,27 @@
     "confirmDelete": "确定要删除这个任务吗？",
     "deleteFailed": "删除失败：{error}",
     "hideCompleted": "隐藏已完成任务",
-    "showCompleted": "显示已完成任务"
+    "showCompleted": "显示已完成任务",
+    "pickDate": "选择日期…",
+    "composer": {
+      "newItem": "新条目",
+      "taskPlaceholder": "任务",
+      "notePlaceholder": "备注",
+      "dateSection": "日期",
+      "listSection": "列表",
+      "dateNone": "无日期",
+      "dateToday": "今天",
+      "dateTomorrow": "明天",
+      "dateWeekend": "周末",
+      "dateNextWeek": "下周",
+      "pickDate": "选择日期…",
+      "timeAnytime": "随时",
+      "timePeriod": "时段",
+      "timeSpecific": "具体时间",
+      "periodMorning": "上午",
+      "periodAfternoon": "下午",
+      "periodEvening": "晚上"
+    }
   },
   "lists": {
     "title": "清单",

@@ -366,7 +366,7 @@ function restoreFocusAfterDelete() {
       focusable.focus()
       return
     }
-    agendaRef.value?.focusQuickAdd?.()
+    agendaRef.value?.focusAddButton?.()
   })
 }
 

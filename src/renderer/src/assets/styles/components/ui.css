@@ -28,4 +28,8 @@
   animation: ui-pop-in 150ms ease-out;
 }
 
+.ui-popover-content[data-state='open'] {
+  animation: ui-fade-in 120ms ease-out;
+}
+
 /* prefers-reduced-motion 由 base.css 全局规则统一降级，这里不重复处理 */

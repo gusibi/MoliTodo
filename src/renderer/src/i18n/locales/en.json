@@ -279,7 +279,27 @@
     "confirmDelete": "Are you sure you want to delete this task?",
     "deleteFailed": "Delete failed: {error}",
     "hideCompleted": "Hide completed tasks",
-    "showCompleted": "Show completed tasks"
+    "showCompleted": "Show completed tasks",
+    "pickDate": "Pick a date…",
+    "composer": {
+      "newItem": "New item",
+      "taskPlaceholder": "Task",
+      "notePlaceholder": "Note",
+      "dateSection": "Date",
+      "listSection": "List",
+      "dateNone": "No date",
+      "dateToday": "Today",
+      "dateTomorrow": "Tomorrow",
+      "dateWeekend": "Weekend",
+      "dateNextWeek": "Next week",
+      "pickDate": "Pick a date…",
+      "timeAnytime": "Anytime",
+      "timePeriod": "Period",
+      "timeSpecific": "Specific time",
+      "periodMorning": "Morning",
+      "periodAfternoon": "Afternoon",
+      "periodEvening": "Evening"
+    }
   },
   "lists": {
     "title": "Lists",

@@ -53,6 +53,7 @@
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/vue3": "^6.1.19",
+    "@internationalized/date": "^3.12.4",
     "@lucide/vue": "^1.47.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@vuepic/vue-datepicker": "^11.0.2",
