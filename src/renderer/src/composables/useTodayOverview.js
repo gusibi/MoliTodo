@@ -224,8 +224,8 @@ export function useTodayOverview() {
 
   const searchQuery = computed(() => taskStore.searchQuery.trim())
 
-  // 搜索覆盖范围：今日执行集合、未计划集合与当前已查询日期范围（含日历可见月份）的并集。
-  // 无主日期的任务（未计划 / doing）始终在范围内；有主日期的任务需落在已查询区间内。
+  // 搜索覆盖范围：今日执行集合、收件箱集合与当前已查询日期范围（含日历可见月份）的并集。
+  // 无主日期的任务（收件箱 / doing）始终在范围内；有主日期的任务需落在已查询区间内。
   const searchableWorld = computed(() => {
     const ranges = loadedRanges.value
     return world.value.filter((task) => {
@@ -278,7 +278,7 @@ export function useTodayOverview() {
     })
   })
 
-  // 搜索覆盖范围说明：今日执行 + 未计划 + 已查询日期区间
+  // 搜索覆盖范围说明：今日执行 + 收件箱 + 已查询日期区间
   const searchScopeLabel = computed(() => {
     if (!loadedRanges.value.length) return ''
     const first = loadedRanges.value[0].startKey

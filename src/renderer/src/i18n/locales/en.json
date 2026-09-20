@@ -367,7 +367,7 @@
   },
   "today": {
     "pendingCount": "{count} to do today",
-    "searchScope": "Search scope: today + unplanned + loaded dates ({from} ~ {to}), not the whole library",
+    "searchScope": "Search scope: today + inbox + loaded dates ({from} ~ {to}), not the whole library",
     "searchScopeLoading": "Determining date coverage of search…",
     "unplanned": "Inbox",
     "unplannedEmpty": "Inbox is empty",

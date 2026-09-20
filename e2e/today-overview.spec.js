@@ -721,7 +721,7 @@ test('收件箱命名、逾期可折叠与今日星期几', async ({ app, window
 
   // 2. 已逾期默认展开，可折叠再展开
   const overdue = window.locator('[data-agenda-section="overdue"]');
-  const overdueToggle = overdue.locator('.agenda-section-header');
+  const overdueToggle = overdue.getByRole('button', { name: /已逾期/ });
   await expect(overdue.getByText('逾期任务')).toBeVisible();
   await expect(overdueToggle).toHaveAttribute('aria-expanded', 'true');
   await overdueToggle.click();
@@ -731,4 +731,37 @@ test('收件箱命名、逾期可折叠与今日星期几', async ({ app, window
 
   // 3. 今天标题带星期几
   await expect(window.locator('.agenda-section-today .agenda-section-title')).toContainText('周');
+});
+
+test('折叠已逾期后，执行分组定位链接自动展开并高亮目标', async ({ app, window }) => {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 1);
+  // 仅在当前月内存在过去日期时验证（日历月份窗口从当前月开始）
+  if (past.getMonth() !== today.getMonth()) {
+    test.skip(true, '今天当月没有可点击的过去日期');
+    return;
+  }
+  const pastKey = localKey(past);
+
+  await seedTasks(app.electronApp, [
+    { content: '逾期定位任务', dueDate: pastKey }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 手动折叠已逾期
+  const overdue = window.locator('[data-agenda-section="overdue"]');
+  await overdue.getByRole('button', { name: /已逾期/ }).click();
+  await expect(overdue.getByText('逾期定位任务')).toHaveCount(0);
+
+  // 通过日历进入过去日期，该日期 section 显示执行分组定位链接
+  await window.locator(`.future-calendar-day[data-date-key="${pastKey}"]`).click();
+  const relocatedLink = window.locator(`[data-date-section="${pastKey}"] .agenda-relocated-link`);
+  await expect(relocatedLink).toBeVisible();
+
+  // 点击定位链接：已逾期 section 自动展开并强调目标卡片
+  await relocatedLink.click();
+  await expect(overdue.getByText('逾期定位任务')).toBeVisible();
+  await expect(window.locator('.agenda-card-highlight')).toBeVisible();
 });

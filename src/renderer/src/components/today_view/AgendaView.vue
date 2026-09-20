@@ -9,14 +9,14 @@
       </div>
 
       <template v-else>
-        <!-- 搜索无匹配：区别于"空日期"与"无未计划"的独立状态 -->
+        <!-- 搜索无匹配：区别于"空日期"与"收件箱为空"的独立状态 -->
         <div v-if="searchNoMatch" class="agenda-state agenda-no-match" role="status">
           <Search class="h-icon-lg w-icon-lg" aria-hidden="true" />
           <p>{{ $t('today.noSearchMatch') }}</p>
         </div>
 
         <template v-else>
-        <!-- 未计划汇总（默认折叠） -->
+        <!-- 收件箱汇总（默认折叠） -->
         <section class="agenda-section agenda-section-unplanned" data-agenda-section="unplanned">
           <button type="button" class="agenda-section-header is-button"
             :aria-expanded="unplannedExpanded" @click="toggleUnplanned">
@@ -398,7 +398,7 @@ function openComposer() {
 }
 
 function handleTaskCreated(task) {
-  // 仅未计划任务提示“已添加到未计划”；带安排/截止的任务直接进入对应日期分组
+  // 仅收件箱任务提示“已添加到收件箱”；带安排/截止的任务直接进入对应日期分组
   if (task && !task.scheduledStartAt && !task.dueDate) {
     unplannedFeedback.value = true
   }
@@ -489,6 +489,8 @@ function locateTask(task) {
   relocatedMenuKey.value = ''
   const key = taskKey(task)
   if (props.model.overdue.some((t) => taskKey(t) === key)) {
+    // 折叠状态下卡片未渲染，先展开再滚动，否则高亮找不到目标
+    overdueExpanded.value = true
     scrollToGroup('overdue')
   } else if (props.model.reschedule.some((t) => taskKey(t) === key)) {
     scrollToGroup('reschedule')
@@ -513,7 +515,7 @@ function handleLoadMore() {
 // ---------- 滚动观察 ----------
 
 // 以 Agenda 顶部进入有效阅读区域的日期 section 作为 active 日期。
-// 停留在未计划 / 已逾期 / 待重新安排等非日期分组时保留上一次有效日期。
+// 停留在收件箱 / 已逾期 / 待重新安排等非日期分组时保留上一次有效日期。
 function computeActiveDate() {
   const container = scrollContainer.value
   if (!container) return

@@ -382,7 +382,7 @@
   },
   "today": {
     "pendingCount": "今日待处理 {count} 项",
-    "searchScope": "搜索范围：今日 + 未计划 + 已加载日期（{from} ~ {to}），不是全库搜索",
+    "searchScope": "搜索范围：今日 + 收件箱 + 已加载日期（{from} ~ {to}），不是全库搜索",
     "searchScopeLoading": "正在确定搜索覆盖的日期范围…",
     "unplanned": "收件箱",
     "unplannedEmpty": "收件箱是空的",
