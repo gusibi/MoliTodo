@@ -6,24 +6,18 @@
       isDragging ? 'floating-icon--dragging' : '',
       isPending ? 'floating-icon--pending' : ''
     ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @click="handleClick"
-      :disabled="isPending">
+      :aria-label="$t('app.title')" :disabled="isPending">
       <!-- 默认图标 -->
       <div :class="[
         'floating-icon-content floating-icon-content--default',
         hasInProgressTasks ? 'floating-icon-content--in-progress' : ''
       ]">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor" />
-        </svg>
+        <Check :size="32" :stroke-width="2.5" aria-hidden="true" />
       </div>
 
       <!-- 提醒状态图标 -->
       <div class="floating-icon-content floating-icon-content--alert">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-            fill="currentColor" />
-        </svg>
+        <AlarmClock :size="32" :stroke-width="2.5" aria-hidden="true" />
       </div>
 
       <!-- 任务数量角标 -->
@@ -39,6 +33,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { AlarmClock, Check } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import '@/assets/styles/components/floating-icon.css'
 

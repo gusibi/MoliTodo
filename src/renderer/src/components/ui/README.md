@@ -171,3 +171,24 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 - TaskSelectionModal 内的 AI 模型下拉仍为历史自建实现，未迁移到共享 DropdownMenu。
 - 迁移后部分历史弹层容器 CSS 已失去消费者，清理与全量 CDN 移除一并留待阶段 5。
 - 悬浮界面（阶段 4）与主窗口 Surface 定稿（阶段 5）未涉及。
+
+## 阶段 4 迁移记录（悬浮界面 / 跨窗口）
+
+- 悬浮界面图标迁移到本地 Lucide：FloatingIcon（Check / AlarmClock）、FloatingTask（状态与操作）、
+  TaskPanel 清单选择器改用 `ListIcon`（未选择清单时回退 `Layers`）。悬浮图标按钮补充可访问名称。
+- TaskPanel 提醒弹窗改用共享 `Dialog`；原生 `alert` 改为弹窗内联错误；移除已失去消费者的
+  `@vuepic/vue-datepicker` 样式导入。
+- 打开输入、提醒弹窗或右键菜单时，悬浮面板不再因鼠标移出而自动隐藏（关闭后恢复原策略）。
+- E2E `e2e/float-view.spec.js` 验证真实 Electron 行为：悬浮窗口存在且置顶、任务面板显示/隐藏、
+  面板新增任务跨窗口同步到主窗口、颜色主题跨窗口同步。
+
+### 阶段 4 尚未完成 / 后续
+
+- TaskPanel 的分类 / 清单下拉与右键菜单仍为历史自建实现，未迁移到共享 DropdownMenu/ContextMenu。
+- TaskPanel 仍有内联本地 SVG 图标（分类、固定、状态勾选、右键菜单等）；它们已离线可用，但尚未统一为
+  Lucide 组件，留待阶段 5 收口。
+- 悬浮图标本身是带拖拽交互的透明窗口按钮，保留原生 `<button>` 而非 `IconButton`（自定义拖动/穿透
+  语义与基础按钮样式冲突），作为明确例外记录。
+- 悬浮面板的历史弹层容器 CSS 失去消费者，与阶段 5 一并清理。
+- 鼠标穿透、置顶、拖动依赖既有主进程窗口逻辑，本阶段仅做窄范围验证，未引入新的窗口生命周期模型。
+- 主窗口 Surface 定稿与 Font Awesome CDN 移除属于阶段 5。

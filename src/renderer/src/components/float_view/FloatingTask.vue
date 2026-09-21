@@ -14,9 +14,9 @@
     }]">
 
       <!-- 关闭按钮 -->
-      <button class="floating-task-close" @click="closeFloatingTask">
-        <i class="fas fa-times"></i>
-      </button>
+      <IconButton size="icon-sm" class="floating-task-close" :label="$t('common.close')" @click="closeFloatingTask">
+        <X class="h-icon-sm w-icon-sm" />
+      </IconButton>
 
 
       <!-- 任务信息 -->
@@ -28,25 +28,25 @@
             'task-tag-overdue': isReminderOverdue,
             'animate-bounce': isReminderOverdue
           }]">
-            <i class="fas fa-calendar"></i>
+            <Calendar class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ formatReminderTime(task.reminderTime) }}
           </span>
           <!-- 状态标签 -->
           <span v-if="currentStatus === 'doing' && !isTaskOvertime" class="task-tag task-tag-status task-tag-doing">
-            <i class="fas fa-play"></i>
+            <Play class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ formatDuration(currentDuration) }}
           </span>
           <span v-else-if="currentStatus === 'doing' && isTaskOvertime"
             class="task-tag task-tag-status task-tag-overtime">
-            <i class="fas fa-clock"></i>
+            <Clock class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ formatDuration(currentDuration) }}
           </span>
           <span v-else-if="currentStatus === 'paused'" class="task-tag task-tag-status task-tag-paused">
-            <i class="fas fa-pause"></i>
+            <Pause class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ formatDuration(task?.totalDuration || 0) }}
           </span>
           <span v-else-if="currentStatus === 'done'" class="task-tag task-tag-status task-tag-completed">
-            <i class="fas fa-check"></i>
+            <Check class="h-icon-sm w-icon-sm" aria-hidden="true" />
             {{ $t('floatView.timeSpent') }} {{ formatDuration(task?.totalDuration || 0) }}
           </span>
 
@@ -56,23 +56,26 @@
 
       <!-- 任务操作按钮 -->
       <div class="task-actions">
-        <button v-if="currentStatus === 'todo'" class="task-btn-action task-btn-start" @click="startTask" title="开始">
-          <i class="fas fa-play"></i>
-        </button>
-        <button v-if="currentStatus === 'doing'" class="task-btn-action task-btn-pause" @click="pauseTask" title="暂停">
-          <i class="fas fa-pause"></i>
-        </button>
-        <button v-if="currentStatus === 'paused'" class="task-btn-action task-btn-resume" @click="startTask" title="继续">
-          <i class="fas fa-play"></i>
-        </button>
-        <button v-if="currentStatus === 'doing' || currentStatus === 'paused'" class="task-btn-action task-btn-complete"
-          @click="completeTask" title="完成">
-          <i class="fas fa-check"></i>
-        </button>
-        <button v-if="currentStatus === 'done'" class="task-btn-action task-btn-restart" @click="restartTask"
-          title="重新开始">
-          <i class="fas fa-redo"></i>
-        </button>
+        <IconButton v-if="currentStatus === 'todo'" size="icon-sm" class="task-btn-action task-btn-start"
+          :label="$t('tasks.start')" @click="startTask">
+          <Play class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton v-if="currentStatus === 'doing'" size="icon-sm" class="task-btn-action task-btn-pause"
+          :label="$t('tasks.pause')" @click="pauseTask">
+          <Pause class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton v-if="currentStatus === 'paused'" size="icon-sm" class="task-btn-action task-btn-resume"
+          :label="$t('tasks.resume')" @click="startTask">
+          <Play class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton v-if="currentStatus === 'doing' || currentStatus === 'paused'" size="icon-sm"
+          class="task-btn-action task-btn-complete" :label="$t('tasks.markComplete')" @click="completeTask">
+          <Check class="h-icon-sm w-icon-sm" />
+        </IconButton>
+        <IconButton v-if="currentStatus === 'done'" size="icon-sm" class="task-btn-action task-btn-restart"
+          :label="$t('tasks.restart')" @click="restartTask">
+          <RotateCcw class="h-icon-sm w-icon-sm" />
+        </IconButton>
       </div>
     </div>
   </div>
@@ -80,8 +83,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, h } from 'vue'
+import { Calendar, Check, Clock, Pause, Play, RotateCcw, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { formatDuration } from '@/utils/task-utils'
+import IconButton from '../ui/button/IconButton.vue'
 
 const props = defineProps({
   taskId: {

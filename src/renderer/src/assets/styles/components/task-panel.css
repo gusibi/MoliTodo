@@ -493,6 +493,10 @@
   @apply w-3.5 h-3.5 text-primary;
 }
 
+.reminder-error {
+  @apply mt-2 text-xs text-destructive;
+}
+
 .modal-footer {
   @apply flex gap-2 justify-end px-3 pb-3 pt-2 border-t border-border;
 }

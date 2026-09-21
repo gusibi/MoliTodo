@@ -554,6 +554,9 @@
     "taskStats": "共 {total} 个任务，已完成 {completed} 个",
     "pinPanel": "固定面板",
     "unpinPanel": "取消固定",
-    "allLists": "全部清单"
+    "allLists": "全部清单",
+    "reminderSetFailed": "设置提醒失败",
+    "selectReminderTime": "请选择提醒时间",
+    "reminderInPast": "提醒时间不能是过去的时间"
   }
 }

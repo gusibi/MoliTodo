@@ -27,7 +27,9 @@
       <!-- 清单过滤下拉 -->
       <div class="task-panel-list-dropdown" @click="toggleListDropdown" ref="listDropdownRef">
         <div class="task-panel-list-trigger">
-          <i :class="getListIconClass(selectedListIcon)" :style="getListColorStyle(selectedListColor)"></i>
+          <ListIcon v-if="selectedListId !== null" :name="selectedListIconName" class="h-icon-sm w-icon-sm"
+            :style="getListColorStyle(selectedListColor)" />
+          <Layers v-else class="h-icon-sm w-icon-sm" :style="getListColorStyle(selectedListColor)" aria-hidden="true" />
           <svg class="dropdown-arrow" :class="{ 'open': showListDropdown }" width="12" height="12" viewBox="0 0 24 24"
             fill="none">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -36,14 +38,14 @@
         </div>
         <div v-if="showListDropdown" class="task-panel-dropdown-menu list-dropdown-menu">
           <div class="dropdown-item" :class="{ 'active': selectedListId === null }" @click.stop="selectList(null)">
-            <i class="fas fa-layer-group dropdown-item-icon"></i>
+            <Layers class="h-icon-sm w-icon-sm dropdown-item-icon" aria-hidden="true" />
             <span>{{ $t('floatView.allLists') }}</span>
             <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
           </div>
           <div v-for="list in sortedLists" :key="list.id" class="dropdown-item"
             :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list.id)">
-            <i :class="getListIconClass(list.icon)" class="dropdown-item-icon"
-              :style="getListColorStyle(list.color)"></i>
+            <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm dropdown-item-icon"
+              :style="getListColorStyle(list.color)" />
             <span>{{ list.name }}</span>
             <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
           </div>
@@ -207,35 +209,23 @@
     </div>
 
     <!-- 提醒设置弹窗 -->
-    <div v-if="showReminder" class="task-panel-modal-overlay">
-      <div class="task-panel-modal" @click.stop>
-        <div class="modal-header">
-          <h3>{{ $t('floatView.setReminder') }}</h3>
-          <button class="modal-close-btn" @click="hideReminderModal">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
+    <Dialog :open="showReminder" :title="$t('floatView.setReminder')" content-class="w-[min(94vw,24rem)]"
+      @update:open="(value) => { if (!value) hideReminderModal() }">
+      <div class="modal-body">
+        <div class="reminder-options-grid">
+          <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option-btn"
+            @click="selectCustomReminder(reminder)">
+            <AlarmClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
+            <span>{{ reminder.label }}</span>
           </button>
         </div>
-        <div class="modal-body">
-          <div class="reminder-options-grid">
-            <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option-btn"
-              @click="selectCustomReminder(reminder)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                  fill="currentColor" />
-              </svg>
-              <span>{{ reminder.label }}</span>
-            </button>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="modal-btn secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</button>
-          <button class="modal-btn primary" @click="saveTaskReminder">{{ $t('floatView.save') }}</button>
-        </div>
+        <p v-if="reminderError" class="reminder-error" role="alert">{{ reminderError }}</p>
       </div>
-    </div>
+      <template #footer>
+        <Button variant="secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</Button>
+        <Button variant="default" @click="saveTaskReminder">{{ $t('floatView.save') }}</Button>
+      </template>
+    </Dialog>
 
     <!-- 面板底部 -->
     <div class="task-panel-footer">
@@ -261,11 +251,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
+import { AlarmClock, Layers } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { getListIconClass } from '@/utils/icon-utils'
-import '@vuepic/vue-datepicker/dist/main.css'
+import ListIcon from '../ui/ListIcon.vue'
+import Dialog from '../ui/dialog/Dialog.vue'
+import Button from '../ui/button/Button.vue'
 
 const taskStore = useTaskStore()
 const { customReminderOptions } = storeToRefs(taskStore)
@@ -278,6 +270,7 @@ const currentEditingTask = ref(null)
 const editingContent = ref('')
 const showReminder = ref(false)
 const currentReminderTask = ref(null)
+const reminderError = ref('')
 const reminderDate = ref('')
 const reminderTime = ref('')
 const dateTimeValue = ref(null)
@@ -312,7 +305,7 @@ const categoryOptions = computed(() => [
   { value: 'planned', label: $t('categories.planned'), icon: CalendarWeekIcon },
   { value: 'doing', label: $t('categories.doing'), icon: PlayCircleIcon },
   { value: 'paused', label: $t('categories.paused'), icon: PauseCircleIcon },
-  { value: 'all', label: $t('categories.all'), icon: ListIcon },
+  { value: 'all', label: $t('categories.all'), icon: AllTasksIcon },
   { value: 'inbox', label: $t('categories.inbox'), icon: InboxIcon },
   { value: 'completed', label: $t('categories.completed'), icon: CheckCircleIcon }
 ])
@@ -334,7 +327,7 @@ const PauseCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24
   h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z', fill: 'currentColor' })
 ])
 
-const ListIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+const AllTasksIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
   h('path', { d: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z', fill: 'currentColor' })
 ])
 
@@ -537,11 +530,13 @@ const showReminderModal = (taskId) => {
   }
 
   showReminder.value = true
+  reminderError.value = ''
 }
 
 const hideReminderModal = () => {
   showReminder.value = false
   currentReminderTask.value = null
+  reminderError.value = ''
   dateTimeValue.value = null
   reminderDate.value = ''
   reminderTime.value = ''
@@ -589,7 +584,7 @@ const selectCustomReminder = async (reminderOption) => {
       await loadTasks()
     } catch (error) {
       console.error('设置提醒失败:', error)
-      alert('设置提醒失败')
+      reminderError.value = $t('floatView.reminderSetFailed')
     }
   }
 }
@@ -610,7 +605,7 @@ const saveTaskReminder = async () => {
     const time = reminderTime.value
 
     if (!date || !time) {
-      alert('请选择提醒时间')
+      reminderError.value = $t('floatView.selectReminderTime')
       return
     }
 
@@ -622,7 +617,7 @@ const saveTaskReminder = async () => {
 
   console.log("本地时区提醒时间:", reminderDateTime)
   if (reminderDateTime <= new Date()) {
-    alert('提醒时间不能是过去的时间')
+    reminderError.value = $t('floatView.reminderInPast')
     return
   }
 
@@ -632,7 +627,7 @@ const saveTaskReminder = async () => {
     await loadTasks()
   } catch (error) {
     console.error('设置提醒失败:', error)
-    alert('设置提醒失败')
+    reminderError.value = $t('floatView.reminderSetFailed')
   }
 }
 
@@ -796,13 +791,10 @@ const sortedLists = computed(() => {
   return taskStore.sortedLists
 })
 
-// 获取选中清单的图标
-const selectedListIcon = computed(() => {
-  if (selectedListId.value === null) {
-    return 'fas fa-layer-group'
-  }
+// 获取选中清单的图标名称（未选择清单时由模板回退到 Layers）
+const selectedListIconName = computed(() => {
   const list = sortedLists.value.find(l => l.id === selectedListId.value)
-  return list?.icon || 'fas fa-list'
+  return list?.icon || ''
 })
 
 // 获取选中清单的颜色
@@ -854,11 +846,22 @@ const showTaskContextMenu = (event, task) => {
   event.preventDefault()
   selectedTask.value = task
 
-  const rect = event.currentTarget.getBoundingClientRect()
+  // 紧凑面板内按窗口可用尺寸夹取菜单位置，避免溢出被裁切
+  const menuWidth = 180
+  const menuHeight = 44
+  let left = event.clientX
+  let top = event.clientY
+  if (left + menuWidth > window.innerWidth) {
+    left = Math.max(4, window.innerWidth - menuWidth - 8)
+  }
+  if (top + menuHeight > window.innerHeight) {
+    top = Math.max(4, window.innerHeight - menuHeight - 8)
+  }
+
   contextMenuStyle.value = {
     position: 'fixed',
-    left: `${event.clientX}px`,
-    top: `${event.clientY}px`,
+    left: `${left}px`,
+    top: `${top}px`,
     zIndex: 1000
   }
 
@@ -929,9 +932,9 @@ const handlePanelMouseLeave = () => {
   // 如果已固定，不需要发送鼠标事件
   if (isPinned.value) return
 
-  // 正在输入（含输入法组词）时不隐藏
-  if (isInputActive()) {
-    console.log('输入中，忽略面板鼠标离开事件')
+  // 正在输入（含输入法组词）或交互浮层打开时不隐藏
+  if (isInputActive() || showReminder.value || showContextMenu.value || showDropdown.value || showListDropdown.value) {
+    console.log('输入或浮层交互中，忽略面板鼠标离开事件')
     return
   }
 

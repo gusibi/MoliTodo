@@ -554,6 +554,9 @@
     "taskStats": "{total} tasks total, {completed} completed",
     "pinPanel": "Pin Panel",
     "unpinPanel": "Unpin Panel",
-    "allLists": "All Lists"
+    "allLists": "All Lists",
+    "reminderSetFailed": "Failed to set reminder",
+    "selectReminderTime": "Please select a reminder time",
+    "reminderInPast": "Reminder time cannot be in the past"
   }
 }
