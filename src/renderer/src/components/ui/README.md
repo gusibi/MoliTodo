@@ -192,3 +192,30 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 - 悬浮面板的历史弹层容器 CSS 失去消费者，与阶段 5 一并清理。
 - 鼠标穿透、置顶、拖动依赖既有主进程窗口逻辑，本阶段仅做窄范围验证，未引入新的窗口生命周期模型。
 - 主窗口 Surface 定稿与 Font Awesome CDN 移除属于阶段 5。
+
+## 阶段 5 迁移记录（Surface 定稿 / 主题收敛 / CDN 清理）
+
+- 移除 `index.html` 的 Font Awesome CDN；`TimeFilter` 等最后一批活跃 FA 图标迁移到本地 Lucide。
+- 清理迁移后失去消费者的样式：各业务弹层的历史 overlay / container / header / close 规则与关键帧
+  （list-create、report、task-selection、task-details、task-panel、unified-calendar），以及
+  KanbanCard、TaskEditVertical 中不再渲染的 FA 注释块与随之失效的方法。
+- 主内容区由大卡片阴影改为轻量 `shadow-sm`，以背景层次与分隔线组织（阴影保留给真正覆盖内容的浮层）。
+- 重新启用 Vercel 主题，恢复 Spec 要求的五套颜色主题；主题只覆盖 palette 等外观 token，
+  基础组件布局与交互由 token 继承。
+- 离线冷启动与五套主题回归由 `e2e/foundation.spec.js` 覆盖。
+
+### 全量覆盖对照（最终）
+
+- 活跃界面：Today、普通列表、看板、日历、Inspector、清单管理、业务弹层、设置、统计、悬浮界面
+  均已迁移或验证；未使用目录 `components/unused/` 与仅被它引用的 `utils/icon-utils.js` 保留不动。
+- 原生业务确认：活跃代码不再使用原生 `confirm`（系统文件/权限对话框按用途保留）。
+- 图标：核心 UI 图标本地可离线显示；清单图标旧名称兼容；Font Awesome CDN 已移除。
+- 主题：五套颜色主题 × 明暗模式继承同一基础组件规则，跨窗口同步。
+- 测试：renderer 构建、单元测试、完整 Electron E2E 通过。
+
+### 已知未验证项 / 后续
+
+- Windows 平台的窗口材质、标题栏与悬浮行为未在本环境验证（当前仅有 macOS）。
+- 设置页原生 `<select>`、TaskSelectionModal 的 AI 下拉、TaskPanel 的内联 SVG 图标未进一步统一；
+  它们功能与离线可用性正常，属于后续可选收敛。
+- 主窗体边距与圆角的最终视觉定稿需要真实应用截图确认；本轮仅将重阴影降级，未改动宽高计算。

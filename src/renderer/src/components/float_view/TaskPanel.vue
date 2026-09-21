@@ -38,7 +38,7 @@
         </div>
         <div v-if="showListDropdown" class="task-panel-dropdown-menu list-dropdown-menu">
           <div class="dropdown-item" :class="{ 'active': selectedListId === null }" @click.stop="selectList(null)">
-            <Layers class="h-icon-sm w-icon-sm dropdown-item-icon" aria-hidden="true" />
+            <Layers class="h-icon-sm w-icon-sm dropdown-item-icon dropdown-item-icon-muted" aria-hidden="true" />
             <span>{{ $t('floatView.allLists') }}</span>
             <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
           </div>

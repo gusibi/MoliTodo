@@ -20,12 +20,12 @@
   @apply bg-muted/30;
 }
 
-/* 主要内容区域样式 */
+/* 主要内容区域样式：以背景层次与分隔线组织，降低大卡片外边距与阴影 */
 .task-manager-main-content {
-  @apply flex flex-col overflow-hidden relative bg-background m-2 rounded-lg shadow-lg;
+  @apply flex flex-col overflow-hidden relative bg-background m-1 rounded-lg shadow-sm;
   /* 使用 calc 计算固定宽度，减去侧边栏宽度和 margin */
-  width: calc(100% - 280px - 16px);
-  height: calc(100vh - 16px); /* 减去margin */
+  width: calc(100% - 280px - 8px);
+  height: calc(100vh - 8px); /* 减去margin */
   min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 

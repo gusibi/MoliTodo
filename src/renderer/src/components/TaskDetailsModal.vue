@@ -178,27 +178,6 @@ const closeFieldModal = () => {
 </script>
 
 <style scoped>
-/* 主模态框样式 */
-.task-details-modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-}
-
-.task-details-modal-container {
-  @apply bg-card rounded-lg shadow-xl max-w-7xl w-full mx-4 max-h-[90vh] flex flex-col;
-}
-
-.task-details-modal-header {
-  @apply flex items-center justify-between p-6 border-b border-border;
-}
-
-.task-details-modal-title {
-  @apply text-xl font-semibold text-card-foreground;
-}
-
-.task-details-modal-close-btn {
-  @apply p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors;
-}
-
 /* 表格容器样式 */
 .task-details-table-container {
   @apply flex-1 overflow-auto p-6;
@@ -253,51 +232,26 @@ const closeFieldModal = () => {
   @apply text-sm text-muted-foreground;
 }
 
-/* 字段详情模态框样式 */
-.task-details-field-modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center;
-  z-index: 60;
-}
-
-.task-details-field-modal-container {
-  @apply bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col;
-}
-
-.task-details-field-modal-header {
-  @apply flex items-center justify-between p-4 border-b border-border;
-}
-
-.task-details-field-modal-title {
-  @apply text-lg font-medium text-card-foreground;
-}
-
-.task-details-field-modal-content {
-  @apply flex-1 overflow-auto p-4;
-}
-
+/* 字段详情内容样式 */
 .task-details-field-value {
   @apply text-sm text-card-foreground whitespace-pre-wrap font-mono bg-muted p-4 rounded border;
 }
 
 /* 滚动条样式适配主题 */
-.task-details-table-container::-webkit-scrollbar,
-.task-details-field-modal-content::-webkit-scrollbar {
+.task-details-table-container::-webkit-scrollbar {
   @apply w-2 h-2;
 }
 
-.task-details-table-container::-webkit-scrollbar-track,
-.task-details-field-modal-content::-webkit-scrollbar-track {
+.task-details-table-container::-webkit-scrollbar-track {
   @apply bg-muted rounded;
 }
 
-.task-details-table-container::-webkit-scrollbar-thumb,
-.task-details-field-modal-content::-webkit-scrollbar-thumb {
+.task-details-table-container::-webkit-scrollbar-thumb {
   @apply bg-border rounded hover:bg-muted-foreground;
 }
 
 /* Firefox 滚动条样式 */
-.task-details-table-container,
-.task-details-field-modal-content {
+.task-details-table-container {
   scrollbar-width: thin;
 }
 </style>

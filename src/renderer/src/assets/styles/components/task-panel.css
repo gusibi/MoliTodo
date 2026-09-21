@@ -132,16 +132,16 @@
   overflow-y: auto;
 }
 
-.list-dropdown-menu .dropdown-item i {
-  @apply text-xs flex-shrink-0 text-foreground;
+.list-dropdown-menu .dropdown-item svg {
+  @apply flex-shrink-0;
 }
 
 /* 全部清单图标使用主题前景色 */
-.list-dropdown-menu .dropdown-item i.fa-layer-group {
+.list-dropdown-menu .dropdown-item .dropdown-item-icon-muted {
   @apply text-muted-foreground;
 }
 
-.list-dropdown-menu .dropdown-item.active i.fa-layer-group {
+.list-dropdown-menu .dropdown-item.active .dropdown-item-icon-muted {
   @apply text-primary;
 }
 
@@ -429,51 +429,6 @@
 }
 
 /* ===== Modal ===== */
-.task-panel-modal-overlay {
-  @apply absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-xl;
-  animation: modal-fade-in 0.2s ease-out;
-}
-
-@keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.task-panel-modal {
-  @apply w-72 max-w-[90%] max-h-[80%] overflow-y-auto;
-  @apply bg-popover border border-border rounded-lg shadow-xl;
-  animation: modal-slide-in 0.2s ease-out;
-}
-
-@keyframes modal-slide-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.modal-header {
-  @apply flex items-center justify-between px-3 pt-3 pb-2 border-b border-border;
-}
-
-.modal-header h3 {
-  @apply text-sm font-semibold text-foreground;
-}
-
-.modal-close-btn {
-  @apply w-5 h-5 rounded flex items-center justify-center;
-  @apply text-muted-foreground hover:text-foreground hover:bg-accent;
-  @apply transition-colors cursor-pointer;
-}
-
-.modal-close-btn svg {
-  @apply w-3.5 h-3.5;
-}
-
 .modal-body {
   @apply p-3;
 }
@@ -495,23 +450,6 @@
 
 .reminder-error {
   @apply mt-2 text-xs text-destructive;
-}
-
-.modal-footer {
-  @apply flex gap-2 justify-end px-3 pb-3 pt-2 border-t border-border;
-}
-
-.modal-btn {
-  @apply px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-all duration-200;
-}
-
-.modal-btn.primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-}
-
-.modal-btn.secondary {
-  @apply bg-secondary text-secondary-foreground;
-  @apply hover:bg-secondary/80;
 }
 
 /* ===== Context Menu ===== */

@@ -277,45 +277,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.report-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
-  backdrop-filter: blur(4px);
-}
-
-.report-modal {
-  @apply bg-background border border-border rounded-lg shadow-2xl;
-  @apply w-full max-w-4xl max-h-[90vh] flex flex-col;
-  @apply mx-4;
-}
-
-.report-modal-header {
-  @apply flex items-center justify-between p-4 border-b border-border;
-  @apply bg-muted/30;
-}
-
-.report-modal-title {
-  @apply flex items-center gap-3;
-}
-
-.report-modal-title h3 {
-  @apply text-lg font-semibold text-foreground;
-}
-
-.report-modal-title i {
-  @apply text-primary text-xl;
-}
-
 .report-type-badge {
   @apply px-2 py-1 bg-primary/10 text-primary text-xs rounded-full;
 }
 
 .report-copy-error {
   @apply mt-2 text-xs text-destructive;
-}
-
-.close-btn {
-  @apply p-2 hover:bg-muted rounded-md transition-colors duration-200;
-  @apply text-muted-foreground hover:text-foreground;
 }
 
 .report-warning {
@@ -481,12 +448,6 @@ onUnmounted(() => {
 
 .copy-btn.success {
   @apply bg-green-600 hover:bg-green-700;
-}
-
-.close-action-btn {
-  @apply px-4 py-2 bg-muted text-foreground rounded-md;
-  @apply hover:bg-muted/80 transition-colors duration-200;
-  @apply text-sm;
 }
 
 /* 流式内容显示区域样式 */

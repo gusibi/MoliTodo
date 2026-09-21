@@ -299,36 +299,6 @@
 }
 
 /* Day Tasks Modal */
-.day-tasks-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
-  animation: modal-fade-in 0.2s ease-out;
-}
-
-.day-tasks-modal {
-  @apply max-w-full p-8 bg-background rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto border border-border;
-  animation: modal-slide-in 0.3s ease-out;
-}
-
-.day-tasks-modal-header {
-  @apply flex items-start justify-between mb-4;
-}
-
-.day-tasks-modal-title {
-  @apply flex items-center mb-6;
-}
-
-.day-tasks-modal-icon {
-  @apply  text-primary;
-}
-
-.day-tasks-modal-title-text {
-  @apply font-semibold ml-3 text-lg text-foreground;
-}
-
-.day-tasks-modal-close {
-  @apply p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors text-muted-foreground;
-}
-
 .day-tasks-modal-content {
   @apply space-y-2;
 }
@@ -380,29 +350,6 @@
 
 .day-task-checkbox.task-status-todo {
   @apply border-muted-foreground;
-}
-
-/* Custom scrollbar for day tasks modal */
-.day-tasks-modal::-webkit-scrollbar {
-  width: 6px;
-}
-
-.day-tasks-modal::-webkit-scrollbar-track {
-  @apply bg-muted/30 rounded-full;
-}
-
-.day-tasks-modal::-webkit-scrollbar-thumb {
-  @apply bg-primary/30 rounded-full;
-}
-
-.day-tasks-modal::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/80;
-}
-
-/* Firefox scrollbar styling */
-.day-tasks-modal {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.6) hsl(var(--muted) / 0.3);
 }
 
 /* Day View Styles - Similar to Week View */
@@ -459,26 +406,4 @@
 /* Day slot column */
 .day-slot {
   @apply min-h-12 border-b border-border p-1 cursor-pointer hover:bg-accent/50 transition-colors;
-}
-
-
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modal-slide-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }

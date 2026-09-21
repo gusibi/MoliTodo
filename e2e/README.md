@@ -26,6 +26,9 @@ npx playwright test e2e/settings.spec.js
 # 悬浮窗口与跨窗口同步
 npx playwright test e2e/float-view.spec.js
 
+# 离线冷启动与五套主题
+npx playwright test e2e/foundation.spec.js
+
 # 单个场景
 npx playwright test e2e/today-overview.spec.js -g "今天截止但安排在明天"
 ```

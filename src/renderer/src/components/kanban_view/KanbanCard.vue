@@ -12,11 +12,6 @@
     <div class="kanban-card-header">
       <div class="kanban-card-content" v-html="getFormattedContent()">
       </div>
-      <!-- <div class="kanban-card-actions">
-        <button class="kanban-card-action-btn" @click.stop="handleEdit" title="编辑任务">
-          <i class="fas fa-edit"></i>
-        </button>
-      </div> -->
     </div>
 
     <!-- 任务描述 -->
@@ -63,30 +58,6 @@
       </div>
     </div>
 
-    <!-- 任务操作按钮 -->
-    <!-- <div class="kanban-card-actions-bottom">
-      <button v-if="task.status === 'todo'" class="kanban-card-btn kanban-card-btn-start"
-        @click.stop="handleStartTask" title="开始">
-        <i class="fas fa-play"></i>
-      </button>
-      <button v-if="task.status === 'doing'" class="kanban-card-btn kanban-card-btn-pause"
-        @click.stop="handlePauseTask" title="暂停">
-        <i class="fas fa-pause"></i>
-      </button>
-      <button v-if="task.status === 'paused'" class="kanban-card-btn kanban-card-btn-resume"
-        @click.stop="handleResumeTask" title="继续">
-        <i class="fas fa-play"></i>
-      </button>
-      <button v-if="task.status === 'done'" class="kanban-card-btn kanban-card-btn-restart"
-        @click.stop="handleRestartTask" title="重新开始">
-        <i class="fas fa-redo"></i>
-      </button>
-      <button v-if="task.status === 'done'" class="kanban-card-btn kanban-card-btn-delete" 
-        @click.stop="handleDeleteTask" title="删除">
-        <i class="fas fa-trash"></i>
-      </button>
-    </div> -->
-
   </div>
 
   <!-- 右键菜单 - 渲染在卡片外部 -->
@@ -110,7 +81,6 @@
 import { computed, ref } from 'vue'
 import { Calendar, Check, Clock, Pause, Pencil, Play, Repeat, Trash2 } from '@lucide/vue'
 import { formatReminderTime, formatDuration, getCurrentDuration, isTaskOvertime } from '@/utils/task-utils'
-import { useTaskStore } from '@/store/taskStore'
 
 const props = defineProps({
   task: {
@@ -135,7 +105,6 @@ const emit = defineEmits(['drag-start', 'drag-end', 'click', 'edit', 'delete-req
 
 const isDragging = ref(false)
 const cardEl = ref(null)
-const taskStore = useTaskStore()
 
 // 右键菜单相关状态
 const showContextMenu = ref(false)
@@ -179,10 +148,6 @@ const handleDragEnd = () => {
 
 const handleClick = () => {
   emit('click', props.task)
-}
-
-const handleEdit = () => {
-  emit('edit', props.task)
 }
 
 // 右键菜单处理
@@ -237,44 +202,6 @@ const getFormattedReminderTime = () => {
 
 const getFormattedDuration = () => {
   return formatDuration(getCurrentDurationWithTrigger(props.task))
-}
-
-// 任务操作方法
-const handleStartTask = async () => {
-  try {
-    await taskStore.startTask(props.task.id)
-  } catch (error) {
-    console.error('开始任务失败:', error)
-  }
-}
-
-const handlePauseTask = async () => {
-  try {
-    await taskStore.pauseTask(props.task.id)
-  } catch (error) {
-    console.error('暂停任务失败:', error)
-  }
-}
-
-const handleResumeTask = async () => {
-  try {
-    await taskStore.startTask(props.task.id) // resume 实际上就是重新开始
-  } catch (error) {
-    console.error('继续任务失败:', error)
-  }
-}
-
-const handleRestartTask = async () => {
-  try {
-    await taskStore.updateTask(props.task.id, {
-      status: 'todo',
-      completedAt: null,
-      startTime: null,
-      totalDuration: 0
-    })
-  } catch (error) {
-    console.error('重新开始任务失败:', error)
-  }
 }
 
 const handleDeleteTask = () => {

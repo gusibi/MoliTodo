@@ -369,41 +369,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.task-selection-modal-overlay {
-  @apply fixed inset-0 bg-black/50 flex items-start justify-center z-50;
-  overflow-y: auto;
-}
-
-.task-selection-modal {
-  @apply bg-background border border-border rounded-lg shadow-2xl;
-  @apply w-full max-w-2xl max-h-[calc(100vh-4rem)] flex flex-col;
-  @apply mx-4 my-auto;
-  position: sticky;
-  top: 2rem;
-}
-
-.task-selection-modal-header {
-  @apply flex items-center justify-between p-4 border-b border-border;
-  @apply bg-muted/30;
-}
-
-.modal-title {
-  @apply flex items-center gap-3;
-}
-
-.modal-title h3 {
-  @apply text-lg font-semibold text-foreground;
-}
-
-.modal-title i {
-  @apply text-primary text-xl;
-}
-
-.close-btn {
-  @apply p-2 hover:bg-muted rounded-md transition-colors duration-200;
-  @apply text-muted-foreground hover:text-foreground;
-}
-
 .filter-info {
   @apply flex items-center justify-between p-3 bg-muted/20 border-b border-border;
 }
@@ -662,15 +627,6 @@ input[type="checkbox"]:indeterminate + .checkmark::after {
 }
 
 /* 滚动条样式 */
-.task-selection-modal-overlay::-webkit-scrollbar {
-  display: none;
-}
-
-.task-selection-modal-overlay {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 .task-list::-webkit-scrollbar {
   @apply w-2;
 }

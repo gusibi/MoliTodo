@@ -25,13 +25,6 @@
                 {{ newTaskContent.length }}/1000
               </div>
             </div>
-
-            <!-- 重要性标记 -->
-            <!-- <div class="task-importance-wrapper">
-            <button class="task-importance-btn" :class="{ 'active': isImportant }" @click="toggleImportance">
-              <i class="fas fa-star importance-icon"></i>
-            </button>
-          </div> -->
           </div>
         </div>
 
@@ -745,12 +738,6 @@ const cancelStepEdit = () => {
   editingStepId.value = null
   editingStepContent.value = ''
 }
-
-// 切换重要性
-const toggleImportance = () => {
-  isImportant.value = !isImportant.value
-}
-
 
 // 切换提醒选择器
 const toggleReminderPicker = async () => {

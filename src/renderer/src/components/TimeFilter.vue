@@ -2,8 +2,9 @@
   <div class="time-filter">
     <div class="filter-buttons">
       <button v-for="filter in timeFilters" :key="filter.key"
-        :class="['filter-btn', { active: currentFilter === filter.key }]" @click="handleFilterChange(filter.key)">
-        <i :class="filter.icon"></i>
+        :class="['filter-btn', { active: currentFilter === filter.key, 'filter-btn-overdue': filter.key === 'overdue' }]"
+        @click="handleFilterChange(filter.key)">
+        <component :is="filter.icon" class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ filter.label }}</span>
         <span v-if="filter.count > 0" class="filter-count">{{ filter.count }}</span>
       </button>
@@ -11,7 +12,7 @@
       <!-- AI 报告按钮 -->
       <button class="filter-btn ai-report-btn" :class="{ 'generating': isGeneratingReport }"
         :disabled="isGeneratingReport || !hasValidTasks" @click="generateReport" title="生成AI报告">
-        <i class="fas fa-robot"></i>
+        <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>AI报告</span>
         <div v-if="isGeneratingReport" class="loading-spinner"></div>
       </button>
@@ -21,6 +22,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { Bot, Calendar, CalendarDays, CalendarPlus, CalendarRange, TriangleAlert } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 
 const taskStore = useTaskStore()
@@ -59,32 +61,32 @@ const timeFilters = computed(() => [
   {
     key: 'all',
     label: '全部',
-    icon: 'fas fa-calendar',
+    icon: Calendar,
     count: getFilterCount('all')
   },
   {
     key: 'overdue',
     label: '过期',
-    icon: 'fas fa-exclamation-triangle',
+    icon: TriangleAlert,
     count: getFilterCount('overdue')
   },
   {
     key: 'onlyToday',
     label: '今天',
-    icon: 'fas fa-calendar-day',
+    icon: CalendarDays,
     count: getFilterCount('onlyToday')
   },
 
   {
     key: 'tomorrow',
     label: '明天',
-    icon: 'fas fa-calendar-plus',
+    icon: CalendarPlus,
     count: getFilterCount('tomorrow')
   },
   {
     key: 'thisWeek',
     label: '本周',
-    icon: 'fas fa-calendar-alt',
+    icon: CalendarRange,
     count: getFilterCount('thisWeek')
   }
 ])
@@ -163,7 +165,7 @@ defineExpose({
   @apply bg-primary text-primary-foreground;
 }
 
-.filter-btn i {
+.filter-btn svg {
   @apply w-3 h-3 flex-shrink-0;
   @apply flex items-center justify-center;
 }
@@ -184,21 +186,13 @@ defineExpose({
   @apply bg-primary-foreground/20 text-primary-foreground;
 }
 
-/* 过期任务的特殊样式 */
-.filter-btn:has(i.fa-exclamation-triangle) {
-  @apply text-red-600 border-red-200;
+/* 过期任务的特殊样式（除颜色外保留文案与图标语义） */
+.filter-btn-overdue {
+  @apply text-destructive border-destructive/30;
 }
 
-.dark .filter-btn:has(i.fa-exclamation-triangle) {
-  @apply text-red-400 border-red-800;
-}
-
-.filter-btn.active:has(i.fa-exclamation-triangle) {
-  @apply bg-red-600 text-white;
-}
-
-.dark .filter-btn.active:has(i.fa-exclamation-triangle) {
-  @apply bg-red-500 text-white;
+.filter-btn-overdue.active {
+  @apply bg-destructive text-destructive-foreground border-destructive;
 }
 
 /* AI 报告按钮样式 */
@@ -211,10 +205,6 @@ defineExpose({
 
 .ai-report-btn.generating {
   @apply from-blue-400 to-purple-500;
-}
-
-.ai-report-btn i.fa-robot {
-  @apply text-white;
 }
 
 .loading-spinner {
