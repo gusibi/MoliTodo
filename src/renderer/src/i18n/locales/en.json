@@ -410,7 +410,9 @@
       "dueToday": "Due today",
       "dueDateOnly": "Due this day",
       "reminderExpired": "Reminder passed",
-      "scheduledElsewhere": "Scheduled elsewhere"
+      "scheduledElsewhere": "Scheduled elsewhere",
+      "overdue": "Overdue",
+      "reschedule": "To reschedule"
     },
     "calendar": {
       "title": "Future calendar",
@@ -558,5 +560,12 @@
     "reminderSetFailed": "Failed to set reminder",
     "selectReminderTime": "Please select a reminder time",
     "reminderInPast": "Reminder time cannot be in the past"
+  },
+  "menuBar": {
+    "showFloatingIcon": "Show Floating Icon",
+    "hideFloatingIcon": "Hide Floating Icon",
+    "taskManager": "Task Manager",
+    "settings": "Settings",
+    "quit": "Quit MoliTodo"
   }
 }

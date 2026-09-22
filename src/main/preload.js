@@ -73,6 +73,8 @@ const electronAPI = {
     toggleTaskPanel: () => ipcRenderer.invoke('toggle-task-panel'),
     showTaskPanel: () => ipcRenderer.invoke('show-task-panel'),
     hideTaskPanel: () => ipcRenderer.invoke('hide-task-panel'),
+    hideMenuBarPanel: () => ipcRenderer.invoke('hide-menubar-panel'),
+    resizeMenuBarPanel: (height) => ipcRenderer.invoke('resize-menubar-panel', height),
     setFloatingIconIgnoreMouse: (ignore) => ipcRenderer.invoke('set-floating-icon-ignore-mouse', ignore),
     panelMouseEnter: () => ipcRenderer.invoke('panel-mouse-enter'),
     panelMouseLeave: () => ipcRenderer.invoke('panel-mouse-leave'),
@@ -133,7 +135,8 @@ const electronAPI = {
         'panel-mouse-leave',
         'panel-pinned-changed',
         'panel-unpinned',
-        'play-notification-sound'
+        'play-notification-sound',
+        'menubar-panel-shown'
       ];
 
       if (validChannels.includes(channel)) {

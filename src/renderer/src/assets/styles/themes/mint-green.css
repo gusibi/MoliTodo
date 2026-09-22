@@ -12,8 +12,8 @@
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 15%;
   
-  /* Primary Colors - 薄荷绿主题色 */
-  --primary: 140 45% 55%;
+  /* Primary Colors - 薄荷绿主题色（加深一档保证白字可读） */
+  --primary: 140 45% 40%;
   --primary-foreground: 0 0% 100%;
   
   /* Secondary Colors */

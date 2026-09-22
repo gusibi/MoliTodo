@@ -1,0 +1,44 @@
+/* Menu Bar Panel - 菜单栏下拉面板（托盘小窗：日历 + 常用入口） */
+
+.menubar-panel-container {
+  @apply relative flex flex-col w-[320px];
+  @apply bg-background/70 backdrop-blur-xl;
+  @apply rounded-xl shadow-2xl overflow-hidden;
+  @apply border border-border/50;
+  @apply select-none;
+}
+
+/* Windows/Linux 窗口不透明且无毛玻璃，铺满不透明背景（issue #8 同款约束） */
+.platform-opaque .menubar-panel-container {
+  @apply bg-background rounded-none border-0;
+}
+
+.menubar-panel-calendar {
+  @apply px-3 pt-3;
+}
+
+.menubar-panel-divider {
+  @apply mx-3 my-1.5 border-t border-border/60;
+}
+
+.menubar-panel-menu {
+  @apply flex flex-col px-2 pb-2;
+}
+
+.menubar-panel-menu-item {
+  @apply flex items-center gap-2.5 w-full h-9 px-2.5;
+  @apply rounded-md text-sm text-foreground;
+  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply transition-colors cursor-pointer outline-none;
+  @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background;
+}
+
+.menubar-panel-menu-item svg {
+  @apply text-muted-foreground;
+}
+
+.menubar-panel-menu-badge {
+  @apply ml-auto min-w-[1.25rem] h-5 px-1.5;
+  @apply flex items-center justify-center;
+  @apply rounded-full bg-muted text-muted-foreground text-2xs font-medium;
+}

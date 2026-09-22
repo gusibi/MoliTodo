@@ -799,6 +799,12 @@ class IpcHandlers {
           console.error('同步本地 API 服务配置失败:', error);
         });
       }
+      // 悬浮图标可见性影响托盘右键菜单标签，同步刷新
+      if (key === 'floatingIcon.visible') {
+        this.windowManager.updateTrayMenu().catch((error) => {
+          console.error('刷新托盘菜单失败:', error);
+        });
+      }
       return result;
     });
 
@@ -944,6 +950,16 @@ class IpcHandlers {
 
     ipcMain.handle('hide-task-panel', () => {
       this.windowManager.hideTaskPanel();
+    });
+
+    // 菜单栏下拉面板（Escape / 跳转其他窗口前收起）
+    ipcMain.handle('hide-menubar-panel', () => {
+      this.windowManager.hideMenuBarPanel();
+    });
+
+    // 渲染层测量内容高度后回传，窗口按内容收缩，避免底部留白
+    ipcMain.handle('resize-menubar-panel', (event, height) => {
+      this.windowManager.resizeMenuBarPanel(height);
     });
 
     // 悬浮图标鼠标穿透（圆形命中区域，见 issue #11）
@@ -1559,6 +1575,11 @@ class IpcHandlers {
   }
 
   setupAppHandlers() {
+    // 退出应用（菜单栏面板等渲染层入口，复用托盘退出的完整清理流程）
+    ipcMain.handle('app-quit', () => {
+      this.windowManager.quit();
+    });
+
     // 获取应用版本
     ipcMain.handle('app-get-version', () => {
       return app.getVersion();

@@ -189,8 +189,9 @@
   @apply border-destructive/40 text-destructive;
 }
 
+/* 清单名属于三级信息：弱化为淡色文字，避免与时间/状态胶囊并列抢层级 */
 .flat-task-badge-list {
-  @apply border-transparent bg-muted/70;
+  @apply border-transparent bg-transparent px-0 text-muted-foreground/80;
 }
 
 /* ---------- 新建入口（底部悬浮按钮） ---------- */

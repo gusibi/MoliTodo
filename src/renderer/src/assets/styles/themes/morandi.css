@@ -15,8 +15,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 25%;
 
-    /* Primary Colors */
-    --primary: 210 25% 55%;
+    /* Primary Colors（加深一档保证白字可读） */
+    --primary: 210 25% 45%;
     /* 雾霾蓝 (核心主题色) */
     --primary-foreground: 0 0% 100%;
 

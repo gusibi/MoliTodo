@@ -733,7 +733,7 @@ test('收件箱命名、逾期可折叠与今日星期几', async ({ app, window
   await expect(window.locator('.agenda-section-today .agenda-section-title')).toContainText('周');
 });
 
-test('折叠已逾期后，执行分组定位链接自动展开并高亮目标', async ({ app, window }) => {
+test('浏览过去日期：逾期任务直接显示卡片并标注原因', async ({ app, window }) => {
   const today = new Date();
   const past = new Date(today);
   past.setDate(today.getDate() - 1);
@@ -750,18 +750,19 @@ test('折叠已逾期后，执行分组定位链接自动展开并高亮目标',
   await window.reload();
   await waitForToday(window);
 
-  // 手动折叠已逾期
+  // 手动折叠已逾期，排除顶部执行分组的重复展示
   const overdue = window.locator('[data-agenda-section="overdue"]');
   await overdue.getByRole('button', { name: /已逾期/ }).click();
   await expect(overdue.getByText('逾期定位任务')).toHaveCount(0);
 
-  // 通过日历进入过去日期，该日期 section 显示执行分组定位链接
+  // 通过日历进入过去日期：该日期 section 直接渲染卡片并标注逾期原因，不再只留定位链接
   await window.locator(`.future-calendar-day[data-date-key="${pastKey}"]`).click();
-  const relocatedLink = window.locator(`[data-date-section="${pastKey}"] .agenda-relocated-link`);
-  await expect(relocatedLink).toBeVisible();
+  const section = window.locator(`[data-date-section="${pastKey}"]`);
+  await expect(section.getByText('逾期定位任务')).toBeVisible();
+  await expect(section.locator('.agenda-relocated-link')).toHaveCount(0);
+  await expect(section.getByText('已逾期')).toBeVisible();
 
-  // 点击定位链接：已逾期 section 自动展开并强调目标卡片
-  await relocatedLink.click();
-  await expect(overdue.getByText('逾期定位任务')).toBeVisible();
-  await expect(window.locator('.agenda-card-highlight')).toBeVisible();
+  // 卡片仍可完成
+  await section.locator('label.flat-checkbox-label').first().click();
+  await expect(section.getByText('逾期定位任务')).toHaveCount(0);
 });

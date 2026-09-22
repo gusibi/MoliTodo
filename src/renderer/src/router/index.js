@@ -8,6 +8,7 @@ import TaskManagerView from '../views/TaskManagerView.vue'
 // 导入组件作为页面级组件
 import TaskPanel from '../components/float_view/TaskPanel.vue'
 import FloatingTask from '../components/float_view/FloatingTask.vue'
+import MenuBarPanel from '../components/float_view/MenuBarPanel.vue'
 
 const routes = [
   {
@@ -49,6 +50,14 @@ const routes = [
     props: true,
     meta: {
       title: '悬浮任务'
+    }
+  },
+  {
+    path: '/menubar-panel',
+    name: 'MenuBarPanel',
+    component: MenuBarPanel,
+    meta: {
+      title: '菜单栏面板'
     }
   }
 ]

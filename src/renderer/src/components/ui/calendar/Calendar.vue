@@ -2,7 +2,10 @@
   <CalendarRoot
     v-slot="{ weekDays, grid }"
     :model-value="dateValue"
+    :locale="locale"
+    :calendar-label="calendarLabel"
     :weekday-format="'short'"
+    :fixed-weeks="fixedWeeks"
     class="p-1"
     @update:model-value="handleUpdate"
   >
@@ -26,7 +29,8 @@
           <CalendarHeadCell
             v-for="day in weekDays"
             :key="day"
-            class="w-8 text-center text-2xs font-normal text-muted-foreground"
+            :class="stretch ? 'flex-1' : 'w-8'"
+            class="text-center text-2xs font-normal text-muted-foreground"
           >
             {{ day }}
           </CalendarHeadCell>
@@ -38,11 +42,11 @@
           :key="weekIndex"
           class="mt-1 flex w-full"
         >
-          <CalendarCell v-for="date in weekDates" :key="date.toString()" :date="date">
+          <CalendarCell v-for="date in weekDates" :key="date.toString()" :date="date" :class="stretch ? 'flex-1' : ''">
             <CalendarCellTrigger
               :day="date"
               :month="month.value"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[outside-view]:text-muted-foreground/40 data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[today]:font-semibold data-[today]:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[unavailable]:pointer-events-none data-[unavailable]:opacity-40"
+              :class="cn('inline-flex h-8 items-center justify-center rounded-md text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[outside-view]:text-muted-foreground/40 data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[today]:font-semibold data-[today]:text-primary data-[today]:data-[selected]:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[unavailable]:pointer-events-none data-[unavailable]:opacity-40', stretch ? 'w-full' : 'w-8')"
             />
           </CalendarCell>
         </CalendarGridRow>
@@ -70,6 +74,7 @@ import {
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { parseDate } from '@internationalized/date'
 import IconButton from '../button/IconButton.vue'
+import { cn } from '../utils'
 
 /**
  * 日历基础组件：基于 Reka UI Calendar 原语。
@@ -79,6 +84,26 @@ const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  // BCP-47 语言标记（如 zh-CN），控制月份标题与星期行的本地化；缺省用 Reka UI 默认 locale
+  locale: {
+    type: String,
+    default: undefined
+  },
+  // 日历的可访问名称，缺省时 Reka UI 用英文默认值
+  calendarLabel: {
+    type: String,
+    default: undefined
+  },
+  // 固定渲染 6 周，避免跨月切换时日历高度跳动（配合固定高度容器）
+  fixedWeeks: {
+    type: Boolean,
+    default: false
+  },
+  // 日期格子拉伸填满可用宽度（默认固定 32px 宽，适合弹层内使用）
+  stretch: {
+    type: Boolean,
+    default: false
   }
 })
 

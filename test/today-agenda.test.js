@@ -151,6 +151,32 @@ test('分组：今天截止但安排在明天的任务进入今天，日历点�
   assert.equal(tomorrowSection.relocated.length, 1);
 });
 
+test('分组：过去日期的逾期任务在日期区直接渲染卡片并标注原因', () => {
+  const overdue = plainTask({ id: 'p1', dueDate: YESTERDAY });
+  const reschedule = plainTask({ id: 'p2', scheduledStartAt: `${YESTERDAY}T10:00:00` });
+  const future = plainTask({ id: 'p3', dueDate: YESTERDAY, scheduledStartAt: `${TOMORROW}T10:00:00` });
+  const model = agenda.buildAgendaModel({
+    instances: [overdue, reschedule, future],
+    todayKey: TODAY,
+    browsingDates: [YESTERDAY, TOMORROW],
+    now: nowAt(TODAY)
+  });
+
+  // 过去日期：直接展示卡片，标注归类原因，不再只留定位链接
+  const pastSection = model.dateSections.find((s) => s.dateKey === YESTERDAY);
+  assert.equal(pastSection.tasks.length, 0);
+  assert.equal(pastSection.relocated.length, 0);
+  assert.deepEqual(
+    pastSection.pastCards.map((entry) => [entry.task.id, entry.group]).sort(),
+    [['p1', 'overdue'], ['p2', 'reschedule']]
+  );
+
+  // 未来日期：仍保留定位链接，不复制卡片
+  const tomorrowSection = model.dateSections.find((s) => s.dateKey === TOMORROW);
+  assert.equal(tomorrowSection.pastCards.length, 0);
+  assert.equal(tomorrowSection.relocated.length, 1);
+});
+
 test('分组：无日期 doing 任务进入今天且不进入未计划', () => {
   const doing = plainTask({ id: 'b', status: 'doing' });
   const model = agenda.buildAgendaModel({

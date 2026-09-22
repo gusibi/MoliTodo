@@ -252,7 +252,7 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
   const todayCompleted = [];
 
   for (const dateKey of browsingDates) {
-    byDateKey.set(dateKey, { tasks: [], completedTasks: [], relocated: [] });
+    byDateKey.set(dateKey, { tasks: [], completedTasks: [], relocated: [], pastCards: [] });
   }
 
   for (const task of instances) {
@@ -297,14 +297,23 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
   reminderExpired.sort(compareExecTasks);
   today.sort(compareExecTasks);
 
-  // 执行分组收纳的任务在日期区显示定位链接
-  const relocatedGroups = [overdue, reschedule, today];
-  for (const group of relocatedGroups) {
-    for (const task of group) {
+  // 执行分组收纳的任务在日期区展示：
+  // 过去日期直接渲染卡片（附归类原因，供浏览时核对当天任务），未来日期仅保留定位链接。
+  const relocatedGroups = [
+    { group: 'overdue', tasks: overdue },
+    { group: 'reschedule', tasks: reschedule },
+    { group: 'today', tasks: today }
+  ];
+  for (const { group, tasks: groupTasks } of relocatedGroups) {
+    for (const task of groupTasks) {
       const main = taskTime.getMainDateInfo(task);
       if (!main || !main.date || main.date === todayKey) continue;
       const section = byDateKey.get(main.date);
-      if (section && !section.tasks.some((t) => instanceKey(t) === instanceKey(task))) {
+      if (!section) continue;
+      if (section.tasks.some((t) => instanceKey(t) === instanceKey(task))) continue;
+      if (main.date < todayKey) {
+        section.pastCards.push({ task, group });
+      } else {
         section.relocated.push(task);
       }
     }
@@ -315,7 +324,8 @@ function buildAgendaModel({ instances = [], todayKey, browsingDates = [], showCo
       dateKey,
       tasks: [...section.tasks].sort(taskTime.compareTasksForDate),
       completedTasks: [...section.completedTasks].sort(taskTime.compareTasksForDate),
-      relocated: section.relocated
+      relocated: section.relocated,
+      pastCards: [...section.pastCards].sort((a, b) => compareExecTasks(a.task, b.task))
     }))
     .sort((a, b) => (a.dateKey < b.dateKey ? -1 : a.dateKey > b.dateKey ? 1 : 0));
 

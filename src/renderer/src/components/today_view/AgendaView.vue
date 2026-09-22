@@ -141,10 +141,10 @@
               {{ formatDateTitle(section.dateKey) }}
               <span v-if="friendlyDateLabel(section.dateKey)" class="agenda-section-friendly">{{ friendlyDateLabel(section.dateKey) }}</span>
             </span>
-            <span class="agenda-section-count">{{ section.tasks.length }}</span>
+            <span class="agenda-section-count">{{ section.tasks.length + section.pastCards.length }}</span>
           </div>
           <div class="agenda-section-body">
-            <div v-if="!section.tasks.length && !section.completedTasks.length && !section.relocated.length"
+            <div v-if="!section.tasks.length && !section.pastCards.length && !section.completedTasks.length && !section.relocated.length"
               class="agenda-empty-inline">{{ $t('today.emptyDate') }}</div>
 
             <div v-for="task in section.tasks" :key="taskKey(task)" class="agenda-card-wrapper"
@@ -152,6 +152,14 @@
               <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
                 :badges="cardBadges(task, 'date')" @task-click="(t) => $emit('task-click', t)" />
+            </div>
+
+            <!-- 过去日期：被执行分组收纳的任务直接展示卡片，附归类原因 -->
+            <div v-for="entry in section.pastCards" :key="taskKey(entry.task)" class="agenda-card-wrapper"
+              :data-task-key="taskKey(entry.task)">
+              <AgendaTaskCard :task="entry.task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                @delete-request="forwardDeleteRequest"
+                :badges="pastCardBadges(entry)" @task-click="(t) => $emit('task-click', t)" />
             </div>
 
             <!-- 已完成区域（开关打开时） -->
@@ -299,6 +307,7 @@ const dateSectionsExceptToday = computed(() => {
     // 隐藏没有任务的日期，仅保留有内容或当前选中的日期，避免空白 section 堆积
     const hasContent =
       section.tasks.length > 0 ||
+      section.pastCards.length > 0 ||
       section.completedTasks.length > 0 ||
       section.relocated.length > 0
     return hasContent || section.dateKey === props.selectedKey
@@ -323,7 +332,8 @@ const searchNoMatch = computed(() => {
     model.today.length === 0 &&
     model.todayCompleted.length === 0 &&
     model.dateSections.every(
-      (section) => section.tasks.length === 0 && section.completedTasks.length === 0
+      (section) =>
+        section.tasks.length === 0 && section.pastCards.length === 0 && section.completedTasks.length === 0
     )
   )
 })
@@ -374,6 +384,17 @@ function cardBadges(task, group) {
   const list = taskStore.getListById(task.listId)
   if (list) badges.push({ text: list.name, tone: 'list', color: list.color })
   return badges
+}
+
+// 过去日期直接展示的卡片脱离执行分组上下文，显式标注归类原因
+function pastCardBadges(entry) {
+  const reason = {
+    overdue: { text: t('today.badge.overdue'), tone: 'danger' },
+    reschedule: { text: t('today.badge.reschedule'), tone: 'muted' },
+    today: { text: t('today.badge.dueToday'), tone: 'warning' }
+  }[entry.group]
+  const badges = cardBadges(entry.task, 'past')
+  return reason ? [reason, ...badges] : badges
 }
 
 function toggleUnplanned() {

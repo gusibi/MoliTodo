@@ -425,7 +425,9 @@
       "dueToday": "今天截止",
       "dueDateOnly": "当天截止",
       "reminderExpired": "提醒已过期",
-      "scheduledElsewhere": "安排在其他日期"
+      "scheduledElsewhere": "安排在其他日期",
+      "overdue": "已逾期",
+      "reschedule": "待重新安排"
     },
     "calendar": {
       "title": "未来日历",
@@ -558,5 +560,12 @@
     "reminderSetFailed": "设置提醒失败",
     "selectReminderTime": "请选择提醒时间",
     "reminderInPast": "提醒时间不能是过去的时间"
+  },
+  "menuBar": {
+    "showFloatingIcon": "显示悬浮图标",
+    "hideFloatingIcon": "隐藏悬浮图标",
+    "taskManager": "任务管理",
+    "settings": "设置",
+    "quit": "退出 MoliTodo"
   }
 }

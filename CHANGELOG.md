@@ -2,6 +2,23 @@
 
 All notable changes to MoliTodo will be documented in this file.
 
+## [1.5.0] - 2026-09-22
+
+### Added
+- 菜单栏下拉面板：点击托盘图标弹出常驻面板，提供悬浮图标开关、任务管理、设置与退出入口，失焦自动收起
+- 日历基础组件新增 `locale`、`fixedWeeks`、`stretch` 属性，支持本地化、固定周数与自适应宽度
+
+### Changed
+- 托盘交互：左键改为弹出下拉面板，右键保留原生菜单作为次要入口
+- Today 视图：过去日期的逾期/待重排任务直接展示卡片并标注归类原因，替代原定位链接
+- 托盘与悬浮图标资源更新，悬浮图标可见性变更后同步刷新托盘菜单
+
+### Fixed
+- 修复非前台应用时菜单栏面板毛玻璃渲染为实色或不可见的问题
+- 修复菜单栏面板内容高度不足时底部留白
+
+---
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

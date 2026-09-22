@@ -2,18 +2,28 @@ const { BrowserWindow, screen, nativeImage, Tray, Menu, app } = require('electro
 const path = require('path');
 const Store = require('electron-store');
 
+// 菜单栏下拉面板：宽度固定，高度由渲染层测量内容后回传，避免底部留白
+const MENUBAR_PANEL_WIDTH = 320;
+const MENUBAR_PANEL_INITIAL_HEIGHT = 460;
+const MENUBAR_PANEL_MIN_HEIGHT = 240;
+const MENUBAR_PANEL_MAX_HEIGHT = 720;
+
 class WindowManager {
   constructor(appInstance = null) {
     this.floatingWindow = null;
     this.taskPanelWindow = null;
+    this.menuBarPanelWindow = null;
     this.taskManagerWindow = null;
     this.settingsWindow = null;
     this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
     this.tray = null;
+    this.trayContextMenu = null; // 右键弹出的原生菜单引用
     this.appInstance = appInstance;
     this.platform = process.platform;
     this.taskService = null; // 将在main.js中设置
     this.isPanelPinned = false; // 面板固定状态
+    this.menuBarPanelHiddenAt = 0; // 菜单栏面板最近一次收起时间，用于托盘点击防抖
+    this.menuBarPanelHeight = MENUBAR_PANEL_INITIAL_HEIGHT; // 最近一次由渲染层测量的面板内容高度
 
     this.configStore = new Store({
       name: 'config',
@@ -396,6 +406,151 @@ class WindowManager {
     }
   }
 
+  /**
+   * 计算菜单栏下拉面板的位置：锚定在托盘图标下方（macOS 菜单栏）或上方（Windows 任务栏）。
+   * 高度取最近一次渲染层测量的内容高度（见 resizeMenuBarPanel）。
+   */
+  computeMenuBarPanelBounds(height = this.menuBarPanelHeight) {
+    const width = MENUBAR_PANEL_WIDTH;
+
+    let trayBounds = null;
+    try {
+      trayBounds = this.tray ? this.tray.getBounds() : null;
+    } catch (error) {
+      // 部分平台/环境不支持 getBounds，走回退定位
+    }
+
+    const { screen } = require('electron');
+    const workArea = trayBounds
+      ? screen.getDisplayNearestPoint({
+        x: trayBounds.x + Math.floor(trayBounds.width / 2),
+        y: trayBounds.y + Math.floor(trayBounds.height / 2)
+      }).workArea
+      : screen.getPrimaryDisplay().workArea;
+
+    let x;
+    let y;
+    if (trayBounds && trayBounds.width > 0) {
+      x = trayBounds.x + Math.floor(trayBounds.width / 2) - Math.floor(width / 2);
+      if (trayBounds.y < workArea.y + workArea.height / 2) {
+        y = trayBounds.y + trayBounds.height + 4;
+      } else {
+        y = trayBounds.y - height - 4;
+      }
+    } else {
+      // 拿不到托盘位置时退到工作区右上角
+      x = workArea.x + workArea.width - width - 8;
+      y = workArea.y + 8;
+    }
+
+    x = Math.min(Math.max(x, workArea.x + 4), workArea.x + workArea.width - width - 4);
+    y = Math.min(Math.max(y, workArea.y + 4), workArea.y + workArea.height - height - 4);
+    return { x, y, width, height };
+  }
+
+  createMenuBarPanel() {
+    // 面板常驻（隐藏不销毁），重复打开只重新定位，保持日历浏览状态
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed()) {
+      this.menuBarPanelWindow.setBounds(this.computeMenuBarPanelBounds());
+      this.menuBarPanelWindow.show();
+      this.notifyMenuBarPanelShown();
+      return;
+    }
+
+    const { x, y, width, height } = this.computeMenuBarPanelBounds();
+    const currentIcon = this.getCurrentAppIcon();
+
+    const options = {
+      width,
+      height,
+      x,
+      y,
+      icon: currentIcon,
+      frame: false,
+      skipTaskbar: true,
+      resizable: false,
+      movable: false,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true
+      }
+    };
+    // 毛玻璃仅 macOS；其它平台窗口保持不透明，由渲染层铺背景（issue #8 同款约束）
+    if (process.platform === 'darwin') {
+      options.transparent = true;
+      options.vibrancy = 'sidebar';
+      // 默认 followWindow 时，只要 MoliTodo 不是前台应用（点托盘的真实场景），
+      // 面板就会渲染成实色甚至不可见；固定 active 保证始终是透明玻璃
+      options.visualEffectState = 'active';
+    }
+
+    this.menuBarPanelWindow = new BrowserWindow(options);
+
+    if (process.env.NODE_ENV === 'development') {
+      this.menuBarPanelWindow.loadURL(`${this.devBaseUrl}/#/menubar-panel`);
+    } else {
+      this.menuBarPanelWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
+        hash: 'menubar-panel'
+      });
+    }
+
+    this.menuBarPanelWindow.once('ready-to-show', () => {
+      this.menuBarPanelWindow.show();
+      this.notifyMenuBarPanelShown();
+    });
+
+    // 失焦自动收起，与系统菜单栏下拉行为一致
+    this.menuBarPanelWindow.on('blur', () => {
+      this.hideMenuBarPanel();
+    });
+
+    this.menuBarPanelWindow.on('closed', () => {
+      this.menuBarPanelWindow = null;
+    });
+  }
+
+  notifyMenuBarPanelShown() {
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed()) {
+      this.menuBarPanelWindow.webContents.send('menubar-panel-shown');
+    }
+  }
+
+  /**
+   * 按渲染层测量的内容高度调整面板窗口，消除底部留白。
+   * 高度变化时按同一托盘锚点重新定位（Windows 面板在任务栏上方，y 依赖高度）。
+   */
+  resizeMenuBarPanel(height) {
+    const measured = Math.round(Number(height));
+    if (!Number.isFinite(measured)) return;
+
+    const clamped = Math.min(Math.max(measured, MENUBAR_PANEL_MIN_HEIGHT), MENUBAR_PANEL_MAX_HEIGHT);
+    if (clamped === this.menuBarPanelHeight) return;
+    this.menuBarPanelHeight = clamped;
+
+    if (!this.menuBarPanelWindow || this.menuBarPanelWindow.isDestroyed()) return;
+    this.menuBarPanelWindow.setBounds(this.computeMenuBarPanelBounds(clamped));
+  }
+
+  hideMenuBarPanel() {
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed()) {
+      this.menuBarPanelWindow.hide();
+      this.menuBarPanelHiddenAt = Date.now();
+    }
+  }
+
+  toggleMenuBarPanel() {
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed() && this.menuBarPanelWindow.isVisible()) {
+      this.hideMenuBarPanel();
+      return;
+    }
+    // 点击托盘图标时系统可能先让面板失焦收起；刚收起的面板视为用户想关闭，不再弹回
+    if (Date.now() - this.menuBarPanelHiddenAt < 300) {
+      return;
+    }
+    this.createMenuBarPanel();
+  }
+
   // 设置面板固定状态
   setPanelPinned(pinned) {
     this.isPanelPinned = pinned;
@@ -461,7 +616,15 @@ class WindowManager {
       this.updateTrayMenu().catch(console.error);
 
       this.tray.on('click', () => {
-        this.tray.popUpContextMenu();
+        this.toggleMenuBarPanel();
+      });
+
+      // 右键保留原生菜单作为次要入口（包含退出等）。
+      // 不能 setContextMenu：macOS 上左键会被系统强制弹出该菜单，盖过自定义下拉面板
+      this.tray.on('right-click', () => {
+        if (this.trayContextMenu) {
+          this.tray.popUpContextMenu(this.trayContextMenu);
+        }
       });
     } catch (error) {
       console.warn('无法创建系统托盘:', error.message);
@@ -519,7 +682,8 @@ class WindowManager {
       }
     ]);
 
-    this.tray.setContextMenu(contextMenu);
+    // 只保存菜单引用供右键手动弹出（见 createTray 中的说明），不能用 setContextMenu
+    this.trayContextMenu = contextMenu;
 
     // 更新托盘工具提示显示任务数量
     const tooltipText = todayTaskCount > 0
@@ -787,6 +951,7 @@ class WindowManager {
       this.taskManagerWindow,
       this.settingsWindow,
       this.taskPanelWindow,
+      this.menuBarPanelWindow,
       ...this.floatingTaskWindows.values()
     ];
 
@@ -926,6 +1091,9 @@ class WindowManager {
 
   quit() {
     // Clean up windows before quitting
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed()) {
+      this.menuBarPanelWindow.close();
+    }
     if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
       this.taskPanelWindow.close();
     }
@@ -966,6 +1134,9 @@ class WindowManager {
   // 清理窗口但不退出应用（用于 before-quit 事件）
   cleanup() {
     // Clean up windows
+    if (this.menuBarPanelWindow && !this.menuBarPanelWindow.isDestroyed()) {
+      this.menuBarPanelWindow.close();
+    }
     if (this.taskPanelWindow && !this.taskPanelWindow.isDestroyed()) {
       this.taskPanelWindow.close();
     }
