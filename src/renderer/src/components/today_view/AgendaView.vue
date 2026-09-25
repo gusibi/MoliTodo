@@ -30,9 +30,11 @@
             <div v-for="task in model.unplanned" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
+                @collapse-request="handleTaskCollapse"
                 :badges="cardBadges(task, 'unplanned')"
-                @detail="(t) => $emit('task-click', t)" />
+                @detail="handleTaskExpansion" />
             </div>
           </div>
         </section>
@@ -52,8 +54,10 @@
             <div v-for="task in model.overdue" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'overdue')" @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                :badges="cardBadges(task, 'overdue')" @detail="handleTaskExpansion" />
             </div>
           </div>
         </section>
@@ -70,8 +74,10 @@
             <div v-for="task in model.reschedule" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'reschedule')" @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                :badges="cardBadges(task, 'reschedule')" @detail="handleTaskExpansion" />
             </div>
           </div>
         </section>
@@ -88,9 +94,11 @@
             <div v-for="task in model.reminderExpired" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
+                @collapse-request="handleTaskCollapse"
                 :badges="cardBadges(task, 'reminderExpired')"
-                @detail="(t) => $emit('task-click', t)" />
+                @detail="handleTaskExpansion" />
             </div>
           </div>
         </section>
@@ -110,8 +118,10 @@
             <div v-for="task in model.today" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'today')" @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                :badges="cardBadges(task, 'today')" @detail="handleTaskExpansion" />
             </div>
             <template v-if="showCompleted && (model.todayCompleted.length || todayCompletedOnDate.length)">
               <div class="agenda-completed-label">
@@ -120,14 +130,18 @@
               <div v-for="task in todayCompletedOnDate" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                  :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                  @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                  @detail="handleTaskExpansion" />
               </div>
               <div v-for="task in model.todayCompleted" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                  :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                  @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                  @detail="handleTaskExpansion" />
               </div>
             </template>
           </div>
@@ -150,16 +164,20 @@
             <div v-for="task in section.tasks" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
               <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'date')" @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                :badges="cardBadges(task, 'date')" @detail="handleTaskExpansion" />
             </div>
 
             <!-- 过去日期：被执行分组收纳的任务直接展示行，附归类原因 -->
             <div v-for="entry in section.pastCards" :key="taskKey(entry.task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(entry.task)">
               <TodayTaskRow :task="entry.task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                :expanded="isTaskExpanded(entry.task)"
                 @delete-request="forwardDeleteRequest"
-                :badges="pastCardBadges(entry)" @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                :badges="pastCardBadges(entry)" @detail="handleTaskExpansion" />
             </div>
 
             <!-- 已完成区域（开关打开时） -->
@@ -168,8 +186,10 @@
               <div v-for="task in section.completedTasks" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
                 <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                  :expanded="isTaskExpanded(task)"
                 @delete-request="forwardDeleteRequest"
-                  @detail="(t) => $emit('task-click', t)" />
+                @collapse-request="handleTaskCollapse"
+                  @detail="handleTaskExpansion" />
               </div>
             </template>
 
@@ -264,6 +284,7 @@ const props = defineProps({
   model: { type: Object, required: true },
   todayKey: { type: String, required: true },
   selectedKey: { type: String, default: '' },
+  expandedTaskKey: { type: String, default: '' },
   searchQuery: { type: String, default: '' },
   showCompleted: { type: Boolean, default: false },
   initialLoading: { type: Boolean, default: false },
@@ -273,6 +294,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'task-click',
+  'task-collapse',
   'load-more',
   'retry',
   'active-date-change',
@@ -298,7 +320,21 @@ let programmaticScrollUntil = 0
 const activeDate = ref('')
 
 function taskKey(task) {
-  return task.seriesId ? `${task.seriesId}|${task.occurrenceDate || ''}|${task.id}` : String(task.id)
+  const occurrenceDate = localDateKey(task.occurrenceDate)
+  if (task.seriesId && occurrenceDate) return `occurrence:${task.seriesId}:${occurrenceDate}`
+  return `task:${task.id}`
+}
+
+function isTaskExpanded(task) {
+  return taskKey(task) === props.expandedTaskKey
+}
+
+function handleTaskExpansion(task) {
+  emit('task-click', task)
+}
+
+function handleTaskCollapse(request) {
+  emit('task-collapse', request)
 }
 
 const dateSectionsExceptToday = computed(() => {

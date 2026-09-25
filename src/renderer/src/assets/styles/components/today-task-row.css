@@ -15,6 +15,18 @@
   @apply opacity-60;
 }
 
+.today-task-row.is-expanded {
+  @apply bg-accent/30;
+}
+
+.today-task-row.is-expanded .today-task-main {
+  @apply min-h-0 justify-end;
+}
+
+.today-task-row.is-expanded .today-task-actions {
+  @apply opacity-100;
+}
+
 .today-task-row.is-dragging {
   @apply opacity-60 shadow-lg;
   transform: rotate(1deg) scale(1.01);
@@ -37,21 +49,46 @@
 }
 
 .today-task-title {
-  @apply text-sm font-medium leading-snug text-foreground;
-  cursor: text;
+  @apply block w-full border-0 bg-transparent p-0 text-left text-sm font-medium leading-snug text-foreground;
+  cursor: pointer;
+}
+
+.today-task-title:focus-visible {
+  @apply rounded-sm outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
 
 .today-task-title.is-completed {
   @apply text-muted-foreground line-through decoration-muted-foreground/50;
 }
 
-.today-task-edit-input {
-  @apply w-full text-sm bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
-  @apply text-foreground;
-}
-
 .today-task-note {
   @apply text-xs leading-relaxed text-muted-foreground mt-0.5;
+}
+
+.today-task-expanded-shell {
+  @apply grid min-h-0;
+  grid-template-rows: 1fr;
+}
+
+.today-task-expanded {
+  @apply min-h-0 overflow-hidden border-t border-border/50 pt-2;
+}
+
+.today-task-expand-enter-active,
+.today-task-expand-leave-active {
+  transition: grid-template-rows 210ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 170ms ease;
+}
+
+.today-task-expand-enter-from,
+.today-task-expand-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.today-task-expand-enter-to,
+.today-task-expand-leave-from {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 
 /* ===== 动作区（hover / focus-within 浮现；图标即动作） ===== */
@@ -118,7 +155,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .today-task-row,
-  .today-task-actions {
+  .today-task-actions,
+  .today-task-expand-enter-active,
+  .today-task-expand-leave-active {
     @apply transition-none;
   }
 }

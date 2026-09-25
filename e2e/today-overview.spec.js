@@ -258,22 +258,23 @@ test('滚动 Agenda 时日历同步当前日期', async ({ app, window }) => {
   await expect(window.locator(`.future-calendar-day[data-date-key="${laterKey}"]`)).toHaveClass(/is-selected/);
 });
 
-test('打开编辑器时收起日历，关闭后恢复', async ({ app, window }) => {
+test('展开任务留在 Agenda 原位，关闭时右侧日历保持可见', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{ content: '编辑目标', dueDate: localKey(new Date()) }]);
   await window.reload();
   await waitForToday(window);
 
   await expect(window.locator('.today-overview-calendar')).toBeVisible();
-  // 行上编辑入口改为 hover 动作区的「打开详情」按钮
-  const row = window.locator('.today-task-row', { hasText: '编辑目标' });
-  await rowAction(row, '打开详情');
+  const collapsedRow = window.locator('.today-task-row', { hasText: '编辑目标' });
+  await collapsedRow.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
 
-  // 编辑器打开：日历收起，编辑面板可见
-  await expect(window.locator('.today-edit-panel')).toBeVisible();
-  await expect(window.locator('.today-overview-calendar')).toHaveCount(0);
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+  await expect(window.locator('.today-overview-calendar')).toBeVisible();
 
   await window.locator('.task-action-close').click();
-  await expect(window.locator('.today-edit-panel')).toHaveCount(0);
+  await expect(collapsedRow.getByRole('region', { name: '任务详情' })).toHaveCount(0);
   await expect(window.locator('.today-overview-calendar')).toBeVisible();
 });
 
@@ -282,15 +283,17 @@ test('通过真实编辑器保存内容后 Agenda 同步更新', async ({ app, w
   await window.reload();
   await waitForToday(window);
 
-  const row = window.locator('.today-task-row', { hasText: '改名前' });
-  await rowAction(row, '打开详情');
-  const titleInput = window.locator('.today-edit-panel .task-title-input');
+  const collapsedRow = window.locator('.today-task-row', { hasText: '改名前' });
+  await collapsedRow.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  const titleInput = row.locator('.task-title-input');
   await expect(titleInput).toBeVisible();
   await titleInput.fill('改名后');
-  await titleInput.blur();
+  await titleInput.press('Control+Enter');
 
   // 等待保存链路（IPC -> SQLite -> tasks-updated -> 页面刷新）
-  await window.locator('.task-action-close').click();
   await expect(window.locator('.today-task-row', { hasText: '改名后' })).toBeVisible();
   await expect(window.getByText('改名前')).toHaveCount(0);
 
@@ -343,11 +346,12 @@ test('取消完成后任务回到今天且计数恢复', async ({ app, window })
   await expect(header).toContainText('今日待处理 1 项');
 });
 
-test('单次重复实例编辑后仅保留一张卡片且内容同步', async ({ app, window }) => {
+test('打开虚拟重复任务不物化；首次实际编辑仅更新目标实例', async ({ app, window }) => {
   // 重复系列：今天 10:00 开始，每天重复
   await app.electronApp.evaluate(async () => {
     const moli = global.__moliTodoApp;
     const start = new Date();
+    start.setDate(start.getDate() - 1);
     start.setHours(10, 0, 0, 0);
     await moli.taskService.createTaskInList('重复实例任务', 0, null, {
       scheduledStartAt: start.toISOString(),
@@ -357,18 +361,33 @@ test('单次重复实例编辑后仅保留一张卡片且内容同步', async ({
   await window.reload();
   await waitForToday(window);
 
-  const rows = window.locator('.agenda-section-today .today-task-row', { hasText: '重复实例任务' });
-  await expect(rows).toHaveCount(1);
+  const collapsedRows = window.locator('.agenda-section-today .today-task-row', { hasText: '重复实例任务' });
+  await expect(collapsedRows).toHaveCount(1);
+  const beforeOpen = await app.electronApp.evaluate(async () =>
+    (await global.__moliTodoApp.taskService.getAllTasks()).filter((task) => task.content === '重复实例任务').length
+  );
 
-  // 详情入口：先物化为真实实例再打开编辑器
-  await rowAction(rows.first(), '打开详情');
-  const titleInput = window.locator('.today-edit-panel .task-title-input');
+  await collapsedRows.first().locator('.today-task-title').click();
+  const expandedRow = window.locator('.agenda-section-today .today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  const titleInput = expandedRow.locator('.task-title-input');
   await expect(titleInput).toBeVisible();
-  await titleInput.fill('重复实例任务（已改）');
-  await titleInput.blur();
-  await window.locator('.task-action-close').click();
+  const afterOpen = await app.electronApp.evaluate(async () =>
+    (await global.__moliTodoApp.taskService.getAllTasks()).filter((task) => task.content === '重复实例任务').length
+  );
+  expect(afterOpen).toBe(beforeOpen);
 
-  // 物化后今天仍只有一张卡片，且内容同步
+  await titleInput.fill('重复实例任务（已改）');
+  await titleInput.press('Control+Enter');
+  await expect(window.getByRole('region', { name: '任务详情' })).toHaveCount(0);
+
+  // 物化后系列模板仍保留原标题，今天只显示目标实例
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.some((task) => task.recurrence && task.content === '重复实例任务')
+      && tasks.some((task) => task.seriesId && task.content === '重复实例任务（已改）');
+  }, { timeout: 15000 }).toBe(true);
   await expect(window.locator('.agenda-section-today .today-task-row', { hasText: '重复实例任务（已改）' })).toHaveCount(1);
 });
 
@@ -780,22 +799,25 @@ test('浏览过去日期：逾期任务直接显示卡片并标注原因', async
   await expect(section.getByText('逾期定位任务')).toHaveCount(0);
 });
 
-/* ===== issue #15：Today 行 Things 式就地交互 ===== */
+/* ===== issue #16：Today 任务卡片 Things 式展开交互 ===== */
 
-test('行内编辑：单击标题原位编辑，Enter 保存并持久化', async ({ app, window }) => {
+test('展开态编辑标题：Control+Enter 保存并收起', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{ content: '有错别字的任务', dueDate: localKey(new Date()) }]);
   await window.reload();
   await waitForToday(window);
 
-  const row = window.locator('.today-task-row', { hasText: '有错别字的任务' });
-  await row.locator('.today-task-title').click();
-  // 进入编辑后标题文本在 input.value 里，不能用行内 hasText 定位输入框
-  const input = window.locator('.today-task-edit-input');
+  const collapsedRow = window.locator('.today-task-row', { hasText: '有错别字的任务' });
+  await collapsedRow.locator('.today-task-title').click();
+  const expandedRow = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  const input = expandedRow.getByRole('textbox', { name: '任务标题' });
   await expect(input).toBeVisible();
   await input.fill('改好的任务标题');
-  await input.press('Enter');
+  await input.press('Control+Enter');
 
   await expect(window.locator('.today-task-row', { hasText: '改好的任务标题' })).toBeVisible();
+  await expect(window.getByRole('textbox', { name: '任务标题' })).toHaveCount(0);
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () =>
       (await global.__moliTodoApp.taskService.getAllTasks()).map((t) => t.content)
@@ -804,20 +826,25 @@ test('行内编辑：单击标题原位编辑，Enter 保存并持久化', async
   }, { timeout: 15000 }).toBe(true);
 });
 
-test('行内编辑：Esc 取消不保存', async ({ app, window }) => {
+test('展开态标题 Escape 先取消草稿，再次 Escape 收起任务', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{ content: '保持原标题', dueDate: localKey(new Date()) }]);
   await window.reload();
   await waitForToday(window);
 
-  const row = window.locator('.today-task-row', { hasText: '保持原标题' });
-  await row.locator('.today-task-title').click();
-  // 进入编辑后标题文本在 input.value 里，不能用行内 hasText 定位输入框
-  const input = window.locator('.today-task-edit-input');
+  const collapsedRow = window.locator('.today-task-row', { hasText: '保持原标题' });
+  await collapsedRow.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  const input = row.getByRole('textbox', { name: '任务标题' });
   await expect(input).toBeVisible();
   await input.fill('不该保存的内容');
   await input.press('Escape');
 
-  await expect(row.locator('.today-task-title')).toContainText('保持原标题');
+  await expect(input).toHaveValue('保持原标题');
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+  await input.press('Escape');
+  await expect(collapsedRow.getByRole('region', { name: '任务详情' })).toHaveCount(0);
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () =>
       (await global.__moliTodoApp.taskService.getAllTasks()).map((t) => t.content)
@@ -1113,4 +1140,106 @@ test('备注与循环图标在行上展示', async ({ app, window }) => {
   await expect(row.locator('.today-task-note')).toContainText('这是备注内容');
   // 循环任务保留重复图标并有悬浮说明
   await expect(row.locator('.today-task-meta-item')).toBeVisible();
+});
+
+test('展开单条任务后编辑内容留在 Agenda 原位且右侧日历保持可见', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{
+    content: '原位展开任务',
+    dueDate: localKey(new Date()),
+    metadata: { note: '展开后仍可修改的备注', steps: [{ id: 'step-1', content: '第一步', status: 'todo' }] }
+  }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsedRow = window.locator('.today-task-row', { hasText: '原位展开任务' });
+  await expect(window.locator('.today-overview-calendar')).toBeVisible();
+  await collapsedRow.locator('.today-task-title').click();
+
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await expect(row.getByRole('textbox', { name: '任务标题' })).toBeVisible();
+  await expect(row.getByRole('textbox', { name: '任务备注' })).toHaveValue('展开后仍可修改的备注');
+  await expect(row.getByText('第一步')).toBeVisible();
+  await expect(window.locator('.today-overview-calendar')).toBeVisible();
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+  await expect(row.getByRole('button', { name: '收起任务' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(row.getByRole('button', { name: '展开任务' })).toHaveCount(0);
+
+  const title = row.getByRole('textbox', { name: '任务标题' });
+  await title.fill('原位展开后改过的标题');
+  await title.press('Control+Enter');
+  const savedRow = window.locator('.today-task-row', { hasText: '原位展开后改过的标题' });
+  await expect(savedRow.locator('.today-task-title')).toHaveAttribute('aria-expanded', 'false');
+  await expect(window.locator('.today-overview-calendar')).toBeVisible();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((task) => task.content === '原位展开后改过的标题')?.content || null;
+  }, { timeout: 15000 }).toBe('原位展开后改过的标题');
+});
+
+test('展开态备注与步骤可新增、编辑、删除且 metadata 字段互不覆盖', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{
+    content: '拆解中的任务',
+    dueDate: localKey(new Date()),
+    metadata: { note: '原备注', steps: [{ id: 'step-1', content: '先做第一步', status: 'todo' }] }
+  }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsedRow = window.locator('.today-task-row', { hasText: '拆解中的任务' });
+  await collapsedRow.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await row.getByRole('button', { name: '添加安排时间' }).click();
+  await expect(window.locator('.date-picker-popup-fixed')).toBeVisible();
+  await window.locator('.date-picker-backdrop').click({ position: { x: 8, y: 8 } });
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+
+  const recurrenceSwitch = row.getByRole('switch', { name: '重复' });
+  await recurrenceSwitch.click();
+  await expect(recurrenceSwitch).toHaveAttribute('aria-checked', 'true');
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return Boolean(tasks.find((item) => item.content === '拆解中的任务')?.recurrence);
+  }).toBe(true);
+  await recurrenceSwitch.click();
+  await expect(recurrenceSwitch).toHaveAttribute('aria-checked', 'false');
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return Boolean(tasks.find((item) => item.content === '拆解中的任务')?.recurrence);
+  }).toBe(false);
+
+  const note = row.getByRole('textbox', { name: '任务备注' });
+  await note.fill('更新后的备注');
+  await note.blur();
+
+  const addStep = row.getByRole('textbox', { name: '新步骤' });
+  await addStep.fill('补充步骤');
+  await addStep.press('Enter');
+  await expect(row.getByRole('button', { name: '编辑第 2 个步骤' })).toContainText('补充步骤');
+
+  await row.getByRole('button', { name: '编辑第 1 个步骤' }).click();
+  const editStep = row.getByRole('textbox', { name: '编辑第 1 个步骤' });
+  await editStep.fill('第一步已调整');
+  await editStep.press('Enter');
+  await expect(row.getByRole('button', { name: '编辑第 1 个步骤' })).toContainText('第一步已调整');
+
+  await row.locator('.step-item').nth(1).getByRole('button', { name: '删除步骤' }).click();
+  const dialog = window.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(row.getByText('补充步骤')).toHaveCount(0);
+
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    const task = tasks.find((item) => item.content === '拆解中的任务');
+    return task?.metadata ? { note: task.metadata.note, steps: task.metadata.steps } : null;
+  }, { timeout: 15000 }).toEqual({
+    note: '更新后的备注',
+    steps: [{ id: 'step-1', content: '第一步已调整', status: 'todo' }]
+  });
 });

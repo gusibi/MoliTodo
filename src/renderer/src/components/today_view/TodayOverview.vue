@@ -6,13 +6,14 @@
         :search-query="searchQuery"
         :show-completed="showCompleted"
         :initial-loading="(!initialLoaded && loadingCount > 0) || (taskStore.loading && taskStore.tasks.length === 0)"
-        :loading-more="loadingCount > 0" :has-error="hasLoadError" @task-click="handleEditTask" @load-more="loadMoreFuture"
+        :loading-more="loadingCount > 0" :has-error="hasLoadError" :expanded-task-key="expandedTaskKey"
+        @task-click="handleEditTask" @task-collapse="handleTaskCollapse" @load-more="loadMoreFuture"
         @retry="retryFailed" @active-date-change="handleActiveDateChange"
         @delete-request="requestTaskDelete" />
     </div>
 
     <!-- 右侧 Future Calendar（宽屏常驻） -->
-    <aside v-if="!isNarrow && calendarVisible" class="today-overview-calendar" :aria-hidden="editorOpen">
+    <aside v-if="!isNarrow" class="today-overview-calendar">
       <FutureCalendar :month-window="monthWindow" :dots="calendarDots" :today-key="todayKey"
         :selected-key="selectedDateKey" @select-date="handleSelectDate" @expand-months="expandMonths"
         @back-today="handleBackToday" />
@@ -50,15 +51,7 @@
       </Transition>
     </Teleport>
 
-    <!-- 编辑器：打开时优先收起 Future Calendar，关闭后恢复 -->
-    <Transition name="today-edit" appear>
-      <div v-if="editorOpen" class="today-edit-panel">
-        <TaskEditVertical :task="selectedTask" :is-editing="true" @update-task="handleUpdateTask"
-          @cancel-edit="closeEditor" @delete-task="requestEditorDelete" />
-      </div>
-    </Transition>
-
-    <!-- 统一危险确认：任务行与编辑器删除共用同一流程（软删除语义：可从悬浮窗垃圾桶恢复） -->
+    <!-- 统一危险确认：任务行与展开态删除共用同一流程（软删除语义：可从悬浮窗垃圾桶恢复） -->
     <AlertDialog
       :open="deleteDialogOpen"
       :title="$t('tasks.deleteTask')"
@@ -76,17 +69,17 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CalendarRange, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { useTodayOverview } from '@/composables/useTodayOverview'
 import AgendaView from './AgendaView.vue'
 import FutureCalendar from './FutureCalendar.vue'
-import TaskEditVertical from '../TaskEditVertical.vue'
 import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
 import IconButton from '../ui/button/IconButton.vue'
 import { isVirtualInstance } from '../../utils/today-agenda.js'
+import { localDateKey } from '../../utils/task-time-rules.js'
 
 /**
  * Today 综合视图：左侧 Agenda + 右侧 Future Calendar。
@@ -151,11 +144,31 @@ onUnmounted(() => {
 
 // ---------- 日历可见性与抽屉 ----------
 
-const calendarVisible = ref(true)
-const calendarVisibleBeforeEditor = ref(true)
 const drawerOpen = ref(false)
+const expandedTaskKey = ref('')
+const activeTaskEditor = ref(null)
+const expansionChangePending = ref(false)
 
-const editorOpen = computed(() => selectedTask.value !== null)
+provide('todayTaskEditorCoordinator', {
+  register(identity, flush) {
+    activeTaskEditor.value = { identity, flush }
+  },
+  unregister(identity) {
+    if (activeTaskEditor.value?.identity === identity) activeTaskEditor.value = null
+  },
+  close(identity, options = {}) {
+    if (expandedTaskKey.value !== identity) return false
+    closeEditor()
+    if (options.restoreFocus !== false) {
+      nextTick(() => {
+        const wrapper = [...document.querySelectorAll('.agenda-card-wrapper')]
+          .find((element) => element.dataset.taskKey === identity)
+        wrapper?.querySelector('.today-task-title')?.focus()
+      })
+    }
+    return true
+  }
+})
 
 function openDrawer() {
   drawerOpen.value = true
@@ -215,66 +228,48 @@ async function handleBackToday() {
   })
 }
 
-// ---------- 任务编辑 ----------
+// ---------- 原位展开任务 ----------
 
 const selectedTask = ref(null)
 
-// 虚拟重复实例先物化为真实任务行再编辑：编辑器内所有保存链路（重复规则、提醒等）
-// 都以真实任务 ID 工作，物化幂等且与 #13 实例规则一致
+function taskIdentity(task) {
+  const occurrenceDate = localDateKey(task?.occurrenceDate)
+  if (task?.seriesId && occurrenceDate) {
+    return `occurrence:${task.seriesId}:${occurrenceDate}`
+  }
+  return task ? `task:${task.id}` : ''
+}
+
 async function handleEditTask(task) {
-  let editable = task
-  if (isVirtualInstance(task)) {
-    try {
-      const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, {})
-      if (result && result.success && result.task) {
-        editable = result.task
-      }
-    } catch (error) {
-      console.error('[TodayOverview] 物化重复实例失败:', error)
+  if (expansionChangePending.value) return
+  expansionChangePending.value = true
+  const identity = taskIdentity(task)
+  try {
+    const editor = activeTaskEditor.value
+    if (expandedTaskKey.value && editor?.identity === expandedTaskKey.value) {
+      const canChangeTask = await editor.flush()
+      if (!canChangeTask) return
     }
+    if (expandedTaskKey.value === identity) {
+      closeEditor()
+      return
+    }
+    selectedTask.value = task
+    expandedTaskKey.value = identity
+  } finally {
+    expansionChangePending.value = false
   }
-  // 仅在首次打开编辑器时记录日历可见性，避免切换任务时丢失恢复状态
-  if (!editorOpen.value) {
-    calendarVisibleBeforeEditor.value = calendarVisible.value
-  }
-  selectedTask.value = editable
-  // 编辑器打开时优先收起 Future Calendar，保证 Agenda 与编辑区域可用
-  calendarVisible.value = false
 }
 
 function closeEditor() {
   selectedTask.value = null
-  calendarVisible.value = calendarVisibleBeforeEditor.value
+  expandedTaskKey.value = ''
 }
 
-// 保存路由：真实任务走普通更新；虚拟实例兜底走重复实例更新
-async function handleUpdateTask(taskData) {
-  try {
-    if (isVirtualInstance(taskData)) {
-      const updates = { ...taskData }
-      delete updates.id
-      delete updates.seriesId
-      delete updates.occurrenceDate
-      delete updates.createdAt
-      delete updates.updatedAt
-      const result = await taskStore.updateRecurringInstance(
-        taskData.seriesId,
-        taskData.occurrenceDate,
-        updates
-      )
-      if (!result.success) {
-        alert(t('today.saveFailed', { error: result.error || '' }))
-      }
-      return
-    }
-    const result = await taskStore.updateTask(taskData.id, taskData)
-    if (!result.success) {
-      alert(t('today.saveFailed', { error: result.error || '' }))
-    }
-  } catch (error) {
-    console.error('[TodayOverview] 更新任务失败:', error)
-    alert(t('today.saveFailed', { error: error.message }))
-  }
+function handleTaskCollapse({ task, restoreFocus }) {
+  const identity = taskIdentity(task)
+  if (identity !== expandedTaskKey.value) return
+  closeEditor()
 }
 
 // ---------- 统一删除确认 ----------
@@ -316,11 +311,6 @@ function requestTaskDelete({ task, trigger }) {
   openDeleteDialog(task, trigger)
 }
 
-// 编辑器删除入口：与任务行共用同一确认流程
-function requestEditorDelete(task) {
-  openDeleteDialog(task, null)
-}
-
 async function confirmDelete() {
   if (!deleteTarget.value || deleteLoading.value) return
   const task = deleteTarget.value
@@ -339,7 +329,7 @@ async function confirmDelete() {
 
     deleteDialogOpen.value = false
     deleteTarget.value = null
-    if (selectedTask.value && selectedTask.value.id === task.id) closeEditor()
+    if (selectedTask.value && taskIdentity(selectedTask.value) === taskIdentity(task)) closeEditor()
     restoreFocusAfterDelete()
   } catch (error) {
     console.error('[TodayOverview] 删除任务失败:', error)

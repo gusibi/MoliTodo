@@ -399,6 +399,18 @@
     "improvements": "改进建议"
   },
   "today": {
+    "taskDetails": "任务详情",
+    "expandTask": "展开任务",
+    "collapseTask": "收起任务",
+    "taskTitleLabel": "任务标题",
+    "titleRequired": "任务标题不能为空",
+    "taskStatusLabel": "任务完成状态",
+    "recurrenceLabel": "重复",
+    "taskNoteLabel": "任务备注",
+    "addNote": "添加备注",
+    "newStepLabel": "新步骤",
+    "editStepLabel": "编辑第 {index} 个步骤",
+    "toggleStepStatus": "切换第 {index} 个步骤完成状态",
     "pendingCount": "今日待处理 {count} 项",
     "searchScope": "搜索范围：今日 + 收件箱 + 已加载日期（{from} ~ {to}），不是全库搜索",
     "searchScopeLoading": "正在确定搜索覆盖的日期范围…",

@@ -384,6 +384,18 @@
     "improvements": "Improvement Suggestions"
   },
   "today": {
+    "taskDetails": "Task details",
+    "expandTask": "Expand task",
+    "collapseTask": "Collapse task",
+    "taskTitleLabel": "Task title",
+    "titleRequired": "A task title is required.",
+    "taskStatusLabel": "Task status",
+    "recurrenceLabel": "Repeat",
+    "taskNoteLabel": "Task note",
+    "addNote": "Add a note",
+    "newStepLabel": "New step",
+    "editStepLabel": "Edit step {index}",
+    "toggleStepStatus": "Toggle step {index} completion",
     "pendingCount": "{count} to do today",
     "searchScope": "Search scope: today + inbox + loaded dates ({from} ~ {to}), not the whole library",
     "searchScopeLoading": "Determining date coverage of search…",

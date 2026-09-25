@@ -1,6 +1,6 @@
 <template>
   <!-- 竖向任务编辑区域 -->
-  <div class="task-edit-vertical-container" ref="taskEditContainer">
+  <div class="task-edit-vertical-container" :class="{ 'is-inline': inline }" ref="taskEditContainer">
     <div class="task-edit-vertical" :class="{ 'active': isAddingTask }">
       <!-- 可滚动内容区域 -->
       <div class="task-content-scrollable">
@@ -9,18 +9,20 @@
           <div class="task-header-title-wrapper">
             <!-- 复选框 -->
             <div class="flat-task-checkbox">
-              <input type="checkbox" :id="`task-edit-${task?.id || 'new'}`" :checked="task?.status === 'done'"
-                @change="handleToggleComplete(task)" @click.stop />
-              <label :for="`task-edit-${task?.id || 'new'}`" class="flat-checkbox-label"></label>
+              <Checkbox :id="`task-edit-${task?.id || 'new'}`" :model-value="task?.status === 'done'"
+                :label="t('today.taskStatusLabel')" indicator-class="flat-checkbox-label"
+                @update:model-value="handleToggleComplete(task)" @click.stop />
             </div>
 
             <!-- 任务标题输入 -->
             <div class="task-title-input-wrapper">
-              <textarea ref="addTaskInput" v-model="newTaskContent"
+              <textarea ref="addTaskInput" v-model="newTaskContent" :aria-label="t('today.taskTitleLabel')"
+                :aria-invalid="!!titleError" :aria-describedby="titleError ? 'today-task-title-error' : undefined"
                 :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'" class="task-title-input" maxlength="1000"
                 rows="1" :style="{ minHeight: '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
-                @blur="handleInputBlur" @keyup.ctrl.enter="handleSaveTaskContent" @keyup.escape="handleCancelAdding"
+                @blur="handleInputBlur" @keydown="handleTitleKeydown"
                 @input="autoResize"></textarea>
+              <p v-if="titleError" id="today-task-title-error" class="task-field-error" role="alert">{{ titleError }}</p>
               <div class="task-input-counter" v-if="isAddingTask">
                 {{ newTaskContent.length }}/1000
               </div>
@@ -33,26 +35,32 @@
           <div v-if="steps.length > 0" class="steps-list">
             <div v-for="(step, index) in steps" :key="step.id" class="step-item">
               <div class="flat-task-checkbox">
-                <input type="checkbox" :id="`step-${step.id}`" :checked="step.status === 'done'"
-                  @change="toggleStepStatus(step)" @click.stop />
-                <label :for="`step-${step.id}`" class="flat-checkbox-label"></label>
+                <Checkbox :id="`step-${step.id}`" :model-value="step.status === 'done'"
+                  :label="t('today.toggleStepStatus', { index: index + 1 })" indicator-class="flat-checkbox-label"
+                  @update:model-value="toggleStepStatus(step)" @click.stop />
               </div>
               <input v-if="editingStepId === step.id" v-model="editingStepContent" type="text"
-                class="step-content-input" @blur="saveStepEdit(step)" @keyup.enter="saveStepEdit(step)"
-                @keyup.escape="cancelStepEdit" ref="stepEditInput" />
-              <span v-else class="step-content" :class="{ 'completed': step.status === 'done' }"
-                @dblclick="startStepEdit(step)">{{ step.content }}</span>
-              <button class="step-delete-btn" :aria-label="t('tasks.deleteStep')" @click="requestRemoveStep(index, $event)">
+                class="step-content-input" :aria-label="t('today.editStepLabel', { index: index + 1 })"
+                :aria-invalid="!!stepError" @blur="saveStepEdit(step)"
+                @keydown="(event) => handleStepEditKeydown(event, step)" ref="stepEditInput" />
+              <Button v-else variant="ghost" class="step-content"
+                :class="{ 'completed': step.status === 'done' }"
+                :aria-label="t('today.editStepLabel', { index: index + 1 })"
+                @click.stop="startStepEdit(step)">{{ step.content }}</Button>
+              <IconButton size="icon-sm" class="step-delete-btn" :label="t('tasks.deleteStep')"
+                @click="requestRemoveStep(index, $event)">
                 <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
+              </IconButton>
             </div>
           </div>
+          <p v-if="stepError" class="task-field-error" role="alert">{{ stepError }}</p>
           <div class="step-add">
-            <button class="step-add-btn" :aria-label="t('tasks.addStep')" @click="addStep">
+            <IconButton size="icon-sm" class="step-add-btn" :label="t('tasks.addStep')" @click="addStep">
               <Plus class="h-icon-sm w-icon-sm step-add-icon" aria-hidden="true" />
-            </button>
-            <input v-model="newStepContent" type="text" placeholder="添加步骤" class="step-add-input"
-              @keyup.enter="addStep" />
+            </IconButton>
+            <input ref="newStepInput" v-model="newStepContent" type="text" :aria-label="t('today.newStepLabel')"
+              :placeholder="t('tasks.addStep')" class="step-add-input"
+              @keydown.enter="handleStepAddKeydown" />
           </div>
         </div>
 
@@ -61,14 +69,14 @@
           <!-- 列表选择 -->
           <div class="task-option-section-list">
             <div class="task-option-item">
-              <button class="task-option-btn" @click="toggleListPicker">
+              <Button variant="ghost" class="task-option-btn" @click="toggleListPicker">
                 <div class="task-option-icon">
                   <Tag class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ getSelectedListName() }}</div>
                 </div>
-              </button>
+              </Button>
             </div>
 
             <!-- 列表选择器下拉 -->
@@ -77,43 +85,43 @@
                 <!-- 编辑模式 -->
                 <template v-if="props.isEditing">
                   <!-- 当前任务所属列表 -->
-                  <div v-if="props.task && props.task.listId" class="current-list">
+                  <div v-if="editingTask && editingTask.listId" class="current-list">
                     <div class="current-list-label">当前列表</div>
-                    <button class="list-option current-list-option"
-                      :class="{ 'active': selectedListId === props.task.listId }"
+                    <Button variant="ghost" class="list-option current-list-option"
+                      :class="{ 'active': selectedListId === editingTask.listId }"
                       @click="selectList(getCurrentTaskList())">
                       <div class="list-icon" :style="{ color: getCurrentTaskList()?.color }">
                         <ListIcon :name="getCurrentTaskList()?.icon" class="h-icon-sm w-icon-sm" />
                       </div>
                       <span class="list-name">{{ getCurrentTaskList()?.name }}</span>
-                    </button>
+                    </Button>
                   </div>
 
                   <!-- 分隔线 -->
-                  <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="list-separator">
+                  <div v-if="editingTask && editingTask.listId && getOtherLists().length > 0" class="list-separator">
                   </div>
 
                   <!-- 其他可选列表 -->
-                  <div v-if="props.task && props.task.listId && getOtherLists().length > 0" class="other-lists-label">
+                  <div v-if="editingTask && editingTask.listId && getOtherLists().length > 0" class="other-lists-label">
                     移动到其他列表</div>
-                  <button v-for="list in getOtherLists()" :key="list.id" class="list-option"
+                  <Button variant="ghost" v-for="list in getOtherLists()" :key="list.id" class="list-option"
                     :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
                     <div class="list-icon" :style="{ color: list.color }">
                       <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm" />
                     </div>
                     <span class="list-name">{{ list.name }}</span>
-                  </button>
+                  </Button>
                 </template>
 
                 <!-- 添加模式：显示所有列表 -->
                 <template v-else>
-                  <button v-for="list in availableLists" :key="list.id" class="list-option"
+                  <Button variant="ghost" v-for="list in availableLists" :key="list.id" class="list-option"
                     :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
                     <div class="list-icon" :style="{ color: list.color }">
                       <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm" />
                     </div>
                     <span class="list-name">{{ list.name }}</span>
-                  </button>
+                  </Button>
                 </template>
               </div>
             </div>
@@ -121,34 +129,34 @@
           <!-- 提醒设置（附属：策略化提醒） -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': selectedReminder }">
-              <button class="task-option-btn" @click="toggleReminderPicker">
+              <Button variant="ghost" class="task-option-btn" @click="toggleReminderPicker">
                 <div class="task-option-icon">
                   <Bell class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
                   <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
                 </div>
-              </button>
-              <button v-if="selectedReminder" class="task-option-delete" :aria-label="t('tasks.clearReminder')"
+              </Button>
+              <Button variant="ghost" v-if="selectedReminder" class="task-option-delete" :aria-label="t('tasks.clearReminder')"
                 @click="clearReminder">
                 <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <!-- 提醒选择器下拉：相对开始 / 自定义绝对时间 -->
             <div v-if="showReminderPicker" class="task-option-dropdown">
               <div class="reminder-options">
-                <button v-if="selectedReminder || reminderPolicy?.mode === 'disabled'" class="reminder-option"
+                <Button variant="ghost" v-if="selectedReminder || reminderPolicy?.mode === 'disabled'" class="reminder-option"
                   @click="disableReminder">
                   <Ban class="h-icon-sm w-icon-sm reminder-option-icon" aria-hidden="true" />
                   <span>不提醒</span>
-                </button>
-                <button v-for="option in reminderOptions" :key="option.id" class="reminder-option"
+                </Button>
+                <Button variant="ghost" v-for="option in reminderOptions" :key="option.id" class="reminder-option"
                   :class="{ 'reminder-option-active': isReminderOptionActive(option) }"
                   @click="selectReminderOption(option)">
                   <Clock class="h-icon-sm w-icon-sm reminder-option-icon" aria-hidden="true" />
                   <span>{{ option.label }}</span>
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -156,7 +164,7 @@
           <!-- 安排时间（一级入口：计划开始 / 结束） -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': scheduleStart }">
-              <button class="task-option-btn" ref="scheduleStartBtn"
+              <Button variant="ghost" class="task-option-btn" ref="scheduleStartBtn"
                 @click="openPickerFor('scheduleStart', scheduleStartBtn)">
                 <div class="task-option-icon">
                   <CalendarDays class="h-icon-sm w-icon-sm" aria-hidden="true" />
@@ -164,16 +172,16 @@
                 <div class="task-option-content">
                   <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : t('tasks.addSchedule') }}</div>
                 </div>
-              </button>
-              <button v-if="scheduleStart" class="task-option-delete" :aria-label="t('tasks.clearSchedule')"
+              </Button>
+              <Button variant="ghost" v-if="scheduleStart" class="task-option-delete" :aria-label="t('tasks.clearSchedule')"
                 @click="clearSchedule">
                 <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <!-- 结束时间：只在设置开始后出现 -->
             <div v-if="scheduleStart" class="task-option-item task-option-subitem" :class="{ 'active': scheduleEnd }">
-              <button class="task-option-btn" ref="scheduleEndBtn"
+              <Button variant="ghost" class="task-option-btn" ref="scheduleEndBtn"
                 @click="openPickerFor('scheduleEnd', scheduleEndBtn)">
                 <div class="task-option-icon">
                   <Hourglass class="h-icon-sm w-icon-sm" aria-hidden="true" />
@@ -181,18 +189,18 @@
                 <div class="task-option-content">
                   <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : t('tasks.addScheduleEnd') }}</div>
                 </div>
-              </button>
-              <button v-if="scheduleEnd" class="task-option-delete" :aria-label="t('tasks.clearScheduleEnd')"
+              </Button>
+              <Button variant="ghost" v-if="scheduleEnd" class="task-option-delete" :aria-label="t('tasks.clearScheduleEnd')"
                 @click="clearScheduleEnd">
                 <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </div>
 
           <!-- 截止日期（一级入口） -->
           <div class="task-option-section" ref="datePickerSection">
             <div class="task-option-item" :class="{ 'active': selectedDate }">
-              <button class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
+              <Button variant="ghost" class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
                 <div class="task-option-icon">
                   <CalendarClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
@@ -200,20 +208,20 @@
                   <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : t('tasks.addDeadline') }}
                   </div>
                 </div>
-              </button>
+              </Button>
               <!-- 日期型截止与日期+时间截止的切换 -->
-              <button v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
+              <Button variant="ghost" v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
                 :title="t('tasks.clearDeadlineTime')">
                 仅日期
-              </button>
-              <button v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
+              </Button>
+              <Button variant="ghost" v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
                 :title="t('tasks.addDeadlineTime')">
                 加时间
-              </button>
-              <button v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
+              </Button>
+              <Button variant="ghost" v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
                 @click="clearDateTime">
                 <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -222,6 +230,7 @@
             <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ timeHintText }}</span>
           </div>
+          <p v-if="timeSaveError" class="task-field-error" role="alert">{{ timeSaveError }}</p>
           
           <!-- 日期选择器 Portal - 固定定位在最上层 -->
           <Teleport to="body">
@@ -250,21 +259,16 @@
           <!-- 重复设置 -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
-              <div class="task-option-btn" @click="toggleRepeatPicker">
+              <Button variant="ghost" class="task-option-btn" @click="toggleRepeatPicker">
                 <div class="task-option-icon">
                   <Repeat2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">重复</div>
+                  <div class="task-option-title">{{ t('today.recurrenceLabel') }}</div>
                 </div>
-                <!-- iOS风格开关 -->
-                <div class="task-option-switch" @click.stop>
-                  <label class="switch">
-                    <input type="checkbox" :checked="!!selectedRecurrence" @change="toggleRepeatEnabled">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
+              </Button>
+              <Switch class="task-option-switch" :model-value="!!selectedRecurrence"
+                :label="t('today.recurrenceLabel')" @update:model-value="toggleRepeatEnabled" />
             </div>
 
             <!-- 重复配置面板 -->
@@ -280,9 +284,12 @@
         <div v-if="isAddingTask" class="task-note">
           <div class="task-note-editor">
             <div class="task-note-input-wrapper">
-              <textarea v-model="taskNote" placeholder="添加备注" class="task-note-textarea" maxlength="1000" rows="5"
+              <textarea ref="noteInput" v-model="taskNote" :aria-label="t('today.taskNoteLabel')"
+                :aria-invalid="!!noteError" :aria-describedby="noteError ? 'today-task-note-error' : undefined"
+                :placeholder="t('today.addNote')" class="task-note-textarea" maxlength="1000" :rows="inline ? 2 : 5"
                 :style="{ minHeight: '3rem', maxHeight: '15rem' }" @input="autoResizeNote"
-                @blur="handleNoteBlur"></textarea>
+                @blur="handleNoteBlur" @keydown="handleNoteKeydown"></textarea>
+              <p v-if="noteError" id="today-task-note-error" class="task-field-error" role="alert">{{ noteError }}</p>
               <div class="task-note-counter">{{ taskNote.length }}/1000</div>
             </div>
           </div>
@@ -292,9 +299,9 @@
       <!-- 操作按钮区域 -->
       <div v-if="isAddingTask" class="task-actions">
         <div class="task-actions-left">
-          <button class="task-action-close" :aria-label="t('common.close')" @click="handleCancelAdding">
-            <LogIn class="h-icon-md w-icon-md" aria-hidden="true" />
-          </button>
+          <IconButton size="icon-sm" class="task-action-close" :label="t('common.close')" @click="handleCancelAdding">
+            <X class="h-icon-md w-icon-md" aria-hidden="true" />
+          </IconButton>
         </div>
 
         <div class="task-actions-center">
@@ -302,10 +309,10 @@
         </div>
 
         <div class="task-actions-right">
-          <button v-if="props.isEditing" class="task-action-delete" :aria-label="t('tasks.deleteTask')"
+          <IconButton v-if="props.isEditing" size="icon-sm" class="task-action-delete" :label="t('tasks.deleteTask')"
             @click="handleDeleteTask">
             <Trash2 class="h-icon-md w-icon-md" aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       </div>
     </div>
@@ -321,9 +328,10 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed } from 'vue'
+import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { localeCode } from '../utils/locale-format.js'
+import { localDateKey } from '../utils/task-time-rules.js'
 import { storeToRefs } from 'pinia'
 import {
   Ban,
@@ -332,7 +340,6 @@ import {
   CalendarDays,
   Clock,
   Hourglass,
-  LogIn,
   Plus,
   Repeat2,
   Tag,
@@ -345,6 +352,11 @@ import { useTheme } from '@/composables/useTheme'
 import RepeatSelector from './RepeatSelector.vue'
 import ListIcon from './ui/ListIcon.vue'
 import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
+import Button from './ui/button/Button.vue'
+import IconButton from './ui/button/IconButton.vue'
+import Checkbox from './ui/checkbox/Checkbox.vue'
+import Switch from './ui/switch/Switch.vue'
+import { isVirtualInstance } from '../utils/today-agenda.js'
 
 // 导入 V-Calendar 样式文件
 import 'v-calendar/style.css'
@@ -358,16 +370,111 @@ const props = defineProps({
   isEditing: {
     type: Boolean,
     default: false
+  },
+  inline: {
+    type: Boolean,
+    default: false
   }
 })
 
 // 定义事件
 const emit = defineEmits(['add-task', 'update-task', 'cancel-edit', 'delete-task'])
+const editorCoordinator = props.inline ? inject('todayTaskEditorCoordinator', null) : null
 
 // 使用 taskStore
 const taskStore = useTaskStore()
 const { t, locale } = useI18n()
 const { customReminderOptions: storeCustomReminderOptions, lists } = storeToRefs(taskStore)
+
+const materializedTask = ref(null)
+const timeSaveError = ref('')
+const pendingTaskWrites = new Set()
+let materializationPromise = null
+const editingTask = computed(() => {
+  const task = materializedTask.value || props.task
+  if (!task) return null
+  return taskStore.tasks.find((item) => item.id === task.id) || task
+})
+
+function taskIdentity(task) {
+  const occurrenceDate = localDateKey(task?.occurrenceDate)
+  if (task?.seriesId && occurrenceDate) {
+    return `occurrence:${task.seriesId}:${occurrenceDate}`
+  }
+  return task ? `task:${task.id}` : ''
+}
+
+async function ensureEditableTask() {
+  const task = editingTask.value
+  if (!task) return null
+  if (!isVirtualInstance(task)) return task
+  if (materializationPromise) return materializationPromise
+
+  materializationPromise = (async () => {
+    const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, {})
+    if (!result?.success || !result.task) return null
+
+    materializedTask.value = result.task
+    return result.task
+  })()
+  try {
+    return await materializationPromise
+  } finally {
+    materializationPromise = null
+  }
+}
+
+async function saveTaskUpdates(task, updates) {
+  const serializableUpdates = JSON.parse(JSON.stringify(updates))
+  if (task?.seriesId && task?.occurrenceDate) {
+    const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, serializableUpdates)
+    if (result?.success && result.task) materializedTask.value = result.task
+    return result
+  }
+  return taskStore.updateTask(task.id, serializableUpdates)
+}
+
+function trackTaskWrite(promise) {
+  const tracked = Promise.resolve(promise)
+  pendingTaskWrites.add(tracked)
+  tracked.then(
+    () => pendingTaskWrites.delete(tracked),
+    () => pendingTaskWrites.delete(tracked)
+  )
+  return tracked
+}
+
+async function updateCurrentTask(updates) {
+  return trackTaskWrite((async () => {
+    const task = editingTask.value
+    if (!task) throw new Error(t('today.saveFailed', { error: '' }))
+    const result = await saveTaskUpdates(task, updates)
+    if (!result?.success) {
+      timeSaveError.value = t('today.saveFailed', { error: result?.error || '' })
+      throw new Error(result?.error || t('today.saveFailed', { error: '' }))
+    }
+    timeSaveError.value = ''
+    return result
+  })())
+}
+
+let metadataWriteQueue = Promise.resolve()
+
+async function updateCurrentMetadata(mutateMetadata) {
+  return trackTaskWrite((async () => {
+    const task = editingTask.value
+    if (!task) return { success: false, error: t('today.saveFailed', { error: '' }) }
+
+    const write = metadataWriteQueue.then(async () => {
+      const currentTask = editingTask.value || task
+      const latestTask = taskStore.tasks.find((item) => item.id === currentTask.id) || currentTask
+      const metadata = await mutateMetadata(latestTask.metadata || {})
+      return saveTaskUpdates(currentTask, { metadata })
+    })
+    metadataWriteQueue = write.then(() => undefined, () => undefined)
+    return write
+  })())
+}
 
 // 使用主题
 const { isDark } = useTheme()
@@ -375,15 +482,21 @@ const { isDark } = useTheme()
 // 组件根元素引用
 const taskEditContainer = ref(null)
 const addTaskInput = ref(null)
+const noteInput = ref(null)
 const fileInput = ref(null)
 const datePickerBtn = ref(null)
 const datePickerSection = ref(null)
 
 // 任务相关状态
 const newTaskContent = ref('')
+const lastSavedTitle = ref('')
 const isAddingTask = ref(false)
 const isImportant = ref(false)
 const taskNote = ref('')
+const lastSavedNote = ref('')
+const titleError = ref('')
+const noteError = ref('')
+const stepError = ref('')
 
 // 防抖定时器
 let noteDebounceTimer = null
@@ -391,8 +504,11 @@ let noteDebounceTimer = null
 // 步骤相关状态
 const steps = ref([])
 const newStepContent = ref('')
+const newStepInput = ref(null)
+const stepAddInProgress = ref(false)
 const editingStepId = ref(null)
 const editingStepContent = ref('')
+const stepSaveInProgress = ref(false)
 
 // 日期时间相关状态
 const selectedDate = ref('')
@@ -465,7 +581,8 @@ const openPickerFor = (mode, btnEl) => {
   }
 
   // 计算按钮位置（模板传入的是 ref 对象）
-  const anchorBtn = (btnEl && (btnEl.value || btnEl)) || datePickerBtn.value
+  const anchor = (btnEl && (btnEl.value || btnEl)) || datePickerBtn.value
+  const anchorBtn = anchor?.el?.value || anchor?.$el || anchor
   if (anchorBtn) {
     const rect = anchorBtn.getBoundingClientRect()
     const pickerHeight = 380 // 预估的选择器高度
@@ -516,12 +633,87 @@ const handleStartAdding = () => {
 }
 
 // 取消添加任务
-const handleCancelAdding = () => {
+const handleCancelAdding = async (options = {}) => {
   if (props.isEditing) {
-    emit('cancel-edit')
+    if (props.inline && !await flushPendingChanges()) return
+    if (props.inline) {
+      editorCoordinator?.close(taskIdentity(props.task), { restoreFocus: options?.restoreFocus !== false })
+    }
+    emit('cancel-edit', { restoreFocus: options?.restoreFocus !== false })
   } else {
     resetAllStates()
   }
+}
+
+const handleSaveAndClose = async () => {
+  if (!props.inline) {
+    await handleSaveTaskContent()
+    return
+  }
+  await handleCancelAdding()
+}
+
+const handleTitleKeydown = (event) => {
+  if (event.isComposing || event.keyCode === 229) return
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault()
+    handleSaveAndClose()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    handleTitleEscape()
+  }
+}
+
+const handleTitleEscape = async () => {
+  if (contentDebounceTimer.value) clearTimeout(contentDebounceTimer.value)
+  const committedTitle = lastSavedTitle.value
+  const hasUncommittedTitle = titleError.value || newTaskContent.value !== committedTitle
+  await titleSaveQueue
+  if ((editingTask.value?.content || '') !== committedTitle) {
+    try {
+      await updateCurrentTask({ content: committedTitle })
+    } catch (error) {
+      titleError.value = t('today.saveFailed', { error: error?.message || '' })
+      return
+    }
+  }
+  lastSavedTitle.value = committedTitle
+  if (hasUncommittedTitle) {
+    newTaskContent.value = committedTitle
+    titleError.value = ''
+    nextTick(() => addTaskInput.value?.focus())
+    return
+  }
+
+  titleError.value = ''
+  handleCancelAdding()
+}
+
+const flushPendingChanges = async () => {
+  if (contentDebounceTimer.value) {
+    clearTimeout(contentDebounceTimer.value)
+    contentDebounceTimer.value = null
+  }
+  if (noteDebounceTimer) {
+    clearTimeout(noteDebounceTimer)
+    noteDebounceTimer = null
+  }
+  showDatePicker.value = false
+  showReminderPicker.value = false
+  showListPicker.value = false
+  showRepeatPicker.value = false
+
+  const titleSaved = await handleSaveTaskContent()
+  const noteSaved = await saveTaskNote()
+  try {
+    await Promise.all([...pendingTaskWrites])
+  } catch {
+    // Individual fields keep their own visible errors and drafts.
+  }
+  await metadataWriteQueue
+  const canClose = titleSaved && noteSaved && !titleError.value && !noteError.value && !stepError.value && !timeSaveError.value
+  return canClose
 }
 
 // 重置所有状态
@@ -558,6 +750,7 @@ const resetAllStates = () => {
 const handleInputBlur = async (event) => {
   // 如果是编辑模式，先保存内容
   if (props.isEditing && props.task && newTaskContent.value.trim()) {
+    if (contentDebounceTimer.value) clearTimeout(contentDebounceTimer.value)
     await handleSaveTaskContent()
   }
 
@@ -574,6 +767,11 @@ const handleInputBlur = async (event) => {
 // 处理点击外部区域
 const handleClickOutside = (event) => {
   if (taskEditContainer.value && !taskEditContainer.value.contains(event.target)) {
+    const target = event.target instanceof Element ? event.target : null
+    const targetRow = target?.closest('.today-task-row')
+    const isEditorOverlay = target?.closest('.date-picker-overlay, [role="dialog"], [role="alertdialog"]')
+    if (isEditorOverlay) return
+
     if (!newTaskContent.value.trim() && !props.isEditing) {
       resetAllStates()
     }
@@ -582,34 +780,59 @@ const handleClickOutside = (event) => {
     showReminderPicker.value = false
     showListPicker.value = false
     showRepeatPicker.value = false
+
+    if (props.inline && !targetRow && !isEditorOverlay) {
+      handleCancelAdding({ restoreFocus: false })
+    }
   }
 }
 
 // 添加步骤
 const addStep = async () => {
-  if (newStepContent.value.trim()) {
-    const stepContent = newStepContent.value.trim()
+  if (stepAddInProgress.value) return
+  const stepContent = newStepContent.value.trim()
+  if (!stepContent) return
 
-    if (props.isEditing && props.task) {
-      // 编辑模式：使用API添加步骤
-      try {
-        const newStep = await taskStore.addTaskStep(props.task.id, stepContent)
-        steps.value.push(newStep.step)
-        newStepContent.value = ''
-      } catch (error) {
-        console.error('添加步骤失败:', error)
-      }
-    } else {
-      // 新建模式：本地添加步骤
-      const newStep = {
-        id: Date.now(), // 临时ID，保存时会由后端生成正式ID
-        content: stepContent,
-        status: 'todo'
+  if (props.isEditing && props.task) {
+    const target = await ensureEditableTask()
+    if (!target) {
+      stepError.value = t('today.saveFailed', { error: '' })
+      return
+    }
+    const newStep = { id: Date.now().toString(), content: stepContent, status: 'todo' }
+    stepAddInProgress.value = true
+    try {
+      const result = await updateCurrentMetadata((metadata) => ({
+        ...metadata,
+        steps: [...(metadata.steps || []), newStep]
+      }))
+      if (!result?.success) {
+        stepError.value = t('today.saveFailed', { error: result?.error || '' })
+        return
       }
       steps.value.push(newStep)
       newStepContent.value = ''
+      stepError.value = ''
+      await nextTick()
+      newStepInput.value?.focus()
+    } catch (error) {
+      stepError.value = t('today.saveFailed', { error: error?.message || '' })
+    } finally {
+      stepAddInProgress.value = false
     }
+    return
   }
+
+  steps.value.push({ id: Date.now(), content: stepContent, status: 'todo' })
+  newStepContent.value = ''
+  stepError.value = ''
+}
+
+const handleStepAddKeydown = (event) => {
+  if (event.isComposing || event.keyCode === 229) return
+  if (event.key !== 'Enter') return
+  event.preventDefault()
+  addStep()
 }
 
 // 删除步骤：统一走 AlertDialog 确认，失败保留上下文可重试
@@ -640,7 +863,10 @@ const confirmRemoveStep = async () => {
   stepDeleteError.value = ''
   try {
     if (props.isEditing && props.task) {
-      const result = await taskStore.deleteTaskStep(props.task.id, step.id)
+      const result = await updateCurrentMetadata((metadata) => ({
+        ...metadata,
+        steps: (metadata.steps || []).filter((item) => item.id !== step.id)
+      }))
       if (!result || result.success === false) {
         stepDeleteError.value = t('tasks.deleteFailed', { error: result?.error || '' })
         return
@@ -649,6 +875,7 @@ const confirmRemoveStep = async () => {
     steps.value.splice(index, 1)
     stepDeleteOpen.value = false
     stepDeleteIndex.value = -1
+    stepError.value = ''
     nextTick(() => {
       if (stepDeleteTrigger && document.contains(stepDeleteTrigger)) stepDeleteTrigger.focus()
     })
@@ -672,18 +899,32 @@ const cancelRemoveStep = () => {
 // 切换步骤状态
 const toggleStepStatus = async (step) => {
   // 立即更新本地状态以提供即时反馈
+  const previousStatus = step.status
   const newStatus = step.status === 'done' ? 'todo' : 'done'
   step.status = newStatus
 
   // 如果是编辑模式且有任务，同时更新服务器状态
   if (props.isEditing && props.task) {
     try {
-      // 使用taskStore的API更新步骤状态
-      await taskStore.toggleTaskStepStatus(props.task.id, step.id)
+      const result = await updateCurrentMetadata((metadata) => ({
+        ...metadata,
+        steps: (metadata.steps || []).map((item) => item.id === step.id ? { ...item, status: newStatus } : item)
+      }))
+      if (!result || result.success === false) throw new Error(result?.error || '保存失败')
+      stepError.value = ''
+      if (newStatus === 'done' && editingTask.value?.status === 'todo') {
+        const task = await ensureEditableTask()
+        if (task) {
+          const statusResult = await trackTaskWrite(taskStore.startTask(task.id))
+          if (!statusResult?.success) {
+            timeSaveError.value = t('today.saveFailed', { error: statusResult?.error || '' })
+          }
+        }
+      }
     } catch (error) {
       console.error('更新步骤状态失败:', error)
-      // 如果API调用失败，回滚本地状态
-      step.status = step.status === 'done' ? 'todo' : 'done'
+      step.status = previousStatus
+      stepError.value = t('today.saveFailed', { error: error?.message || '' })
     }
   }
 }
@@ -705,6 +946,7 @@ const startStepEdit = (step) => {
 
 // 保存步骤编辑
 const saveStepEdit = async (step) => {
+  if (stepSaveInProgress.value) return
   if (!editingStepContent.value.trim()) {
     cancelStepEdit()
     return
@@ -717,14 +959,24 @@ const saveStepEdit = async (step) => {
   }
 
   if (props.isEditing && props.task) {
-    // 编辑模式：使用API更新步骤
+    stepSaveInProgress.value = true
     try {
-      await taskStore.updateTaskStep(props.task.id, step.id, { content: newContent })
+      const result = await updateCurrentMetadata((metadata) => ({
+        ...metadata,
+        steps: (metadata.steps || []).map((item) => item.id === step.id ? { ...item, content: newContent } : item)
+      }))
+      if (!result || result.success === false) {
+        stepError.value = t('today.saveFailed', { error: result?.error || '' })
+        return
+      }
       step.content = newContent
+      stepError.value = ''
       cancelStepEdit()
     } catch (error) {
       console.error('更新步骤失败:', error)
-      cancelStepEdit()
+      stepError.value = t('today.saveFailed', { error: error?.message || '' })
+    } finally {
+      stepSaveInProgress.value = false
     }
   } else {
     // 新建模式：本地更新步骤
@@ -737,6 +989,18 @@ const saveStepEdit = async (step) => {
 const cancelStepEdit = () => {
   editingStepId.value = null
   editingStepContent.value = ''
+}
+
+const handleStepEditKeydown = (event, step) => {
+  if (event.isComposing || event.keyCode === 229) return
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    saveStepEdit(step)
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    cancelStepEdit()
+  }
 }
 
 // 切换提醒选择器
@@ -753,8 +1017,8 @@ const toggleReminderPicker = async () => {
 
 
 // 切换重复功能开关
-const toggleRepeatEnabled = async (event) => {
-  if (event.target.checked) {
+const toggleRepeatEnabled = async (enabled) => {
+  if (enabled) {
     // 开启重复时，设置默认的重复配置
     selectedRecurrence.value = {
       type: 'daily',
@@ -804,6 +1068,8 @@ const handleSaveRecurrence = async () => {
   if (!props.task || !props.isEditing) return
 
   try {
+    const task = await ensureEditableTask()
+    if (!task) throw new Error(t('today.saveFailed', { error: '' }))
     // 清理重复规则对象，确保可序列化
     const cleanRecurrence = selectedRecurrence.value ? {
       type: selectedRecurrence.value.type,
@@ -820,26 +1086,29 @@ const handleSaveRecurrence = async () => {
       recurrence: cleanRecurrence
     }
 
-    if (props.task.seriesId && selectedRecurrence.value) {
+    if (task.seriesId && selectedRecurrence.value) {
       // 更新重复任务系列
-      await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
-    } else if (selectedRecurrence.value && !props.task.seriesId) {
+      const result = await trackTaskWrite(taskStore.updateRecurringTask(task.id, updates, cleanRecurrence))
+      if (!result?.success) throw new Error(result?.error || '')
+    } else if (selectedRecurrence.value && !task.seriesId) {
       // 将普通任务转换为重复任务
-      await taskStore.updateRecurringTask(props.task.id, updates, cleanRecurrence)
-    } else if (!selectedRecurrence.value && props.task.seriesId) {
+      const result = await trackTaskWrite(taskStore.updateRecurringTask(task.id, updates, cleanRecurrence))
+      if (!result?.success) throw new Error(result?.error || '')
+    } else if (!selectedRecurrence.value && task.seriesId) {
       // 将重复任务转换为普通任务
-      await taskStore.updateTask(props.task.id, {
+      await updateCurrentTask( {
         seriesId: null,
         recurrence: null
       })
     } else {
       // 更新普通任务的重复配置
-      await taskStore.updateTask(props.task.id, updates)
+      await updateCurrentTask( updates)
     }
 
     console.log('重复配置已自动保存:', cleanRecurrence)
   } catch (error) {
     console.error('自动保存重复配置失败:', error)
+    timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
   }
 }
 
@@ -866,7 +1135,7 @@ const clearReminder = async () => {
   // 如果是编辑模式，自动保存提醒时间清除
   if (props.isEditing && props.task) {
     try {
-      await taskStore.updateTask(props.task.id, {
+      await updateCurrentTask( {
         reminderPolicy: { mode: 'disabled', minutesBefore: null }
       })
       console.log('提醒已清除并自动保存')
@@ -917,7 +1186,7 @@ const selectList = (list) => {
   showListPicker.value = false
 
   // 如果是编辑模式且列表发生变化，立即更新任务列表
-  if (props.isEditing && props.task && props.task.listId !== list.id) {
+  if (props.isEditing && editingTask.value && editingTask.value.listId !== list.id) {
     handleUpdateTaskList(list.id)
   }
 }
@@ -927,22 +1196,24 @@ const handleUpdateTaskList = async (newListId) => {
   if (!props.task || !props.isEditing) return
 
   try {
-    const result = await taskStore.moveTaskToList(props.task.id, newListId)
+    const task = await ensureEditableTask()
+    if (!task) throw new Error(t('today.saveFailed', { error: '' }))
+    const result = await trackTaskWrite(taskStore.moveTaskToList(task.id, newListId))
     if (result.success) {
-      // 更新本地任务数据的listId
-      if (props.task) {
-        props.task.listId = newListId
-      }
+      selectedListId.value = newListId
+      timeSaveError.value = ''
       console.log('任务列表更新成功')
     } else {
       console.error('更新任务列表失败:', result.error)
       // 恢复原来的选择
-      selectedListId.value = props.task.listId
+      selectedListId.value = editingTask.value?.listId
+      timeSaveError.value = t('today.saveFailed', { error: result?.error || '' })
+      return
     }
   } catch (error) {
     console.error('更新任务列表失败:', error)
-    // 恢复原来的选择
-    selectedListId.value = props.task.listId
+    selectedListId.value = editingTask.value?.listId
+    timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
   }
 }
 
@@ -954,16 +1225,16 @@ const getSelectedListName = () => {
 
 // 获取当前任务列表
 const getCurrentTaskList = () => {
-  if (props.task && props.task.listId) {
-    return availableLists.value.find(list => list.id === props.task.listId)
+  if (editingTask.value && editingTask.value.listId) {
+    return availableLists.value.find(list => list.id === editingTask.value.listId)
   }
   return null
 }
 
 // 获取其他列表
 const getOtherLists = () => {
-  if (props.task && props.task.listId) {
-    return availableLists.value.filter(list => list.id !== props.task.listId)
+  if (editingTask.value && editingTask.value.listId) {
+    return availableLists.value.filter(list => list.id !== editingTask.value.listId)
   }
   return availableLists.value
 }
@@ -1004,11 +1275,15 @@ const handleDateTimeChange = async (newValue) => {
   if (datePickerMode.value === 'scheduleStart') {
     if (!newValue) return
     const start = newValue instanceof Date ? newValue : new Date(newValue)
-    if (scheduleEnd.value && start.getTime() > new Date(scheduleEnd.value).getTime()) {
-      alert(t('tasks.scheduleEndBeforeNewStart'))
-      return
-    }
+    const currentStart = scheduleStart.value ? new Date(scheduleStart.value) : null
+    const currentEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+    const duration = currentStart && currentEnd
+      ? currentEnd.getTime() - currentStart.getTime()
+      : null
     scheduleStart.value = start
+    if (duration !== null && duration >= 0) {
+      scheduleEnd.value = new Date(start.getTime() + duration)
+    }
     await saveSchedule()
     return
   }
@@ -1051,7 +1326,7 @@ const handleDateTimeChange = async (newValue) => {
     // 如果是编辑模式，自动保存截止时间
     if (props.isEditing && props.task) {
       try {
-        const result = await taskStore.updateTask(props.task.id, {
+        const result = await updateCurrentTask( {
           dueDate: selectedDate.value,
           dueTime: selectedTime.value
         })
@@ -1068,7 +1343,7 @@ const handleDateTimeChange = async (newValue) => {
     // 如果是编辑模式且清除了时间，也要自动保存
     if (props.isEditing && props.task) {
       try {
-        await taskStore.updateTask(props.task.id, { dueDate: null })
+        await updateCurrentTask( { dueDate: null })
         console.log('截止时间已清除并自动保存')
       } catch (error) {
         console.error('自动保存截止时间清除失败:', error)
@@ -1083,7 +1358,7 @@ const makeDeadlineDateOnly = async () => {
   selectedTime.value = ''
   if (props.isEditing && props.task) {
     try {
-      await taskStore.updateTask(props.task.id, {
+      await updateCurrentTask( {
         dueDate: selectedDate.value,
         dueTime: null
       })
@@ -1098,7 +1373,7 @@ const makeDeadlineDateOnly = async () => {
 const saveSchedule = async () => {
   if (!(props.isEditing && props.task)) return
   try {
-    const result = await taskStore.updateTask(props.task.id, {
+    const result = await updateCurrentTask( {
       scheduledStartAt: scheduleStart.value ? new Date(scheduleStart.value).toISOString() : null,
       scheduledEndAt: scheduleEnd.value ? new Date(scheduleEnd.value).toISOString() : null
     })
@@ -1131,7 +1406,7 @@ const clearScheduleEnd = async () => {
 const saveAbsoluteReminder = async (reminderTime) => {
   if (!(props.isEditing && props.task)) return
   try {
-    const result = await taskStore.updateTask(props.task.id, {
+    const result = await updateCurrentTask( {
       reminderPolicy: { mode: 'absolute', minutesBefore: null },
       reminderTime: reminderTime.toISOString()
     })
@@ -1173,7 +1448,7 @@ const selectReminderOption = async (option) => {
   }
   if (!(props.isEditing && props.task)) return
   try {
-    const result = await taskStore.updateTask(props.task.id, {
+    const result = await updateCurrentTask( {
       reminderPolicy: { mode: 'relative', minutesBefore: option.minutesBefore }
     })
     applyTimeWarning(result)
@@ -1192,7 +1467,7 @@ const disableReminder = async () => {
   reminderPolicy.value = { mode: 'disabled', minutesBefore: null }
   if (props.isEditing && props.task) {
     try {
-      await taskStore.updateTask(props.task.id, {
+      await updateCurrentTask( {
         reminderPolicy: { mode: 'disabled', minutesBefore: null }
       })
       console.log('提醒已关闭')
@@ -1242,7 +1517,7 @@ const relativePolicyLabel = (policy) => {
 
 // 时间提示：无效旧截止 > 服务端警告（计划晚于截止 / 错过的相对提醒）
 const timeHintText = computed(() => {
-  if (props.task?.deadlineInvalid) {
+  if (editingTask.value?.deadlineInvalid) {
     return '截止数据无效，请重新设置截止时间'
   }
   return timeWarning.value || ''
@@ -1274,8 +1549,8 @@ const formatSelectedDate = (date) => {
 
 // 格式化创建日期
 const formatCreatedDate = () => {
-  if (props.task && props.task.createdAt) {
-    const date = new Date(props.task.createdAt)
+  if (editingTask.value && editingTask.value.createdAt) {
+    const date = new Date(editingTask.value.createdAt)
     const today = new Date()
     const todayStr = getLocalDateString(today)
     const taskDateStr = getLocalDateString(date)
@@ -1301,8 +1576,8 @@ const getBaseDate = () => {
 
 // 删除任务
 const handleDeleteTask = () => {
-  if (props.task) {
-    emit('delete-task', props.task)
+  if (editingTask.value) {
+    emit('delete-task', editingTask.value)
   }
 }
 
@@ -1311,21 +1586,19 @@ const handleToggleComplete = async (task) => {
   if (!task) return
 
   try {
-    if (task.status === 'done') {
+    const editableTask = await ensureEditableTask()
+    if (!editableTask) throw new Error(t('today.saveFailed', { error: '' }))
+    if (editableTask.status === 'done') {
       // 如果已完成，重新开始任务
-      await taskStore.updateTask(task.id, { status: 'todo', completedAt: null })
-      // 立即更新本地task状态
-      task.status = 'todo'
-      task.completedAt = null
+      await updateCurrentTask({ status: 'todo', completedAt: null })
     } else {
       // 如果未完成，标记为完成
-      await taskStore.completeTask(task.id)
-      // 立即更新本地task状态
-      task.status = 'done'
-      task.completedAt = new Date().toISOString()
+      const result = await trackTaskWrite(taskStore.completeTask(editableTask.id))
+      if (!result?.success) throw new Error(result?.error || '')
     }
   } catch (error) {
     console.error('切换任务完成状态失败:', error)
+    timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
   }
 }
 
@@ -1366,29 +1639,36 @@ const debounceSaveTaskContent = () => {
   }, 1000) // 1秒后保存
 }
 
+let titleSaveQueue = Promise.resolve(true)
+
 // 保存任务内容
-const handleSaveTaskContent = async () => {
-  if (!props.task || !props.isEditing || !newTaskContent.value.trim()) return
-
-  // 检查内容是否真的发生了变化
+const handleSaveTaskContent = () => {
+  if (!props.task || !props.isEditing) return Promise.resolve(false)
   const newContent = newTaskContent.value.trim()
-  const originalContent = props.task.content || ''
-
-  if (newContent === originalContent) {
-    console.log('任务内容未发生变化，跳过保存')
-    return
+  if (!newContent) {
+    titleError.value = t('today.titleRequired')
+    return Promise.resolve(false)
   }
 
-  try {
-    const updates = {
-      content: newContent
+  const save = titleSaveQueue.then(async () => {
+  if (newContent === (editingTask.value?.content || '')) {
+      lastSavedTitle.value = newContent
+      titleError.value = ''
+      return true
     }
-
-    await taskStore.updateTask(props.task.id, updates)
-    console.log('任务内容已自动保存:', updates.content)
-  } catch (error) {
-    console.error('自动保存任务内容失败:', error)
-  }
+    try {
+      await updateCurrentTask({ content: newContent })
+      lastSavedTitle.value = newContent
+      titleError.value = ''
+      return true
+    } catch (error) {
+      console.error('自动保存任务内容失败:', error)
+      titleError.value = t('today.saveFailed', { error: error?.message || '' })
+      return false
+    }
+  })
+  titleSaveQueue = save.then(() => true, () => false)
+  return save
 }
 
 // 自动调整备注区域textarea高度
@@ -1412,57 +1692,88 @@ const autoResizeNote = (event) => {
   }
 }
 
-// 防抖保存备注
-const debounceSaveNote = () => {
-  // 清除之前的定时器
-  if (noteDebounceTimer) {
-    clearTimeout(noteDebounceTimer)
+const saveTaskNote = async () => {
+  if (!props.isEditing || !editingTask.value) return true
+  const note = taskNote.value?.trim() || ''
+  if (note === (editingTask.value.metadata?.note || '')) {
+    lastSavedNote.value = note
+    noteError.value = ''
+    return true
   }
 
-  // 设置新的定时器，1秒后保存
-  noteDebounceTimer = setTimeout(async () => {
-    if (props.isEditing && props.task) {
-      try {
-        const currentMetadata = props.task.metadata || {}
-        const updatedMetadata = {
-          ...currentMetadata,
-          note: taskNote.value?.trim() || ''
-        }
-        await taskStore.updateTaskMetadata(props.task.id, updatedMetadata)
-        console.log('备注已自动保存:', taskNote.value)
-      } catch (error) {
-        console.error('自动保存备注失败:', error)
-      }
-    }
+  try {
+    const result = await updateCurrentMetadata((metadata) => ({ ...metadata, note }))
+    if (!result?.success) throw new Error(result?.error || '')
+    lastSavedNote.value = note
+    noteError.value = ''
+    return true
+  } catch (error) {
+    console.error('自动保存备注失败:', error)
+    noteError.value = t('today.saveFailed', { error: error?.message || '' })
+    return false
+  }
+}
+
+// 防抖保存备注；metadata 写入队列会与步骤变更顺序执行，避免覆盖对方的字段。
+const debounceSaveNote = () => {
+  if (noteDebounceTimer) clearTimeout(noteDebounceTimer)
+  noteDebounceTimer = setTimeout(() => {
+    noteDebounceTimer = null
+    saveTaskNote()
   }, 1000)
 }
 
-// 备注失焦时立即保存
 const handleNoteBlur = async () => {
-  if (props.isEditing && props.task) {
-    // 清除防抖定时器
-    if (noteDebounceTimer) {
-      clearTimeout(noteDebounceTimer)
-      noteDebounceTimer = null
-    }
+  if (noteDebounceTimer) {
+    clearTimeout(noteDebounceTimer)
+    noteDebounceTimer = null
+  }
+  await saveTaskNote()
+}
 
-    // 立即保存
-    try {
-      const currentMetadata = props.task.metadata || {}
-      const updatedMetadata = {
-        ...currentMetadata,
-        note: taskNote.value?.trim() || ''
-      }
-      await taskStore.updateTaskMetadata(props.task.id, updatedMetadata)
-      console.log('备注失焦自动保存:', taskNote.value)
-    } catch (error) {
-      console.error('备注失焦自动保存失败:', error)
+const handleNoteKeydown = async (event) => {
+  if (event.isComposing || event.keyCode === 229 || event.key !== 'Escape') return
+  event.preventDefault()
+  event.stopPropagation()
+  if (noteDebounceTimer) {
+    clearTimeout(noteDebounceTimer)
+    noteDebounceTimer = null
+  }
+
+  const committedNote = lastSavedNote.value
+  const hasUncommittedNote = noteError.value || (taskNote.value?.trim() || '') !== committedNote
+  await metadataWriteQueue
+  try {
+    await Promise.all([...pendingTaskWrites])
+  } catch {
+    // Restore the last value that the task store confirms as saved.
+  }
+  const persistedNote = editingTask.value?.metadata?.note || ''
+  if (persistedNote !== committedNote) {
+    const result = await updateCurrentMetadata((metadata) => ({ ...metadata, note: committedNote }))
+    if (!result?.success) {
+      noteError.value = t('today.saveFailed', { error: result?.error || '' })
+      return
     }
   }
+  lastSavedNote.value = committedNote
+  if (hasUncommittedNote) {
+    taskNote.value = committedNote
+    noteError.value = ''
+    nextTick(() => noteInput.value?.focus())
+    return
+  }
+
+  noteError.value = ''
+  handleCancelAdding()
 }
 
 // 组件挂载时初始化
 onMounted(async () => {
+  if (props.inline) {
+    editorCoordinator?.register(taskIdentity(props.task), flushPendingChanges)
+  }
+
   if (!availableLists.value || availableLists.value.length === 0) {
     await taskStore.getAllLists()
   }
@@ -1471,8 +1782,8 @@ onMounted(async () => {
     await taskStore.loadCustomReminderOptions()
   }
 
-  if (props.isEditing && props.task && props.task.listId) {
-    selectedListId.value = props.task.listId
+  if (props.isEditing && editingTask.value?.listId) {
+    selectedListId.value = editingTask.value.listId
   } else if (taskStore.currentListId) {
     selectedListId.value = taskStore.currentListId
   } else if (availableLists.value.length > 0) {
@@ -1485,6 +1796,16 @@ onMounted(async () => {
 // 组件卸载时移除监听器
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (props.inline) editorCoordinator?.unregister(taskIdentity(props.task))
+
+  if (props.inline) {
+    if (newTaskContent.value.trim() && newTaskContent.value !== (editingTask.value?.content || '')) {
+      void handleSaveTaskContent()
+    }
+    if (taskNote.value !== (editingTask.value?.metadata?.note || '')) {
+      void saveTaskNote()
+    }
+  }
 
   // 清理防抖定时器
   if (noteDebounceTimer) {
@@ -1498,30 +1819,37 @@ onUnmounted(() => {
 
 // 加载任务数据的通用函数
 const loadTaskData = () => {
-  if (!props.task) return
+  const task = editingTask.value
+  if (!task) return
 
   isAddingTask.value = true
-  newTaskContent.value = props.task.content || ''
-  isImportant.value = props.task.isImportant || false
-  taskNote.value = props.task.metadata?.note || ''
-  steps.value = props.task.metadata?.steps || []
+  newTaskContent.value = task.content || ''
+  lastSavedTitle.value = task.content || ''
+  titleError.value = ''
+  noteError.value = ''
+  stepError.value = ''
+  timeSaveError.value = ''
+  isImportant.value = task.isImportant || false
+  taskNote.value = task.metadata?.note || ''
+  lastSavedNote.value = task.metadata?.note || ''
+  steps.value = (task.metadata?.steps || []).map((step) => ({ ...step }))
 
   // 截止与提醒分别展示，不再用一个入口填充另一个
-  selectedDate.value = props.task.dueDate || ''
-  selectedTime.value = props.task.dueTime || ''
-  if (props.task.dueDate && props.task.dueTime) {
-    dateTimeValue.value = new Date(`${props.task.dueDate}T${props.task.dueTime}:00`)
+  selectedDate.value = task.dueDate || ''
+  selectedTime.value = task.dueTime || ''
+  if (task.dueDate && task.dueTime) {
+    dateTimeValue.value = new Date(`${task.dueDate}T${task.dueTime}:00`)
   } else {
     dateTimeValue.value = null
   }
 
   // 计划安排（开始 / 结束）
-  scheduleStart.value = props.task.scheduledStartAt ? new Date(props.task.scheduledStartAt) : null
-  scheduleEnd.value = props.task.scheduledEndAt ? new Date(props.task.scheduledEndAt) : null
-  timeWarning.value = props.task.timeWarning || ''
+  scheduleStart.value = task.scheduledStartAt ? new Date(task.scheduledStartAt) : null
+  scheduleEnd.value = task.scheduledEndAt ? new Date(task.scheduledEndAt) : null
+  timeWarning.value = task.timeWarning || ''
 
   // 提醒策略：相对 / 绝对 / 关闭 / 旧绝对（无策略）
-  const policy = props.task.reminderPolicy || null
+  const policy = task.reminderPolicy || null
   reminderPolicy.value = policy
   if (policy && policy.mode === 'relative') {
     selectedReminder.value = {
@@ -1531,28 +1859,28 @@ const loadTaskData = () => {
     }
   } else if (policy && policy.mode === 'disabled') {
     selectedReminder.value = null
-  } else if (props.task.reminderTime) {
-    const reminderDate = new Date(props.task.reminderTime)
-    if (props.task.reminderConfig) {
+  } else if (task.reminderTime) {
+    const reminderDate = new Date(task.reminderTime)
+    if (task.reminderConfig) {
       selectedReminder.value = {
         value: 'custom',
-        label: props.task.reminderConfig.label,
-        config: props.task.reminderConfig,
-        reminderTime: props.task.reminderTime
+        label: task.reminderConfig.label,
+        config: task.reminderConfig,
+        reminderTime: task.reminderTime
       }
     } else {
       selectedReminder.value = {
         value: 'custom',
         label: `${getLocalDateString(reminderDate)} ${reminderDate.toTimeString().slice(0, 5)}`,
-        reminderTime: props.task.reminderTime
+        reminderTime: task.reminderTime
       }
     }
   } else {
     selectedReminder.value = null
   }
 
-  if (props.task.recurrence) {
-    selectedRecurrence.value = props.task.recurrence
+  if (task.recurrence) {
+    selectedRecurrence.value = task.recurrence
     // 编辑现有重复任务时，默认不展开面板
     showRepeatPicker.value = false
   } else {
@@ -1560,8 +1888,8 @@ const loadTaskData = () => {
     showRepeatPicker.value = false
   }
 
-  if (props.task.listId) {
-    selectedListId.value = props.task.listId
+  if (task.listId) {
+    selectedListId.value = task.listId
   }
 
   nextTick(() => {
@@ -1575,29 +1903,14 @@ const loadTaskData = () => {
   })
 }
 
-// 监听编辑状态变化
-watch(() => props.isEditing, (newIsEditing) => {
-  if (newIsEditing && props.task) {
+// 只在真正切换编辑目标时加载；store 刷新同一任务时保留正在编辑的草稿。
+watch(() => [props.isEditing, taskIdentity(props.task)], ([isEditing, identity], previous = []) => {
+  const [wasEditing, previousIdentity] = previous
+  if (isEditing && props.task && (!wasEditing || identity !== previousIdentity)) {
+    materializedTask.value = null
     loadTaskData()
-  } else if (!newIsEditing) {
+  } else if (!isEditing && wasEditing) {
     handleCancelAdding()
-  }
-}, { immediate: true })
-
-// 监听任务变化 - 当点击不同任务时更新编辑区域
-watch(() => props.task, (newTask) => {
-  if (newTask) {
-    loadTaskData()
-  }
-}, { immediate: true })
-
-// 监听编辑状态和任务的组合变化
-watch(() => [props.isEditing, props.task], ([newIsEditing, newTask]) => {
-  if (newIsEditing && newTask) {
-    // 确保在编辑状态下有任务时立即加载数据
-    nextTick(() => {
-      loadTaskData()
-    })
   }
 }, { immediate: true })
 

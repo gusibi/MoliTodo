@@ -4,37 +4,31 @@
     :class="{
       'is-done': status === 'done',
       'is-doing': status === 'doing',
-      'is-dragging': isDragging
+      'is-dragging': isDragging,
+      'is-expanded': expanded
     }"
     :data-status="status"
-    draggable="true"
+    :draggable="!expanded"
+    @click="handleRowClick"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
   >
-    <!-- 主行：状态圆圈（纯展示）+ 标题/备注（单击原位编辑）+ hover 动作（图标即动作） -->
+    <!-- 主行：状态圆圈（纯展示）+ 标题/备注摘要 + hover 动作（图标即动作） -->
     <div class="today-task-main">
-      <span class="today-task-status">
+      <span v-if="!expanded" class="today-task-status">
         <TaskStatusCircle :status="status" />
       </span>
 
-      <div class="today-task-content">
-        <div
-          v-if="!isEditing"
+      <div v-if="!expanded" class="today-task-content">
+        <button
           class="today-task-title"
+          type="button"
           :class="{ 'is-completed': status === 'done' }"
+          :aria-label="expanded ? $t('today.collapseTask') : $t('today.expandTask')"
           v-html="highlightedTitle"
-          :title="$t('floatView.clickToEdit')"
-          @click="startEdit"
-        ></div>
-        <input
-          v-else
-          v-model="editingContent"
-          class="today-task-edit-input"
-          @keydown.enter="saveEdit"
-          @keydown.esc="cancelEdit"
-          @blur="saveEdit"
-          ref="editInput"
-        />
+          :aria-expanded="expanded"
+          @click.stop="$emit('detail', task)"
+        ></button>
         <div v-if="task.metadata?.note" class="today-task-note" v-html="highlightedNote"></div>
       </div>
 
@@ -78,12 +72,16 @@
         <IconButton
           size="icon-sm"
           class="today-task-action-btn"
-          :label="$t('tasks.openDetails')"
+          :label="expanded ? $t('today.collapseTask') : $t('today.expandTask')"
+          :aria-expanded="expanded"
+          ref="expandButton"
           @click.stop="$emit('detail', task)"
         >
-          <Info class="h-icon-sm w-icon-sm" />
+          <ChevronUp v-if="expanded" class="h-icon-sm w-icon-sm" />
+          <ChevronDown v-else class="h-icon-sm w-icon-sm" />
         </IconButton>
         <IconButton
+          v-if="!expanded"
           size="icon-sm"
           class="today-task-action-btn today-task-action-danger"
           :label="$t('tasks.deleteTask')"
@@ -95,7 +93,7 @@
     </div>
 
     <!-- 元信息行：When chip + 提醒 pill + 循环图标 + 分组徽标 + 计时 -->
-    <div class="today-task-meta">
+    <div v-if="!expanded" class="today-task-meta">
       <TaskWhenBubble v-if="status !== 'done'" :task="task" />
       <TaskReminderBubble v-if="status !== 'done'" :task="task" />
 
@@ -136,12 +134,19 @@
         <span>{{ formatDuration(task.totalDuration) }}</span>
       </span>
     </div>
+
+    <TodayTaskExpanded
+      :task="task"
+      :open="expanded"
+      @close="handleCloseExpanded"
+      @delete-task="handleEditorDelete"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { Check, CircleCheck, Clock, Info, Pause, Play, Repeat, RotateCcw, Trash2 } from '@lucide/vue'
+import { Check, ChevronDown, ChevronUp, CircleCheck, Clock, Pause, Play, Repeat, RotateCcw, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import { isTaskOvertime, formatDuration, getCurrentDuration } from '@/utils/task-utils'
@@ -150,13 +155,14 @@ import TaskStatusCircle from '../task/TaskStatusCircle.vue'
 import TaskWhenBubble from '../task/TaskWhenBubble.vue'
 import TaskReminderBubble from '../task/TaskReminderBubble.vue'
 import IconButton from '../ui/button/IconButton.vue'
+import TodayTaskExpanded from './TodayTaskExpanded.vue'
 
 /**
  * Today 页专用任务行（Things 式就地交互）：
  * - 状态圆圈纯展示；动作全部在 hover 动作区，图标即点击后的动作
  * - When chip / 提醒 pill 点击弹气泡就地改期、设提醒（共享悬浮窗组件）
- * - 单击标题原位编辑（Enter 保存 / Esc 取消 / 失焦保存）
- * - 备注、循环规则、结束时间等低频字段仍在编辑面板维护，行上只读展示
+ * - 单击任务正文在原位展开，标题、备注、步骤及全部属性共用一套编辑流程
+ * - 元信息摘要和 When / 提醒捷径仍留在浏览态，行上动作不会顺带展开
  * 不改 FlatTaskItem：普通列表与月视图继续使用旧行组件。
  */
 const props = defineProps({
@@ -175,10 +181,14 @@ const props = defineProps({
   badges: {
     type: Array,
     default: () => []
+  },
+  expanded: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['detail', 'delete-request'])
+const emit = defineEmits(['detail', 'delete-request', 'collapse-request'])
 
 const { t: $t } = useI18n()
 const taskStore = useTaskStore()
@@ -219,67 +229,49 @@ const getCurrentDurationWithTrigger = (task) => {
 
 // ---------- 搜索高亮 ----------
 
-const getHighlightedContent = (task) => {
-  if (!props.searchQuery) return task.content
-  const regex = new RegExp(`(${props.searchQuery})`, 'gi')
-  return task.content.replace(regex, '<mark>$1</mark>')
+const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+})[char])
+
+const getHighlightedContent = (content) => {
+  const text = String(content || '')
+  if (!props.searchQuery) return escapeHtml(text)
+  const query = props.searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${query})`, 'gi')
+  return text.split(regex).map((part, index) => index % 2
+    ? `<mark>${escapeHtml(part)}</mark>`
+    : escapeHtml(part)).join('')
 }
 
-const getHighlightedNote = (task) => {
-  if (!task.metadata?.note || !props.searchQuery) return task.metadata?.note || ''
-  const regex = new RegExp(`(${props.searchQuery})`, 'gi')
-  return task.metadata.note.replace(regex, '<mark>$1</mark>')
+const getHighlightedNote = (note) => {
+  if (!note) return ''
+  return getHighlightedContent(note)
 }
 
-const highlightedTitle = computed(() => getHighlightedContent(props.task))
-const highlightedNote = computed(() => getHighlightedNote(props.task))
+const highlightedTitle = computed(() => getHighlightedContent(props.task.content))
+const highlightedNote = computed(() => getHighlightedNote(props.task.metadata?.note))
 
-// ---------- 行内编辑 ----------
+// ---------- 展开与编辑 ----------
 
-const editInput = ref(null)
-const isEditing = ref(false)
-const editingContent = ref('')
+const expandButton = ref(null)
 
-const startEdit = () => {
-  isEditing.value = true
-  editingContent.value = props.task.content
-  nextTick(() => {
-    editInput.value?.focus()
-    editInput.value?.select()
-  })
+function handleRowClick(event) {
+  if (event.target.closest('button, input, textarea, select, [role="button"], [contenteditable="true"]')) return
+  emit('detail', props.task)
 }
 
-const saveEdit = async () => {
-  if (!isEditing.value) return
-  isEditing.value = false
-  const newContent = editingContent.value.trim()
-  if (!newContent || newContent === props.task.content) return
-
-  try {
-    if (isVirtual.value) {
-      // 虚拟实例保存走重复实例更新（与编辑面板同一路径）
-      const result = await taskStore.updateRecurringInstance(
-        props.task.seriesId,
-        props.task.occurrenceDate,
-        { content: newContent }
-      )
-      if (!result.success) {
-        console.error('更新任务失败:', result.error)
-      }
-      return
-    }
-    const result = await taskStore.updateTask(props.task.id, { content: newContent })
-    if (!result.success) {
-      console.error('更新任务失败:', result.error)
-    }
-  } catch (error) {
-    console.error('更新任务失败:', error)
-  }
+function handleCloseExpanded(options = {}) {
+  const restoreFocus = options?.restoreFocus !== false
+  emit('collapse-request', { task: props.task, restoreFocus })
+  if (restoreFocus) nextTick(() => expandButton.value?.focus())
 }
 
-const cancelEdit = () => {
-  isEditing.value = false
-  editingContent.value = ''
+function handleEditorDelete(task) {
+  emit('delete-request', { task, trigger: document.activeElement })
 }
 
 // ---------- 状态动作（图标即动作） ----------
