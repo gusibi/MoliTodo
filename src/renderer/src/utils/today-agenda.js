@@ -101,6 +101,19 @@ function instanceKey(task) {
 }
 
 /**
+ * Today 卡片的 UI 身份：编辑期间普通任务即使被转换为重复系列也保持原身份；
+ * 重复发生项则在虚拟行与物化行之间保持同一身份。
+ */
+function todayTaskIdentity(task) {
+  if (!task) return '';
+  if (!isSeriesHead(task) && task.seriesId && task.occurrenceDate) {
+    const dateKey = occurrenceDateKeyOf(task);
+    if (dateKey) return `occurrence:${task.seriesId}:${dateKey}`;
+  }
+  return `task:${task.id}`;
+}
+
+/**
  * 合并页面任务世界：
  * - 基础任务（含物化实例与头行）优先；虚拟实例与基础任务同键时丢弃
  * - 同一系列 + 同一发生日期的基础行只保留一条：物化实例（有 occurrenceDate）覆盖头行
@@ -473,6 +486,7 @@ export {
   headOccurrenceDateKey,
   occurrenceDateKeyOf,
   instanceKey,
+  todayTaskIdentity,
   mergeTaskWorld,
   classifyForAgenda,
   isExpiredReminder,

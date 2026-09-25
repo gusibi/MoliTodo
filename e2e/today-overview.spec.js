@@ -490,6 +490,13 @@ async function showCompletedCard(window, content) {
   return window.locator('.today-task-row', { hasText: content });
 }
 
+async function requestDeleteFromContextMenu(window, row) {
+  await row.click({ button: 'right' });
+  const menu = window.getByRole('menu');
+  await expect(menu).toBeVisible();
+  await menu.getByRole('menuitem', { name: '删除任务' }).click();
+}
+
 test('任务删除确认：取消不删除且焦点返回触发控件', async ({ app, window }) => {
   await seedTasks(app.electronApp, [
     { content: '待删除任务', dueDate: localKey(new Date()), status: 'done' }
@@ -498,8 +505,8 @@ test('任务删除确认：取消不删除且焦点返回触发控件', async ({
   await waitForToday(window);
 
   const card = await showCompletedCard(window, '待删除任务');
-  const deleteBtn = card.getByRole('button', { name: '删除任务' });
-  await deleteBtn.click();
+  await expect(card.locator('.today-task-actions').getByRole('button', { name: '删除任务' })).toHaveCount(0);
+  await requestDeleteFromContextMenu(window, card);
 
   const dialog = window.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
@@ -509,7 +516,7 @@ test('任务删除确认：取消不删除且焦点返回触发控件', async ({
   await dialog.getByRole('button', { name: '取消' }).click();
   await expect(dialog).toHaveCount(0);
   await expect(card).toBeVisible();
-  await expect(deleteBtn).toBeFocused();
+  await expect(card.locator('.today-task-title')).toBeFocused();
 });
 
 test('任务删除确认：Escape 取消不删除', async ({ app, window }) => {
@@ -520,12 +527,77 @@ test('任务删除确认：Escape 取消不删除', async ({ app, window }) => {
   await waitForToday(window);
 
   const card = await showCompletedCard(window, 'Escape 保留任务');
-  await card.getByRole('button', { name: '删除任务' }).click();
+  await requestDeleteFromContextMenu(window, card);
   await expect(window.getByRole('alertdialog')).toBeVisible();
 
   await window.keyboard.press('Escape');
   await expect(window.getByRole('alertdialog')).toHaveCount(0);
   await expect(card).toBeVisible();
+});
+
+test('任务菜单可通过 Shift+F10 打开，浏览态不展示展开或删除按钮', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '任务菜单键盘入口', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '任务菜单键盘入口' });
+  await expect(row.locator('.today-task-actions button')).toHaveCount(2);
+  await expect(row.getByRole('button', { name: '删除任务' })).toHaveCount(0);
+  await expect(row.getByRole('button', { name: '展开任务：任务菜单键盘入口' })).toBeVisible();
+  await row.locator('.today-task-title').focus();
+  await window.keyboard.press('Shift+F10');
+  await expect(window.getByRole('menu')).toBeVisible();
+  await expect(window.getByRole('menu').getByRole('menuitem', { name: '删除任务' })).toBeVisible();
+  await window.keyboard.press('Escape');
+  await expect(window.getByRole('menu')).toHaveCount(0);
+  await expect(row.locator('.today-task-title')).toBeFocused();
+});
+
+test('移动展开任务前先保存标题，保存失败时阻止任务离开并保留重试入口', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '改期前的任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsed = window.locator('.today-task-row', { hasText: '改期前的任务' });
+  await collapsed.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const original = service.updateTask.bind(service);
+    let failuresRemaining = 2;
+    service.updateTask = async (id, updates) => {
+      if (updates.content === '先保存这段标题' && failuresRemaining > 0) {
+        failuresRemaining -= 1;
+        throw new Error('title write failed before move');
+      }
+      return original(id, updates);
+    };
+  });
+
+  await row.getByRole('textbox', { name: '任务标题' }).fill('先保存这段标题');
+  await row.locator('.flat-task-checkbox').first().click();
+  await expect(row.locator('#today-task-title-error')).toContainText('title write failed before move');
+
+  const afterFailedMove = await app.electronApp.evaluate(async () => {
+    const task = (await global.__moliTodoApp.taskService.getAllTasks()).find((item) => item.content === '改期前的任务');
+    return { content: task?.content, status: task?.status };
+  });
+  expect(afterFailedMove).toEqual({ content: '改期前的任务', status: 'todo' });
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+
+  await row.locator('#today-task-title-error').getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '先保存这段标题')?.content;
+  }).toBe('先保存这段标题');
+  await row.locator('.flat-task-checkbox').first().click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '先保存这段标题')?.status;
+  }).toBe('done');
 });
 
 test('任务删除确认：确认后删除并持久化，焦点回到有效位置', async ({ app, window }) => {
@@ -536,7 +608,7 @@ test('任务删除确认：确认后删除并持久化，焦点回到有效位�
   await waitForToday(window);
 
   const card = await showCompletedCard(window, '确认删除任务');
-  await card.getByRole('button', { name: '删除任务' }).click();
+  await requestDeleteFromContextMenu(window, card);
   const dialog = window.getByRole('alertdialog');
   await dialog.getByRole('button', { name: '删除', exact: true }).click();
 
@@ -576,7 +648,7 @@ test('任务删除失败：显示错误、任务保留并可重试', async ({ ap
   });
 
   const card = await showCompletedCard(window, '删除会失败');
-  await card.getByRole('button', { name: '删除任务' }).click();
+  await requestDeleteFromContextMenu(window, card);
   const dialog = window.getByRole('alertdialog');
   await dialog.getByRole('button', { name: '删除', exact: true }).click();
 
@@ -1074,7 +1146,7 @@ test('删除确认说明垃圾桶语义，且可从悬浮窗恢复（跨窗口�
   await waitForToday(window);
 
   const row = window.locator('.today-task-row', { hasText: '跨窗口删除任务' });
-  await rowAction(row, '删除任务');
+  await requestDeleteFromContextMenu(window, row);
 
   // 确认文案说明任务会移入垃圾桶
   const dialog = window.getByRole('alertdialog');
@@ -1164,7 +1236,7 @@ test('展开单条任务后编辑内容留在 Agenda 原位且右侧日历保持
   await expect(row.getByText('第一步')).toBeVisible();
   await expect(window.locator('.today-overview-calendar')).toBeVisible();
   await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
-  await expect(row.getByRole('button', { name: '收起任务' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(row.locator('.today-task-actions button')).toHaveCount(2);
   await expect(row.getByRole('button', { name: '展开任务' })).toHaveCount(0);
 
   const title = row.getByRole('textbox', { name: '任务标题' });
@@ -1194,14 +1266,27 @@ test('展开态备注与步骤可新增、编辑、删除且 metadata 字段互�
     has: window.getByRole('region', { name: '任务详情' })
   });
 
-  await row.getByRole('button', { name: '添加安排时间' }).click();
+  const scheduleTrigger = row.getByRole('button', { name: '添加安排时间' });
+  await scheduleTrigger.click();
   await expect(window.locator('.date-picker-popup-fixed')).toBeVisible();
-  await window.locator('.date-picker-backdrop').click({ position: { x: 8, y: 8 } });
+  await window.keyboard.press('Escape');
+  await expect(window.locator('.date-picker-popup-fixed')).toHaveCount(0);
+  await expect(scheduleTrigger).toBeFocused();
   await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+
+  await row.getByRole('button', { name: '清除截止时间' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    const task = tasks.find((item) => item.content === '拆解中的任务');
+    return { dueDate: task?.dueDate ?? null, dueTime: task?.dueTime ?? null };
+  }).toEqual({ dueDate: null, dueTime: null });
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+  await expect(row.locator('.task-title-input')).toBeVisible();
 
   const recurrenceSwitch = row.getByRole('switch', { name: '重复' });
   await recurrenceSwitch.click();
   await expect(recurrenceSwitch).toHaveAttribute('aria-checked', 'true');
+  await expect(row.getByRole('button', { name: '每天' })).toBeVisible();
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
     return Boolean(tasks.find((item) => item.content === '拆解中的任务')?.recurrence);
@@ -1242,4 +1327,180 @@ test('展开态备注与步骤可新增、编辑、删除且 metadata 字段互�
     note: '更新后的备注',
     steps: [{ id: 'step-1', content: '第一步已调整', status: 'todo' }]
   });
+});
+
+test('展开态标题、备注和步骤保存失败后保留草稿并可重试', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{
+    content: '重试字段任务',
+    dueDate: localKey(new Date()),
+    metadata: { note: '旧备注', steps: [] }
+  }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsed = window.locator('.today-task-row', { hasText: '重试字段任务' });
+  await collapsed.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const originalUpdateTask = service.updateTask.bind(service);
+    let failedTitle = false;
+    let failedNote = false;
+    let failedStep = false;
+    service.updateTask = async (id, updates) => {
+      if (updates.content === '重试后的标题' && !failedTitle) {
+        failedTitle = true;
+        throw new Error('title write failed once');
+      }
+      if (updates.metadata?.note === '重试后的备注' && !failedNote) {
+        failedNote = true;
+        throw new Error('note write failed once');
+      }
+      if (updates.metadata?.steps?.some((step) => step.content === '重试后的步骤') && !failedStep) {
+        failedStep = true;
+        throw new Error('step write failed once');
+      }
+      return originalUpdateTask(id, updates);
+    };
+  });
+
+  const title = row.getByRole('textbox', { name: '任务标题' });
+  await title.fill('重试后的标题');
+  await title.evaluate((element) => element.blur());
+  await expect(row.locator('#today-task-title-error')).toContainText('title write failed once');
+  await row.getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '重试后的标题')?.content;
+  }).toBe('重试后的标题');
+
+  const note = row.getByRole('textbox', { name: '任务备注' });
+  await note.fill('重试后的备注');
+  await note.evaluate((element) => element.blur());
+  await expect(row.locator('#today-task-note-error')).toContainText('note write failed once');
+  await row.getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '重试后的标题')?.metadata?.note;
+  }).toBe('重试后的备注');
+
+  const newStep = row.getByRole('textbox', { name: '新步骤' });
+  await newStep.fill('重试后的步骤');
+  await newStep.press('Enter');
+  await expect(row.locator('.task-step-save-error')).toContainText('step write failed once');
+  await row.getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '重试后的标题')?.metadata?.steps;
+  }).toEqual([{ id: expect.any(String), content: '重试后的步骤', status: 'todo' }]);
+});
+
+test('重复规则保存失败后可从重复字段重试', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '重试重复任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsed = window.locator('.today-task-row', { hasText: '重试重复任务' });
+  await collapsed.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const original = service.updateRecurringTask.bind(service);
+    let failed = false;
+    service.updateRecurringTask = async (...args) => {
+      if (!failed) {
+        failed = true;
+        throw new Error('recurrence write failed once');
+      }
+      return original(...args);
+    };
+  });
+
+  await row.getByRole('switch', { name: '重复' }).click();
+  await expect(row.getByRole('alert')).toContainText('recurrence write failed once');
+
+  await row.locator('.flat-task-checkbox').first().click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '重试重复任务')?.status;
+  }).toBe('todo');
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+
+  await row.getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '重试重复任务')?.recurrence?.type;
+  }).toBe('daily');
+});
+
+test('离开展开任务前自动保存尚未提交的新步骤', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '提交时保存步骤', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsed = window.locator('.today-task-row', { hasText: '提交时保存步骤' });
+  await collapsed.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  await row.getByRole('textbox', { name: '新步骤' }).fill('提交前补上的检查');
+  await row.locator('.flat-task-checkbox').first().click();
+
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    const task = tasks.find((item) => item.content === '提交时保存步骤');
+    return { status: task?.status, steps: task?.metadata?.steps };
+  }).toEqual({
+    status: 'done',
+    steps: [{ id: expect.any(String), content: '提交前补上的检查', status: 'todo' }]
+  });
+});
+
+test('展开态清除截止保存失败后可重试并跟随任务移动', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '清除截止后仍展开', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsedRow = window.locator('.today-task-row', { hasText: '清除截止后仍展开' });
+  await collapsedRow.locator('.today-task-title').click();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const original = service.updateTask.bind(service);
+    let failed = false;
+    service.updateTask = async (...args) => {
+      if (!failed) {
+        failed = true;
+        throw new Error('injected update failure');
+      }
+      return original(...args);
+    };
+  });
+
+  await row.getByRole('button', { name: '清除截止时间' }).click();
+  await expect(row.getByRole('alert')).toContainText('injected update failure');
+  await expect(row.getByRole('button', { name: '重试' })).toBeVisible();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    return tasks.find((item) => item.content === '清除截止后仍展开')?.dueDate;
+  }).toBe(localKey(new Date()));
+
+  await row.getByRole('button', { name: '重试' }).click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    const task = tasks.find((item) => item.content === '清除截止后仍展开');
+    return { dueDate: task?.dueDate ?? null, dueTime: task?.dueTime ?? null };
+  }).toEqual({ dueDate: null, dueTime: null });
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
+  await expect.poll(() => row.evaluate((element) => element.closest('[data-agenda-section="unplanned"]') !== null))
+    .toBe(true);
 });

@@ -10,7 +10,7 @@
             <!-- 复选框 -->
             <div class="flat-task-checkbox">
               <Checkbox :id="`task-edit-${task?.id || 'new'}`" :model-value="task?.status === 'done'"
-                :label="t('today.taskStatusLabel')" indicator-class="flat-checkbox-label"
+                :label="t('today.taskStatusLabel')" indicator-class="ui-checkbox-indicator-flat"
                 @update:model-value="handleToggleComplete(task)" @click.stop />
             </div>
 
@@ -22,10 +22,37 @@
                 rows="1" :style="{ minHeight: '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
                 @blur="handleInputBlur" @keydown="handleTitleKeydown"
                 @input="autoResize"></textarea>
-              <p v-if="titleError" id="today-task-title-error" class="task-field-error" role="alert">{{ titleError }}</p>
+              <div v-if="titleError" id="today-task-title-error" class="task-field-error" role="alert">
+                <span>{{ titleError }}</span>
+                <Button v-if="failedTitleSave" variant="outline" size="sm" :loading="titleSaveInProgress"
+                  :disabled="titleSaveInProgress" @click="handleSaveTaskContent">
+                  {{ t('common.retry') }}
+                </Button>
+              </div>
               <div class="task-input-counter" v-if="isAddingTask">
                 {{ newTaskContent.length }}/1000
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 备注区域 -->
+        <div v-if="isAddingTask" class="task-note">
+          <div class="task-note-editor">
+            <div class="task-note-input-wrapper">
+              <textarea ref="noteInput" v-model="taskNote" :aria-label="t('today.taskNoteLabel')"
+                :aria-invalid="!!noteError" :aria-describedby="noteError ? 'today-task-note-error' : undefined"
+                :placeholder="t('today.addNote')" class="task-note-textarea" maxlength="1000" :rows="inline ? 2 : 5"
+                :style="{ minHeight: '3rem', maxHeight: '15rem' }" @input="autoResizeNote"
+                @blur="handleNoteBlur" @keydown="handleNoteKeydown"></textarea>
+              <div v-if="noteError" id="today-task-note-error" class="task-field-error" role="alert">
+                <span>{{ noteError }}</span>
+                <Button v-if="failedNoteSave" variant="outline" size="sm" :loading="noteSaveInProgress"
+                  :disabled="noteSaveInProgress" @click="saveTaskNote">
+                  {{ t('common.retry') }}
+                </Button>
+              </div>
+              <div class="task-note-counter">{{ taskNote.length }}/1000</div>
             </div>
           </div>
         </div>
@@ -36,7 +63,7 @@
             <div v-for="(step, index) in steps" :key="step.id" class="step-item">
               <div class="flat-task-checkbox">
                 <Checkbox :id="`step-${step.id}`" :model-value="step.status === 'done'"
-                  :label="t('today.toggleStepStatus', { index: index + 1 })" indicator-class="flat-checkbox-label"
+                  :label="t('today.toggleStepStatus', { index: index + 1 })" indicator-class="ui-checkbox-indicator-flat"
                   @update:model-value="toggleStepStatus(step)" @click.stop />
               </div>
               <input v-if="editingStepId === step.id" v-model="editingStepContent" type="text"
@@ -53,14 +80,18 @@
               </IconButton>
             </div>
           </div>
-          <p v-if="stepError" class="task-field-error" role="alert">{{ stepError }}</p>
+          <div v-if="stepError" class="task-field-error task-step-save-error" role="alert">
+            <span>{{ stepError }}</span>
+            <Button v-if="failedStepRetry" variant="outline" size="sm" :loading="retryingStepSave"
+              :disabled="retryingStepSave" @click="retryStepSave">{{ t('common.retry') }}</Button>
+          </div>
           <div class="step-add">
             <IconButton size="icon-sm" class="step-add-btn" :label="t('tasks.addStep')" @click="addStep">
               <Plus class="h-icon-sm w-icon-sm step-add-icon" aria-hidden="true" />
             </IconButton>
             <input ref="newStepInput" v-model="newStepContent" type="text" :aria-label="t('today.newStepLabel')"
               :placeholder="t('tasks.addStep')" class="step-add-input"
-              @keydown.enter="handleStepAddKeydown" />
+              @keydown="handleStepAddKeydown" />
           </div>
         </div>
 
@@ -69,7 +100,7 @@
           <!-- 列表选择 -->
           <div class="task-option-section-list">
             <div class="task-option-item">
-              <Button variant="ghost" class="task-option-btn" @click="toggleListPicker">
+              <Button variant="ghost" class="task-option-btn" ref="listPickerBtn" @click="toggleListPicker">
                 <div class="task-option-icon">
                   <Tag class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
@@ -129,7 +160,7 @@
           <!-- 提醒设置（附属：策略化提醒） -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': selectedReminder }">
-              <Button variant="ghost" class="task-option-btn" @click="toggleReminderPicker">
+              <Button variant="ghost" class="task-option-btn" ref="reminderPickerBtn" @click="toggleReminderPicker">
                 <div class="task-option-icon">
                   <Bell class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
@@ -230,7 +261,11 @@
             <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ timeHintText }}</span>
           </div>
-          <p v-if="timeSaveError" class="task-field-error" role="alert">{{ timeSaveError }}</p>
+          <div v-if="timeSaveError" class="task-field-error task-time-save-error" role="alert">
+            <span>{{ timeSaveError }}</span>
+            <Button v-if="failedTimeUpdates" variant="outline" size="sm" :loading="retryingTimeSave"
+              :disabled="retryingTimeSave" @click="retryTimeSave">{{ t('common.retry') }}</Button>
+          </div>
           
           <!-- 日期选择器 Portal - 固定定位在最上层 -->
           <Teleport to="body">
@@ -259,12 +294,12 @@
           <!-- 重复设置 -->
           <div class="task-option-section">
             <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
-              <Button variant="ghost" class="task-option-btn" @click="toggleRepeatPicker">
+              <Button variant="ghost" class="task-option-btn" ref="repeatPickerBtn" @click="toggleRepeatPicker">
                 <div class="task-option-icon">
                   <Repeat2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ t('today.recurrenceLabel') }}</div>
+                  <div class="task-option-title">{{ recurrenceSummary }}</div>
                 </div>
               </Button>
               <Switch class="task-option-switch" :model-value="!!selectedRecurrence"
@@ -276,24 +311,15 @@
               <RepeatSelector v-model="selectedRecurrence" :base-date="getBaseDate()"
                 @update:modelValue="handleRecurrenceChange" />
             </div>
-          </div>
-
-        </div>
-
-        <!-- 备注区域 -->
-        <div v-if="isAddingTask" class="task-note">
-          <div class="task-note-editor">
-            <div class="task-note-input-wrapper">
-              <textarea ref="noteInput" v-model="taskNote" :aria-label="t('today.taskNoteLabel')"
-                :aria-invalid="!!noteError" :aria-describedby="noteError ? 'today-task-note-error' : undefined"
-                :placeholder="t('today.addNote')" class="task-note-textarea" maxlength="1000" :rows="inline ? 2 : 5"
-                :style="{ minHeight: '3rem', maxHeight: '15rem' }" @input="autoResizeNote"
-                @blur="handleNoteBlur" @keydown="handleNoteKeydown"></textarea>
-              <p v-if="noteError" id="today-task-note-error" class="task-field-error" role="alert">{{ noteError }}</p>
-              <div class="task-note-counter">{{ taskNote.length }}/1000</div>
+            <div v-if="recurrenceSaveError" class="task-field-error task-recurrence-save-error" role="alert">
+              <span>{{ recurrenceSaveError }}</span>
+              <Button v-if="failedRecurrenceSave" variant="outline" size="sm" :loading="retryingRecurrenceSave"
+                :disabled="retryingRecurrenceSave" @click="retryRecurrenceSave">{{ t('common.retry') }}</Button>
             </div>
           </div>
+
         </div>
+
       </div>
 
       <!-- 操作按钮区域 -->
@@ -331,7 +357,6 @@
 import { ref, nextTick, watch, onMounted, onUnmounted, defineExpose, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { localeCode } from '../utils/locale-format.js'
-import { localDateKey } from '../utils/task-time-rules.js'
 import { storeToRefs } from 'pinia'
 import {
   Ban,
@@ -356,7 +381,7 @@ import Button from './ui/button/Button.vue'
 import IconButton from './ui/button/IconButton.vue'
 import Checkbox from './ui/checkbox/Checkbox.vue'
 import Switch from './ui/switch/Switch.vue'
-import { isVirtualInstance } from '../utils/today-agenda.js'
+import { todayTaskIdentity, isVirtualInstance } from '../utils/today-agenda.js'
 
 // 导入 V-Calendar 样式文件
 import 'v-calendar/style.css'
@@ -388,6 +413,8 @@ const { customReminderOptions: storeCustomReminderOptions, lists } = storeToRefs
 
 const materializedTask = ref(null)
 const timeSaveError = ref('')
+const failedTimeUpdates = ref(null)
+const retryingTimeSave = ref(false)
 const pendingTaskWrites = new Set()
 let materializationPromise = null
 const editingTask = computed(() => {
@@ -397,11 +424,7 @@ const editingTask = computed(() => {
 })
 
 function taskIdentity(task) {
-  const occurrenceDate = localDateKey(task?.occurrenceDate)
-  if (task?.seriesId && occurrenceDate) {
-    return `occurrence:${task.seriesId}:${occurrenceDate}`
-  }
-  return task ? `task:${task.id}` : ''
+  return todayTaskIdentity(task)
 }
 
 async function ensureEditableTask() {
@@ -425,13 +448,12 @@ async function ensureEditableTask() {
 }
 
 async function saveTaskUpdates(task, updates) {
-  const serializableUpdates = JSON.parse(JSON.stringify(updates))
   if (task?.seriesId && task?.occurrenceDate) {
-    const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, serializableUpdates)
+    const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, updates)
     if (result?.success && result.task) materializedTask.value = result.task
     return result
   }
-  return taskStore.updateTask(task.id, serializableUpdates)
+  return taskStore.updateTask(task.id, updates)
 }
 
 function trackTaskWrite(promise) {
@@ -444,18 +466,61 @@ function trackTaskWrite(promise) {
   return tracked
 }
 
-async function updateCurrentTask(updates) {
-  return trackTaskWrite((async () => {
-    const task = editingTask.value
-    if (!task) throw new Error(t('today.saveFailed', { error: '' }))
-    const result = await saveTaskUpdates(task, updates)
-    if (!result?.success) {
-      timeSaveError.value = t('today.saveFailed', { error: result?.error || '' })
-      throw new Error(result?.error || t('today.saveFailed', { error: '' }))
+async function updateCurrentTask(updates, { reportTimeError = true } = {}) {
+  const task = editingTask.value
+  if (!task) throw new Error(t('today.saveFailed', { error: '' }))
+  const serializableUpdates = JSON.parse(JSON.stringify(updates))
+  const changesTaskLocation = ['dueDate', 'scheduledStartAt', 'status', 'listId']
+    .some((field) => field in serializableUpdates)
+  if (props.inline && changesTaskLocation) {
+    const canChangeLocation = await editorCoordinator?.beforeTaskLocationChange?.(taskIdentity(task))
+    if (canChangeLocation === false) {
+      selectedDate.value = task.dueDate || ''
+      selectedTime.value = task.dueTime || ''
+      dateTimeValue.value = task.dueDate && task.dueTime
+        ? new Date(`${task.dueDate}T${task.dueTime}:00`)
+        : null
+      scheduleStart.value = task.scheduledStartAt ? new Date(task.scheduledStartAt) : null
+      scheduleEnd.value = task.scheduledEndAt ? new Date(task.scheduledEndAt) : null
+      selectedListId.value = task.listId || null
+      const error = new Error('Task edits must save before its location can change')
+      error.taskLocationChangeBlocked = true
+      throw error
     }
-    timeSaveError.value = ''
-    return result
+  }
+
+  return trackTaskWrite((async () => {
+    try {
+      const result = await saveTaskUpdates(task, serializableUpdates)
+      if (!result?.success) throw new Error(result?.error || t('today.saveFailed', { error: '' }))
+      if (reportTimeError) {
+        timeSaveError.value = ''
+        failedTimeUpdates.value = null
+      }
+      if (props.inline && changesTaskLocation) {
+        editorCoordinator?.taskLocationChanged?.(taskIdentity(task), result.task)
+      }
+      return result
+    } catch (error) {
+      if (reportTimeError) {
+        failedTimeUpdates.value = serializableUpdates
+        timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
+      }
+      throw error
+    }
   })())
+}
+
+const retryTimeSave = async () => {
+  if (!failedTimeUpdates.value || retryingTimeSave.value) return
+  retryingTimeSave.value = true
+  try {
+    await updateCurrentTask(failedTimeUpdates.value)
+  } catch {
+    // The field error and retry payload remain available for another attempt.
+  } finally {
+    retryingTimeSave.value = false
+  }
 }
 
 let metadataWriteQueue = Promise.resolve()
@@ -469,7 +534,7 @@ async function updateCurrentMetadata(mutateMetadata) {
       const currentTask = editingTask.value || task
       const latestTask = taskStore.tasks.find((item) => item.id === currentTask.id) || currentTask
       const metadata = await mutateMetadata(latestTask.metadata || {})
-      return saveTaskUpdates(currentTask, { metadata })
+      return saveTaskUpdates(currentTask, JSON.parse(JSON.stringify({ metadata })))
     })
     metadataWriteQueue = write.then(() => undefined, () => undefined)
     return write
@@ -486,6 +551,10 @@ const noteInput = ref(null)
 const fileInput = ref(null)
 const datePickerBtn = ref(null)
 const datePickerSection = ref(null)
+const listPickerBtn = ref(null)
+const reminderPickerBtn = ref(null)
+const repeatPickerBtn = ref(null)
+const datePickerTrigger = ref(null)
 
 // 任务相关状态
 const newTaskContent = ref('')
@@ -495,8 +564,17 @@ const isImportant = ref(false)
 const taskNote = ref('')
 const lastSavedNote = ref('')
 const titleError = ref('')
+const failedTitleSave = ref(false)
+const titleSaveInProgress = ref(false)
 const noteError = ref('')
+const failedNoteSave = ref(false)
+const noteSaveInProgress = ref(false)
 const stepError = ref('')
+const failedStepRetry = ref(null)
+const retryingStepSave = ref(false)
+const recurrenceSaveError = ref('')
+const failedRecurrenceSave = ref(false)
+const retryingRecurrenceSave = ref(false)
 
 // 防抖定时器
 let noteDebounceTimer = null
@@ -509,6 +587,23 @@ const stepAddInProgress = ref(false)
 const editingStepId = ref(null)
 const editingStepContent = ref('')
 const stepSaveInProgress = ref(false)
+let titleSavePending = 0
+let noteSavePending = 0
+
+const recordStepSaveFailure = (error, retry) => {
+  stepError.value = t('today.saveFailed', { error: error?.message || error || '' })
+  failedStepRetry.value = retry
+}
+
+const retryStepSave = async () => {
+  if (!failedStepRetry.value || retryingStepSave.value) return
+  retryingStepSave.value = true
+  try {
+    await failedStepRetry.value()
+  } finally {
+    retryingStepSave.value = false
+  }
+}
 
 // 日期时间相关状态
 const selectedDate = ref('')
@@ -540,6 +635,70 @@ const availableLists = lists
 // 重复任务相关状态
 const selectedRecurrence = ref(null)
 const showRepeatPicker = ref(false)
+const recurrenceSummary = computed(() => {
+  const rule = selectedRecurrence.value
+  const units = ['daily', 'weekly', 'monthly', 'yearly']
+  if (!rule?.type || !units.includes(rule.type)) return t('today.recurrenceLabel')
+  const interval = Math.max(1, Number(rule.interval) || 1)
+  let summary = interval === 1
+    ? t(`today.recurrenceEvery.${rule.type}`)
+    : t('today.recurrenceInterval', {
+        interval,
+        unit: t(`today.recurrenceUnit.${rule.type}`)
+      })
+  const join = locale.value.startsWith('zh') ? '、' : ', '
+  const weekdayName = (day) => t(`today.recurrenceWeekday.${day}`)
+  const values = (value) => Array.isArray(value) ? value : value == null ? [] : [value]
+  const weekDescription = (week) => Number(week) === -1
+    ? t('today.recurrenceLastWeek')
+    : t('today.recurrenceWeekNumber', { week })
+
+  if (rule.type === 'weekly' && rule.daysOfWeek?.length) {
+    const days = [...rule.daysOfWeek].sort((a, b) => a - b).map(weekdayName).join(join)
+    summary += t('today.recurrenceOnDays', { days })
+  }
+
+  if (rule.type === 'monthly') {
+    const monthDays = values(rule.byMonthDay).filter(Boolean).sort((a, b) => a - b)
+    if (monthDays.length) {
+      summary += t('today.recurrenceOnMonthDays', { days: monthDays.join(join) })
+    } else if (rule.byWeekDay?.weekday !== undefined) {
+      summary += t('today.recurrenceOnWeekday', {
+        week: weekDescription(rule.byWeekDay.week),
+        weekday: weekdayName(rule.byWeekDay.weekday)
+      })
+    }
+  }
+
+  if (rule.type === 'yearly') {
+    const months = values(rule.byMonth).filter(Boolean).sort((a, b) => a - b)
+    if (months.length) {
+      summary += t('today.recurrenceInMonths', {
+        months: months.map((month) => t('today.recurrenceMonth', { month })).join(join)
+      })
+    }
+    const monthDays = values(rule.byMonthDay).filter(Boolean).sort((a, b) => a - b)
+    if (monthDays.length) {
+      summary += t('today.recurrenceOnMonthDays', { days: monthDays.join(join) })
+    } else if (rule.byWeekDay?.weekday !== undefined) {
+      summary += t('today.recurrenceOnWeekday', {
+        week: weekDescription(rule.byWeekDay.week),
+        weekday: weekdayName(rule.byWeekDay.weekday)
+      })
+    }
+  }
+
+  if (rule.endCondition?.type === 'date' && rule.endCondition.endDate) {
+    const endDate = new Date(`${String(rule.endCondition.endDate).slice(0, 10)}T12:00:00`)
+    const date = Number.isNaN(endDate.getTime())
+      ? rule.endCondition.endDate
+      : new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(endDate)
+    summary += t('today.recurrenceUntilDate', { date })
+  } else if ((rule.endCondition?.type === 'count' && rule.endCondition.count) || rule.count) {
+    summary += t('today.recurrenceCount', { count: rule.endCondition?.count || rule.count })
+  }
+  return summary
+})
 
 // 使用 storeToRefs 确保响应式
 const customReminderOptions = storeCustomReminderOptions
@@ -583,6 +742,7 @@ const openPickerFor = (mode, btnEl) => {
   // 计算按钮位置（模板传入的是 ref 对象）
   const anchor = (btnEl && (btnEl.value || btnEl)) || datePickerBtn.value
   const anchorBtn = anchor?.el?.value || anchor?.$el || anchor
+  datePickerTrigger.value = anchorBtn || null
   if (anchorBtn) {
     const rect = anchorBtn.getBoundingClientRect()
     const pickerHeight = 380 // 预估的选择器高度
@@ -665,6 +825,39 @@ const handleTitleKeydown = (event) => {
   }
 }
 
+const handleEscapeKeydown = (event) => {
+  if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return
+
+  if (showDatePicker.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    showDatePicker.value = false
+    nextTick(() => datePickerTrigger.value?.focus?.())
+    return
+  }
+
+  if (stepDeleteOpen.value || document.querySelector('[role="alertdialog"], [role="dialog"]')) return
+
+  const popover = [
+    [showRepeatPicker, repeatPickerBtn],
+    [showReminderPicker, reminderPickerBtn],
+    [showListPicker, listPickerBtn]
+  ].find(([isOpen]) => isOpen.value)
+  if (popover) {
+    event.preventDefault()
+    event.stopPropagation()
+    popover[0].value = false
+    nextTick(() => popover[1].value?.focus?.())
+    return
+  }
+
+  if (props.inline && props.isEditing) {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleCancelAdding()
+  }
+}
+
 const handleTitleEscape = async () => {
   if (contentDebounceTimer.value) clearTimeout(contentDebounceTimer.value)
   const committedTitle = lastSavedTitle.value
@@ -672,7 +865,7 @@ const handleTitleEscape = async () => {
   await titleSaveQueue
   if ((editingTask.value?.content || '') !== committedTitle) {
     try {
-      await updateCurrentTask({ content: committedTitle })
+      await updateCurrentTask({ content: committedTitle }, { reportTimeError: false })
     } catch (error) {
       titleError.value = t('today.saveFailed', { error: error?.message || '' })
       return
@@ -706,13 +899,18 @@ const flushPendingChanges = async () => {
 
   const titleSaved = await handleSaveTaskContent()
   const noteSaved = await saveTaskNote()
+  if (newStepContent.value.trim() && !stepError.value && !stepAddInProgress.value) {
+    await addStep({ focusNext: false })
+  }
   try {
     await Promise.all([...pendingTaskWrites])
   } catch {
     // Individual fields keep their own visible errors and drafts.
   }
   await metadataWriteQueue
-  const canClose = titleSaved && noteSaved && !titleError.value && !noteError.value && !stepError.value && !timeSaveError.value
+  const canClose = titleSaved && noteSaved && !titleError.value && !noteError.value
+    && !stepError.value && !failedStepRetry.value && !newStepContent.value.trim() && !stepAddInProgress.value
+    && !recurrenceSaveError.value && (!timeSaveError.value || retryingTimeSave.value)
   return canClose
 }
 
@@ -720,10 +918,17 @@ const flushPendingChanges = async () => {
 const resetAllStates = () => {
   isAddingTask.value = false
   newTaskContent.value = ''
+  titleError.value = ''
+  failedTitleSave.value = false
   isImportant.value = false
   taskNote.value = ''
+  noteError.value = ''
+  failedNoteSave.value = false
   steps.value = []
   newStepContent.value = ''
+  stepError.value = ''
+  failedStepRetry.value = null
+  retryingStepSave.value = false
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
@@ -733,7 +938,12 @@ const resetAllStates = () => {
   scheduleStart.value = null
   scheduleEnd.value = null
   timeWarning.value = ''
+  failedTimeUpdates.value = null
+  timeSaveError.value = ''
   selectedRecurrence.value = null
+  recurrenceSaveError.value = ''
+  failedRecurrenceSave.value = false
+  retryingRecurrenceSave.value = false
   showReminderPicker.value = false
   showListPicker.value = false
   showRepeatPicker.value = false
@@ -748,6 +958,7 @@ const resetAllStates = () => {
 
 // 处理输入框失焦
 const handleInputBlur = async (event) => {
+  if (failedTitleSave.value) return
   // 如果是编辑模式，先保存内容
   if (props.isEditing && props.task && newTaskContent.value.trim()) {
     if (contentDebounceTimer.value) clearTimeout(contentDebounceTimer.value)
@@ -788,7 +999,7 @@ const handleClickOutside = (event) => {
 }
 
 // 添加步骤
-const addStep = async () => {
+const addStep = async ({ focusNext = true } = {}) => {
   if (stepAddInProgress.value) return
   const stepContent = newStepContent.value.trim()
   if (!stepContent) return
@@ -796,7 +1007,7 @@ const addStep = async () => {
   if (props.isEditing && props.task) {
     const target = await ensureEditableTask()
     if (!target) {
-      stepError.value = t('today.saveFailed', { error: '' })
+      recordStepSaveFailure('', () => addStep())
       return
     }
     const newStep = { id: Date.now().toString(), content: stepContent, status: 'todo' }
@@ -807,16 +1018,17 @@ const addStep = async () => {
         steps: [...(metadata.steps || []), newStep]
       }))
       if (!result?.success) {
-        stepError.value = t('today.saveFailed', { error: result?.error || '' })
+        recordStepSaveFailure(result?.error, () => addStep())
         return
       }
       steps.value.push(newStep)
       newStepContent.value = ''
       stepError.value = ''
+      failedStepRetry.value = null
       await nextTick()
-      newStepInput.value?.focus()
+      if (focusNext) newStepInput.value?.focus()
     } catch (error) {
-      stepError.value = t('today.saveFailed', { error: error?.message || '' })
+      recordStepSaveFailure(error, () => addStep())
     } finally {
       stepAddInProgress.value = false
     }
@@ -826,13 +1038,23 @@ const addStep = async () => {
   steps.value.push({ id: Date.now(), content: stepContent, status: 'todo' })
   newStepContent.value = ''
   stepError.value = ''
+  failedStepRetry.value = null
 }
 
 const handleStepAddKeydown = (event) => {
   if (event.isComposing || event.keyCode === 229) return
-  if (event.key !== 'Enter') return
-  event.preventDefault()
-  addStep()
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    addStep()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    if (newStepContent.value.trim()) {
+      newStepContent.value = ''
+      return
+    }
+    void handleCancelAdding()
+  }
 }
 
 // 删除步骤：统一走 AlertDialog 确认，失败保留上下文可重试
@@ -912,6 +1134,7 @@ const toggleStepStatus = async (step) => {
       }))
       if (!result || result.success === false) throw new Error(result?.error || '保存失败')
       stepError.value = ''
+      failedStepRetry.value = null
       if (newStatus === 'done' && editingTask.value?.status === 'todo') {
         const task = await ensureEditableTask()
         if (task) {
@@ -924,7 +1147,7 @@ const toggleStepStatus = async (step) => {
     } catch (error) {
       console.error('更新步骤状态失败:', error)
       step.status = previousStatus
-      stepError.value = t('today.saveFailed', { error: error?.message || '' })
+      recordStepSaveFailure(error, () => toggleStepStatus(step))
     }
   }
 }
@@ -966,15 +1189,16 @@ const saveStepEdit = async (step) => {
         steps: (metadata.steps || []).map((item) => item.id === step.id ? { ...item, content: newContent } : item)
       }))
       if (!result || result.success === false) {
-        stepError.value = t('today.saveFailed', { error: result?.error || '' })
+        recordStepSaveFailure(result?.error, () => saveStepEdit(step))
         return
       }
       step.content = newContent
       stepError.value = ''
+      failedStepRetry.value = null
       cancelStepEdit()
     } catch (error) {
       console.error('更新步骤失败:', error)
-      stepError.value = t('today.saveFailed', { error: error?.message || '' })
+      recordStepSaveFailure(error, () => saveStepEdit(step))
     } finally {
       stepSaveInProgress.value = false
     }
@@ -999,7 +1223,9 @@ const handleStepEditKeydown = (event, step) => {
   } else if (event.key === 'Escape') {
     event.preventDefault()
     event.stopPropagation()
+    const index = steps.value.findIndex((item) => item.id === step.id)
     cancelStepEdit()
+    nextTick(() => taskEditContainer.value?.querySelectorAll('.step-content')[index]?.focus())
   }
 }
 
@@ -1065,7 +1291,9 @@ const handleRecurrenceChange = async (recurrence) => {
 
 // 保存重复配置
 const handleSaveRecurrence = async () => {
-  if (!props.task || !props.isEditing) return
+  if (!props.task || !props.isEditing) return false
+  recurrenceSaveError.value = ''
+  failedRecurrenceSave.value = false
 
   try {
     const task = await ensureEditableTask()
@@ -1096,19 +1324,32 @@ const handleSaveRecurrence = async () => {
       if (!result?.success) throw new Error(result?.error || '')
     } else if (!selectedRecurrence.value && task.seriesId) {
       // 将重复任务转换为普通任务
-      await updateCurrentTask( {
+      await updateCurrentTask({
         seriesId: null,
         recurrence: null
-      })
+      }, { reportTimeError: false })
     } else {
       // 更新普通任务的重复配置
-      await updateCurrentTask( updates)
+      await updateCurrentTask(updates, { reportTimeError: false })
     }
 
     console.log('重复配置已自动保存:', cleanRecurrence)
+    return true
   } catch (error) {
     console.error('自动保存重复配置失败:', error)
-    timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
+    recurrenceSaveError.value = t('today.saveFailed', { error: error?.message || '' })
+    failedRecurrenceSave.value = true
+    return false
+  }
+}
+
+const retryRecurrenceSave = async () => {
+  if (!failedRecurrenceSave.value || retryingRecurrenceSave.value) return
+  retryingRecurrenceSave.value = true
+  try {
+    await handleSaveRecurrence()
+  } finally {
+    retryingRecurrenceSave.value = false
   }
 }
 
@@ -1120,11 +1361,18 @@ const toggleListPicker = () => {
 
 
 // 清除日期时间
-const clearDateTime = () => {
+const clearDateTime = async () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
   showDatePicker.value = false
+  if (props.isEditing && props.task) {
+    try {
+      await updateCurrentTask({ dueDate: null, dueTime: null })
+    } catch (error) {
+      console.error('自动保存截止时间清除失败:', error)
+    }
+  }
 }
 
 // 清除提醒（显式关闭，改期不会自动恢复通知）
@@ -1383,7 +1631,6 @@ const saveSchedule = async () => {
     console.log('计划安排已自动保存')
   } catch (error) {
     console.error('自动保存计划安排失败:', error)
-    alert(error?.message || '计划安排保存失败')
   }
 }
 
@@ -1414,7 +1661,6 @@ const saveAbsoluteReminder = async (reminderTime) => {
     syncReminderFromResult(result)
   } catch (error) {
     console.error('保存自定义提醒失败:', error)
-    alert(error?.message || '提醒设置失败')
   }
 }
 
@@ -1443,7 +1689,7 @@ const isReminderOptionActive = (option) => {
 // 选择提醒选项
 const selectReminderOption = async (option) => {
   if (option.kind === 'absolute') {
-    openPickerFor('reminderAbsolute', null)
+    openPickerFor('reminderAbsolute', reminderPickerBtn)
     return
   }
   if (!(props.isEditing && props.task)) return
@@ -1456,7 +1702,6 @@ const selectReminderOption = async (option) => {
     showReminderPicker.value = false
   } catch (error) {
     console.error('保存相对提醒失败:', error)
-    alert(error?.message || '提醒设置失败')
   }
 }
 
@@ -1593,10 +1838,21 @@ const handleToggleComplete = async (task) => {
       await updateCurrentTask({ status: 'todo', completedAt: null })
     } else {
       // 如果未完成，标记为完成
+      const identity = taskIdentity(editableTask)
+      if (props.inline && await editorCoordinator?.beforeTaskLocationChange?.(identity) === false) return
       const result = await trackTaskWrite(taskStore.completeTask(editableTask.id))
       if (!result?.success) throw new Error(result?.error || '')
+      if (props.inline) {
+        editorCoordinator?.taskLocationChanged?.(identity, {
+          ...editableTask,
+          status: 'done',
+          completed: true,
+          completedAt: new Date().toISOString()
+        })
+      }
     }
   } catch (error) {
+    if (error?.taskLocationChangeBlocked) return
     console.error('切换任务完成状态失败:', error)
     timeSaveError.value = t('today.saveFailed', { error: error?.message || '' })
   }
@@ -1647,28 +1903,37 @@ const handleSaveTaskContent = () => {
   const newContent = newTaskContent.value.trim()
   if (!newContent) {
     titleError.value = t('today.titleRequired')
+    failedTitleSave.value = false
     return Promise.resolve(false)
   }
 
+  titleSavePending += 1
+  titleSaveInProgress.value = true
   const save = titleSaveQueue.then(async () => {
-  if (newContent === (editingTask.value?.content || '')) {
+    if (newContent === (editingTask.value?.content || '')) {
       lastSavedTitle.value = newContent
       titleError.value = ''
+      failedTitleSave.value = false
       return true
     }
     try {
-      await updateCurrentTask({ content: newContent })
+      await updateCurrentTask({ content: newContent }, { reportTimeError: false })
       lastSavedTitle.value = newContent
       titleError.value = ''
+      failedTitleSave.value = false
       return true
     } catch (error) {
       console.error('自动保存任务内容失败:', error)
       titleError.value = t('today.saveFailed', { error: error?.message || '' })
+      failedTitleSave.value = true
       return false
     }
   })
   titleSaveQueue = save.then(() => true, () => false)
-  return save
+  return save.finally(() => {
+    titleSavePending -= 1
+    titleSaveInProgress.value = titleSavePending > 0
+  })
 }
 
 // 自动调整备注区域textarea高度
@@ -1698,19 +1963,27 @@ const saveTaskNote = async () => {
   if (note === (editingTask.value.metadata?.note || '')) {
     lastSavedNote.value = note
     noteError.value = ''
+    failedNoteSave.value = false
     return true
   }
 
+  noteSavePending += 1
+  noteSaveInProgress.value = true
   try {
     const result = await updateCurrentMetadata((metadata) => ({ ...metadata, note }))
     if (!result?.success) throw new Error(result?.error || '')
     lastSavedNote.value = note
     noteError.value = ''
+    failedNoteSave.value = false
     return true
   } catch (error) {
     console.error('自动保存备注失败:', error)
     noteError.value = t('today.saveFailed', { error: error?.message || '' })
+    failedNoteSave.value = true
     return false
+  } finally {
+    noteSavePending -= 1
+    noteSaveInProgress.value = noteSavePending > 0
   }
 }
 
@@ -1724,6 +1997,7 @@ const debounceSaveNote = () => {
 }
 
 const handleNoteBlur = async () => {
+  if (failedNoteSave.value) return
   if (noteDebounceTimer) {
     clearTimeout(noteDebounceTimer)
     noteDebounceTimer = null
@@ -1791,11 +2065,13 @@ onMounted(async () => {
   }
 
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleEscapeKeydown)
 })
 
 // 组件卸载时移除监听器
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleEscapeKeydown)
   if (props.inline) editorCoordinator?.unregister(taskIdentity(props.task))
 
   if (props.inline) {
@@ -1826,9 +2102,17 @@ const loadTaskData = () => {
   newTaskContent.value = task.content || ''
   lastSavedTitle.value = task.content || ''
   titleError.value = ''
+  failedTitleSave.value = false
   noteError.value = ''
+  failedNoteSave.value = false
   stepError.value = ''
+  failedStepRetry.value = null
+  retryingStepSave.value = false
   timeSaveError.value = ''
+  failedTimeUpdates.value = null
+  recurrenceSaveError.value = ''
+  failedRecurrenceSave.value = false
+  retryingRecurrenceSave.value = false
   isImportant.value = task.isImportant || false
   taskNote.value = task.metadata?.note || ''
   lastSavedNote.value = task.metadata?.note || ''

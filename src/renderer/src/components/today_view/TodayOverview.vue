@@ -2,6 +2,9 @@
   <div class="today-overview" ref="rootEl" :class="{ 'is-narrow': isNarrow }">
     <!-- 左侧 Agenda -->
     <div class="today-overview-agenda">
+      <div v-if="taskMoveFeedback" class="today-task-move-feedback" role="status" aria-live="polite">
+        {{ taskMoveFeedback }}
+      </div>
       <AgendaView ref="agendaRef" :model="agendaModel" :today-key="todayKey" :selected-key="selectedDateKey"
         :search-query="searchQuery"
         :show-completed="showCompleted"
@@ -78,7 +81,7 @@ import AgendaView from './AgendaView.vue'
 import FutureCalendar from './FutureCalendar.vue'
 import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
 import IconButton from '../ui/button/IconButton.vue'
-import { isVirtualInstance } from '../../utils/today-agenda.js'
+import { todayTaskIdentity, isVirtualInstance } from '../../utils/today-agenda.js'
 import { localDateKey } from '../../utils/task-time-rules.js'
 
 /**
@@ -140,6 +143,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect()
+  if (taskMoveFeedbackTimer) clearTimeout(taskMoveFeedbackTimer)
 })
 
 // ---------- 日历可见性与抽屉 ----------
@@ -148,6 +152,9 @@ const drawerOpen = ref(false)
 const expandedTaskKey = ref('')
 const activeTaskEditor = ref(null)
 const expansionChangePending = ref(false)
+const taskMoveFeedback = ref('')
+let taskMoveFeedbackTimer = null
+let locationFallbackTaskKey = ''
 
 provide('todayTaskEditorCoordinator', {
   register(identity, flush) {
@@ -167,8 +174,49 @@ provide('todayTaskEditorCoordinator', {
       })
     }
     return true
+  },
+  async beforeTaskLocationChange(identity) {
+    const wrapper = [...document.querySelectorAll('.agenda-card-wrapper')]
+      .find((element) => element.dataset.taskKey === identity)
+    if (wrapper) {
+      const wrappers = [...document.querySelectorAll('.agenda-card-wrapper')]
+      const index = wrappers.indexOf(wrapper)
+      locationFallbackTaskKey = (wrappers[index + 1] || wrappers[index - 1])?.dataset.taskKey || ''
+    }
+
+    const editor = activeTaskEditor.value
+    return editor?.identity === identity ? editor.flush() : true
+  },
+  taskLocationChanged(identity, task) {
+    void followTaskAfterLocationChange(identity, task)
   }
 })
+
+async function followTaskAfterLocationChange(identity, task) {
+  const dateKey = task?.scheduledStartAt
+    ? localDateKey(task.scheduledStartAt)
+    : task?.dueDate ? localDateKey(task.dueDate) : ''
+  if (dateKey) await ensureDateLoaded(dateKey)
+  await nextTick()
+  if (await agendaRef.value?.scrollToTask(identity)) {
+    locationFallbackTaskKey = ''
+    return
+  }
+
+  closeEditor()
+  const target = task?.status === 'done' || task?.completed
+    ? t('today.completedLabel')
+    : dateKey ? (dateKey === todayKey.value ? t('today.todaySection') : dateKey) : t('today.unplanned')
+  taskMoveFeedback.value = t('today.taskMoved', { target })
+  if (taskMoveFeedbackTimer) clearTimeout(taskMoveFeedbackTimer)
+  taskMoveFeedbackTimer = setTimeout(() => { taskMoveFeedback.value = '' }, 4500)
+  await nextTick()
+  const fallback = locationFallbackTaskKey && [...document.querySelectorAll('.agenda-card-wrapper')]
+    .find((element) => element.dataset.taskKey === locationFallbackTaskKey)
+  fallback?.querySelector('.today-task-title')?.focus()
+  if (!fallback) agendaRef.value?.focusAddButton()
+  locationFallbackTaskKey = ''
+}
 
 function openDrawer() {
   drawerOpen.value = true
@@ -233,11 +281,7 @@ async function handleBackToday() {
 const selectedTask = ref(null)
 
 function taskIdentity(task) {
-  const occurrenceDate = localDateKey(task?.occurrenceDate)
-  if (task?.seriesId && occurrenceDate) {
-    return `occurrence:${task.seriesId}:${occurrenceDate}`
-  }
-  return task ? `task:${task.id}` : ''
+  return todayTaskIdentity(task)
 }
 
 async function handleEditTask(task) {

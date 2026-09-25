@@ -9,16 +9,20 @@
       :aria-label="label"
       @change="$emit('update:modelValue', $event.target.checked)"
     />
-    <span :class="indicatorClass" aria-hidden="true"><slot /></span>
+    <span :class="['ui-checkbox-indicator', indicatorClass]" aria-hidden="true">
+      <Check v-if="modelValue" class="ui-checkbox-mark" />
+    </span>
   </label>
 </template>
 
 <script setup>
+import { Check } from '@lucide/vue'
+
 defineProps({
   id: { type: String, required: true },
   modelValue: { type: Boolean, default: false },
   label: { type: String, required: true },
-  indicatorClass: { type: String, default: 'ui-checkbox-indicator' },
+  indicatorClass: { type: String, default: '' },
   disabled: { type: Boolean, default: false }
 })
 
@@ -27,7 +31,7 @@ defineEmits(['update:modelValue'])
 
 <style>
 .ui-checkbox-control {
-  @apply inline-flex shrink-0 items-center justify-center cursor-pointer;
+  @apply relative inline-flex min-h-7 min-w-7 shrink-0 items-center justify-center cursor-pointer;
 }
 
 .ui-checkbox-input {
@@ -43,16 +47,23 @@ defineEmits(['update:modelValue'])
 }
 
 .ui-checkbox-indicator {
-  @apply block h-4 w-4 rounded border border-input bg-background transition-colors;
+  @apply relative flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input bg-background transition-colors;
+}
+
+.ui-checkbox-indicator-flat {
+  @apply rounded-full border-2 border-border/40 border-primary/30;
+}
+
+.ui-checkbox-control:hover .ui-checkbox-indicator-flat {
+  @apply border-primary;
+}
+
+.ui-checkbox-mark {
+  @apply h-3 w-3 text-primary-foreground;
 }
 
 .ui-checkbox-input:checked + .ui-checkbox-indicator {
   @apply border-primary bg-primary;
-}
-
-.ui-checkbox-input:checked + .ui-checkbox-indicator::after {
-  content: '✓';
-  @apply flex h-full items-center justify-center text-[10px] font-bold text-primary-foreground;
 }
 
 @media (prefers-reduced-motion: reduce) {

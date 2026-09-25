@@ -277,7 +277,7 @@ import TaskComposer from '../TaskComposer.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
 import { isLegacyRecurringDateInstance, localDateKey } from '../../utils/task-time-rules.js'
-import { addDaysToKey } from '../../utils/today-agenda.js'
+import { addDaysToKey, todayTaskIdentity } from '../../utils/today-agenda.js'
 import { localeCode } from '../../utils/locale-format.js'
 
 const props = defineProps({
@@ -320,9 +320,7 @@ let programmaticScrollUntil = 0
 const activeDate = ref('')
 
 function taskKey(task) {
-  const occurrenceDate = localDateKey(task.occurrenceDate)
-  if (task.seriesId && occurrenceDate) return `occurrence:${task.seriesId}:${occurrenceDate}`
-  return `task:${task.id}`
+  return todayTaskIdentity(task)
 }
 
 function isTaskExpanded(task) {
@@ -505,6 +503,25 @@ function scrollToSection(dateKey) {
   target.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
 }
 
+async function scrollToTask(key) {
+  const container = scrollContainer.value
+  let target = container?.querySelector(`[data-task-key="${cssEscape(key)}"]`)
+  if (!target && props.model.unplanned.some((task) => taskKey(task) === key)) {
+    unplannedExpanded.value = true
+    await nextTick()
+    target = container?.querySelector(`[data-task-key="${cssEscape(key)}"]`)
+  }
+  if (!target && props.model.overdue.some((task) => taskKey(task) === key)) {
+    overdueExpanded.value = true
+    await nextTick()
+    target = container?.querySelector(`[data-task-key="${cssEscape(key)}"]`)
+  }
+  if (!target) return false
+  beginProgrammaticScroll()
+  target.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' })
+  return true
+}
+
 function highlightTasks(taskKeys) {
   nextTick(() => {
     const container = scrollContainer.value
@@ -606,6 +623,7 @@ function refreshObserverNow() {
 
 defineExpose({
   scrollToSection,
+  scrollToTask,
   scrollToGroup,
   highlightTasks,
   viewUnplanned,

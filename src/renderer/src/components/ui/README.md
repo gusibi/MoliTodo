@@ -25,6 +25,19 @@
 - `IconButton` 强制要求 `label`，同时作为 `aria-label` 与 `title`。
 - 关闭弹层后如需恢复焦点，调用按钮实例的 `focus()`（组件已 `defineExpose`）。
 
+### Checkbox
+
+任务完成与步骤状态使用 `Checkbox`。图形本身为 16×16，标签点击区域至少 28×28；必须提供稳定 `id` 和可访问 `label`。
+
+```vue
+<Checkbox id="task-done" :model-value="done" label="任务完成状态"
+  @update:model-value="done = $event" />
+<Checkbox id="step-done" :model-value="stepDone" label="完成第 1 个步骤" disabled />
+```
+
+- 支持未选中、选中、键盘聚焦和禁用状态；勾选图标使用本地 Lucide `Check`。
+- `indicator-class` 仅用于图形外观变体，不要缩小根标签的点击区域。
+
 ### AlertDialog
 
 危险操作确认。职责：标题、说明、取消、危险确认、异步状态与焦点恢复。
@@ -65,6 +78,20 @@
 ```vue
 <DatePicker v-model="date" />
 ```
+
+### ContextMenu / ContextMenuItem
+
+```vue
+<ContextMenu>
+  <template #trigger>
+    <Button variant="ghost" aria-keyshortcuts="Shift+F10">任务内容</Button>
+  </template>
+  <ContextMenuItem variant="destructive" @select="deleteTask">删除任务</ContextMenuItem>
+</ContextMenu>
+```
+
+- `ContextMenu` 用于右键或触控板次要点击触发的任务操作菜单；菜单项由 `ContextMenuItem` 提供。
+- 可见触发器必须可聚焦；组件支持 Shift+F10 和 Context Menu 键打开菜单。危险操作仍由业务调用方接入统一确认流程。
 
 ### Switch / FormField
 
@@ -184,7 +211,7 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 
 ### 阶段 4 尚未完成 / 后续
 
-- TaskPanel 的分类 / 清单下拉与右键菜单仍为历史自建实现，未迁移到共享 DropdownMenu/ContextMenu。
+- TaskPanel 的分类 / 清单下拉与右键菜单仍为历史自建实现，未迁移到共享 DropdownMenu。
 - TaskPanel 仍有内联本地 SVG 图标（分类、固定、状态勾选、右键菜单等）；它们已离线可用，但尚未统一为
   Lucide 组件，留待阶段 5 收口。
 - 悬浮图标本身是带拖拽交互的透明窗口按钮，保留原生 `<button>` 而非 `IconButton`（自定义拖动/穿透

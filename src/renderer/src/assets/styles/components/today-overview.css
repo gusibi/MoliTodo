@@ -7,9 +7,13 @@
 }
 
 .today-overview-agenda {
-  @apply flex-1 min-w-0 min-h-0 flex flex-col;
+  @apply relative flex-1 min-w-0 min-h-0 flex flex-col;
   flex-basis: 56%;
   max-width: 60%;
+}
+
+.today-task-move-feedback {
+  @apply pointer-events-none absolute left-1/2 top-3 z-30 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-md border border-border bg-popover px-3 py-2 text-sm text-foreground shadow-md;
 }
 
 .today-overview-calendar {

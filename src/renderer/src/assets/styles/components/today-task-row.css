@@ -49,7 +49,7 @@
 }
 
 .today-task-title {
-  @apply block w-full border-0 bg-transparent p-0 text-left text-sm font-medium leading-snug text-foreground;
+  @apply block w-full min-h-7 border-0 bg-transparent p-0 text-left text-sm font-medium leading-snug text-foreground;
   cursor: pointer;
 }
 
@@ -105,11 +105,6 @@
 
 .today-task-action-btn {
   @apply text-muted-foreground;
-}
-
-/* 删除用危险色，双类选择器覆盖 ghost 变体的 hover 色 */
-.today-task-row .today-task-action-danger:hover {
-  @apply text-destructive bg-destructive/10;
 }
 
 /* ===== 元信息行（与标题左缘对齐：16px 圆圈 + 8px 间距） ===== */
