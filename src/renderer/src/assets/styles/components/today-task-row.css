@@ -1,0 +1,124 @@
+/* Today 专用任务行（Things 式就地交互）
+ *
+ * 与悬浮窗任务面板同一交互模型：扁平行、hover 浮现操作、状态圆圈纯展示。
+ * 视觉规格沿用悬浮窗定稿：16px 状态圆圈、11px 元信息、28px 动作点击区、逾期红、ghost chip 弱化态。
+ * 正文层级沿用 Today 试点：标题 14px / 描述 12px / 元信息 11px。
+ */
+
+.today-task-row {
+  @apply relative flex flex-col px-2 py-1.5 rounded-lg;
+  @apply transition-colors duration-150;
+  @apply hover:bg-accent/40;
+}
+
+.today-task-row.is-done {
+  @apply opacity-60;
+}
+
+.today-task-row.is-dragging {
+  @apply opacity-60 shadow-lg;
+  transform: rotate(1deg) scale(1.01);
+  transition: none;
+  z-index: 1000;
+}
+
+/* ===== 主行 ===== */
+
+.today-task-main {
+  @apply flex items-start gap-2 min-h-[28px];
+}
+
+.today-task-status {
+  @apply flex-shrink-0 flex items-center pt-0.5;
+}
+
+.today-task-content {
+  @apply flex-1 min-w-0;
+}
+
+.today-task-title {
+  @apply text-sm font-medium leading-snug text-foreground;
+  cursor: text;
+}
+
+.today-task-title.is-completed {
+  @apply text-muted-foreground line-through decoration-muted-foreground/50;
+}
+
+.today-task-edit-input {
+  @apply w-full text-sm bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
+  @apply text-foreground;
+}
+
+.today-task-note {
+  @apply text-xs leading-relaxed text-muted-foreground mt-0.5;
+}
+
+/* ===== 动作区（hover / focus-within 浮现；图标即动作） ===== */
+
+.today-task-actions {
+  @apply flex items-center gap-0.5 flex-shrink-0;
+  @apply opacity-0 transition-opacity duration-150;
+}
+
+.today-task-row:hover .today-task-actions,
+.today-task-row:focus-within .today-task-actions {
+  @apply opacity-100;
+}
+
+.today-task-action-btn {
+  @apply text-muted-foreground;
+}
+
+/* 删除用危险色，双类选择器覆盖 ghost 变体的 hover 色 */
+.today-task-row .today-task-action-danger:hover {
+  @apply text-destructive bg-destructive/10;
+}
+
+/* ===== 元信息行（与标题左缘对齐：16px 圆圈 + 8px 间距） ===== */
+
+.today-task-meta {
+  @apply flex items-center gap-2 mt-1 flex-wrap w-full pl-6;
+}
+
+.today-task-meta-item {
+  @apply inline-flex items-center text-muted-foreground;
+}
+
+/* 行上徽标：沿用 Today 徽标语义，字号与行内元信息统一为 11px */
+.today-task-meta .flat-task-badge {
+  @apply text-[11px];
+}
+
+.today-task-time {
+  @apply inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md flex-shrink-0 tabular-nums;
+}
+
+.today-task-time-doing {
+  @apply bg-warning/10 text-status-doing;
+}
+
+.today-task-time-overtime {
+  @apply bg-status-overtime/10 text-status-overtime;
+}
+
+.today-task-time-paused {
+  @apply bg-muted-foreground/10 text-status-paused;
+}
+
+.today-task-time-completed {
+  @apply bg-success/10 text-status-done;
+}
+
+/* 无提醒时的「+ 提醒」入口：hover / focus 时与提醒 pill 同位显现（共享组件提供基础隐藏样式） */
+.today-task-row:hover .task-reminder-add,
+.today-task-row:focus-within .task-reminder-add {
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-task-row,
+  .today-task-actions {
+    @apply transition-none;
+  }
+}

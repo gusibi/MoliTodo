@@ -91,6 +91,15 @@ export const getTaskStatusCounts = (tasks) => {
 }
 
 /**
+ * 判断提醒时间是否已过（行上提醒 pill 的逾期红状态）
+ * @param {string|Date} reminderTime - 提醒时间
+ * @returns {boolean} 是否已过期
+ */
+export const isReminderOverdue = (reminderTime) => {
+  return new Date(reminderTime) < new Date()
+}
+
+/**
  * 格式化提醒时间
  * @param {string|Date} reminderTime - 提醒时间
  * @returns {string} 格式化后的提醒时间字符串

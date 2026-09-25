@@ -25,6 +25,12 @@ async function waitForToday(page) {
   await expect(page.locator('.agenda-view')).toBeVisible();
 }
 
+// issue #15 后任务行动作集中在 hover 动作区：先 hover 行（focus-within 亦可见），再点击动作按钮
+async function rowAction(row, name) {
+  await row.hover();
+  await row.getByRole('button', { name }).click();
+}
+
 test('今天截止但安排在明天：只显示一张卡片，日历点仍在明天且可定位执行分组', async ({ app, window }) => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -107,10 +113,10 @@ test('点击空日期定位到对应 section 且不污染新建时间', async ({
 
   // 未计划汇总默认折叠：点击反馈中的"查看"展开并定位
   await window.getByRole('button', { name: '查看' }).click();
-  const taskRow = window.locator('.flat-task-item', { hasText: '随手记' });
+  const taskRow = window.locator('.today-task-row', { hasText: '随手记' });
   await expect(taskRow).toBeVisible();
-  const taskTime = taskRow.locator('.flat-task-reminder-time');
-  await expect(taskTime).toHaveCount(0);
+  // 未安排任务以 ghost chip 提供安排入口，不带具体时间
+  await expect(taskRow.locator('.task-when-chip')).toContainText('未安排');
 });
 
 test('搜索左右同步且显示范围说明', async ({ app, window }) => {
@@ -153,11 +159,12 @@ test('完成与取消完成后分组、计数与日历点同步', async ({ app, 
   const header = window.locator('.task-manager-category-count');
   await expect(header).toContainText('今日待处理 1 项');
 
-  const card = window.locator('.flat-task-item', { hasText: '要完成的事' });
-  await card.locator('label.flat-checkbox-label').click();
+  // hover 动作区：完成任务图标即动作
+  const row = window.locator('.today-task-row', { hasText: '要完成的事' });
+  await rowAction(row, '完成任务');
 
   await expect(header).toContainText('今日待处理 0 项');
-  await expect(window.locator('.flat-task-item', { hasText: '要完成的事' })).toHaveCount(0);
+  await expect(window.locator('.today-task-row', { hasText: '要完成的事' })).toHaveCount(0);
 });
 
 test('重启后保存结果保留', async ({ app, window }) => {
@@ -191,7 +198,7 @@ test('旧日期型重复实例不伪造 00:00', async ({ app, window }) => {
   await window.reload();
   await waitForToday(window);
 
-  const card = window.locator('.flat-task-item', { hasText: '旧重复任务' }).first();
+  const card = window.locator('.today-task-row', { hasText: '旧重复任务' }).first();
   await expect(card).toBeVisible();
   // 不显示 00:00 的伪造开始时刻
   await expect(card).not.toContainText('00:00');
@@ -257,7 +264,9 @@ test('打开编辑器时收起日历，关闭后恢复', async ({ app, window })
   await waitForToday(window);
 
   await expect(window.locator('.today-overview-calendar')).toBeVisible();
-  await window.locator('.flat-task-item', { hasText: '编辑目标' }).click();
+  // 行上编辑入口改为 hover 动作区的「打开详情」按钮
+  const row = window.locator('.today-task-row', { hasText: '编辑目标' });
+  await rowAction(row, '打开详情');
 
   // 编辑器打开：日历收起，编辑面板可见
   await expect(window.locator('.today-edit-panel')).toBeVisible();
@@ -273,7 +282,8 @@ test('通过真实编辑器保存内容后 Agenda 同步更新', async ({ app, w
   await window.reload();
   await waitForToday(window);
 
-  await window.locator('.flat-task-item', { hasText: '改名前' }).click();
+  const row = window.locator('.today-task-row', { hasText: '改名前' });
+  await rowAction(row, '打开详情');
   const titleInput = window.locator('.today-edit-panel .task-title-input');
   await expect(titleInput).toBeVisible();
   await titleInput.fill('改名后');
@@ -281,7 +291,7 @@ test('通过真实编辑器保存内容后 Agenda 同步更新', async ({ app, w
 
   // 等待保存链路（IPC -> SQLite -> tasks-updated -> 页面刷新）
   await window.locator('.task-action-close').click();
-  await expect(window.locator('.flat-task-item', { hasText: '改名后' })).toBeVisible();
+  await expect(window.locator('.today-task-row', { hasText: '改名后' })).toBeVisible();
   await expect(window.getByText('改名前')).toHaveCount(0);
 
   const persisted = await app.electronApp.evaluate(async () => {
@@ -319,14 +329,15 @@ test('取消完成后任务回到今天且计数恢复', async ({ app, window })
   await expect(header).toContainText('今日待处理 1 项');
 
   // 完成：从今天执行区消失
-  await window.locator('.flat-task-item', { hasText: '可取消完成' }).locator('label.flat-checkbox-label').click();
+  const row = window.locator('.today-task-row', { hasText: '可取消完成' });
+  await rowAction(row, '完成任务');
   await expect(header).toContainText('今日待处理 0 项');
 
-  // 打开已完成开关，找到已完成卡片并取消完成
+  // 打开已完成开关，找到已完成行并通过「重新开始」动作取消完成
   await window.locator('.task-manager-action-btn[title="显示已完成任务"]').click();
-  const completedCard = window.locator('.flat-task-item', { hasText: '可取消完成' });
-  await expect(completedCard).toBeVisible();
-  await completedCard.locator('label.flat-checkbox-label').click();
+  const completedRow = window.locator('.today-task-row', { hasText: '可取消完成' });
+  await expect(completedRow).toBeVisible();
+  await rowAction(completedRow, '重新开始');
 
   // 重新归组：回到今天待处理，计数恢复
   await expect(header).toContainText('今日待处理 1 项');
@@ -346,11 +357,11 @@ test('单次重复实例编辑后仅保留一张卡片且内容同步', async ({
   await window.reload();
   await waitForToday(window);
 
-  const cards = window.locator('.agenda-section-today .flat-task-item', { hasText: '重复实例任务' });
-  await expect(cards).toHaveCount(1);
+  const rows = window.locator('.agenda-section-today .today-task-row', { hasText: '重复实例任务' });
+  await expect(rows).toHaveCount(1);
 
-  // 点击虚拟实例：先物化为真实实例再打开编辑器
-  await cards.first().click();
+  // 详情入口：先物化为真实实例再打开编辑器
+  await rowAction(rows.first(), '打开详情');
   const titleInput = window.locator('.today-edit-panel .task-title-input');
   await expect(titleInput).toBeVisible();
   await titleInput.fill('重复实例任务（已改）');
@@ -358,7 +369,7 @@ test('单次重复实例编辑后仅保留一张卡片且内容同步', async ({
   await window.locator('.task-action-close').click();
 
   // 物化后今天仍只有一张卡片，且内容同步
-  await expect(window.locator('.agenda-section-today .flat-task-item', { hasText: '重复实例任务（已改）' })).toHaveCount(1);
+  await expect(window.locator('.agenda-section-today .today-task-row', { hasText: '重复实例任务（已改）' })).toHaveCount(1);
 });
 
 test('窄屏抽屉 Escape 关闭且焦点返回触发按钮', async ({ window }) => {
@@ -410,7 +421,7 @@ test('真实重启应用后保存结果保留', async ({ app }) => {
       await new Promise((r) => setTimeout(r, 200));
     }
     await page.waitForSelector('.today-overview', { timeout: 30000 });
-    await expect(page.locator('.flat-task-item', { hasText: '重启保留任务' })).toBeVisible();
+    await expect(page.locator('.today-task-row', { hasText: '重启保留任务' })).toBeVisible();
   } finally {
     await relaunched.close().catch(() => {});
   }
@@ -454,10 +465,10 @@ test('仅提醒且已过期的任务出现在已过期提醒分组', async ({ ap
 
 /* ===== 统一删除确认（Today 试点阶段 0） ===== */
 
-// 展示已完成任务，返回目标卡片
+// 展示已完成任务，返回目标行
 async function showCompletedCard(window, content) {
   await window.locator('.task-manager-action-btn[title="显示已完成任务"]').click();
-  return window.locator('.flat-task-item', { hasText: content });
+  return window.locator('.today-task-row', { hasText: content });
 }
 
 test('任务删除确认：取消不删除且焦点返回触发控件', async ({ app, window }) => {
@@ -473,7 +484,8 @@ test('任务删除确认：取消不删除且焦点返回触发控件', async ({
 
   const dialog = window.getByRole('alertdialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('确定要删除这个任务吗');
+  // 软删除语义：确认文案说明任务会移入垃圾桶
+  await expect(dialog).toContainText('垃圾桶');
 
   await dialog.getByRole('button', { name: '取消' }).click();
   await expect(dialog).toHaveCount(0);
@@ -510,7 +522,7 @@ test('任务删除确认：确认后删除并持久化，焦点回到有效位�
   await dialog.getByRole('button', { name: '删除', exact: true }).click();
 
   await expect(window.getByRole('alertdialog')).toHaveCount(0);
-  await expect(window.locator('.flat-task-item', { hasText: '确认删除任务' })).toHaveCount(0);
+  await expect(window.locator('.today-task-row', { hasText: '确认删除任务' })).toHaveCount(0);
 
   const persisted = await app.electronApp.evaluate(async () => {
     const tasks = await global.__moliTodoApp.taskService.getAllTasks();
@@ -557,7 +569,7 @@ test('任务删除失败：显示错误、任务保留并可重试', async ({ ap
   // 重试成功
   await dialog.getByRole('button', { name: '删除', exact: true }).click();
   await expect(window.getByRole('alertdialog')).toHaveCount(0);
-  await expect(window.locator('.flat-task-item', { hasText: '删除会失败' })).toHaveCount(0);
+  await expect(window.locator('.today-task-row', { hasText: '删除会失败' })).toHaveCount(0);
 
   await app.electronApp.evaluate(() => global.__moliTodoApp.__restoreDeleteTask?.());
 });
@@ -755,14 +767,350 @@ test('浏览过去日期：逾期任务直接显示卡片并标注原因', async
   await overdue.getByRole('button', { name: /已逾期/ }).click();
   await expect(overdue.getByText('逾期定位任务')).toHaveCount(0);
 
-  // 通过日历进入过去日期：该日期 section 直接渲染卡片并标注逾期原因，不再只留定位链接
+  // 通过日历进入过去日期：该日期 section 直接渲染行并标注逾期原因，不再只留定位链接
   await window.locator(`.future-calendar-day[data-date-key="${pastKey}"]`).click();
   const section = window.locator(`[data-date-section="${pastKey}"]`);
   await expect(section.getByText('逾期定位任务')).toBeVisible();
   await expect(section.locator('.agenda-relocated-link')).toHaveCount(0);
   await expect(section.getByText('已逾期')).toBeVisible();
 
-  // 卡片仍可完成
-  await section.locator('label.flat-checkbox-label').first().click();
+  // 行仍可完成（hover 动作区）
+  const row = section.locator('.today-task-row').first();
+  await rowAction(row, '完成任务');
   await expect(section.getByText('逾期定位任务')).toHaveCount(0);
+});
+
+/* ===== issue #15：Today 行 Things 式就地交互 ===== */
+
+test('行内编辑：单击标题原位编辑，Enter 保存并持久化', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '有错别字的任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '有错别字的任务' });
+  await row.locator('.today-task-title').click();
+  // 进入编辑后标题文本在 input.value 里，不能用行内 hasText 定位输入框
+  const input = window.locator('.today-task-edit-input');
+  await expect(input).toBeVisible();
+  await input.fill('改好的任务标题');
+  await input.press('Enter');
+
+  await expect(window.locator('.today-task-row', { hasText: '改好的任务标题' })).toBeVisible();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      (await global.__moliTodoApp.taskService.getAllTasks()).map((t) => t.content)
+    );
+    return tasks.includes('改好的任务标题');
+  }, { timeout: 15000 }).toBe(true);
+});
+
+test('行内编辑：Esc 取消不保存', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '保持原标题', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '保持原标题' });
+  await row.locator('.today-task-title').click();
+  // 进入编辑后标题文本在 input.value 里，不能用行内 hasText 定位输入框
+  const input = window.locator('.today-task-edit-input');
+  await expect(input).toBeVisible();
+  await input.fill('不该保存的内容');
+  await input.press('Escape');
+
+  await expect(row.locator('.today-task-title')).toContainText('保持原标题');
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      (await global.__moliTodoApp.taskService.getAllTasks()).map((t) => t.content)
+    );
+    return tasks.includes('不该保存的内容');
+  }, { timeout: 15000 }).toBe(false);
+});
+
+test('When 气泡快捷改期：未安排任务改到明天并持久化', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '要改期的任务' }]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 展开收件箱分组（默认折叠）
+  await window.locator('[data-agenda-section="unplanned"] .agenda-section-header').click();
+  const row = window.locator('.today-task-row', { hasText: '要改期的任务' });
+  await expect(row).toBeVisible();
+
+  // ghost chip → When 气泡 → 明天
+  await row.locator('.task-when-chip').click();
+  await expect(window.locator('.when-option-tomorrow')).toBeVisible();
+  await window.locator('.when-option-tomorrow').click();
+
+  const expected = new Date();
+  expected.setDate(expected.getDate() + 1);
+  expected.setHours(0, 0, 0, 0);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '要改期的任务');
+    return task && task.scheduledStartAt ? new Date(task.scheduledStartAt).toISOString() : null;
+  }, { timeout: 15000 }).toBe(expected.toISOString());
+
+  // 改期后行进入明天的日期 section，chip 更新为「明天」
+  const tomorrowKey = localKey(expected);
+  const tomorrowSection = window.locator(`[data-date-section="${tomorrowKey}"]`);
+  await expect(tomorrowSection.locator('.today-task-row', { hasText: '要改期的任务' }).locator('.task-when-chip'))
+    .toContainText('明天');
+});
+
+test('When 气泡改期按时长平移结束时间', async ({ app, window }) => {
+  await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(10, 0, 0, 0);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    await moli.taskService.createTaskInList('跨时段任务', 0, null, {
+      scheduledStartAt: start.toISOString(),
+      scheduledEndAt: end.toISOString()
+    });
+  });
+  await window.reload();
+  await waitForToday(window);
+
+  const tomorrowKey = localKey(new Date(Date.now() + 86400000));
+  const row = window.locator(`[data-date-section="${tomorrowKey}"] .today-task-row`, { hasText: '跨时段任务' });
+  await expect(row).toBeVisible();
+
+  // chip 显示「开始 – 结束」区间
+  await expect(row.locator('.task-when-chip')).toContainText('10:00');
+  await expect(row.locator('.task-when-chip')).toContainText('11:00');
+
+  // 改到下周（下周一）：结束时间按时长平移，保留 1 小时时段
+  await row.locator('.task-when-chip').click();
+  await window.locator('.when-option-next-week').click();
+
+  const nextMonday = new Date();
+  nextMonday.setDate(nextMonday.getDate() + (((1 - nextMonday.getDay() + 7) % 7) || 7));
+  nextMonday.setHours(0, 0, 0, 0);
+  const expectedStart = nextMonday.toISOString();
+  const expectedEnd = new Date(nextMonday.getTime() + 60 * 60 * 1000).toISOString();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '跨时段任务');
+    if (!task || !task.scheduledStartAt || !task.scheduledEndAt) return null;
+    return {
+      start: new Date(task.scheduledStartAt).toISOString(),
+      end: new Date(task.scheduledEndAt).toISOString()
+    };
+  }, { timeout: 15000 }).toEqual({ start: expectedStart, end: expectedEnd });
+});
+
+test('When 气泡内嵌日历选择具体日期并持久化', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '日历改期任务' }]);
+  await window.reload();
+  await waitForToday(window);
+
+  await window.locator('[data-agenda-section="unplanned"] .agenda-section-header').click();
+  const row = window.locator('.today-task-row', { hasText: '日历改期任务' });
+  await row.locator('.task-when-chip').click();
+  await window.locator('.when-option-picker').click();
+
+  const calendar = window.locator('.when-calendar');
+  await expect(calendar).toBeVisible();
+
+  // 选择当月今天所在的日子（min-date 为今天，当日必可点）
+  const today = new Date();
+  await calendar.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+
+  const todayKey = localKey(today);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '日历改期任务');
+    return task && task.scheduledStartAt ? localKey(new Date(task.scheduledStartAt)) : null;
+  }, { timeout: 15000 }).toBe(todayKey);
+});
+
+test('提醒气泡：行上设置预设提醒并可清除', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '要提醒的任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  // 无提醒时 hover 显示「+ 提醒」入口，点击弹提醒气泡
+  const row = window.locator('.today-task-row', { hasText: '要提醒的任务' });
+  await row.hover();
+  await row.locator('.task-reminder-add').click();
+  const popover = window.locator('.reminder-popover');
+  await expect(popover).toBeVisible();
+  await popover.locator('.reminder-option', { hasText: '30分钟后' }).click();
+
+  // 预设提醒持久化（相对时间从现在起算）
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '要提醒的任务');
+    if (!task || !task.reminderTime) return null;
+    const time = new Date(task.reminderTime).getTime();
+    return time > Date.now() + 20 * 60 * 1000 && time < Date.now() + 40 * 60 * 1000;
+  }, { timeout: 15000 }).toBe(true);
+
+  // 行上提醒 pill 可见；再次打开气泡清除提醒
+  await expect(row.locator('.task-reminder-pill')).toBeVisible();
+  await row.hover();
+  await row.locator('.task-reminder-pill').click();
+  await window.locator('.reminder-option-clear').click();
+
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '要提醒的任务');
+    return task ? task.reminderTime ?? null : null;
+  }, { timeout: 15000 }).toBeNull();
+});
+
+test('状态动作：开始、暂停、继续与完成即动作', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '状态流转任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '状态流转任务' });
+  await expect(row).toHaveAttribute('data-status', 'todo');
+
+  await rowAction(row, '开始');
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await expect(row.locator('.today-task-time-doing')).toBeVisible();
+
+  await rowAction(row, '暂停');
+  await expect(row).toHaveAttribute('data-status', 'paused');
+
+  await rowAction(row, '继续');
+  await expect(row).toHaveAttribute('data-status', 'doing');
+
+  await rowAction(row, '完成任务');
+  await expect(window.locator('.today-task-row', { hasText: '状态流转任务' })).toHaveCount(0);
+});
+
+test('逾期任务 When chip 变红且悬浮说明为截止时间', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [
+    { content: '过期截止任务', dueDate: localKey(new Date(Date.now() - 86400000)) }
+  ]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('[data-agenda-section="overdue"] .today-task-row', { hasText: '过期截止任务' });
+  await expect(row).toBeVisible();
+
+  const chip = row.locator('.task-when-chip');
+  await expect(chip).toHaveClass(/overdue/);
+
+  await chip.hover();
+  await expect(window.locator('.ui-tooltip-content')).toContainText('截止时间');
+});
+
+test('虚拟重复实例改期先物化为真实任务', async ({ app, window }) => {
+  await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    const start = new Date();
+    start.setHours(10, 0, 0, 0);
+    await moli.taskService.createTaskInList('重复改期任务', 0, null, {
+      scheduledStartAt: start.toISOString(),
+      recurrence: { type: 'daily', interval: 1, startDate: start.toISOString() }
+    });
+  });
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.agenda-section-today .today-task-row', { hasText: '重复改期任务' });
+  await expect(row).toBeVisible();
+
+  // 虚拟实例行上改期：先物化再执行，结果落在真实任务行
+  await row.locator('.task-when-chip').click();
+  await window.locator('.when-option-tomorrow').click();
+
+  const expected = new Date();
+  expected.setDate(expected.getDate() + 1);
+  expected.setHours(0, 0, 0, 0);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const real = tasks.find((t) => t.content === '重复改期任务' && t.scheduledStartAt);
+    return real ? new Date(real.scheduledStartAt).toISOString() : null;
+  }, { timeout: 15000 }).toBe(expected.toISOString());
+});
+
+test('删除确认说明垃圾桶语义，且可从悬浮窗恢复（跨窗口闭环）', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '跨窗口删除任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '跨窗口删除任务' });
+  await rowAction(row, '删除任务');
+
+  // 确认文案说明任务会移入垃圾桶
+  const dialog = window.getByRole('alertdialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('垃圾桶');
+
+  await dialog.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(window.locator('.today-task-row', { hasText: '跨窗口删除任务' })).toHaveCount(0);
+
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    return tasks.some((t) => t.content === '跨窗口删除任务');
+  }, { timeout: 15000 }).toBe(false);
+
+  // 从悬浮窗垃圾桶恢复
+  await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.createTaskPanel());
+  let panel = null;
+  const deadline = Date.now() + 30000;
+  while (Date.now() < deadline) {
+    panel = app.electronApp.windows().find((w) => w.url().includes('task-panel'));
+    if (panel) break;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  expect(panel).not.toBeNull();
+  await panel.waitForSelector('.task-panel-container', { timeout: 30000 });
+
+  await panel.locator('.task-panel-dropdown-trigger').click();
+  await panel.locator('.dropdown-item', { hasText: '垃圾桶' }).click();
+  const trashRow = panel.locator('.task-panel-card', { hasText: '跨窗口删除任务' });
+  await expect(trashRow).toBeVisible();
+
+  await trashRow.hover();
+  await trashRow.locator('.task-action-btn.restore').click();
+  await expect(trashRow).toHaveCount(0);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    return tasks.some((t) => t.content === '跨窗口删除任务');
+  }, { timeout: 15000 }).toBe(true);
+});
+
+test('备注与循环图标在行上展示', async ({ app, window }) => {
+  const todayKey = localKey(new Date());
+  await app.electronApp.evaluate(async ({}, key) => {
+    const moli = global.__moliTodoApp;
+    const start = new Date();
+    start.setHours(10, 0, 0, 0);
+    await moli.taskService.createTaskInList('带备注的循环任务', 0, null, {
+      dueDate: key,
+      metadata: { note: '这是备注内容' },
+      recurrence: { type: 'daily', interval: 1, startDate: start.toISOString() }
+    });
+  }, todayKey);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '带备注的循环任务' }).first();
+  await expect(row).toBeVisible();
+  // 备注以第二行灰色文字展示
+  await expect(row.locator('.today-task-note')).toContainText('这是备注内容');
+  // 循环任务保留重复图标并有悬浮说明
+  await expect(row.locator('.today-task-meta-item')).toBeVisible();
 });

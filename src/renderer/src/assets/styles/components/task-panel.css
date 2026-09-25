@@ -174,15 +174,6 @@
   @apply w-2 h-2 text-muted-foreground/70 transition-transform duration-200;
 }
 
-/* When 气泡内的日历 */
-.when-calendar {
-  @apply p-1;
-}
-
-.when-calendar .vc-container {
-  @apply bg-popover border-0;
-}
-
 /* ===== Task List Container ===== */
 .task-panel-list-container {
   @apply flex-1 overflow-y-auto px-2 pb-2 min-h-0;
@@ -264,31 +255,7 @@
   @apply flex-shrink-0 flex items-center;
 }
 
-.task-status-circle {
-  @apply w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
-}
-
-.task-status-circle.status-todo {
-  @apply border-muted-foreground/40;
-}
-
-/* doing：空心圆 + 中心小圆点脉冲（进行中状态，非播放按钮） */
-.task-status-circle.status-doing {
-  @apply border-status-doing;
-}
-
-.task-status-circle.status-doing::after {
-  content: '';
-  @apply w-1.5 h-1.5 rounded-full bg-status-doing animate-pulse;
-}
-
-.task-status-circle.status-done {
-  @apply bg-status-done border-status-done text-white;
-}
-
-.task-status-circle.status-paused {
-  @apply border-status-paused text-status-paused;
-}
+/* 状态圆圈的图形规则由共享组件 TaskStatusCircle 提供 */
 
 /* ===== Task Card Text ===== */
 .task-card-text-wrapper {
@@ -326,73 +293,11 @@
   @apply w-2.5 h-2.5;
 }
 
-.task-meta-tag.reminder {
-  @apply text-muted-foreground;
-}
-
-.task-meta-tag.reminder.overdue {
-  @apply text-destructive font-medium;
-}
-
-/* 可点击的提醒 pill（打开提醒预设弹窗） */
-.task-meta-tag-clickable {
-  @apply cursor-pointer rounded-full px-1 -mx-1 py-0.5;
-  @apply hover:bg-accent/70 hover:text-accent-foreground;
-}
-
-/* 无提醒时的「+ 提醒」入口：hover / focus 时与提醒 pill 同位显现 */
-.task-reminder-add {
-  @apply text-muted-foreground/40;
-  display: none;
-}
-
+/* 提醒 pill / 行上 When chip / 提醒与 When 气泡由共享组件 TaskReminderBubble、TaskWhenBubble 提供；
+   这里只保留行上下文的 hover 显现规则 */
 .task-panel-card:hover .task-reminder-add,
 .task-panel-card:focus-within .task-reminder-add {
   @apply inline-flex;
-}
-
-.task-panel-card:hover .task-reminder-add:hover,
-.task-panel-card:focus-within .task-reminder-add:hover {
-  @apply bg-accent/70 text-accent-foreground;
-}
-
-/* 行上 When chip：安排/截止/未安排占位 */
-.task-when-chip {
-  @apply inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full;
-  @apply transition-colors cursor-pointer;
-}
-
-.task-when-chip.scheduled {
-  @apply text-muted-foreground;
-}
-
-.task-when-chip.overdue {
-  @apply text-destructive font-medium;
-}
-
-.task-when-chip.ghost {
-  @apply text-muted-foreground/50;
-}
-
-.task-when-chip:hover {
-  @apply bg-accent/70 text-accent-foreground;
-}
-
-.task-when-chip.ghost:hover {
-  @apply text-accent-foreground;
-}
-
-/* When 气泡的清除安排用危险色 */
-.when-option-clear {
-  @apply text-destructive/90;
-}
-
-.when-option-clear .dropdown-item-icon {
-  @apply text-destructive/70;
-}
-
-.when-option-clear:hover {
-  @apply bg-destructive/10 text-destructive;
 }
 
 .task-meta-tag.doing {
@@ -454,6 +359,7 @@
 }
 
 /* ===== 面板内添加步骤（hover / focus-within 显现） ===== */
+
 .task-add-step {
   @apply items-center gap-1.5 pl-[26px] mt-0.5;
   display: none;
@@ -511,26 +417,7 @@
   @apply hover:text-foreground cursor-pointer transition-colors;
 }
 
-/* ===== 提醒气泡（When 式） ===== */
-.reminder-option {
-  @apply text-xs;
-}
-
-.reminder-option .dropdown-item-icon {
-  @apply text-primary;
-}
-
-.reminder-option-clear {
-  @apply text-destructive/90;
-}
-
-.reminder-option-clear .dropdown-item-icon {
-  @apply text-destructive/70;
-}
-
-.reminder-option-clear:hover {
-  @apply bg-destructive/10 text-destructive;
-}
+/* ===== 提醒气泡（When 式）样式由共享组件 TaskReminderBubble 提供 ===== */
 
 /* ===== Context Menu ===== */
 .task-context-menu {
@@ -574,13 +461,4 @@
   .task-card-actions {
     @apply transition-none;
   }
-
-  .task-status-circle.status-doing::after {
-    animation: none;
-  }
-}
-
-/* When chip 的 Popover 锚点（Tooltip 与 Popover 触发器解耦用） */
-.when-chip-anchor {
-  @apply inline-flex;
 }

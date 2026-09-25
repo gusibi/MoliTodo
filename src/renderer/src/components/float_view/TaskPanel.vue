@@ -149,13 +149,7 @@
               <div class="task-card-main">
                 <!-- 状态指示（纯展示，不可点击；动作在右侧 hover 按钮） -->
                 <span v-if="!isTrashView" class="task-status-indicator">
-                  <span class="task-status-circle" :class="`status-${statusOf(task)}`">
-                    <svg v-if="statusOf(task) === 'done'" width="10" height="10" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                    </svg>
-                    <Pause v-else-if="statusOf(task) === 'paused'" class="h-2 w-2" aria-hidden="true" />
-                  </span>
+                  <TaskStatusCircle :status="statusOf(task)" />
                 </span>
 
                 <!-- 任务内容文本（单击原位编辑，Things 式） -->
@@ -208,99 +202,12 @@
               <!-- 元信息行（占满宽度） -->
               <div class="task-card-meta">
                 <!-- 安排/截止 chip（点击弹 When 气泡，Things 式就地改期） -->
-                <Popover v-if="statusOf(task) !== 'done' && !isTrashView" :open="whenMenuTaskId === task.id"
-                  @update:open="(value) => toggleWhenMenu(task.id, value)" align="start" content-class="p-1">
-                  <template #trigger>
-                    <span class="when-chip-anchor">
-                      <Tooltip :content-class="getWhenInfo(task).variant === 'overdue' ? 'text-destructive' : ''">
-                        <template #trigger>
-                          <button type="button" :class="['task-when-chip', getWhenInfo(task).variant]">
-                            <component :is="getWhenInfo(task).icon" class="h-2.5 w-2.5" aria-hidden="true" />
-                            <span>{{ getWhenInfo(task).label }}</span>
-                          </button>
-                        </template>
-                        {{ getWhenInfo(task).tooltip }}
-                      </Tooltip>
-                    </span>
-                  </template>
-                  <div class="task-panel-dropdown-menu when-popover">
-                    <template v-if="!whenPickerVisible">
-                      <div class="dropdown-item when-option when-option-today" @click.stop="setWhenQuick(task, 'today')">
-                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('categories.today') }}</span>
-                      </div>
-                      <div class="dropdown-item when-option when-option-tomorrow" @click.stop="setWhenQuick(task, 'tomorrow')">
-                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('floatView.chipTomorrow') }}</span>
-                      </div>
-                      <div class="dropdown-item when-option when-option-next-week" @click.stop="setWhenQuick(task, 'nextWeek')">
-                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('tasks.nextWeek') }}</span>
-                      </div>
-                      <div v-if="hasSchedule(task)" class="dropdown-item when-option when-option-clear"
-                        @click.stop="clearWhen(task)">
-                        <X class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('tasks.clearSchedule') }}</span>
-                      </div>
-                      <div class="dropdown-item when-option when-option-picker" @click.stop="openWhenPicker(task)">
-                        <CalendarClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('tasks.pickDate') }}</span>
-                      </div>
-                    </template>
-                    <div v-else class="when-calendar">
-                      <v-date-picker v-model="whenPickerValue" mode="dateTime" is24hr :minute-increment="5"
-                        :is-dark="isDark" :min-date="whenPickerMinDate" @update:modelValue="setWhenFromPicker(task)"
-                        borderless />
-                    </div>
-                  </div>
-                </Popover>
+                <TaskWhenBubble v-if="statusOf(task) !== 'done' && !isTrashView" :task="task" align="start"
+                  @open-change="(value) => trackWhenOpen(task.id, value)" @updated="loadTasks" />
 
                 <!-- 提醒：小闹钟图标 + 悬浮说明；点击弹 When 式气泡（预设/自定义/清除） -->
-                <Popover v-if="statusOf(task) !== 'done' && !isTrashView" :open="reminderMenuTaskId === task.id"
-                  @update:open="(value) => toggleReminderMenu(task.id, value)" align="start" content-class="p-1 w-52">
-                  <template #trigger>
-                    <span class="when-chip-anchor">
-                      <Tooltip v-if="task.reminderTime">
-                        <template #trigger>
-                          <button type="button"
-                            :class="['task-meta-tag', 'reminder', 'task-meta-tag-clickable', { 'overdue': isReminderOverdue(task.reminderTime) }]">
-                            <AlarmClock class="h-2.5 w-2.5" aria-hidden="true" />
-                            <span>{{ formatReminderTime(task.reminderTime) }}</span>
-                          </button>
-                        </template>
-                        {{ $t('tasks.reminderTime') }}
-                      </Tooltip>
-                      <button v-else type="button" :title="$t('floatView.setReminder')"
-                        class="task-meta-tag reminder task-meta-tag-clickable task-reminder-add">
-                        <AlarmClock class="h-2.5 w-2.5" aria-hidden="true" />
-                        <span>{{ $t('floatView.reminderShort') }}</span>
-                      </button>
-                    </span>
-                  </template>
-                  <div class="task-panel-dropdown-menu reminder-popover">
-                    <template v-if="!reminderPickerVisible">
-                      <div v-for="option in customReminderOptions" :key="option.id" class="dropdown-item reminder-option"
-                        @click.stop="applyReminderPreset(task, option)">
-                        <AlarmClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ option.label }}</span>
-                      </div>
-                      <div class="dropdown-item reminder-option reminder-option-picker" @click.stop="openReminderPicker(task)">
-                        <CalendarClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('tasks.customReminder') }}</span>
-                      </div>
-                      <div v-if="task.reminderTime" class="dropdown-item reminder-option reminder-option-clear"
-                        @click.stop="clearTaskReminder(task)">
-                        <X class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
-                        <span>{{ $t('tasks.clearReminder') }}</span>
-                      </div>
-                    </template>
-                    <div v-else class="when-calendar">
-                      <v-date-picker v-model="reminderPickerValue" mode="dateTime" is24hr :minute-increment="5"
-                        :is-dark="isDark" :min-date="reminderPickerMinDate" @update:modelValue="setReminderFromPicker(task)"
-                        borderless />
-                    </div>
-                  </div>
-                </Popover>
+                <TaskReminderBubble v-if="statusOf(task) !== 'done' && !isTrashView" :task="task" align="start"
+                  @open-change="(value) => trackReminderOpen(task.id, value)" @updated="loadTasks" />
 
                 <!-- 进行中状态标签 -->
                 <div v-if="statusOf(task) === 'doing'" class="task-meta-tag doing">
@@ -401,22 +308,24 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
-import { AlarmClock, CalendarClock, CalendarDays, CalendarPlus, CircleCheck, Layers, Pause, Play, Plus, RotateCcw, Trash2, X } from '@lucide/vue'
+import { CalendarDays, CircleCheck, Layers, Pause, Play, Plus, RotateCcw, Trash2, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { parseQuickEntry } from '@/utils/quick-entry-parse'
-import { hasSchedule, hasDeadline, isOverdue, isTaskInbox, scheduleStartDate, localDateKey } from '@/utils/task-time-rules'
-import { useTheme } from '@/composables/useTheme'
+import { isTaskInbox } from '@/utils/task-time-rules'
+import { isReminderOverdue } from '@/utils/task-utils'
+import { dayLabel, formatTimeHM } from '@/utils/when-labels'
 import ListIcon from '../ui/ListIcon.vue'
 import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
 import Popover from '../ui/popover/Popover.vue'
-import Tooltip from '../ui/tooltip/Tooltip.vue'
+import TaskStatusCircle from '../task/TaskStatusCircle.vue'
+import TaskWhenBubble from '../task/TaskWhenBubble.vue'
+import TaskReminderBubble from '../task/TaskReminderBubble.vue'
 
 const taskStore = useTaskStore()
 const { customReminderOptions } = storeToRefs(taskStore)
 const { t: $t, locale } = useI18n()
-const { isDark } = useTheme()
 
 // 响应式数据
 const tasks = ref([])
@@ -447,21 +356,27 @@ const parsedDateSuppressed = ref(false)
 // 清单筛选 chip（与头部清单下拉共用 selectedListId）
 const showAddListDropdown = ref(false)
 
-// When 气泡（行上就地改期）
+// When 气泡（行上就地改期）：开合状态由共享组件自管，面板只跟踪用于抑制自动隐藏
 const whenMenuTaskId = ref(null)
-const whenPickerVisible = ref(false)
-const whenPickerValue = ref(null)
-const whenPickerMinDate = computed(() => {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  return start
-})
 
 // 提醒气泡（与 When 气泡同一交互模式）
 const reminderMenuTaskId = ref(null)
-const reminderPickerVisible = ref(false)
-const reminderPickerValue = ref(null)
-const reminderPickerMinDate = computed(() => new Date())
+
+const trackWhenOpen = (taskId, open) => {
+  if (open) {
+    whenMenuTaskId.value = taskId
+  } else if (whenMenuTaskId.value === taskId) {
+    whenMenuTaskId.value = null
+  }
+}
+
+const trackReminderOpen = (taskId, open) => {
+  if (open) {
+    reminderMenuTaskId.value = taskId
+  } else if (reminderMenuTaskId.value === taskId) {
+    reminderMenuTaskId.value = null
+  }
+}
 
 // 垃圾桶视图 + 彻底删除确认
 const isTrashView = computed(() => selectedCategory.value === 'trash')
@@ -546,143 +461,14 @@ const suppressParsedDate = () => {
 // 行状态简写
 const statusOf = (task) => task.status || (task.completed ? 'done' : 'todo')
 
-// 日期的人话标签：今天/明天/星期X/M月D日
-const dayLabel = (date) => {
-  const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-  const now = new Date()
-  const tomorrow = new Date(now)
-  tomorrow.setDate(now.getDate() + 1)
-
-  if (dayKey(date) === dayKey(now)) return $t('categories.today')
-  if (dayKey(date) === dayKey(tomorrow)) return $t('floatView.chipTomorrow')
-
-  const diffDays = Math.round(
-    (new Date(date.getFullYear(), date.getMonth(), date.getDate()) -
-      new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
-  )
-  const intlLocale = locale.value || 'zh-CN'
-  if (diffDays >= 2 && diffDays <= 6) {
-    return new Intl.DateTimeFormat(intlLocale, { weekday: 'long' }).format(date)
-  }
-  return new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }).format(date)
-}
-
-const formatTimeHM = (date) => {
-  return ` ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
-// chip 上的日期文案：日期词 + 非零点时刻
+// chip 上的日期文案：日期词 + 非零点时刻（dayLabel/formatTimeHM 来自共享工具 when-labels）
 const formatParsedDate = (date, hasTime) => {
-  let label = dayLabel(date)
+  let label = dayLabel(date, $t, locale.value)
   if (hasTime) label += formatTimeHM(date)
   return label
 }
 
-// 任务行 When chip 内容：安排优先，其次截止（逾期红），否则未安排占位
-const getWhenInfo = (task) => {
-  if (hasSchedule(task)) {
-    const start = scheduleStartDate(task)
-    const isMidnight = start.getHours() === 0 && start.getMinutes() === 0
-    return {
-      label: dayLabel(start) + (isMidnight ? '' : formatTimeHM(start)),
-      icon: CalendarDays,
-      variant: 'scheduled',
-      tooltip: $t('tasks.scheduleStartLabel')
-    }
-  }
-  if (hasDeadline(task)) {
-    const due = new Date(`${localDateKey(task.dueDate)}T00:00:00`)
-    const label = dayLabel(due) + (task.dueTime ? ` ${task.dueTime}` : '')
-    const overdue = isOverdue(task)
-    return {
-      label,
-      icon: CalendarClock,
-      variant: overdue ? 'overdue' : 'scheduled',
-      tooltip: $t('tasks.deadlineLabel')
-    }
-  }
-  return {
-    label: $t('floatView.unscheduledSection'),
-    icon: CalendarPlus,
-    variant: 'ghost',
-    tooltip: $t('floatView.whenChipTitle')
-  }
-}
-
-// When 气泡动作
-const toggleWhenMenu = (taskId, open) => {
-  if (open) {
-    whenMenuTaskId.value = taskId
-    whenPickerVisible.value = false
-    whenPickerValue.value = null
-  } else if (whenMenuTaskId.value === taskId) {
-    whenMenuTaskId.value = null
-    whenPickerVisible.value = false
-  }
-}
-
-// 改安排：保留原有时长（有结束时间时按偏移平移）；相对提醒由应用层自动重算
-const applyWhen = async (task, date) => {
-  try {
-    const payload = { scheduledStartAt: date.toISOString() }
-    if (task.scheduledEndAt && task.scheduledStartAt) {
-      const oldStart = new Date(task.scheduledStartAt).getTime()
-      const oldEnd = new Date(task.scheduledEndAt).getTime()
-      if (!Number.isNaN(oldStart) && !Number.isNaN(oldEnd) && oldEnd > oldStart) {
-        payload.scheduledEndAt = new Date(date.getTime() + (oldEnd - oldStart)).toISOString()
-      }
-    }
-    await taskStore.updateTask(task.id, payload)
-    whenMenuTaskId.value = null
-    whenPickerVisible.value = false
-    await loadTasks()
-  } catch (error) {
-    console.error('更新安排失败:', error)
-  }
-}
-
-const startOfToday = () => {
-  const date = new Date()
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-const setWhenQuick = async (task, kind) => {
-  let date = startOfToday()
-  if (kind === 'tomorrow') {
-    date.setDate(date.getDate() + 1)
-  } else if (kind === 'nextWeek') {
-    // 下周：取下周一（与「下周X」口语的锚点一致）
-    const diff = (1 - date.getDay() + 7) % 7 || 7
-    date.setDate(date.getDate() + diff)
-  }
-  await applyWhen(task, date)
-}
-
-const clearWhen = async (task) => {
-  try {
-    await taskStore.updateTask(task.id, { scheduledStartAt: null, scheduledEndAt: null })
-    whenMenuTaskId.value = null
-    whenPickerVisible.value = false
-    await loadTasks()
-  } catch (error) {
-    console.error('清除安排失败:', error)
-  }
-}
-
-const openWhenPicker = (task) => {
-  whenPickerValue.value = hasSchedule(task)
-    ? scheduleStartDate(task)
-    : startOfToday()
-  whenPickerVisible.value = true
-}
-
-const setWhenFromPicker = async (task) => {
-  if (!whenPickerValue.value) return
-  const date = new Date(whenPickerValue.value)
-  if (Number.isNaN(date.getTime())) return
-  await applyWhen(task, date)
-}
+// 任务行 When chip 内容由共享组件 TaskWhenBubble 计算（安排优先，其次截止（逾期红），否则未安排占位）
 
 // 面板内添加步骤
 const addStep = async (task) => {
@@ -888,87 +674,6 @@ const cancelTaskEdit = () => {
   editingContent.value = ''
 }
 
-// 提醒气泡动作（与 When 气泡同一交互模式）
-const toggleReminderMenu = (taskId, open) => {
-  if (open) {
-    reminderMenuTaskId.value = taskId
-    reminderPickerVisible.value = false
-    reminderPickerValue.value = null
-  } else if (reminderMenuTaskId.value === taskId) {
-    reminderMenuTaskId.value = null
-    reminderPickerVisible.value = false
-  }
-}
-
-// 预设提醒：相对时间从现在起算，绝对时间已过则顺延到明天（沿用原弹窗逻辑）
-const applyReminderPreset = async (task, option) => {
-  const now = new Date()
-  let reminderTime = null
-
-  if (option.type === 'relative') {
-    let milliseconds = 0
-    switch (option.unit) {
-      case 'minutes':
-        milliseconds = option.value * 60 * 1000
-        break
-      case 'hours':
-        milliseconds = option.value * 60 * 60 * 1000
-        break
-      case 'days':
-        milliseconds = option.value * 24 * 60 * 60 * 1000
-        break
-    }
-    reminderTime = new Date(now.getTime() + milliseconds)
-  } else if (option.type === 'absolute') {
-    const targetDate = new Date(now)
-    targetDate.setDate(now.getDate() + option.dayOffset)
-    const [hours, minutes] = option.time.split(':').map(Number)
-    targetDate.setHours(hours, minutes, 0, 0)
-    if (targetDate <= now) {
-      targetDate.setDate(targetDate.getDate() + 1)
-    }
-    reminderTime = targetDate
-  }
-
-  if (!reminderTime) return
-  try {
-    await window.electronAPI.tasks.setReminder(task.id, reminderTime.toISOString())
-    reminderMenuTaskId.value = null
-    await loadTasks()
-  } catch (error) {
-    console.error('设置提醒失败:', error)
-  }
-}
-
-const openReminderPicker = (task) => {
-  reminderPickerValue.value = task.reminderTime ? new Date(task.reminderTime) : new Date(Date.now() + 60 * 60 * 1000)
-  reminderPickerVisible.value = true
-}
-
-const setReminderFromPicker = async (task) => {
-  if (!reminderPickerValue.value) return
-  const date = new Date(reminderPickerValue.value)
-  if (Number.isNaN(date.getTime()) || date <= new Date()) return
-  try {
-    await window.electronAPI.tasks.setReminder(task.id, date.toISOString())
-    reminderMenuTaskId.value = null
-    reminderPickerVisible.value = false
-    await loadTasks()
-  } catch (error) {
-    console.error('设置提醒失败:', error)
-  }
-}
-
-const clearTaskReminder = async (task) => {
-  try {
-    await window.electronAPI.tasks.clearReminder(task.id)
-    reminderMenuTaskId.value = null
-    await loadTasks()
-  } catch (error) {
-    console.error('清除提醒失败:', error)
-  }
-}
-
 // 垃圾桶动作
 const restoreTaskFromTrash = async (taskId) => {
   try {
@@ -1049,14 +754,6 @@ const formatDurationCompact = (milliseconds) => {
   else {
     return `${seconds}s`
   }
-}
-
-const formatReminderTime = (date) => {
-  return taskStore.formatTimeDisplay(date, 'reminder')
-}
-
-const isReminderOverdue = (reminderTime) => {
-  return new Date(reminderTime) < new Date()
 }
 
 // 获取任务的未完成步骤

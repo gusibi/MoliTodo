@@ -163,15 +163,7 @@
   @apply flex items-center justify-between gap-3 mx-2 my-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs;
 }
 
-/* ---------- 任务卡与徽标 ---------- */
-
-.agenda-task-card {
-  @apply relative;
-}
-
-.agenda-task-schedule-btn {
-  @apply absolute right-2 top-1/2 -translate-y-1/2 bg-background/90;
-}
+/* ---------- 任务徽标（TodayTaskRow 元信息行使用） ---------- */
 
 .flat-task-badge {
   @apply inline-flex items-center px-1.5 py-0.5 rounded text-2xs border border-border/70 text-muted-foreground whitespace-nowrap;

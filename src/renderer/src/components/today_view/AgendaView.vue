@@ -29,10 +29,10 @@
             <div v-if="!model.unplanned.length" class="agenda-empty-inline">{{ $t('today.unplannedEmpty') }}</div>
             <div v-for="task in model.unplanned" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'unplanned')" :show-schedule="true"
-                @task-click="(t) => $emit('task-click', t)" @schedule="handleScheduleClick(task)" />
+                :badges="cardBadges(task, 'unplanned')"
+                @detail="(t) => $emit('task-click', t)" />
             </div>
           </div>
         </section>
@@ -51,9 +51,9 @@
           <div v-if="overdueExpanded" class="agenda-section-body">
             <div v-for="task in model.overdue" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'overdue')" @task-click="(t) => $emit('task-click', t)" />
+                :badges="cardBadges(task, 'overdue')" @detail="(t) => $emit('task-click', t)" />
             </div>
           </div>
         </section>
@@ -69,9 +69,9 @@
           <div class="agenda-section-body">
             <div v-for="task in model.reschedule" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'reschedule')" @task-click="(t) => $emit('task-click', t)" />
+                :badges="cardBadges(task, 'reschedule')" @detail="(t) => $emit('task-click', t)" />
             </div>
           </div>
         </section>
@@ -87,10 +87,10 @@
           <div class="agenda-section-body">
             <div v-for="task in model.reminderExpired" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'reminderExpired')" :show-schedule="true"
-                @task-click="(t) => $emit('task-click', t)" @schedule="handleScheduleClick(task)" />
+                :badges="cardBadges(task, 'reminderExpired')"
+                @detail="(t) => $emit('task-click', t)" />
             </div>
           </div>
         </section>
@@ -109,9 +109,9 @@
             <div v-if="!model.today.length" class="agenda-empty-inline">{{ $t('today.todayEmpty') }}</div>
             <div v-for="task in model.today" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'today')" @task-click="(t) => $emit('task-click', t)" />
+                :badges="cardBadges(task, 'today')" @detail="(t) => $emit('task-click', t)" />
             </div>
             <template v-if="showCompleted && (model.todayCompleted.length || todayCompletedOnDate.length)">
               <div class="agenda-completed-label">
@@ -119,15 +119,15 @@
               </div>
               <div v-for="task in todayCompletedOnDate" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
-                <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                  @task-click="(t) => $emit('task-click', t)" />
+                  @detail="(t) => $emit('task-click', t)" />
               </div>
               <div v-for="task in model.todayCompleted" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
-                <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                  @task-click="(t) => $emit('task-click', t)" />
+                  @detail="(t) => $emit('task-click', t)" />
               </div>
             </template>
           </div>
@@ -149,17 +149,17 @@
 
             <div v-for="task in section.tasks" :key="taskKey(task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(task)">
-              <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="cardBadges(task, 'date')" @task-click="(t) => $emit('task-click', t)" />
+                :badges="cardBadges(task, 'date')" @detail="(t) => $emit('task-click', t)" />
             </div>
 
-            <!-- 过去日期：被执行分组收纳的任务直接展示卡片，附归类原因 -->
+            <!-- 过去日期：被执行分组收纳的任务直接展示行，附归类原因 -->
             <div v-for="entry in section.pastCards" :key="taskKey(entry.task)" class="agenda-card-wrapper"
               :data-task-key="taskKey(entry.task)">
-              <AgendaTaskCard :task="entry.task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+              <TodayTaskRow :task="entry.task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                :badges="pastCardBadges(entry)" @task-click="(t) => $emit('task-click', t)" />
+                :badges="pastCardBadges(entry)" @detail="(t) => $emit('task-click', t)" />
             </div>
 
             <!-- 已完成区域（开关打开时） -->
@@ -167,9 +167,9 @@
               <div class="agenda-completed-label">{{ $t('today.completedOnDate', { count: section.completedTasks.length }) }}</div>
               <div v-for="task in section.completedTasks" :key="taskKey(task)" class="agenda-card-wrapper"
                 :data-task-key="taskKey(task)">
-                <AgendaTaskCard :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
+                <TodayTaskRow :task="task" :search-query="searchQuery" :time-update-trigger="timeUpdateTrigger"
                 @delete-request="forwardDeleteRequest"
-                  @task-click="(t) => $emit('task-click', t)" />
+                  @detail="(t) => $emit('task-click', t)" />
               </div>
             </template>
 
@@ -251,7 +251,7 @@ import {
   X
 } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
-import AgendaTaskCard from './AgendaTaskCard.vue'
+import TodayTaskRow from './TodayTaskRow.vue'
 import FloatingAddButton from '../FloatingAddButton.vue'
 import TaskComposer from '../TaskComposer.vue'
 import Button from '../ui/button/Button.vue'
@@ -521,10 +521,6 @@ function locateTask(task) {
     scrollToGroup('today')
   }
   highlightTasks([key])
-}
-
-function handleScheduleClick(task) {
-  emit('task-click', task)
 }
 
 function forwardDeleteRequest(payload) {

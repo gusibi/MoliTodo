@@ -47,6 +47,21 @@ function seriesKeyOf(task) {
 }
 
 /**
+ * 虚拟重复实例先物化为真实任务行（幂等链路）：非虚拟实例原样返回；
+ * 物化成功返回真实任务行，失败返回 null。
+ * 行级改期、提醒、状态动作在操作虚拟实例前都必须经过这里（#13/#15 规则）。
+ */
+export async function materializeVirtualInstance(taskStore, task) {
+  if (!isVirtualInstance(task)) return task;
+  const result = await taskStore.updateRecurringInstance(
+    task.seriesId,
+    task.occurrenceDate,
+    {}
+  );
+  return result && result.success ? result.task : null;
+}
+
+/**
  * 头行自身发生的本地日期键：安排开始 > 截止 > occurrenceDate > 创建时间。
  * 与展开器的 baseDate（occurrenceDate || createdAt）对齐：
  * 有明确安排/截止时以业务日期为准，用于过滤早于首次发生的幻影虚拟实例。

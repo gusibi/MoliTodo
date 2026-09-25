@@ -58,11 +58,11 @@
       </div>
     </Transition>
 
-    <!-- 统一危险确认：任务行与编辑器删除共用同一流程 -->
+    <!-- 统一危险确认：任务行与编辑器删除共用同一流程（软删除语义：可从悬浮窗垃圾桶恢复） -->
     <AlertDialog
       :open="deleteDialogOpen"
       :title="$t('tasks.deleteTask')"
-      :description="$t('tasks.confirmDelete')"
+      :description="$t('tasks.confirmSoftDelete')"
       :cancel-label="$t('common.cancel')"
       :confirm-label="$t('common.delete')"
       confirm-variant="destructive"
