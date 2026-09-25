@@ -69,6 +69,7 @@ Today 的每条任务采用“紧凑浏览态 → 原位展开态”的单一编
 
 - 展开内容从上到下依次为：标题和当前状态；备注；步骤清单及添加入口；任务属性区；低频操作区。空备注和空步骤清单用简洁的添加入口表示，不保留大片空白。
 - 任务属性区必须提供当前已有能力：所属清单、安排开始及结束、截止日期及可选时间、提醒策略及时间、重复规则。属性采用轻量入口，当前值可见；点击后打开对应 Popover、日期选择器或已有规则编辑器。不能为了“像 Things”而合并或删除这些不同字段。
+- Today 展开态在宽度足够时将安排开始与结束并排，截止与重复并排；未设置安排开始时继续隐藏结束入口。窄宽度下成组纵向排列，其他任务编辑场景沿用原有纵向布局。
 - 开始、结束、截止、提醒各用准确文案。安排回答“何时做”，截止回答“何时前完成”，提醒回答“何时通知”。现有时间模型、时区、日期型值、提醒重算与警告逻辑沿用应用层规则。
 - 任务所属清单继续可改，成功后与其他视图同步。移动清单不改变 Today 分组语义，除非已有业务规则会使其变化。
 - 低频操作保留删除任务及其他当前编辑器实际可达的动作。浏览态删除放在任务右键菜单，键盘可用 Shift+F10 打开；删除继续走统一 AlertDialog，文案说明移入垃圾桶及现有恢复方式；取消无副作用，提交中防重复，失败保留上下文。
@@ -138,6 +139,7 @@ Today 的每条任务采用“紧凑浏览态 → 原位展开态”的单一编
 
 - 实施完成前运行当前项目脚本规定的 renderer 构建、Today E2E、受影响的任务视图 E2E 和任务规则单元测试。真实应用中留存同一测试数据的收起、展开、日期弹层、步骤确认和窄窗口截图，并实际检查动效与焦点；未运行的平台标为未验证。
 - 2026-09-25 使用同一隔离任务在 Electron 中留存了实际界面：[`collapsed-hover.png`](../screenshots/today-task-things/collapsed-hover.png)、[`context-menu.png`](../screenshots/today-task-things/context-menu.png)、[`expanded.png`](../screenshots/today-task-things/expanded.png)、[`date-picker.png`](../screenshots/today-task-things/date-picker.png)、[`step-delete-confirm.png`](../screenshots/today-task-things/step-delete-confirm.png)、[`narrow-window.png`](../screenshots/today-task-things/narrow-window.png)。[`collapsed-hover-dark.png`](../screenshots/today-task-things/collapsed-hover-dark.png) 和 [`context-menu-dark.png`](../screenshots/today-task-things/context-menu-dark.png) 记录暗色主题；其余主题配色需随对应阶段继续完成。
+- 2026-09-26 在隔离 Electron 数据中核对时间属性布局：[`time-layout-after.png`](../screenshots/today-task-things/time-layout-after.png) 显示宽窗口两行并排，[`time-layout-narrow.png`](../screenshots/today-task-things/time-layout-narrow.png) 显示窄窗口纵向排列。
 
 ## Out of Scope
 

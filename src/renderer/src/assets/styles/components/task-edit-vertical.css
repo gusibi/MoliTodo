@@ -566,6 +566,16 @@
   @apply grid grid-cols-1 gap-1 sm:grid-cols-2;
 }
 
+.task-edit-vertical-container.is-inline .task-option-time-row {
+  @apply col-span-1 grid min-w-0 grid-cols-1 gap-1 sm:col-span-2 sm:grid-cols-2;
+}
+
+.task-edit-vertical-container.is-inline .task-option-time-row .task-option-section,
+.task-edit-vertical-container.is-inline .task-option-time-row .task-option-item,
+.task-edit-vertical-container.is-inline .task-option-time-row .task-option-btn {
+  @apply min-w-0;
+}
+
 .task-edit-vertical-container.is-inline .task-actions {
   @apply mt-2 border-t border-border/50 pt-2;
 }
@@ -597,7 +607,7 @@
 }
 
 .task-edit-vertical-container.is-inline .task-option-subitem {
-  @apply ml-3;
+  @apply ml-0;
 }
 
 .task-edit-vertical-container.is-inline .task-note-textarea {

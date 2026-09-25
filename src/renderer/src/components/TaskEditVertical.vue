@@ -193,66 +193,99 @@
           </div>
 
           <!-- 安排时间（一级入口：计划开始 / 结束） -->
-          <div class="task-option-section">
-            <div class="task-option-item" :class="{ 'active': scheduleStart }">
-              <Button variant="ghost" class="task-option-btn" ref="scheduleStartBtn"
-                @click="openPickerFor('scheduleStart', scheduleStartBtn)">
-                <div class="task-option-icon">
-                  <CalendarDays class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                </div>
-                <div class="task-option-content">
-                  <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : t('tasks.addSchedule') }}</div>
-                </div>
-              </Button>
-              <Button variant="ghost" v-if="scheduleStart" class="task-option-delete" :aria-label="t('tasks.clearSchedule')"
-                @click="clearSchedule">
-                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </Button>
+          <div class="task-option-time-row">
+            <div class="task-option-section">
+              <div class="task-option-item" :class="{ 'active': scheduleStart }">
+                <Button variant="ghost" class="task-option-btn" ref="scheduleStartBtn"
+                  @click="openPickerFor('scheduleStart', scheduleStartBtn)">
+                  <div class="task-option-icon">
+                    <CalendarDays class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                  </div>
+                  <div class="task-option-content">
+                    <div class="task-option-title">{{ scheduleStart ? formatScheduleText() : t('tasks.addSchedule') }}</div>
+                  </div>
+                </Button>
+                <Button variant="ghost" v-if="scheduleStart" class="task-option-delete" :aria-label="t('tasks.clearSchedule')"
+                  @click="clearSchedule">
+                  <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                </Button>
+              </div>
             </div>
 
             <!-- 结束时间：只在设置开始后出现 -->
-            <div v-if="scheduleStart" class="task-option-item task-option-subitem" :class="{ 'active': scheduleEnd }">
-              <Button variant="ghost" class="task-option-btn" ref="scheduleEndBtn"
-                @click="openPickerFor('scheduleEnd', scheduleEndBtn)">
-                <div class="task-option-icon">
-                  <Hourglass class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                </div>
-                <div class="task-option-content">
-                  <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : t('tasks.addScheduleEnd') }}</div>
-                </div>
-              </Button>
-              <Button variant="ghost" v-if="scheduleEnd" class="task-option-delete" :aria-label="t('tasks.clearScheduleEnd')"
-                @click="clearScheduleEnd">
-                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </Button>
+            <div v-if="scheduleStart" class="task-option-section task-option-subitem">
+              <div class="task-option-item" :class="{ 'active': scheduleEnd }">
+                <Button variant="ghost" class="task-option-btn" ref="scheduleEndBtn"
+                  @click="openPickerFor('scheduleEnd', scheduleEndBtn)">
+                  <div class="task-option-icon">
+                    <Hourglass class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                  </div>
+                  <div class="task-option-content">
+                    <div class="task-option-title">{{ scheduleEnd ? formatScheduleEndText() : t('tasks.addScheduleEnd') }}</div>
+                  </div>
+                </Button>
+                <Button variant="ghost" v-if="scheduleEnd" class="task-option-delete" :aria-label="t('tasks.clearScheduleEnd')"
+                  @click="clearScheduleEnd">
+                  <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          <!-- 截止日期（一级入口） -->
-          <div class="task-option-section" ref="datePickerSection">
-            <div class="task-option-item" :class="{ 'active': selectedDate }">
-              <Button variant="ghost" class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
-                <div class="task-option-icon">
-                  <CalendarClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                </div>
-                <div class="task-option-content">
-                  <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : t('tasks.addDeadline') }}
+          <div class="task-option-time-row">
+            <!-- 截止日期（一级入口） -->
+            <div class="task-option-section" ref="datePickerSection">
+              <div class="task-option-item" :class="{ 'active': selectedDate }">
+                <Button variant="ghost" class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
+                  <div class="task-option-icon">
+                    <CalendarClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
                   </div>
-                </div>
-              </Button>
-              <!-- 日期型截止与日期+时间截止的切换 -->
-              <Button variant="ghost" v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
-                :title="t('tasks.clearDeadlineTime')">
-                仅日期
-              </Button>
-              <Button variant="ghost" v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
-                :title="t('tasks.addDeadlineTime')">
-                加时间
-              </Button>
-              <Button variant="ghost" v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
-                @click="clearDateTime">
-                <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
-              </Button>
+                  <div class="task-option-content">
+                    <div class="task-option-title">{{ selectedDate ? formatSelectedDate(selectedDate) : t('tasks.addDeadline') }}
+                    </div>
+                  </div>
+                </Button>
+                <!-- 日期型截止与日期+时间截止的切换 -->
+                <Button variant="ghost" v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
+                  :title="t('tasks.clearDeadlineTime')">
+                  仅日期
+                </Button>
+                <Button variant="ghost" v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
+                  :title="t('tasks.addDeadlineTime')">
+                  加时间
+                </Button>
+                <Button variant="ghost" v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
+                  @click="clearDateTime">
+                  <X class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+
+            <!-- 重复设置 -->
+            <div class="task-option-section">
+              <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
+                <Button variant="ghost" class="task-option-btn" ref="repeatPickerBtn" @click="toggleRepeatPicker">
+                  <div class="task-option-icon">
+                    <Repeat2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                  </div>
+                  <div class="task-option-content">
+                    <div class="task-option-title">{{ recurrenceSummary }}</div>
+                  </div>
+                </Button>
+                <Switch class="task-option-switch" :model-value="!!selectedRecurrence"
+                  :label="t('today.recurrenceLabel')" @update:model-value="toggleRepeatEnabled" />
+              </div>
+
+              <!-- 重复配置面板 -->
+              <div v-if="showRepeatPicker && selectedRecurrence" class="task-option-dropdown">
+                <RepeatSelector v-model="selectedRecurrence" :base-date="getBaseDate()"
+                  @update:modelValue="handleRecurrenceChange" />
+              </div>
+              <div v-if="recurrenceSaveError" class="task-field-error task-recurrence-save-error" role="alert">
+                <span>{{ recurrenceSaveError }}</span>
+                <Button v-if="failedRecurrenceSave" variant="outline" size="sm" :loading="retryingRecurrenceSave"
+                  :disabled="retryingRecurrenceSave" @click="retryRecurrenceSave">{{ t('common.retry') }}</Button>
+              </div>
             </div>
           </div>
 
@@ -290,33 +323,6 @@
               </div>
             </div>
           </Teleport>
-
-          <!-- 重复设置 -->
-          <div class="task-option-section">
-            <div class="task-option-item" :class="{ 'active': !!selectedRecurrence }">
-              <Button variant="ghost" class="task-option-btn" ref="repeatPickerBtn" @click="toggleRepeatPicker">
-                <div class="task-option-icon">
-                  <Repeat2 class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                </div>
-                <div class="task-option-content">
-                  <div class="task-option-title">{{ recurrenceSummary }}</div>
-                </div>
-              </Button>
-              <Switch class="task-option-switch" :model-value="!!selectedRecurrence"
-                :label="t('today.recurrenceLabel')" @update:model-value="toggleRepeatEnabled" />
-            </div>
-
-            <!-- 重复配置面板 -->
-            <div v-if="showRepeatPicker && selectedRecurrence" class="task-option-dropdown">
-              <RepeatSelector v-model="selectedRecurrence" :base-date="getBaseDate()"
-                @update:modelValue="handleRecurrenceChange" />
-            </div>
-            <div v-if="recurrenceSaveError" class="task-field-error task-recurrence-save-error" role="alert">
-              <span>{{ recurrenceSaveError }}</span>
-              <Button v-if="failedRecurrenceSave" variant="outline" size="sm" :loading="retryingRecurrenceSave"
-                :disabled="retryingRecurrenceSave" @click="retryRecurrenceSave">{{ t('common.retry') }}</Button>
-            </div>
-          </div>
 
         </div>
 
