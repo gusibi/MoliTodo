@@ -1,4 +1,11 @@
-/* Task Panel Component Styles - Theme-aware Design */
+/* Task Panel Component Styles - Things 风格
+ *
+ * 设计基调参考 Things 3：安静的平台感。
+ * - 列表是扁平行（hover 才浮现操作），不是卡片堆叠
+ * - 分组用灰色小节头（今天 / 未安排），不用重底色
+ * - 颜色强调只留给状态语义（进行中、逾期）与主操作
+ * - 操作点击区不小于 28×28px，动效尊重 prefers-reduced-motion
+ */
 
 /* ===== Container ===== */
 .task-panel-container {
@@ -6,13 +13,13 @@
   @apply bg-background/95 backdrop-blur-xl;
   @apply rounded-xl shadow-2xl overflow-hidden;
   @apply border border-border/50;
-  @apply transition-all duration-300 ease-in-out select-none;
+  @apply select-none;
 }
 
 /* ===== Header ===== */
 .task-panel-header {
-  @apply flex items-center justify-between px-3 py-2;
-  @apply bg-card/60 border-b border-border/50 backdrop-blur-sm;
+  @apply flex items-center gap-0.5 px-2 py-1.5;
+  @apply border-b border-border/40;
   @apply flex-shrink-0 relative z-[100];
 }
 
@@ -24,61 +31,47 @@
   @apply cursor-grabbing;
 }
 
-.task-panel-title-wrapper {
-  @apply flex-1;
-}
-
-/* ===== Dropdown ===== */
-.task-panel-dropdown {
-  @apply relative z-[100];
-}
-
+/* ===== Dropdown Trigger ===== */
 .task-panel-dropdown-trigger {
-  @apply flex items-center gap-1.5 px-1.5 py-1 rounded-md;
-  @apply hover:bg-accent/50;
+  @apply flex items-center gap-1.5 px-2 py-1.5 rounded-lg;
+  @apply hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
   @apply transition-colors cursor-pointer;
 }
 
 .task-panel-dropdown-trigger .category-icon {
-  @apply w-3.5 h-3.5 text-muted-foreground;
+  @apply w-4 h-4 text-primary;
 }
 
 .task-panel-dropdown-trigger .category-label {
-  @apply font-semibold text-xs text-foreground;
+  @apply font-semibold text-[13px] text-foreground;
 }
 
 .task-panel-dropdown-trigger .task-panel-count {
-  @apply text-[10px] px-1 py-0.5 bg-muted text-muted-foreground rounded-full font-medium;
+  @apply text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full font-medium tabular-nums;
 }
 
+.task-panel-list-trigger {
+  @apply flex items-center gap-1 px-1.5 py-1.5 rounded-lg;
+  @apply hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
+  @apply transition-colors cursor-pointer;
+}
+
+.task-panel-list-trigger .dropdown-arrow,
 .task-panel-dropdown-trigger .dropdown-arrow {
   @apply w-2.5 h-2.5 text-muted-foreground transition-transform duration-200;
 }
 
-.task-panel-dropdown-trigger .dropdown-arrow.open {
+.dropdown-arrow.open {
   @apply rotate-180;
 }
 
+/* ===== Dropdown Menu（渲染在 ui Popover 内容层内） ===== */
 .task-panel-dropdown-menu {
-  @apply absolute top-full left-0 mt-1 w-40;
-  @apply bg-popover rounded-lg shadow-xl;
-  @apply border border-border py-1 z-[100];
-  animation: dropdown-slide-in 0.2s ease-out;
-}
-
-@keyframes dropdown-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  @apply flex flex-col;
 }
 
 .dropdown-item {
-  @apply flex items-center gap-2 px-2.5 py-1.5 mx-1 text-xs rounded-md;
+  @apply flex items-center gap-2 px-2 py-1.5 text-xs rounded-md;
   @apply text-popover-foreground hover:bg-accent;
   @apply transition-colors cursor-pointer;
 }
@@ -88,7 +81,7 @@
 }
 
 .dropdown-item-icon {
-  @apply w-3.5 h-3.5 text-muted-foreground;
+  @apply w-3.5 h-3.5 text-muted-foreground flex-shrink-0;
 }
 
 .dropdown-item.active .dropdown-item-icon {
@@ -96,58 +89,25 @@
 }
 
 .dropdown-item-count {
-  @apply ml-auto text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded-full;
+  @apply ml-auto text-[10px] text-muted-foreground tabular-nums;
 }
 
 .dropdown-item.active .dropdown-item-count {
-  @apply bg-primary/20 text-primary;
-}
-
-/* ===== List Dropdown ===== */
-.task-panel-list-dropdown {
-  @apply relative z-[100] ml-1;
-}
-
-.task-panel-list-trigger {
-  @apply flex items-center gap-1 px-1.5 py-1 rounded-md;
-  @apply hover:bg-accent/50;
-  @apply transition-colors cursor-pointer;
-}
-
-.task-panel-list-trigger i {
-  @apply text-xs text-foreground;
-}
-
-.task-panel-list-trigger .dropdown-arrow {
-  @apply w-2.5 h-2.5 text-muted-foreground transition-transform duration-200;
-}
-
-.task-panel-list-trigger .dropdown-arrow.open {
-  @apply rotate-180;
-}
-
-.list-dropdown-menu {
-  @apply right-0 left-auto w-36;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.list-dropdown-menu .dropdown-item svg {
-  @apply flex-shrink-0;
+  @apply text-primary;
 }
 
 /* 全部清单图标使用主题前景色 */
-.list-dropdown-menu .dropdown-item .dropdown-item-icon-muted {
+.dropdown-item-icon-muted {
   @apply text-muted-foreground;
 }
 
-.list-dropdown-menu .dropdown-item.active .dropdown-item-icon-muted {
+.dropdown-item.active .dropdown-item-icon-muted {
   @apply text-primary;
 }
 
 /* ===== Pin Button ===== */
 .task-panel-pin-btn {
-  @apply p-1 rounded-md transition-all duration-200 flex-shrink-0;
+  @apply ml-auto p-1.5 rounded-lg transition-all duration-200 flex-shrink-0 flex items-center justify-center;
   @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
 }
 
@@ -156,12 +116,12 @@
 }
 
 .task-panel-pin-btn.pinned {
-  @apply bg-primary/20 text-primary;
+  @apply bg-primary/15 text-primary;
 }
 
 /* ===== Quick Add ===== */
 .task-panel-quick-add {
-  @apply px-3 py-2 bg-card/40 flex-shrink-0;
+  @apply px-2.5 pt-2.5 pb-1.5 flex-shrink-0;
 }
 
 .task-panel-input-wrapper {
@@ -169,34 +129,63 @@
 }
 
 .task-panel-input {
-  @apply w-full pl-3 pr-8 py-2;
-  @apply bg-input border border-border rounded-lg;
-  @apply text-xs text-foreground placeholder:text-muted-foreground;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary;
+  @apply w-full pl-3 pr-9 py-2.5;
+  @apply bg-input border border-border/70 rounded-lg;
+  @apply text-[13px] text-foreground placeholder:text-muted-foreground/70;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-primary/60;
   @apply shadow-sm transition-all;
 }
 
 .task-panel-add-btn {
   @apply absolute right-1.5 top-1/2 -translate-y-1/2;
-  @apply p-1 rounded-md transition-all duration-200;
-  @apply text-muted-foreground/50 hover:bg-accent hover:text-accent-foreground;
+  @apply w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200;
+  @apply text-muted-foreground/60 hover:bg-accent hover:text-accent-foreground;
 }
 
 .task-panel-add-btn.active {
-  @apply bg-primary text-primary-foreground shadow-md hover:bg-primary/90;
+  @apply bg-primary text-primary-foreground rounded-full shadow-md hover:bg-primary/90;
 }
 
-.task-panel-add-btn svg {
-  @apply w-3.5 h-3.5;
+/* 解析出的日期 chip 预览（点击移除 = 本次创建不设置日期） */
+.quick-entry-chip-row {
+  @apply flex items-center gap-1.5 mt-1.5 px-0.5;
+}
+
+.quick-entry-chip {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full;
+  @apply bg-primary/10 text-primary text-[11px] font-medium;
+  @apply hover:bg-primary/15 transition-colors cursor-pointer;
+}
+
+.quick-entry-chip-remove {
+  @apply text-primary/60;
+}
+
+/* 目标清单 chip（弱化于日期 chip） */
+.quick-entry-chip-muted {
+  @apply bg-muted/70 text-muted-foreground font-normal;
+}
+
+.quick-entry-chip-muted:hover {
+  @apply bg-accent text-accent-foreground;
+}
+
+.quick-entry-chip .dropdown-arrow {
+  @apply w-2 h-2 text-muted-foreground/70 transition-transform duration-200;
+}
+
+/* When 气泡内的日历 */
+.when-calendar {
+  @apply p-1;
+}
+
+.when-calendar .vc-container {
+  @apply bg-popover border-0;
 }
 
 /* ===== Task List Container ===== */
 .task-panel-list-container {
-  @apply flex-1 overflow-y-auto px-3 pb-2 min-h-0;
-}
-
-.task-panel-list {
-  @apply space-y-1.5 pt-1;
+  @apply flex-1 overflow-y-auto px-2 pb-2 min-h-0;
 }
 
 /* Custom Scrollbar */
@@ -216,19 +205,40 @@
   @apply bg-muted-foreground/50;
 }
 
-/* ===== Task Card ===== */
-.task-panel-card {
-  @apply relative flex flex-col p-2;
-  @apply bg-card rounded-lg border transition-all duration-200;
-  @apply border-border shadow-sm;
-  @apply hover:border-border/80 hover:shadow-md;
-  animation: card-slide-in 0.3s ease-out;
+/* ===== Section（今天 / 未安排 分组） ===== */
+.task-panel-section {
+  @apply flex flex-col;
 }
 
-@keyframes card-slide-in {
+.task-panel-section + .task-panel-section {
+  @apply mt-2;
+}
+
+.task-panel-section-header {
+  @apply flex items-center gap-1.5 px-1.5 pt-1.5 pb-1;
+  @apply text-[10px] font-semibold text-muted-foreground;
+}
+
+.task-panel-section-header .section-count {
+  @apply text-[10px] font-medium text-muted-foreground/70 tabular-nums;
+}
+
+.task-panel-list {
+  @apply flex flex-col;
+}
+
+/* ===== Task Row（Things 式扁平行，hover 浮现操作） ===== */
+.task-panel-card {
+  @apply relative flex flex-col px-1.5 py-1 rounded-lg;
+  @apply transition-colors duration-150;
+  @apply hover:bg-accent/40;
+  animation: row-fade-in 0.2s ease-out;
+}
+
+@keyframes row-fade-in {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -236,72 +246,57 @@
   }
 }
 
-.task-panel-card.status-doing {
-  @apply border-status-doing/50 shadow-md;
-  box-shadow: 0 4px 6px -1px hsl(var(--status-doing) / 0.1);
-}
-
 .task-panel-card.status-done {
-  @apply opacity-70 bg-muted/50;
+  @apply opacity-60;
 }
 
 .task-panel-card.overtime {
-  @apply border-status-overtime/50 bg-status-overtime/5;
+  @apply bg-destructive/5;
 }
 
 /* ===== Task Card Main Row ===== */
 .task-card-main {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-2 min-h-[28px];
 }
 
-/* ===== Status Checkbox ===== */
-.task-status-checkbox {
-  @apply flex-shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
-  @apply transition-all duration-200 cursor-pointer;
-  @apply border-border bg-transparent;
-  @apply hover:border-primary;
+/* ===== Status Indicator（纯状态展示，不可点击；动作一律在 hover 按钮） ===== */
+.task-status-indicator {
+  @apply flex-shrink-0 flex items-center;
 }
 
-/* ===== Task Card Text Wrapper ===== */
+.task-status-circle {
+  @apply w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center;
+}
+
+.task-status-circle.status-todo {
+  @apply border-muted-foreground/40;
+}
+
+/* doing：空心圆 + 中心小圆点脉冲（进行中状态，非播放按钮） */
+.task-status-circle.status-doing {
+  @apply border-status-doing;
+}
+
+.task-status-circle.status-doing::after {
+  content: '';
+  @apply w-1.5 h-1.5 rounded-full bg-status-doing animate-pulse;
+}
+
+.task-status-circle.status-done {
+  @apply bg-status-done border-status-done text-white;
+}
+
+.task-status-circle.status-paused {
+  @apply border-status-paused text-status-paused;
+}
+
+/* ===== Task Card Text ===== */
 .task-card-text-wrapper {
   @apply flex-1 min-w-0;
 }
 
-.task-status-checkbox.status-todo {
-  @apply border-status-todo;
-}
-
-.task-status-checkbox.status-doing {
-  @apply bg-status-doing border-status-doing text-primary-foreground;
-}
-
-.task-status-checkbox.status-done {
-  @apply bg-status-done border-status-done text-primary-foreground;
-}
-
-.task-status-checkbox.status-paused {
-  @apply bg-status-paused/20 border-status-paused text-status-paused;
-}
-
-.task-status-checkbox .check-icon {
-  @apply flex items-center justify-center;
-}
-
-.task-status-checkbox .check-icon svg {
-  @apply w-2.5 h-2.5;
-}
-
-.task-status-checkbox .doing-dot {
-  @apply w-1.5 h-1.5 bg-primary-foreground rounded-full animate-pulse;
-}
-
-/* ===== Task Card Meta (second row) ===== */
-.task-card-meta {
-  @apply flex items-center gap-1.5 mt-1 min-h-[14px] flex-wrap w-full pl-5;
-}
-
 .task-card-text {
-  @apply text-xs leading-normal cursor-text;
+  @apply text-[13px] leading-snug cursor-text;
   @apply text-foreground;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -314,12 +309,17 @@
 }
 
 .task-card-edit-input {
-  @apply w-full text-xs bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
+  @apply w-full text-[13px] bg-transparent border-b-2 border-primary focus:outline-none pb-0.5;
   @apply text-foreground;
 }
 
+/* ===== Task Card Meta ===== */
+.task-card-meta {
+  @apply flex items-center gap-2 mt-0.5 min-h-[14px] flex-wrap w-full pl-[26px];
+}
+
 .task-meta-tag {
-  @apply flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded-full;
+  @apply flex items-center gap-1 text-[11px];
 }
 
 .task-meta-tag svg {
@@ -331,42 +331,104 @@
 }
 
 .task-meta-tag.reminder.overdue {
-  @apply text-destructive font-medium bg-destructive/10;
+  @apply text-destructive font-medium;
 }
 
-.task-meta-tag.doing {
-  @apply text-status-doing font-medium bg-status-doing/10;
+/* 可点击的提醒 pill（打开提醒预设弹窗） */
+.task-meta-tag-clickable {
+  @apply cursor-pointer rounded-full px-1 -mx-1 py-0.5;
+  @apply hover:bg-accent/70 hover:text-accent-foreground;
 }
 
-.task-meta-tag.subtasks {
+/* 无提醒时的「+ 提醒」入口：hover / focus 时与提醒 pill 同位显现 */
+.task-reminder-add {
+  @apply text-muted-foreground/40;
+  display: none;
+}
+
+.task-panel-card:hover .task-reminder-add,
+.task-panel-card:focus-within .task-reminder-add {
+  @apply inline-flex;
+}
+
+.task-panel-card:hover .task-reminder-add:hover,
+.task-panel-card:focus-within .task-reminder-add:hover {
+  @apply bg-accent/70 text-accent-foreground;
+}
+
+/* 行上 When chip：安排/截止/未安排占位 */
+.task-when-chip {
+  @apply inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full;
+  @apply transition-colors cursor-pointer;
+}
+
+.task-when-chip.scheduled {
   @apply text-muted-foreground;
 }
 
-/* ===== Task Card Actions ===== */
-.task-card-actions {
-  @apply flex items-center gap-0.5 flex-shrink-0;
-  @apply opacity-0 transition-opacity duration-200;
+.task-when-chip.overdue {
+  @apply text-destructive font-medium;
 }
 
-.task-panel-card:hover .task-card-actions {
+.task-when-chip.ghost {
+  @apply text-muted-foreground/50;
+}
+
+.task-when-chip:hover {
+  @apply bg-accent/70 text-accent-foreground;
+}
+
+.task-when-chip.ghost:hover {
+  @apply text-accent-foreground;
+}
+
+/* When 气泡的清除安排用危险色 */
+.when-option-clear {
+  @apply text-destructive/90;
+}
+
+.when-option-clear .dropdown-item-icon {
+  @apply text-destructive/70;
+}
+
+.when-option-clear:hover {
+  @apply bg-destructive/10 text-destructive;
+}
+
+.task-meta-tag.doing {
+  @apply text-status-doing font-medium tabular-nums;
+}
+
+.task-meta-tag.subtasks {
+  @apply text-muted-foreground tabular-nums;
+}
+
+/* ===== Task Card Actions（hover / focus-within 浮现，28px 点击区） ===== */
+.task-card-actions {
+  @apply flex items-center gap-0.5 flex-shrink-0;
+  @apply opacity-0 transition-opacity duration-150;
+}
+
+.task-panel-card:hover .task-card-actions,
+.task-panel-card:focus-within .task-card-actions {
   @apply opacity-100;
 }
 
 .task-action-btn {
-  @apply p-1 rounded transition-colors;
+  @apply w-7 h-7 flex items-center justify-center rounded-md transition-colors;
   @apply text-muted-foreground;
 }
 
 .task-action-btn svg {
-  @apply w-3 h-3;
+  @apply w-3.5 h-3.5;
 }
 
-.task-action-btn.pause:hover {
-  @apply text-status-paused bg-status-paused/10;
+.task-action-btn:hover {
+  @apply text-accent-foreground bg-accent;
 }
 
-.task-action-btn.reminder:hover {
-  @apply text-info bg-info/10;
+.task-action-btn.restore:hover {
+  @apply text-status-done bg-status-done/10;
 }
 
 .task-action-btn.delete:hover {
@@ -375,20 +437,41 @@
 
 /* ===== Subtasks ===== */
 .task-card-subtasks {
-  @apply mt-1.5 pl-6 space-y-0.5;
+  @apply mt-1 pl-[26px] space-y-0.5;
 }
 
 .subtask-item {
-  @apply flex items-center gap-1.5 text-[10px] text-muted-foreground;
+  @apply flex items-center gap-1.5 text-[11px] text-muted-foreground;
 }
 
 .subtask-checkbox {
-  @apply w-2.5 h-2.5 cursor-pointer transition-colors;
+  @apply w-4 h-4 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0;
   @apply text-muted-foreground/50 hover:text-primary;
 }
 
 .subtask-text {
   @apply truncate;
+}
+
+/* ===== 面板内添加步骤（hover / focus-within 显现） ===== */
+.task-add-step {
+  @apply items-center gap-1.5 pl-[26px] mt-0.5;
+  display: none;
+}
+
+.task-panel-card:hover .task-add-step,
+.task-panel-card:focus-within .task-add-step {
+  @apply flex;
+}
+
+.task-add-step > svg {
+  @apply text-muted-foreground/50 flex-shrink-0;
+}
+
+.task-add-step-input {
+  @apply flex-1 min-w-0 bg-transparent border-0 text-[11px];
+  @apply text-foreground placeholder:text-muted-foreground/50;
+  @apply focus:outline-none;
 }
 
 /* ===== Empty State ===== */
@@ -398,7 +481,7 @@
 }
 
 .empty-icon {
-  @apply mb-2 opacity-60;
+  @apply mb-2 opacity-50;
 }
 
 .empty-icon svg {
@@ -415,7 +498,7 @@
 
 /* ===== Footer ===== */
 .task-panel-footer {
-  @apply px-3 py-1.5 bg-muted/50 border-t border-border;
+  @apply px-3 py-1.5 border-t border-border/40;
   @apply flex justify-between items-center text-[10px] text-muted-foreground;
   @apply flex-shrink-0;
 }
@@ -428,28 +511,25 @@
   @apply hover:text-foreground cursor-pointer transition-colors;
 }
 
-/* ===== Modal ===== */
-.modal-body {
-  @apply p-3;
+/* ===== 提醒气泡（When 式） ===== */
+.reminder-option {
+  @apply text-xs;
 }
 
-.reminder-options-grid {
-  @apply space-y-1.5;
+.reminder-option .dropdown-item-icon {
+  @apply text-primary;
 }
 
-.reminder-option-btn {
-  @apply w-full flex items-center gap-2 px-3 py-2 text-xs text-left;
-  @apply bg-muted/50 rounded-md;
-  @apply text-foreground hover:bg-accent;
-  @apply transition-colors cursor-pointer;
+.reminder-option-clear {
+  @apply text-destructive/90;
 }
 
-.reminder-option-btn svg {
-  @apply w-3.5 h-3.5 text-primary;
+.reminder-option-clear .dropdown-item-icon {
+  @apply text-destructive/70;
 }
 
-.reminder-error {
-  @apply mt-2 text-xs text-destructive;
+.reminder-option-clear:hover {
+  @apply bg-destructive/10 text-destructive;
 }
 
 /* ===== Context Menu ===== */
@@ -467,6 +547,40 @@
   @apply w-3 h-3 text-muted-foreground;
 }
 
+.context-menu-item-delete {
+  @apply text-destructive/90;
+}
+
+.context-menu-item-delete svg {
+  @apply text-destructive/70;
+}
+
+.context-menu-item-delete:hover {
+  @apply bg-destructive/10 text-destructive;
+}
+
 .context-menu-overlay {
   @apply fixed inset-0 z-40;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-panel-card {
+    animation: none;
+  }
+
+  .task-panel-list-trigger .dropdown-arrow,
+  .task-panel-dropdown-trigger .dropdown-arrow,
+  .task-status-checkbox,
+  .task-card-actions {
+    @apply transition-none;
+  }
+
+  .task-status-circle.status-doing::after {
+    animation: none;
+  }
+}
+
+/* When chip 的 Popover 锚点（Tooltip 与 Popover 触发器解耦用） */
+.when-chip-anchor {
+  @apply inline-flex;
 }

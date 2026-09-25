@@ -120,8 +120,30 @@ class TaskUseCases {
   }
 
   async deleteTask(taskId) {
+    const task = await this.taskService.getTaskById(taskId);
+    if (task) {
+      this.notificationService.cancelTaskReminder(taskId);
+    }
     const success = await this.taskService.deleteTask(taskId);
+    return { success };
+  }
+
+  async restoreTask(taskId) {
+    const task = await this.taskService.restoreTask(taskId);
+    if (task.reminderTime && task.status !== 'done') {
+      this.scheduleReminder(task);
+    }
+    return this.serializeTask(task);
+  }
+
+  async getDeletedTasks() {
+    const tasks = await this.taskService.getDeletedTasks();
+    return tasks.map((task) => this.serializeTask(task));
+  }
+
+  async purgeTask(taskId) {
     this.notificationService.cancelTaskReminder(taskId);
+    const success = await this.taskService.purgeTask(taskId);
     return { success };
   }
 
@@ -183,6 +205,7 @@ class TaskUseCases {
       scheduledStartAt: this.toIso(task.scheduledStartAt),
       scheduledEndAt: this.toIso(task.scheduledEndAt),
       reminderPolicy: task.reminderPolicy || null,
+      deletedAt: this.toIso(task.deletedAt),
       timeWarning: task.timeWarning || null
     };
   }

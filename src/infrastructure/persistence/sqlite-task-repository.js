@@ -219,7 +219,8 @@ class SqliteTaskRepository {
         metadata TEXT DEFAULT '{}',
         scheduled_start_at TEXT,
         scheduled_end_at TEXT,
-        reminder_policy TEXT
+        reminder_policy TEXT,
+        deleted_at TEXT
       )
     `;
 
@@ -275,6 +276,11 @@ class SqliteTaskRepository {
 
     if (!columnNames.includes('reminder_policy')) {
       await this.db.exec('ALTER TABLE tasks ADD COLUMN reminder_policy TEXT');
+    }
+
+    // 软删除（垃圾桶）字段兼容性检查
+    if (!columnNames.includes('deleted_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN deleted_at TEXT');
     }
 
     // 重复任务字段兼容性检查
@@ -373,7 +379,8 @@ class SqliteTaskRepository {
       reminder_policy: task.reminderPolicy ? JSON.stringify(task.reminderPolicy) : null,
       recurrence: task.recurrence ? JSON.stringify(task.recurrence) : null,
       series_id: task.seriesId || null,
-      occurrence_date: task.occurrenceDate ? (task.occurrenceDate instanceof Date ? task.occurrenceDate.toISOString() : task.occurrenceDate) : null
+      occurrence_date: task.occurrenceDate ? (task.occurrenceDate instanceof Date ? task.occurrenceDate.toISOString() : task.occurrenceDate) : null,
+      deleted_at: task.deletedAt ? (task.deletedAt instanceof Date ? task.deletedAt.toISOString() : task.deletedAt) : null
     };
   }
 
@@ -434,6 +441,7 @@ class SqliteTaskRepository {
     );
 
     task.updatedAt = new Date(row.updated_at);
+    task.deletedAt = row.deleted_at ? new Date(row.deleted_at) : null;
 
     return task;
   }
@@ -447,13 +455,13 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    const rows = await this.db.all('SELECT * FROM tasks ORDER BY created_at DESC');
+    const rows = await this.db.all('SELECT * FROM tasks WHERE deleted_at IS NULL ORDER BY created_at DESC');
     return rows.map(row => this.rowToTask(row));
   }
 
   /**
    * 根据ID查找任务
-   * @param {string} id 
+   * @param {string} id
    * @returns {Promise<Task|null>}
    */
   async findById(id) {
@@ -466,6 +474,19 @@ class SqliteTaskRepository {
   }
 
   /**
+   * 获取垃圾桶中的任务（软删除，按删除时间倒序）
+   * @returns {Promise<Task[]>}
+   */
+  async findDeleted() {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+
+    const rows = await this.db.all('SELECT * FROM tasks WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
    * 获取所有未完成的任务
    * @param {number|null} listId 清单ID，null表示所有清单
    * @returns {Promise<Task[]>}
@@ -475,7 +496,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT * FROM tasks WHERE status != "done"';
+    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND status != "done"';
     const params = [];
 
     if (listId !== null) {
@@ -499,7 +520,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT * FROM tasks WHERE status = "done"';
+    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND status = "done"';
     const params = [];
 
     if (listId !== null) {
@@ -531,7 +552,7 @@ class SqliteTaskRepository {
     if (existing) {
       // 更新现有任务
       await this.db.run(`
-        UPDATE tasks SET 
+        UPDATE tasks SET
           content = ?,
           status = ?,
           completed = ?,
@@ -549,7 +570,8 @@ class SqliteTaskRepository {
           reminder_policy = ?,
           recurrence = ?,
           series_id = ?,
-          occurrence_date = ?
+          occurrence_date = ?,
+          deleted_at = ?
         WHERE id = ?
       `, [
         row.content,
@@ -570,14 +592,15 @@ class SqliteTaskRepository {
         row.recurrence,
         row.series_id,
         row.occurrence_date,
+        row.deleted_at,
         row.id
       ]);
     } else {
       // 插入新任务
       await this.db.run(`
         INSERT INTO tasks (
-          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, scheduled_start_at, scheduled_end_at, reminder_policy, recurrence, series_id, occurrence_date
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, scheduled_start_at, scheduled_end_at, reminder_policy, recurrence, series_id, occurrence_date, deleted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         row.id,
         row.content,
@@ -598,7 +621,8 @@ class SqliteTaskRepository {
         row.reminder_policy,
         row.recurrence,
         row.series_id,
-        row.occurrence_date
+        row.occurrence_date,
+        row.deleted_at
       ]);
     }
 
@@ -629,7 +653,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT COUNT(*) as count FROM tasks WHERE status != "done"';
+    let sql = 'SELECT COUNT(*) as count FROM tasks WHERE deleted_at IS NULL AND status != "done"';
     const params = [];
 
     if (listId !== null) {
@@ -664,7 +688,7 @@ class SqliteTaskRepository {
     }
 
     const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
       [listId]
     );
     return rows.map(row => this.rowToTask(row));
@@ -681,7 +705,7 @@ class SqliteTaskRepository {
     }
 
     const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? AND status != "done" ORDER BY created_at DESC',
+      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status != "done" ORDER BY created_at DESC',
       [listId]
     );
     return rows.map(row => this.rowToTask(row));
@@ -698,7 +722,7 @@ class SqliteTaskRepository {
     }
 
     const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? AND status = "done" ORDER BY updated_at DESC',
+      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status = "done" ORDER BY updated_at DESC',
       [listId]
     );
     return rows.map(row => this.rowToTask(row));
@@ -809,7 +833,7 @@ class SqliteTaskRepository {
     }
 
     const result = await this.db.get(
-      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ?',
+      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ? AND deleted_at IS NULL',
       [listId]
     );
     return result.count;
@@ -826,7 +850,7 @@ class SqliteTaskRepository {
     }
 
     const result = await this.db.get(
-      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ? AND status != "done"',
+      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status != "done"',
       [listId]
     );
     return result.count;
@@ -847,6 +871,7 @@ class SqliteTaskRepository {
         status,
         COUNT(*) as count
       FROM tasks 
+      WHERE deleted_at IS NULL
       GROUP BY list_id, status
     `);
 
@@ -888,7 +913,7 @@ class SqliteTaskRepository {
     const searchTerm = `%${query.trim()}%`;
     let sql = `
       SELECT * FROM tasks 
-      WHERE (content LIKE ? OR metadata LIKE ?)
+      WHERE deleted_at IS NULL AND (content LIKE ? OR metadata LIKE ?)
     `;
     const params = [searchTerm, searchTerm];
 
@@ -914,7 +939,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT * FROM tasks WHERE ';
+    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND ';
     const params = [];
 
     // 根据分类构建查询条件
@@ -975,7 +1000,8 @@ class SqliteTaskRepository {
         SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused,
         SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as done,
         SUM(CASE WHEN status != 'done' THEN 1 ELSE 0 END) as incomplete
-      FROM tasks 
+      FROM tasks
+      WHERE deleted_at IS NULL
       GROUP BY list_id
     `);
 
@@ -1010,7 +1036,7 @@ class SqliteTaskRepository {
 
     const placeholders = listIds.map(() => '?').join(',');
     const rows = await this.db.all(
-      `SELECT * FROM tasks WHERE list_id IN (${placeholders}) ORDER BY list_id, created_at DESC`,
+      `SELECT * FROM tasks WHERE list_id IN (${placeholders}) AND deleted_at IS NULL ORDER BY list_id, created_at DESC`,
       listIds
     );
 

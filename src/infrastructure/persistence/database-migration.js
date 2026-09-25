@@ -9,7 +9,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 5; // 任务时间模型（安排 / 截止 / 提醒策略）
+    this.targetVersion = 6; // 任务时间模型（安排 / 截止 / 提醒策略）
   }
 
   /**
@@ -119,6 +119,11 @@ class DatabaseMigration {
         version: 5,
         description: '添加任务时间模型字段',
         migrate: () => this.migration_005_add_task_time_model()
+      },
+      {
+        version: 6,
+        description: '添加软删除（垃圾桶）字段',
+        migrate: () => this.migration_006_add_deleted_at()
       }
     ];
 
@@ -322,6 +327,27 @@ class DatabaseMigration {
     await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)');
 
     console.log('任务时间模型字段添加完成，索引已创建');
+  }
+
+  /**
+   * 迁移 006: 添加软删除字段（垃圾桶）
+   * deleted_at 为 NULL 表示活跃任务；非 NULL 表示已入垃圾桶，可恢复或彻底删除。
+   */
+  async migration_006_add_deleted_at() {
+    console.log('执行迁移: 添加软删除字段');
+
+    const tableInfo = await this.db.all("PRAGMA table_info(tasks)");
+    const columnNames = tableInfo.map(col => col.name);
+
+    if (!columnNames.includes('deleted_at')) {
+      await this.db.exec('ALTER TABLE tasks ADD COLUMN deleted_at TEXT');
+      console.log('已添加 deleted_at 字段');
+    }
+
+    // 垃圾桶列表按删除时间倒序查询
+    await this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_deleted_at ON tasks(deleted_at)');
+
+    console.log('软删除字段添加完成，索引已创建');
   }
 
   /**

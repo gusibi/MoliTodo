@@ -79,9 +79,28 @@ class Task {
     }
 
     this._normalizeDeadlineFields();
-    
+
     // Keep backward compatibility
     this.completed = this.status === 'done';
+
+    // 软删除（垃圾桶）：null 表示未删除；由仓储层从 deleted_at 列映射
+    this.deletedAt = null;
+  }
+
+  /**
+   * 移入垃圾桶（软删除）：deleted_at 非空的任务不参与任何视图与统计
+   */
+  markDeleted(deletedAt = new Date()) {
+    this.deletedAt = deletedAt;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 从垃圾桶恢复
+   */
+  restoreFromTrash() {
+    this.deletedAt = null;
+    this.updatedAt = new Date();
   }
 
   /**

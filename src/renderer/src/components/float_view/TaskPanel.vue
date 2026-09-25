@@ -2,9 +2,11 @@
   <div class="task-panel-container" @mouseenter="handlePanelMouseEnter" @mouseleave="handlePanelMouseLeave">
     <!-- 面板头部 - 固定时可拖动 -->
     <div class="task-panel-header" :class="{ 'draggable': isPinned }" @mousedown="handleHeaderMouseDown">
-      <div class="task-panel-title-wrapper">
-        <div class="task-panel-dropdown" @click="toggleDropdown" ref="dropdownRef">
-          <div class="task-panel-dropdown-trigger">
+      <!-- 分类下拉 -->
+      <Popover v-model:open="showDropdown" align="start" content-class="p-1 w-44">
+        <template #trigger>
+          <div class="task-panel-dropdown-trigger" role="button" tabindex="0"
+            :aria-label="$t('floatView.selectCategory')">
             <component :is="getCategoryIcon(selectedCategory)" class="category-icon" />
             <span class="category-label">{{ getCategoryLabel(selectedCategory) }}</span>
             <span class="task-panel-count">{{ taskCount }}</span>
@@ -14,29 +16,35 @@
                 stroke-linejoin="round" />
             </svg>
           </div>
-          <div v-if="showDropdown" class="task-panel-dropdown-menu">
-            <div v-for="category in categoryOptions" :key="category.value" class="dropdown-item"
-              :class="{ 'active': selectedCategory === category.value }" @click.stop="selectCategory(category.value)">
-              <component :is="category.icon" class="dropdown-item-icon" />
-              <span>{{ category.label }}</span>
-              <span class="dropdown-item-count">{{ getCategoryCount(category.value) }}</span>
-            </div>
+        </template>
+        <div class="task-panel-dropdown-menu">
+          <div v-for="category in categoryOptions" :key="category.value" class="dropdown-item" role="option"
+            :class="{ 'active': selectedCategory === category.value }"
+            @click.stop="selectCategory(category.value)">
+            <component :is="category.icon" class="dropdown-item-icon" />
+            <span>{{ category.label }}</span>
+            <span class="dropdown-item-count">{{ getCategoryCount(category.value) }}</span>
           </div>
         </div>
-      </div>
+      </Popover>
+
       <!-- 清单过滤下拉 -->
-      <div class="task-panel-list-dropdown" @click="toggleListDropdown" ref="listDropdownRef">
-        <div class="task-panel-list-trigger">
-          <ListIcon v-if="selectedListId !== null" :name="selectedListIconName" class="h-icon-sm w-icon-sm"
-            :style="getListColorStyle(selectedListColor)" />
-          <Layers v-else class="h-icon-sm w-icon-sm" :style="getListColorStyle(selectedListColor)" aria-hidden="true" />
-          <svg class="dropdown-arrow" :class="{ 'open': showListDropdown }" width="12" height="12" viewBox="0 0 24 24"
-            fill="none">
-            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div v-if="showListDropdown" class="task-panel-dropdown-menu list-dropdown-menu">
+      <Popover v-model:open="showListDropdown" align="end" content-class="p-1 w-40">
+        <template #trigger>
+          <div class="task-panel-list-trigger" role="button" tabindex="0"
+            :aria-label="$t('floatView.allLists')">
+            <ListIcon v-if="selectedListId !== null" :name="selectedListIconName" class="h-icon-sm w-icon-sm"
+              :style="getListColorStyle(selectedListColor)" />
+            <Layers v-else class="h-icon-sm w-icon-sm" :style="getListColorStyle(selectedListColor)"
+              aria-hidden="true" />
+            <svg class="dropdown-arrow" :class="{ 'open': showListDropdown }" width="12" height="12" viewBox="0 0 24 24"
+              fill="none">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+        </template>
+        <div class="task-panel-dropdown-menu list-dropdown-menu">
           <div class="dropdown-item" :class="{ 'active': selectedListId === null }" @click.stop="selectList(null)">
             <Layers class="h-icon-sm w-icon-sm dropdown-item-icon dropdown-item-icon-muted" aria-hidden="true" />
             <span>{{ $t('floatView.allLists') }}</span>
@@ -50,7 +58,7 @@
             <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
           </div>
         </div>
-      </div>
+      </Popover>
 
       <!-- 固定按钮 -->
       <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
@@ -65,7 +73,7 @@
       </button>
     </div>
 
-    <!-- 快速添加框 -->
+    <!-- 快速添加（Things Quick Entry 式：支持「明天下午3点」自然语言解析，chip 预览） -->
     <div class="task-panel-quick-add">
       <div class="task-panel-input-wrapper">
         <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')"
@@ -74,125 +82,269 @@
           @compositionstart="handleCompositionStart" @compositionend="handleCompositionEnd">
         <button class="task-panel-add-btn" :class="{ 'active': newTaskContent.trim() }" @click="addTask"
           :title="$t('floatView.addTask')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
+          <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
         </button>
+      </div>
+      <div class="quick-entry-chip-row">
+        <button v-if="parsedDateChip" type="button" class="quick-entry-chip" @click="suppressParsedDate"
+          :title="$t('floatView.removeDateChip')">
+          <CalendarDays class="h-3 w-3" aria-hidden="true" />
+          <span>{{ parsedDateChip }}</span>
+          <X class="h-2.5 w-2.5 quick-entry-chip-remove" aria-hidden="true" />
+        </button>
+        <!-- 清单筛选 chip（与头部筛选同一状态）：筛选当前视图，同时决定新任务归属 -->
+        <Popover v-model:open="showAddListDropdown" align="start" content-class="p-1 w-44">
+          <template #trigger>
+            <button type="button" class="quick-entry-chip quick-entry-chip-muted"
+              :title="$t('floatView.listFilterTitle')">
+              <Layers v-if="selectedListId === null" class="h-3 w-3" aria-hidden="true" />
+              <ListIcon v-else :name="quickAddTargetList?.icon || ''" class="h-3 w-3"
+                :style="getListColorStyle(quickAddTargetList?.color)" />
+              <span>{{ quickAddListName }}</span>
+              <svg class="dropdown-arrow" :class="{ 'open': showAddListDropdown }" width="10" height="10"
+                viewBox="0 0 24 24" fill="none">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+          </template>
+          <div class="task-panel-dropdown-menu">
+            <div class="dropdown-item" :class="{ 'active': selectedListId === null }"
+              @click.stop="selectList(null)">
+              <Layers class="h-3.5 w-3.5 dropdown-item-icon dropdown-item-icon-muted" aria-hidden="true" />
+              <span>{{ $t('floatView.allLists') }}</span>
+              <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
+            </div>
+            <div v-for="list in sortedLists" :key="list.id" class="dropdown-item"
+              :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list.id)">
+              <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm dropdown-item-icon"
+                :style="getListColorStyle(list.color)" />
+              <span>{{ list.name }}</span>
+              <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
+            </div>
+          </div>
+        </Popover>
       </div>
     </div>
 
     <!-- 任务列表 -->
     <div class="task-panel-list-container">
-      <div v-if="tasks.length > 0" class="task-panel-list">
-        <div v-for="task in sortedTasks" :key="task.id" :class="[
-          'task-panel-card',
-          `status-${task.status || (task.completed ? 'done' : 'todo')}`,
-          {
-            'overtime': (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
-          }
-        ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
-          @contextmenu="showTaskContextMenu($event, task)">
+      <template v-if="tasks.length > 0">
+        <section v-for="section in taskSections" :key="section.key" class="task-panel-section">
+          <div v-if="section.label" class="task-panel-section-header">
+            <span>{{ section.label }}</span>
+            <span class="section-count">{{ section.tasks.length }}</span>
+          </div>
+          <div class="task-panel-list">
+            <div v-for="task in section.tasks" :key="task.id" :class="[
+              'task-panel-card',
+              `status-${task.status || (task.completed ? 'done' : 'todo')}`,
+              {
+                'overtime': (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
+              }
+            ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
+              @contextmenu="showTaskContextMenu($event, task)">
 
-          <!-- 主行：checkbox + 内容 + 悬浮按钮 -->
-          <div class="task-card-main">
-            <!-- 状态指示器 -->
-            <button class="task-status-checkbox" :class="`status-${task.status || (task.completed ? 'done' : 'todo')}`"
-              @click="cycleTaskStatus(task.id)" :title="$t('floatView.clickToToggleStatus')">
-              <span v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'done'" class="check-icon">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </span>
-              <span v-else-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
-                class="doing-dot"></span>
-            </button>
+              <!-- 主行：状态指示 + 内容 + 悬浮动作 -->
+              <div class="task-card-main">
+                <!-- 状态指示（纯展示，不可点击；动作在右侧 hover 按钮） -->
+                <span v-if="!isTrashView" class="task-status-indicator">
+                  <span class="task-status-circle" :class="`status-${statusOf(task)}`">
+                    <svg v-if="statusOf(task) === 'done'" width="10" height="10" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
+                    <Pause v-else-if="statusOf(task) === 'paused'" class="h-2 w-2" aria-hidden="true" />
+                  </span>
+                </span>
 
-            <!-- 任务内容文本 -->
-            <div class="task-card-text-wrapper">
-              <div v-if="!isEditing(task.id)" class="task-card-text"
-                :class="{ 'completed': (task.status || (task.completed ? 'done' : 'todo')) === 'done' }"
-                @dblclick="startEditTask(task.id)" :title="$t('floatView.doubleClickToEdit')">
-                {{ task.content }}
+                <!-- 任务内容文本（单击原位编辑，Things 式） -->
+                <div class="task-card-text-wrapper">
+                  <div v-if="!isEditing(task.id)" class="task-card-text"
+                    :class="{ 'completed': statusOf(task) === 'done' }"
+                    @click="startEditTask(task.id)" :title="$t('floatView.clickToEdit')">
+                    {{ task.content }}
+                  </div>
+                  <input v-else v-model="editingContent" class="task-card-edit-input"
+                    @keydown.enter="saveTaskEdit(task.id)" @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)"
+                    ref="editInput" />
+                </div>
+
+                <!-- 悬浮动作按钮：图标即点击后的动作（开始/暂停/继续/完成/重做） -->
+                <div v-if="!isTrashView" class="task-card-actions">
+                  <button v-if="statusOf(task) === 'todo'" class="task-action-btn" @click="startTaskAction(task.id)"
+                    :title="$t('floatView.startTask')">
+                    <Play class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <button v-else-if="statusOf(task) === 'doing'" class="task-action-btn"
+                    @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
+                    <Pause class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <button v-else-if="statusOf(task) === 'paused'" class="task-action-btn"
+                    @click="startTaskAction(task.id)" :title="$t('floatView.resumeTask')">
+                    <Play class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <button v-if="statusOf(task) !== 'done'" class="task-action-btn"
+                    @click="completeTaskAction(task.id)" :title="$t('floatView.completeTask')">
+                    <CircleCheck class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <button v-if="statusOf(task) === 'done'" class="task-action-btn"
+                    @click="redoTaskAction(task.id)" :title="$t('floatView.redoTask')">
+                    <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+                <!-- 垃圾桶视图：恢复 / 彻底删除 -->
+                <div v-else class="task-card-actions">
+                  <button class="task-action-btn restore" @click="restoreTaskFromTrash(task.id)"
+                    :title="$t('floatView.restore')">
+                    <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <button class="task-action-btn delete" @click="requestPurge(task)" :title="$t('floatView.purge')">
+                    <Trash2 class="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-              <input v-else v-model="editingContent" class="task-card-edit-input" @keydown.enter="saveTaskEdit(task.id)"
-                @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)" ref="editInput" />
-            </div>
 
-            <!-- 悬浮操作按钮 -->
-            <div class="task-card-actions">
-              <button v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'"
-                class="task-action-btn pause" @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
-                    fill="currentColor" />
-                </svg>
-              </button>
-              <button class="task-action-btn reminder" @click="showReminderModal(task.id)"
-                :title="$t('floatView.setReminder')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                    fill="currentColor" />
-                </svg>
-              </button>
-              <button class="task-action-btn delete" @click="deleteTask(task.id)" :title="$t('floatView.deleteTask')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
+              <!-- 元信息行（占满宽度） -->
+              <div class="task-card-meta">
+                <!-- 安排/截止 chip（点击弹 When 气泡，Things 式就地改期） -->
+                <Popover v-if="statusOf(task) !== 'done' && !isTrashView" :open="whenMenuTaskId === task.id"
+                  @update:open="(value) => toggleWhenMenu(task.id, value)" align="start" content-class="p-1">
+                  <template #trigger>
+                    <span class="when-chip-anchor">
+                      <Tooltip :content-class="getWhenInfo(task).variant === 'overdue' ? 'text-destructive' : ''">
+                        <template #trigger>
+                          <button type="button" :class="['task-when-chip', getWhenInfo(task).variant]">
+                            <component :is="getWhenInfo(task).icon" class="h-2.5 w-2.5" aria-hidden="true" />
+                            <span>{{ getWhenInfo(task).label }}</span>
+                          </button>
+                        </template>
+                        {{ getWhenInfo(task).tooltip }}
+                      </Tooltip>
+                    </span>
+                  </template>
+                  <div class="task-panel-dropdown-menu when-popover">
+                    <template v-if="!whenPickerVisible">
+                      <div class="dropdown-item when-option when-option-today" @click.stop="setWhenQuick(task, 'today')">
+                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('categories.today') }}</span>
+                      </div>
+                      <div class="dropdown-item when-option when-option-tomorrow" @click.stop="setWhenQuick(task, 'tomorrow')">
+                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('floatView.chipTomorrow') }}</span>
+                      </div>
+                      <div class="dropdown-item when-option when-option-next-week" @click.stop="setWhenQuick(task, 'nextWeek')">
+                        <CalendarDays class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('tasks.nextWeek') }}</span>
+                      </div>
+                      <div v-if="hasSchedule(task)" class="dropdown-item when-option when-option-clear"
+                        @click.stop="clearWhen(task)">
+                        <X class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('tasks.clearSchedule') }}</span>
+                      </div>
+                      <div class="dropdown-item when-option when-option-picker" @click.stop="openWhenPicker(task)">
+                        <CalendarClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('tasks.pickDate') }}</span>
+                      </div>
+                    </template>
+                    <div v-else class="when-calendar">
+                      <v-date-picker v-model="whenPickerValue" mode="dateTime" is24hr :minute-increment="5"
+                        :is-dark="isDark" :min-date="whenPickerMinDate" @update:modelValue="setWhenFromPicker(task)"
+                        borderless />
+                    </div>
+                  </div>
+                </Popover>
 
-          <!-- 元信息行（占满宽度） -->
-          <div class="task-card-meta">
-            <!-- 提醒时间 -->
-            <div v-if="task.reminderTime && (task.status || (task.completed ? 'done' : 'todo')) !== 'done'"
-              :class="['task-meta-tag reminder', { 'overdue': isReminderOverdue(task.reminderTime) }]">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"
-                  fill="currentColor" />
-              </svg>
-              <span>{{ formatReminderTime(task.reminderTime) }}</span>
-            </div>
+                <!-- 提醒：小闹钟图标 + 悬浮说明；点击弹 When 式气泡（预设/自定义/清除） -->
+                <Popover v-if="statusOf(task) !== 'done' && !isTrashView" :open="reminderMenuTaskId === task.id"
+                  @update:open="(value) => toggleReminderMenu(task.id, value)" align="start" content-class="p-1 w-52">
+                  <template #trigger>
+                    <span class="when-chip-anchor">
+                      <Tooltip v-if="task.reminderTime">
+                        <template #trigger>
+                          <button type="button"
+                            :class="['task-meta-tag', 'reminder', 'task-meta-tag-clickable', { 'overdue': isReminderOverdue(task.reminderTime) }]">
+                            <AlarmClock class="h-2.5 w-2.5" aria-hidden="true" />
+                            <span>{{ formatReminderTime(task.reminderTime) }}</span>
+                          </button>
+                        </template>
+                        {{ $t('tasks.reminderTime') }}
+                      </Tooltip>
+                      <button v-else type="button" :title="$t('floatView.setReminder')"
+                        class="task-meta-tag reminder task-meta-tag-clickable task-reminder-add">
+                        <AlarmClock class="h-2.5 w-2.5" aria-hidden="true" />
+                        <span>{{ $t('floatView.reminderShort') }}</span>
+                      </button>
+                    </span>
+                  </template>
+                  <div class="task-panel-dropdown-menu reminder-popover">
+                    <template v-if="!reminderPickerVisible">
+                      <div v-for="option in customReminderOptions" :key="option.id" class="dropdown-item reminder-option"
+                        @click.stop="applyReminderPreset(task, option)">
+                        <AlarmClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ option.label }}</span>
+                      </div>
+                      <div class="dropdown-item reminder-option reminder-option-picker" @click.stop="openReminderPicker(task)">
+                        <CalendarClock class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('tasks.customReminder') }}</span>
+                      </div>
+                      <div v-if="task.reminderTime" class="dropdown-item reminder-option reminder-option-clear"
+                        @click.stop="clearTaskReminder(task)">
+                        <X class="h-3.5 w-3.5 dropdown-item-icon" aria-hidden="true" />
+                        <span>{{ $t('tasks.clearReminder') }}</span>
+                      </div>
+                    </template>
+                    <div v-else class="when-calendar">
+                      <v-date-picker v-model="reminderPickerValue" mode="dateTime" is24hr :minute-increment="5"
+                        :is-dark="isDark" :min-date="reminderPickerMinDate" @update:modelValue="setReminderFromPicker(task)"
+                        borderless />
+                    </div>
+                  </div>
+                </Popover>
 
-            <!-- 进行中状态标签 -->
-            <div v-if="(task.status || (task.completed ? 'done' : 'todo')) === 'doing'" class="task-meta-tag doing">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                  fill="currentColor" />
-              </svg>
-              <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
-            </div>
+                <!-- 进行中状态标签 -->
+                <div v-if="statusOf(task) === 'doing'" class="task-meta-tag doing">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                      fill="currentColor" />
+                  </svg>
+                  <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
+                </div>
 
-            <!-- 子任务指示器 -->
-            <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
-                  fill="currentColor" />
-              </svg>
-              <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
-              }}</span>
-            </div>
-          </div>
-
-          <!-- 子任务列表 -->
-          <div v-if="getIncompleteSteps(task).length > 0" class="task-card-subtasks">
-            <div v-for="step in getIncompleteSteps(task)" :key="step.id" class="subtask-item">
-              <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
-                </svg>
+                <!-- 子任务指示器 -->
+                <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                      fill="currentColor" />
+                  </svg>
+                  <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
+                  }}</span>
+                </div>
               </div>
-              <span class="subtask-text">{{ step.content }}</span>
+
+              <!-- 子任务列表 -->
+              <div v-if="getIncompleteSteps(task).length > 0" class="task-card-subtasks">
+                <div v-for="step in getIncompleteSteps(task)" :key="step.id" class="subtask-item">
+                  <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                  </div>
+                  <span class="subtask-text">{{ step.content }}</span>
+                </div>
+              </div>
+
+              <!-- 面板内添加步骤（hover / focus 时显现） -->
+              <div v-if="statusOf(task) !== 'done' && !isTrashView" class="task-add-step">
+                <Plus class="h-3 w-3" aria-hidden="true" />
+                <input v-model="stepDrafts[task.id]" class="task-add-step-input" :placeholder="$t('tasks.addStep')"
+                  maxlength="200" @keypress.enter="addStep(task)" @click.stop>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </template>
 
       <!-- 空状态 -->
       <div v-else class="task-panel-empty">
@@ -203,29 +355,23 @@
               fill="currentColor" />
           </svg>
         </div>
-        <h3 class="empty-title">{{ $t('floatView.excellent') }}</h3>
-        <p class="empty-text">{{ $t('floatView.allTasksCompleted') }}</p>
+        <template v-if="isTrashView">
+          <h3 class="empty-title">{{ $t('floatView.trash') }}</h3>
+          <p class="empty-text">{{ $t('floatView.trashEmpty') }}</p>
+        </template>
+        <template v-else>
+          <h3 class="empty-title">{{ $t('floatView.excellent') }}</h3>
+          <p class="empty-text">{{ $t('floatView.allTasksCompleted') }}</p>
+        </template>
       </div>
     </div>
 
-    <!-- 提醒设置弹窗 -->
-    <Dialog :open="showReminder" :title="$t('floatView.setReminder')" content-class="w-[min(94vw,24rem)]"
-      @update:open="(value) => { if (!value) hideReminderModal() }">
-      <div class="modal-body">
-        <div class="reminder-options-grid">
-          <button v-for="reminder in customReminderOptions" :key="reminder.id" class="reminder-option-btn"
-            @click="selectCustomReminder(reminder)">
-            <AlarmClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
-            <span>{{ reminder.label }}</span>
-          </button>
-        </div>
-        <p v-if="reminderError" class="reminder-error" role="alert">{{ reminderError }}</p>
-      </div>
-      <template #footer>
-        <Button variant="secondary" @click="hideReminderModal">{{ $t('floatView.cancel') }}</Button>
-        <Button variant="default" @click="saveTaskReminder">{{ $t('floatView.save') }}</Button>
-      </template>
-    </Dialog>
+    <!-- 垃圾桶：彻底删除确认（不可恢复，统一 AlertDialog） -->
+    <AlertDialog :open="purgeConfirm.open" :title="$t('floatView.purgeTitle')"
+      :description="$t('floatView.purgeConfirm', { content: purgeConfirm.target ? purgeConfirm.target.content : '' })"
+      :confirm-label="$t('floatView.purge')" :cancel-label="$t('floatView.cancel')" confirm-variant="destructive"
+      :loading="purgeConfirm.loading" @update:open="(value) => { if (!value) closePurgeConfirm() }"
+      @confirm="confirmPurge" />
 
     <!-- 面板底部 -->
     <div class="task-panel-footer">
@@ -242,6 +388,10 @@
         </svg>
         {{ $t('floatView.createFloatingTask') }}
       </div>
+      <div class="context-menu-item context-menu-item-delete" @click="deleteTaskFromMenu">
+        <Trash2 class="h-3 w-3" aria-hidden="true" />
+        {{ $t('floatView.deleteTask') }}
+      </div>
     </div>
 
     <!-- 遮罩层 -->
@@ -250,30 +400,29 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
-import { AlarmClock, Layers } from '@lucide/vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
+import { AlarmClock, CalendarClock, CalendarDays, CalendarPlus, CircleCheck, Layers, Pause, Play, Plus, RotateCcw, Trash2, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { parseQuickEntry } from '@/utils/quick-entry-parse'
+import { hasSchedule, hasDeadline, isOverdue, isTaskInbox, scheduleStartDate, localDateKey } from '@/utils/task-time-rules'
+import { useTheme } from '@/composables/useTheme'
 import ListIcon from '../ui/ListIcon.vue'
-import Dialog from '../ui/dialog/Dialog.vue'
-import Button from '../ui/button/Button.vue'
+import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
+import Popover from '../ui/popover/Popover.vue'
+import Tooltip from '../ui/tooltip/Tooltip.vue'
 
 const taskStore = useTaskStore()
 const { customReminderOptions } = storeToRefs(taskStore)
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
+const { isDark } = useTheme()
 
 // 响应式数据
 const tasks = ref([])
 const newTaskContent = ref('')
 const currentEditingTask = ref(null)
 const editingContent = ref('')
-const showReminder = ref(false)
-const currentReminderTask = ref(null)
-const reminderError = ref('')
-const reminderDate = ref('')
-const reminderTime = ref('')
-const dateTimeValue = ref(null)
 const completedTasksCount = ref(0)
 const isPinned = ref(false)
 const isDragging = ref(false)
@@ -284,15 +433,42 @@ const isInputFocused = ref(false)
 const isComposing = ref(false)
 const isMouseOverPanel = ref(false)
 
-// 下拉选择器相关
+// 下拉选择器相关（开合由 ui Popover 管理）
 const showDropdown = ref(false)
 const selectedCategory = ref('today')
-const dropdownRef = ref(null)
 
 // 清单下拉选择器相关
 const showListDropdown = ref(false)
 const selectedListId = ref(null)
-const listDropdownRef = ref(null)
+
+// 快速录入日期 chip：手动移除后，再次输入前不再应用解析结果
+const parsedDateSuppressed = ref(false)
+
+// 清单筛选 chip（与头部清单下拉共用 selectedListId）
+const showAddListDropdown = ref(false)
+
+// When 气泡（行上就地改期）
+const whenMenuTaskId = ref(null)
+const whenPickerVisible = ref(false)
+const whenPickerValue = ref(null)
+const whenPickerMinDate = computed(() => {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  return start
+})
+
+// 提醒气泡（与 When 气泡同一交互模式）
+const reminderMenuTaskId = ref(null)
+const reminderPickerVisible = ref(false)
+const reminderPickerValue = ref(null)
+const reminderPickerMinDate = computed(() => new Date())
+
+// 垃圾桶视图 + 彻底删除确认
+const isTrashView = computed(() => selectedCategory.value === 'trash')
+const purgeConfirm = reactive({ open: false, target: null, loading: false })
+
+// 面板内添加步骤的草稿（按任务 id 存放）
+const stepDrafts = reactive({})
 
 // 右键菜单相关
 const showContextMenu = ref(false)
@@ -307,7 +483,8 @@ const categoryOptions = computed(() => [
   { value: 'paused', label: $t('categories.paused'), icon: PauseCircleIcon },
   { value: 'all', label: $t('categories.all'), icon: AllTasksIcon },
   { value: 'inbox', label: $t('categories.inbox'), icon: InboxIcon },
-  { value: 'completed', label: $t('categories.completed'), icon: CheckCircleIcon }
+  { value: 'completed', label: $t('categories.completed'), icon: CheckCircleIcon },
+  { value: 'trash', label: $t('floatView.trash'), icon: TrashIcon }
 ])
 
 // 图标组件
@@ -339,6 +516,10 @@ const CheckCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24
   h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z', fill: 'currentColor' })
 ])
 
+const TrashIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
+  h('path', { d: 'M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
+])
+
 // 引用
 const quickAddInput = ref(null)
 const editInput = ref(null)
@@ -346,12 +527,196 @@ const editInput = ref(null)
 // 计算属性
 const taskCount = computed(() => tasks.value.length)
 
-const sortedTasks = computed(() => {
-  // 直接返回已经排序的任务，因为 taskStore.getSortedTasks 已经处理了排序
-  return tasks.value
+// 快速录入解析：日期 chip 预览
+const parsedEntry = computed(() => parseQuickEntry(newTaskContent.value))
+
+const parsedDateChip = computed(() => {
+  if (!parsedEntry.value.date || parsedDateSuppressed.value) return ''
+  return formatParsedDate(parsedEntry.value.date, parsedEntry.value.hasTime)
+})
+
+watch(newTaskContent, () => {
+  parsedDateSuppressed.value = false
+})
+
+const suppressParsedDate = () => {
+  parsedDateSuppressed.value = true
+}
+
+// 行状态简写
+const statusOf = (task) => task.status || (task.completed ? 'done' : 'todo')
+
+// 日期的人话标签：今天/明天/星期X/M月D日
+const dayLabel = (date) => {
+  const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(now.getDate() + 1)
+
+  if (dayKey(date) === dayKey(now)) return $t('categories.today')
+  if (dayKey(date) === dayKey(tomorrow)) return $t('floatView.chipTomorrow')
+
+  const diffDays = Math.round(
+    (new Date(date.getFullYear(), date.getMonth(), date.getDate()) -
+      new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
+  )
+  const intlLocale = locale.value || 'zh-CN'
+  if (diffDays >= 2 && diffDays <= 6) {
+    return new Intl.DateTimeFormat(intlLocale, { weekday: 'long' }).format(date)
+  }
+  return new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }).format(date)
+}
+
+const formatTimeHM = (date) => {
+  return ` ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+// chip 上的日期文案：日期词 + 非零点时刻
+const formatParsedDate = (date, hasTime) => {
+  let label = dayLabel(date)
+  if (hasTime) label += formatTimeHM(date)
+  return label
+}
+
+// 任务行 When chip 内容：安排优先，其次截止（逾期红），否则未安排占位
+const getWhenInfo = (task) => {
+  if (hasSchedule(task)) {
+    const start = scheduleStartDate(task)
+    const isMidnight = start.getHours() === 0 && start.getMinutes() === 0
+    return {
+      label: dayLabel(start) + (isMidnight ? '' : formatTimeHM(start)),
+      icon: CalendarDays,
+      variant: 'scheduled',
+      tooltip: $t('tasks.scheduleStartLabel')
+    }
+  }
+  if (hasDeadline(task)) {
+    const due = new Date(`${localDateKey(task.dueDate)}T00:00:00`)
+    const label = dayLabel(due) + (task.dueTime ? ` ${task.dueTime}` : '')
+    const overdue = isOverdue(task)
+    return {
+      label,
+      icon: CalendarClock,
+      variant: overdue ? 'overdue' : 'scheduled',
+      tooltip: $t('tasks.deadlineLabel')
+    }
+  }
+  return {
+    label: $t('floatView.unscheduledSection'),
+    icon: CalendarPlus,
+    variant: 'ghost',
+    tooltip: $t('floatView.whenChipTitle')
+  }
+}
+
+// When 气泡动作
+const toggleWhenMenu = (taskId, open) => {
+  if (open) {
+    whenMenuTaskId.value = taskId
+    whenPickerVisible.value = false
+    whenPickerValue.value = null
+  } else if (whenMenuTaskId.value === taskId) {
+    whenMenuTaskId.value = null
+    whenPickerVisible.value = false
+  }
+}
+
+// 改安排：保留原有时长（有结束时间时按偏移平移）；相对提醒由应用层自动重算
+const applyWhen = async (task, date) => {
+  try {
+    const payload = { scheduledStartAt: date.toISOString() }
+    if (task.scheduledEndAt && task.scheduledStartAt) {
+      const oldStart = new Date(task.scheduledStartAt).getTime()
+      const oldEnd = new Date(task.scheduledEndAt).getTime()
+      if (!Number.isNaN(oldStart) && !Number.isNaN(oldEnd) && oldEnd > oldStart) {
+        payload.scheduledEndAt = new Date(date.getTime() + (oldEnd - oldStart)).toISOString()
+      }
+    }
+    await taskStore.updateTask(task.id, payload)
+    whenMenuTaskId.value = null
+    whenPickerVisible.value = false
+    await loadTasks()
+  } catch (error) {
+    console.error('更新安排失败:', error)
+  }
+}
+
+const startOfToday = () => {
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+const setWhenQuick = async (task, kind) => {
+  let date = startOfToday()
+  if (kind === 'tomorrow') {
+    date.setDate(date.getDate() + 1)
+  } else if (kind === 'nextWeek') {
+    // 下周：取下周一（与「下周X」口语的锚点一致）
+    const diff = (1 - date.getDay() + 7) % 7 || 7
+    date.setDate(date.getDate() + diff)
+  }
+  await applyWhen(task, date)
+}
+
+const clearWhen = async (task) => {
+  try {
+    await taskStore.updateTask(task.id, { scheduledStartAt: null, scheduledEndAt: null })
+    whenMenuTaskId.value = null
+    whenPickerVisible.value = false
+    await loadTasks()
+  } catch (error) {
+    console.error('清除安排失败:', error)
+  }
+}
+
+const openWhenPicker = (task) => {
+  whenPickerValue.value = hasSchedule(task)
+    ? scheduleStartDate(task)
+    : startOfToday()
+  whenPickerVisible.value = true
+}
+
+const setWhenFromPicker = async (task) => {
+  if (!whenPickerValue.value) return
+  const date = new Date(whenPickerValue.value)
+  if (Number.isNaN(date.getTime())) return
+  await applyWhen(task, date)
+}
+
+// 面板内添加步骤
+const addStep = async (task) => {
+  const content = (stepDrafts[task.id] || '').trim()
+  if (!content) return
+  try {
+    await taskStore.addTaskStep(task.id, content)
+    stepDrafts[task.id] = ''
+    await loadTasks()
+  } catch (error) {
+    console.error('添加步骤失败:', error)
+  }
+}
+
+// 悬浮窗「今天」= 已安排今天的任务 + 未安排的收件箱任务。
+// 快速添加默认不设置日期，若只按主窗口的 isTaskToday 规则过滤，
+// 新建任务会落进收件箱而在当前视图里不可见（创建即找不到）。
+// 这里只放宽悬浮窗的展示：未安排任务以独立分组跟在「今天」之后。
+const taskSections = computed(() => {
+  if (selectedCategory.value !== 'today') {
+    return [{ key: 'list', label: '', tasks: tasks.value }]
+  }
+  const todays = tasks.value.filter(task => !isTaskInbox(task))
+  const unscheduled = tasks.value.filter(task => isTaskInbox(task))
+  const sections = []
+  if (todays.length > 0) sections.push({ key: 'today', label: $t('categories.today'), tasks: todays })
+  if (unscheduled.length > 0) sections.push({ key: 'unscheduled', label: $t('floatView.unscheduledSection'), tasks: unscheduled })
+  return sections
 })
 
 const footerStats = computed(() => {
+  if (isTrashView.value) {
+    return $t('floatView.trashStats', { count: taskCount.value })
+  }
   const totalCount = taskCount.value + completedTasksCount.value
   if (totalCount === 0) {
     return $t('floatView.noTasks')
@@ -365,15 +730,30 @@ const loadTasks = async () => {
     // 确保任务数据和清单数据已加载
     await taskStore.getAllTasks()
     await taskStore.getAllLists()
+    // 垃圾桶计数与视图需要已删除任务列表
+    await taskStore.loadDeletedTasks()
 
     // 使用选中的清单过滤任务
     const listId = selectedListId.value
 
+    if (selectedCategory.value === 'trash') {
+      // 垃圾桶视图：仅展示软删除任务（IPC 已按删除时间倒序）
+      tasks.value = [...taskStore.deletedTasks]
+      completedTasksCount.value = 0
+      return
+    }
+
     // 对于 completed 分类，显示已完成任务；其他分类不显示已完成任务
     const includeCompleted = selectedCategory.value === 'completed'
 
-    // 获取过滤后的任务
-    tasks.value = taskStore.getSortedTasks(selectedCategory.value, listId, includeCompleted)
+    if (selectedCategory.value === 'today') {
+      // 悬浮窗今天视图：合并未安排任务（见 taskSections 说明）
+      const todays = taskStore.getSortedTasks('today', listId, includeCompleted)
+      const unscheduled = taskStore.getSortedTasks('inbox', listId, null)
+      tasks.value = [...todays, ...unscheduled]
+    } else {
+      tasks.value = taskStore.getSortedTasks(selectedCategory.value, listId, includeCompleted)
+    }
 
     // 获取已完成任务的计数
     const stats = taskStore.getCategoryStats(selectedCategory.value, listId)
@@ -384,18 +764,24 @@ const loadTasks = async () => {
 }
 
 const addTask = async () => {
-  const content = newTaskContent.value.trim()
+  const parsed = parsedEntry.value
+  const applyParsed = Boolean(parsed.date) && !parsedDateSuppressed.value
+  const content = applyParsed ? parsed.content : newTaskContent.value.trim()
   if (!content) return
 
   try {
-    // 构建任务数据，如果选择了清单则传递 listId
+    // 构建任务数据：解析出日期时写入安排时间；选中清单时新任务归入该清单
     const taskData = { content }
+    if (applyParsed) {
+      taskData.scheduledStartAt = parsed.date.toISOString()
+    }
     if (selectedListId.value !== null) {
       taskData.listId = selectedListId.value
     }
 
     await taskStore.createTask(taskData)
     newTaskContent.value = ''
+    parsedDateSuppressed.value = false
 
     // 重新加载任务列表以显示新添加的任务
     await loadTasks()
@@ -408,32 +794,34 @@ const addTask = async () => {
   }
 }
 
-const cycleTaskStatus = async (taskId) => {
+// 状态动作：图标即动作（开始/暂停/继续/完成/重做），状态圆圈只做展示
+const startTaskAction = async (taskId) => {
   try {
-    const task = tasks.value.find(t => t.id === taskId)
-    if (!task) return
-
-    const currentStatus = task.status || (task.completed ? 'done' : 'todo')
-
-    switch (currentStatus) {
-      case 'todo':
-        await taskStore.startTask(taskId)
-        break
-      case 'doing':
-        await taskStore.completeTask(taskId)
-        break
-      case 'done':
-        await taskStore.updateTask(taskId, { status: 'todo' })
-        break
-      default:
-        await taskStore.startTask(taskId)
-    }
-
+    await taskStore.startTask(taskId)
     await loadTasks()
-    // 重新启动定时器以调整更新频率
     startUpdateTimer()
   } catch (error) {
-    console.error('更新任务状态失败:', error)
+    console.error('开始任务失败:', error)
+  }
+}
+
+const completeTaskAction = async (taskId) => {
+  try {
+    await taskStore.completeTask(taskId)
+    await loadTasks()
+    startUpdateTimer()
+  } catch (error) {
+    console.error('完成任务失败:', error)
+  }
+}
+
+const redoTaskAction = async (taskId) => {
+  try {
+    await taskStore.updateTask(taskId, { status: 'todo' })
+    await loadTasks()
+    startUpdateTimer()
+  } catch (error) {
+    console.error('重做任务失败:', error)
   }
 }
 
@@ -462,6 +850,7 @@ const isEditing = (taskId) => {
 }
 
 const startEditTask = (taskId) => {
+  if (isTrashView.value) return
   const task = tasks.value.find(t => t.id === taskId)
   if (!task) return
 
@@ -499,160 +888,131 @@ const cancelTaskEdit = () => {
   editingContent.value = ''
 }
 
-const showReminderModal = (taskId) => {
-  currentReminderTask.value = taskId
-  const task = tasks.value.find(t => t.id === taskId)
-
-  if (task && task.reminderTime) {
-    const reminderDateTime = new Date(task.reminderTime)
-    // 使用本地时区格式化日期和时间
-    const year = reminderDateTime.getFullYear()
-    const month = String(reminderDateTime.getMonth() + 1).padStart(2, '0')
-    const day = String(reminderDateTime.getDate()).padStart(2, '0')
-    const hours = String(reminderDateTime.getHours()).padStart(2, '0')
-    const mins = String(reminderDateTime.getMinutes()).padStart(2, '0')
-
-    reminderDate.value = `${year}-${month}-${day}`
-    reminderTime.value = `${hours}:${mins}`
-    dateTimeValue.value = reminderDateTime
-  } else {
-    const defaultTime = new Date(Date.now() + 60 * 60 * 1000)
-    // 使用本地时区格式化默认时间
-    const year = defaultTime.getFullYear()
-    const month = String(defaultTime.getMonth() + 1).padStart(2, '0')
-    const day = String(defaultTime.getDate()).padStart(2, '0')
-    const hours = String(defaultTime.getHours()).padStart(2, '0')
-    const mins = String(defaultTime.getMinutes()).padStart(2, '0')
-
-    reminderDate.value = `${year}-${month}-${day}`
-    reminderTime.value = `${hours}:${mins}`
-    dateTimeValue.value = defaultTime
+// 提醒气泡动作（与 When 气泡同一交互模式）
+const toggleReminderMenu = (taskId, open) => {
+  if (open) {
+    reminderMenuTaskId.value = taskId
+    reminderPickerVisible.value = false
+    reminderPickerValue.value = null
+  } else if (reminderMenuTaskId.value === taskId) {
+    reminderMenuTaskId.value = null
+    reminderPickerVisible.value = false
   }
-
-  showReminder.value = true
-  reminderError.value = ''
 }
 
-const hideReminderModal = () => {
-  showReminder.value = false
-  currentReminderTask.value = null
-  reminderError.value = ''
-  dateTimeValue.value = null
-  reminderDate.value = ''
-  reminderTime.value = ''
-}
-
-const selectCustomReminder = async (reminderOption) => {
+// 预设提醒：相对时间从现在起算，绝对时间已过则顺延到明天（沿用原弹窗逻辑）
+const applyReminderPreset = async (task, option) => {
   const now = new Date()
   let reminderTime = null
 
-  if (reminderOption.type === 'relative') {
-    // 相对时间计算
+  if (option.type === 'relative') {
     let milliseconds = 0
-    switch (reminderOption.unit) {
+    switch (option.unit) {
       case 'minutes':
-        milliseconds = reminderOption.value * 60 * 1000
+        milliseconds = option.value * 60 * 1000
         break
       case 'hours':
-        milliseconds = reminderOption.value * 60 * 60 * 1000
+        milliseconds = option.value * 60 * 60 * 1000
         break
       case 'days':
-        milliseconds = reminderOption.value * 24 * 60 * 60 * 1000
+        milliseconds = option.value * 24 * 60 * 60 * 1000
         break
     }
     reminderTime = new Date(now.getTime() + milliseconds)
-  } else if (reminderOption.type === 'absolute') {
-    // 绝对时间计算
+  } else if (option.type === 'absolute') {
     const targetDate = new Date(now)
-    targetDate.setDate(now.getDate() + reminderOption.dayOffset)
-
-    const [hours, minutes] = reminderOption.time.split(':').map(Number)
+    targetDate.setDate(now.getDate() + option.dayOffset)
+    const [hours, minutes] = option.time.split(':').map(Number)
     targetDate.setHours(hours, minutes, 0, 0)
-
-    // 如果计算出的时间已经过去，则设置为明天的同一时间
     if (targetDate <= now) {
       targetDate.setDate(targetDate.getDate() + 1)
     }
-
     reminderTime = targetDate
   }
 
-  if (reminderTime && currentReminderTask.value) {
-    try {
-      await window.electronAPI.tasks.setReminder(currentReminderTask.value, reminderTime.toISOString())
-      hideReminderModal()
-      await loadTasks()
-    } catch (error) {
-      console.error('设置提醒失败:', error)
-      reminderError.value = $t('floatView.reminderSetFailed')
-    }
-  }
-}
-
-
-
-const saveTaskReminder = async () => {
-  if (!currentReminderTask.value) return
-
-  let reminderDateTime = null
-
-  // 优先使用 VueDatePicker 的值
-  if (dateTimeValue.value) {
-    reminderDateTime = new Date(dateTimeValue.value)
-  } else {
-    // 回退到手动输入的日期时间
-    const date = reminderDate.value
-    const time = reminderTime.value
-
-    if (!date || !time) {
-      reminderError.value = $t('floatView.selectReminderTime')
-      return
-    }
-
-    // 使用本地时区创建日期对象
-    const [year, month, day] = date.split('-').map(Number)
-    const [hours, minutes] = time.split(':').map(Number)
-    reminderDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
-  }
-
-  console.log("本地时区提醒时间:", reminderDateTime)
-  if (reminderDateTime <= new Date()) {
-    reminderError.value = $t('floatView.reminderInPast')
-    return
-  }
-
+  if (!reminderTime) return
   try {
-    await window.electronAPI.tasks.setReminder(currentReminderTask.value, reminderDateTime.toISOString())
-    hideReminderModal()
+    await window.electronAPI.tasks.setReminder(task.id, reminderTime.toISOString())
+    reminderMenuTaskId.value = null
     await loadTasks()
   } catch (error) {
     console.error('设置提醒失败:', error)
-    reminderError.value = $t('floatView.reminderSetFailed')
   }
 }
 
-
-
-
-const getStatusText = (status) => {
-  return taskStore.getStatusText(status)
+const openReminderPicker = (task) => {
+  reminderPickerValue.value = task.reminderTime ? new Date(task.reminderTime) : new Date(Date.now() + 60 * 60 * 1000)
+  reminderPickerVisible.value = true
 }
 
-const getStatusIcon = (status) => {
-  const iconComponents = {
-    'todo': () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, stroke: 'currentColor', 'stroke-width': 2 })
-    ]),
-    'doing': () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, fill: 'currentColor' }),
-      h('circle', { cx: 12, cy: 12, r: 4, fill: 'white' })
-    ]),
-    'done': () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-      h('circle', { cx: 12, cy: 12, r: 10, fill: 'currentColor' }),
-      h('path', { d: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z', fill: 'white' })
-    ])
+const setReminderFromPicker = async (task) => {
+  if (!reminderPickerValue.value) return
+  const date = new Date(reminderPickerValue.value)
+  if (Number.isNaN(date.getTime()) || date <= new Date()) return
+  try {
+    await window.electronAPI.tasks.setReminder(task.id, date.toISOString())
+    reminderMenuTaskId.value = null
+    reminderPickerVisible.value = false
+    await loadTasks()
+  } catch (error) {
+    console.error('设置提醒失败:', error)
   }
-  return iconComponents[status] || iconComponents['todo']
+}
+
+const clearTaskReminder = async (task) => {
+  try {
+    await window.electronAPI.tasks.clearReminder(task.id)
+    reminderMenuTaskId.value = null
+    await loadTasks()
+  } catch (error) {
+    console.error('清除提醒失败:', error)
+  }
+}
+
+// 垃圾桶动作
+const restoreTaskFromTrash = async (taskId) => {
+  try {
+    await taskStore.restoreTask(taskId)
+    await loadTasks()
+  } catch (error) {
+    console.error('恢复任务失败:', error)
+  }
+}
+
+const requestPurge = (task) => {
+  purgeConfirm.target = task
+  purgeConfirm.open = true
+}
+
+const closePurgeConfirm = () => {
+  purgeConfirm.open = false
+  purgeConfirm.target = null
+  purgeConfirm.loading = false
+}
+
+const confirmPurge = async () => {
+  if (!purgeConfirm.target || purgeConfirm.loading) return
+  purgeConfirm.loading = true
+  try {
+    await taskStore.purgeTask(purgeConfirm.target.id)
+    await loadTasks()
+    closePurgeConfirm()
+  } catch (error) {
+    console.error('彻底删除失败:', error)
+    purgeConfirm.loading = false
+  }
+}
+
+// 右键菜单删除（软删除，无确认：可在垃圾桶恢复）
+const deleteTaskFromMenu = async () => {
+  if (!selectedTask.value) return
+  try {
+    await taskStore.deleteTask(selectedTask.value.id)
+    hideContextMenu()
+    await loadTasks()
+  } catch (error) {
+    console.error('删除任务失败:', error)
+  }
 }
 
 const getTaskTotalDuration = (task) => {
@@ -699,23 +1059,6 @@ const isReminderOverdue = (reminderTime) => {
   return new Date(reminderTime) < new Date()
 }
 
-// 判断是否需要使用紧凑模式
-const shouldUseCompactMode = (task) => {
-  // 计算当前任务的元信息项数量
-  let itemCount = 1 // 状态标签总是存在
-
-  if (task.reminderTime) {
-    itemCount++
-  }
-
-  if ((task.status || (task.completed ? 'done' : 'todo')) === 'doing') {
-    itemCount++
-  }
-
-  // 如果有3个或更多项目，或者任务内容很长，使用紧凑模式
-  return itemCount >= 3 || (task.content && task.content.length > 30)
-}
-
 // 获取任务的未完成步骤
 const getIncompleteSteps = (task) => {
   const steps = task.metadata?.steps || []
@@ -732,13 +1075,7 @@ const toggleStepStatus = async (taskId, step) => {
   }
 }
 
-// 下拉选择器方法
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
-  // 关闭清单下拉
-  showListDropdown.value = false
-}
-
+// 分类选择
 const selectCategory = (category) => {
   selectedCategory.value = category
   showDropdown.value = false
@@ -755,40 +1092,48 @@ const getCategoryIcon = (category) => {
   return option ? option.icon : CalendarDayIcon
 }
 
-const getCategoryCount = (category) => {
-  const stats = taskStore.getCategoryStats(category, selectedListId.value)
+// 悬浮窗分类计数：与 taskSections 的展示口径一致（今天含未安排分组）
+const countForCategory = (category, listId) => {
+  if (category === 'trash') {
+    return taskStore.deletedTasks.length
+  }
+  const stats = taskStore.getCategoryStats(category, listId)
   if (category === 'completed') {
     return stats.completed
   }
-  return stats.total - stats.completed
-}
-
-// 点击外部关闭下拉菜单
-const handleClickOutside = (event) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-    showDropdown.value = false
+  let count = stats.total - stats.completed
+  if (category === 'today') {
+    count += taskStore.getCategoryStats('inbox', listId).incomplete
   }
-  if (listDropdownRef.value && !listDropdownRef.value.contains(event.target)) {
-    showListDropdown.value = false
-  }
+  return count
 }
 
-// 清单下拉选择器方法
-const toggleListDropdown = () => {
-  showListDropdown.value = !showListDropdown.value
-  // 关闭分类下拉
-  showDropdown.value = false
+const getCategoryCount = (category) => {
+  return countForCategory(category, selectedListId.value)
 }
 
+// 清单选择
 const selectList = (listId) => {
   selectedListId.value = listId
   showListDropdown.value = false
+  showAddListDropdown.value = false
   loadTasks()
 }
 
 // 获取排序后的清单列表
 const sortedLists = computed(() => {
   return taskStore.sortedLists
+})
+
+// 清单 chip 文案：null = 全部清单（新建落默认清单 listId 0），否则为所选清单
+const quickAddTargetList = computed(() => {
+  if (selectedListId.value === null) return null
+  return sortedLists.value.find(l => l.id === selectedListId.value) || null
+})
+
+const quickAddListName = computed(() => {
+  if (selectedListId.value === null) return $t('floatView.allLists')
+  return quickAddTargetList.value?.name || $t('floatView.defaultList')
 })
 
 // 获取选中清单的图标名称（未选择清单时由模板回退到 Layers）
@@ -812,24 +1157,14 @@ const getListColorStyle = (color) => {
   return { color }
 }
 
-
-
 // 获取清单任务数量
 const getListTaskCount = (listId) => {
-  const stats = taskStore.getCategoryStats(selectedCategory.value, listId)
-  if (selectedCategory.value === 'completed') {
-    return stats.completed
-  }
-  return stats.total - stats.completed
+  return countForCategory(selectedCategory.value, listId)
 }
 
 // 获取所有清单的任务数量
 const getAllListsTaskCount = () => {
-  const stats = taskStore.getCategoryStats(selectedCategory.value, null)
-  if (selectedCategory.value === 'completed') {
-    return stats.completed
-  }
-  return stats.total - stats.completed
+  return countForCategory(selectedCategory.value, null)
 }
 
 // 打开任务管理页面
@@ -844,11 +1179,12 @@ const openTaskManager = async () => {
 // 右键菜单相关方法
 const showTaskContextMenu = (event, task) => {
   event.preventDefault()
+  if (isTrashView.value) return
   selectedTask.value = task
 
   // 紧凑面板内按窗口可用尺寸夹取菜单位置，避免溢出被裁切
   const menuWidth = 180
-  const menuHeight = 44
+  const menuHeight = 84
   let left = event.clientX
   let top = event.clientY
   if (left + menuWidth > window.innerWidth) {
@@ -918,7 +1254,6 @@ const handlePanelMouseEnter = () => {
   // 如果已固定，不需要发送鼠标事件
   if (isPinned.value) return
 
-  console.log('面板鼠标进入')
   try {
     window.electronAPI.windows.panelMouseEnter()
   } catch (error) {
@@ -933,12 +1268,11 @@ const handlePanelMouseLeave = () => {
   if (isPinned.value) return
 
   // 正在输入（含输入法组词）或交互浮层打开时不隐藏
-  if (isInputActive() || showReminder.value || showContextMenu.value || showDropdown.value || showListDropdown.value) {
-    console.log('输入或浮层交互中，忽略面板鼠标离开事件')
+  if (isInputActive() || showContextMenu.value || showDropdown.value || showListDropdown.value
+    || showAddListDropdown.value || whenMenuTaskId.value !== null || reminderMenuTaskId.value !== null) {
     return
   }
 
-  console.log('面板鼠标离开')
   try {
     window.electronAPI.windows.panelMouseLeave()
   } catch (error) {
@@ -952,7 +1286,6 @@ const togglePin = async () => {
     const newPinned = !isPinned.value
     isPinned.value = newPinned
     await window.electronAPI.windows.setPanelPinned(newPinned)
-    console.log('面板固定状态:', newPinned)
 
     // 如果取消固定，直接隐藏面板
     if (!newPinned) {
@@ -971,8 +1304,8 @@ const handleHeaderMouseDown = (event) => {
   if (!isPinned.value) return
   // 只处理左键
   if (event.button !== 0) return
-  // 如果点击的是按钮，不处理拖动
-  if (event.target.closest('button')) return
+  // 点击操作控件（含下拉触发器）时不进入拖动
+  if (event.target.closest('button') || event.target.closest('.task-panel-dropdown-trigger, .task-panel-list-trigger')) return
 
   let hasMoved = false
   let initialWindowPos = null
@@ -1125,15 +1458,11 @@ onMounted(async () => {
   // 监听任务更新事件
   window.electronAPI.events.on('tasks-updated', handleTasksUpdated)
 
-  // 监听点击外部关闭下拉菜单
-  document.addEventListener('click', handleClickOutside)
-
   // 启动定时器
   startUpdateTimer()
 
   onUnmounted(() => {
     stopUpdateTimer()
-    document.removeEventListener('click', handleClickOutside)
     window.electronAPI.events.removeAllListeners('tasks-updated')
   })
 })

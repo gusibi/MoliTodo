@@ -385,7 +385,7 @@ class TaskService {
   }
 
   /**
-   * 删除任务
+   * 删除任务（软删除：移入垃圾桶，可恢复）
    * @param {string} taskId 任务ID
    * @returns {Promise<boolean>}
    */
@@ -396,6 +396,40 @@ class TaskService {
       return true;
     }
 
+    task.markDeleted();
+    await this.taskRepository.save(task);
+    return true;
+  }
+
+  /**
+   * 从垃圾桶恢复任务
+   * @param {string} taskId 任务ID
+   * @returns {Promise<Task>}
+   */
+  async restoreTask(taskId) {
+    const task = await this.taskRepository.findById(taskId);
+    if (!task) {
+      throw new Error('任务不存在');
+    }
+
+    task.restoreFromTrash();
+    return await this.taskRepository.save(task);
+  }
+
+  /**
+   * 获取垃圾桶中的任务
+   * @returns {Promise<Task[]>}
+   */
+  async getDeletedTasks() {
+    return await this.taskRepository.findDeleted();
+  }
+
+  /**
+   * 彻底删除任务（不可恢复，仅供垃圾桶清理使用）
+   * @param {string} taskId 任务ID
+   * @returns {Promise<boolean>}
+   */
+  async purgeTask(taskId) {
     return await this.taskRepository.delete(taskId);
   }
 
@@ -1060,8 +1094,8 @@ class TaskService {
     const existingInstance = await this.taskRepository.findOverrideInstance(seriesId, occurrenceDate);
 
     if (existingInstance) {
-      // 如果存在覆盖实例，删除它
-      await this.deleteTask(existingInstance.id);
+      // 如果存在覆盖实例，删除它（重复任务内部清理用硬删除，避免堆进垃圾桶）
+      await this.taskRepository.delete(existingInstance.id);
     } else {
       // 如果不存在覆盖实例，创建一个已删除的标记
       const recurringTask = await this.taskRepository.findById(seriesId);
@@ -1145,13 +1179,13 @@ class TaskService {
    * @returns {Promise<Object>}
    */
   async deleteRecurringSeries(seriesId) {
-    // 删除主重复任务
-    await this.deleteTask(seriesId);
+    // 删除主重复任务（重复任务内部清理用硬删除，避免堆进垃圾桶）
+    await this.taskRepository.delete(seriesId);
 
     // 删除所有相关的覆盖实例
     const overrideInstances = await this.taskRepository.findOverrideInstances(seriesId);
     for (const instance of overrideInstances) {
-      await this.deleteTask(instance.id);
+      await this.taskRepository.delete(instance.id);
     }
 
     return { success: true };

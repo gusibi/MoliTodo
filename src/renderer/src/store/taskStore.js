@@ -795,6 +795,49 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // ===== 垃圾桶（软删除） =====
+  const deletedTasks = ref([])
+
+  // 加载垃圾桶任务（按删除时间倒序）
+  const loadDeletedTasks = async () => {
+    try {
+      deletedTasks.value = await window.electronAPI.tasks.getDeletedTasks() || []
+      return deletedTasks.value
+    } catch (error) {
+      console.error('加载垃圾桶任务失败:', error)
+      return []
+    }
+  }
+
+  // 从垃圾桶恢复任务
+  const restoreTask = async (taskId) => {
+    try {
+      const result = await window.electronAPI.tasks.restore(taskId)
+      if (result.success) {
+        await getAllTasks()
+        await loadDeletedTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('恢复任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 彻底删除任务（不可恢复）
+  const purgeTask = async (taskId) => {
+    try {
+      const result = await window.electronAPI.tasks.purge(taskId)
+      if (result.success) {
+        await loadDeletedTasks()
+      }
+      return result
+    } catch (error) {
+      console.error('彻底删除任务失败:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // 开始任务
   const startTask = async (taskId) => {
     try {
@@ -2124,6 +2167,10 @@ export const useTaskStore = defineStore('task', () => {
     completeTask,
     deleteTask,
     deleteTasksBatch,
+    deletedTasks,
+    loadDeletedTasks,
+    restoreTask,
+    purgeTask,
     startTask,
     pauseTask,
     moveTaskToList,

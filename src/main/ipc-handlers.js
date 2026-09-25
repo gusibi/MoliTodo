@@ -297,10 +297,38 @@ class IpcHandlers {
       return { success: true, task };
     });
 
-    // 删除任务
+    // 删除任务（软删除：移入垃圾桶，可恢复）
     ipcMain.handle('delete-task', async (event, taskId) => {
       const success = await this.taskService.deleteTask(taskId);
       this.notificationService.cancelTaskReminder(taskId);
+      this.broadcastTaskUpdates();
+      return { success };
+    });
+
+    // 垃圾桶：已删除任务列表
+    ipcMain.handle('get-deleted-tasks', async () => {
+      return await this.taskService.getDeletedTasks();
+    });
+
+    // 垃圾桶：恢复任务
+    ipcMain.handle('restore-task', async (event, taskId) => {
+      try {
+        const task = await this.taskService.restoreTask(taskId);
+        if (task.reminderTime && task.status !== 'done') {
+          this.notificationService.scheduleTaskReminder(task, (restored) => this.handleTaskReminder(restored));
+        }
+        this.broadcastTaskUpdates();
+        return { success: true, task };
+      } catch (error) {
+        console.error('恢复任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 垃圾桶：彻底删除（不可恢复）
+    ipcMain.handle('purge-task', async (event, taskId) => {
+      this.notificationService.cancelTaskReminder(taskId);
+      const success = await this.taskService.purgeTask(taskId);
       this.broadcastTaskUpdates();
       return { success };
     });
