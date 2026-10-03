@@ -122,13 +122,48 @@ export function useTodayOverview() {
     initialLoaded.value = true
   }
 
-  // 数据变化后的全量刷新：作废旧请求与旧虚拟实例快照，再按当前范围重取
+  // 数据变化后的全量刷新：重取当前范围内所有日期，最后一次性替换虚拟实例快照。
+  // 关键点：刷新期间保留旧快照，避免展开中的虚拟实例行被卸载，导致就地编辑状态丢失。
   async function refreshAfterMutation() {
     requestEpoch += 1
-    virtualByKey.value = new Map()
-    loadedRanges.value = []
-    failedSpans.value = []
-    await ensureRanges()
+    const epoch = requestEpoch
+    const ranges = mergeDayRanges(wantedRanges.value.map((range) => ({ ...range })))
+    const nextVirtuals = new Map()
+    const nextFailed = []
+    loadingCount.value += ranges.length
+    try {
+      await Promise.all(ranges.map(async (span) => {
+        try {
+          const result = await window.electronAPI.tasks.expandRecurring({
+            startDate: `${span.startKey}T00:00:00`,
+            endDate: `${span.endKey}T23:59:59.999`,
+            listId: null
+          })
+          if (epoch !== requestEpoch) return // 旧响应不得覆盖新状态
+          if (!result || !result.success) {
+            throw new Error(result && result.error ? result.error : '加载重复实例失败')
+          }
+          for (const instance of result.tasks || []) {
+            const identity = instanceKey(instance)
+            if (identity) nextVirtuals.set(identity, instance)
+          }
+        } catch (error) {
+          if (epoch !== requestEpoch) return
+          console.error('[TodayOverview] 刷新日期范围失败:', span, error)
+          nextFailed.push({ ...span })
+        }
+      }))
+      if (epoch !== requestEpoch) return
+      // 原子替换：虚拟实例行在刷新前后保持同一身份，Vue 只 patch 不卸载
+      virtualByKey.value = nextVirtuals
+      loadedRanges.value = ranges
+      failedSpans.value = nextFailed
+      initialLoaded.value = true
+    } finally {
+      loadingCount.value -= ranges.length
+    }
+    // 刷新期间范围可能变化（导航 / 加载更多），补齐新增区间
+    if (epoch === requestEpoch) await ensureRanges()
   }
 
   // 加载失败重试：保留已加载内容，只重取失败的区间

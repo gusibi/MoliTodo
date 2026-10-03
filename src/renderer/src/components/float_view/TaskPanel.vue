@@ -92,38 +92,6 @@
           <span>{{ parsedDateChip }}</span>
           <X class="h-2.5 w-2.5 quick-entry-chip-remove" aria-hidden="true" />
         </button>
-        <!-- 清单筛选 chip（与头部筛选同一状态）：筛选当前视图，同时决定新任务归属 -->
-        <Popover v-model:open="showAddListDropdown" align="start" content-class="p-1 w-44">
-          <template #trigger>
-            <button type="button" class="quick-entry-chip quick-entry-chip-muted"
-              :title="$t('floatView.listFilterTitle')">
-              <Layers v-if="selectedListId === null" class="h-3 w-3" aria-hidden="true" />
-              <ListIcon v-else :name="quickAddTargetList?.icon || ''" class="h-3 w-3"
-                :style="getListColorStyle(quickAddTargetList?.color)" />
-              <span>{{ quickAddListName }}</span>
-              <svg class="dropdown-arrow" :class="{ 'open': showAddListDropdown }" width="10" height="10"
-                viewBox="0 0 24 24" fill="none">
-                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
-            </button>
-          </template>
-          <div class="task-panel-dropdown-menu">
-            <div class="dropdown-item" :class="{ 'active': selectedListId === null }"
-              @click.stop="selectList(null)">
-              <Layers class="h-3.5 w-3.5 dropdown-item-icon dropdown-item-icon-muted" aria-hidden="true" />
-              <span>{{ $t('floatView.allLists') }}</span>
-              <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
-            </div>
-            <div v-for="list in sortedLists" :key="list.id" class="dropdown-item"
-              :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list.id)">
-              <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm dropdown-item-icon"
-                :style="getListColorStyle(list.color)" />
-              <span>{{ list.name }}</span>
-              <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
-            </div>
-          </div>
-        </Popover>
       </div>
     </div>
 
@@ -152,11 +120,12 @@
                   <TaskStatusCircle :status="statusOf(task)" />
                 </span>
 
-                <!-- 任务内容文本（单击原位编辑，Things 式） -->
+                <!-- 任务内容文本：单击展开添加步骤，双击编辑内容 -->
                 <div class="task-card-text-wrapper">
                   <div v-if="!isEditing(task.id)" class="task-card-text"
                     :class="{ 'completed': statusOf(task) === 'done' }"
-                    @click="startEditTask(task.id)" :title="$t('floatView.clickToEdit')">
+                    @click="handleTitleClick(task)" @dblclick="handleTitleDblclick(task)"
+                    :title="$t('floatView.clickToAddStepDblclickToEdit')">
                     {{ task.content }}
                   </div>
                   <input v-else v-model="editingContent" class="task-card-edit-input"
@@ -242,11 +211,14 @@
                 </div>
               </div>
 
-              <!-- 面板内添加步骤（hover / focus 时显现） -->
-              <div v-if="statusOf(task) !== 'done' && !isTrashView" class="task-add-step">
+              <!-- 面板内添加步骤：hover 只出现「+ 步骤」入口，点击才展开输入框 -->
+              <div v-if="statusOf(task) !== 'done' && !isTrashView && (stepAddTaskId === task.id || (stepDrafts[task.id] || '').length > 0)"
+                class="task-add-step">
                 <Plus class="h-3 w-3" aria-hidden="true" />
-                <input v-model="stepDrafts[task.id]" class="task-add-step-input" :placeholder="$t('tasks.addStep')"
-                  maxlength="200" @keypress.enter="addStep(task)" @click.stop>
+                <input v-model="stepDrafts[task.id]" :data-step-input="task.id" class="task-add-step-input"
+                  :placeholder="$t('tasks.addStep')" maxlength="200"
+                  @keypress.enter="addStep(task)" @keydown.esc="closeStepAdd(task)" @blur="closeStepAdd(task, true)"
+                  @click.stop>
               </div>
             </div>
           </div>
@@ -353,9 +325,6 @@ const selectedListId = ref(null)
 // 快速录入日期 chip：手动移除后，再次输入前不再应用解析结果
 const parsedDateSuppressed = ref(false)
 
-// 清单筛选 chip（与头部清单下拉共用 selectedListId）
-const showAddListDropdown = ref(false)
-
 // When 气泡（行上就地改期）：开合状态由共享组件自管，面板只跟踪用于抑制自动隐藏
 const whenMenuTaskId = ref(null)
 
@@ -384,6 +353,39 @@ const purgeConfirm = reactive({ open: false, target: null, loading: false })
 
 // 面板内添加步骤的草稿（按任务 id 存放）
 const stepDrafts = reactive({})
+
+// 点击展开「添加步骤」输入框的任务 id（null = 全部收起）
+const stepAddTaskId = ref(null)
+
+// 单击/双击区分：单击延时展开「添加步骤」，双击取消单击定时器进入标题编辑
+let titleClickTimer = null
+
+const handleTitleClick = (task) => {
+  if (statusOf(task) === 'done' || isTrashView.value) return
+  clearTimeout(titleClickTimer)
+  titleClickTimer = setTimeout(() => openStepAdd(task), 280)
+}
+
+const handleTitleDblclick = (task) => {
+  clearTimeout(titleClickTimer)
+  if (isTrashView.value) return
+  startEditTask(task.id)
+}
+
+const openStepAdd = (task) => {
+  stepAddTaskId.value = task.id
+  nextTick(() => {
+    const input = document.querySelector(`[data-step-input="${CSS.escape(String(task.id))}"]`)
+    input?.focus()
+  })
+}
+
+// 收起输入框：keepDraft 时（失焦且有内容）保留草稿下次继续；否则清空
+const closeStepAdd = (task, keepDraft = false) => {
+  if (keepDraft && (stepDrafts[task.id] || '').trim()) return
+  if (stepAddTaskId.value === task.id) stepAddTaskId.value = null
+  if (!keepDraft) stepDrafts[task.id] = ''
+}
 
 // 右键菜单相关
 const showContextMenu = ref(false)
@@ -813,24 +815,12 @@ const getCategoryCount = (category) => {
 const selectList = (listId) => {
   selectedListId.value = listId
   showListDropdown.value = false
-  showAddListDropdown.value = false
   loadTasks()
 }
 
 // 获取排序后的清单列表
 const sortedLists = computed(() => {
   return taskStore.sortedLists
-})
-
-// 清单 chip 文案：null = 全部清单（新建落默认清单 listId 0），否则为所选清单
-const quickAddTargetList = computed(() => {
-  if (selectedListId.value === null) return null
-  return sortedLists.value.find(l => l.id === selectedListId.value) || null
-})
-
-const quickAddListName = computed(() => {
-  if (selectedListId.value === null) return $t('floatView.allLists')
-  return quickAddTargetList.value?.name || $t('floatView.defaultList')
 })
 
 // 获取选中清单的图标名称（未选择清单时由模板回退到 Layers）
@@ -966,7 +956,7 @@ const handlePanelMouseLeave = () => {
 
   // 正在输入（含输入法组词）或交互浮层打开时不隐藏
   if (isInputActive() || showContextMenu.value || showDropdown.value || showListDropdown.value
-    || showAddListDropdown.value || whenMenuTaskId.value !== null || reminderMenuTaskId.value !== null) {
+    || whenMenuTaskId.value !== null || reminderMenuTaskId.value !== null) {
     return
   }
 
@@ -1160,6 +1150,7 @@ onMounted(async () => {
 
   onUnmounted(() => {
     stopUpdateTimer()
+    clearTimeout(titleClickTimer)
     window.electronAPI.events.removeAllListeners('tasks-updated')
   })
 })

@@ -62,7 +62,8 @@ Today 的每条任务采用“紧凑浏览态 → 原位展开态”的单一编
 - 浏览态仍由任务状态、标题、可选备注预览和元信息组成。标题是一级视觉信息；安排、截止、提醒、清单、重复、耗时、分组原因作为次级信息。重要状态不能只靠颜色表示。已有字段不删除，只允许通过更轻的样式、摘要或展开态展示降低噪声。
 - 展开态嵌在原任务行所在的 Agenda 分组内，由内容推开后续任务。它不覆盖日历、不把日历收起、不把整条任务移动到右侧面板。展开后保持任务标题在可视区域；内容过高时由 Agenda 正常滚动，不创建另一个长距离嵌套滚动区域。
 - 一次只展开一条。打开另一条前，先完成当前字段按既有规则应执行的保存；若保存失败，保留当前展开态和失败草稿，不直接切换。
-- 用户点击任务正文或标题打开；点击状态、日期、提醒等明确动作只执行该动作，不顺带展开。浏览态不显示单独的展开箭头或删除按钮；标题本身可直接编辑。
+- 用户双击任务正文或标题打开；单击只是浏览，不进入编辑（键盘聚焦后按 Enter 仍可打开）。点击状态、日期、提醒等明确动作只执行该动作，不顺带展开。浏览态不显示单独的展开箭头或删除按钮；标题本身可直接编辑。
+- 展开动画从标题行向下渐进展开：标题行即时落在原位（字号、位置与收起态一致，不跳行），备注、步骤、属性区由 0 高度以 ease-out 平滑下拉，不使用旋转、弹跳或逐字段飞入。
 - 浏览态的状态圆圈维持当前“状态展示”语义；开始、暂停、继续、完成、重做维持当前明确的动作按钮。不要把圆圈改成另一套可点击状态机，也不要删除计时能力。
 
 ### 2. 展开态布局与字段归属
@@ -138,8 +139,15 @@ Today 的每条任务采用“紧凑浏览态 → 原位展开态”的单一编
 10. 原有搜索高亮、拖拽到侧边清单、其他页面编辑器和新建任务流程没有行为回归。
 
 - 实施完成前运行当前项目脚本规定的 renderer 构建、Today E2E、受影响的任务视图 E2E 和任务规则单元测试。真实应用中留存同一测试数据的收起、展开、日期弹层、步骤确认和窄窗口截图，并实际检查动效与焦点；未运行的平台标为未验证。
-- 2026-09-25 使用同一隔离任务在 Electron 中留存了实际界面：[`collapsed-hover.png`](../screenshots/today-task-things/collapsed-hover.png)、[`context-menu.png`](../screenshots/today-task-things/context-menu.png)、[`expanded.png`](../screenshots/today-task-things/expanded.png)、[`date-picker.png`](../screenshots/today-task-things/date-picker.png)、[`step-delete-confirm.png`](../screenshots/today-task-things/step-delete-confirm.png)、[`narrow-window.png`](../screenshots/today-task-things/narrow-window.png)。[`collapsed-hover-dark.png`](../screenshots/today-task-things/collapsed-hover-dark.png) 和 [`context-menu-dark.png`](../screenshots/today-task-things/context-menu-dark.png) 记录暗色主题；其余主题配色需随对应阶段继续完成。
+- 2026-09-25 使用同一隔离任务在 Electron 中留存了实际界面：[`collapsed-hover.png`](../screenshots/today-task-things/collapsed-hover.png)、[`context-menu.png`](../screenshots/today-task-things/context-menu.png)、[`expanded.png`](../screenshots/today-task-things/expanded.png)、[`date-picker.png`](../screenshots/today-task-things/date-picker.png)、[`step-delete-confirm.png`](../screenshots/today-task-things/step-delete-confirm.png)、[`narrow-window.png`](../screenshots/today-task-things/narrow-window.png)。[`collapsed-hover-dark.png`](../screenshots/today-task-things/collapsed-hover-dark.png) 和 [`context-menu-dark.png`](../screenshots/today-task-things/context-menu-dark.png) 记录暗色主题。
 - 2026-09-26 在隔离 Electron 数据中核对时间属性布局：[`time-layout-after.png`](../screenshots/today-task-things/time-layout-after.png) 显示宽窗口两行并排，[`time-layout-narrow.png`](../screenshots/today-task-things/time-layout-narrow.png) 显示窄窗口纵向排列。
+- 2026-10-01 补齐验收场景 2/3/9/10 的 E2E 断言：搜索高亮与展开后筛选范围、清除安排保留截止、拖拽到侧边清单、展开完成后离开分组的移动说明与焦点回落、窄窗口展开编辑与日历抽屉入口、`prefers-reduced-motion` 下展开/编辑/收起、虚拟重复实例的步骤编辑只作用于目标实例。E2E 同时为五套颜色主题分别留存展开态截图 `theme-default/twitter/vercel/morandi/mint-green.png`，并以 `expanded-dark.png` 复核默认主题暗色模式。
+- 2026-10-01 修复收尾中发现的缺陷：虚拟重复实例首次编辑触发物化时，`useTodayOverview` 的全量刷新会先清空虚拟实例快照，导致展开中的任务行被卸载、就地编辑状态（如刚新增的步骤）丢失。改为刷新期间保留旧快照、完成后一次性原子替换，虚拟实例行在物化前后保持同一身份，Vue 只 patch 不卸载。
+- 2026-10-02 补齐无障碍与动作缺口：展开态收起控件通过 `aria-expanded="true"` + `aria-controls` 关联带 `id` 的展开区域（收起态标题按钮同步指向该区域）；`重新开始` 改走编辑器协调器，展开态下先保存再随分组移动。E2E 增加对应断言。
+- 2026-10-02 任务离开分组的位移动画暂缓：用 `<TransitionGroup>` 包裹各分组会让同一身份在离场窗口内同时存在于新旧分组，产生重复行与重复 `id`，干扰协调器基于 DOM 的定位/焦点回退，并与现有“E2E 不耦合动画实现”的约定冲突。当前先保留既有的移动说明与展开/收起过渡；如需动画需先重构为跨分组的稳定身份渲染。
+- 2026-10-02 统一收起态与展开态的标题基线：状态圆圈槽位固定为 28px 见方并居中对齐标题首行（展开态为同尺寸的完成勾选控件），标题字号/行高/字重两态一致（14px / 1.5 / 500，收起态修正被 `size="sm"` 覆盖成 12px 的问题），正文列起点对齐到 `pl-10`。展开态状态动作改为渲染在编辑器标题行右侧（收起态仍在主行右侧），标题不再被挤到第二行；内联标题去掉上下内边距与字符计数，使标题在展开前后位置不变。新增 `TaskRowActions` 组件承载两侧共用的动作区。
+- 2026-10-02 交互与动效调整：触发方式由单击改为双击（键盘 Enter 保留），避免误触编辑；展开动画改为“标题行即时原位 + 备注/步骤/属性区从 0 高度 ease-out 下拉（280ms）”，修掉了原先主行内容先塌陷导致的“先上后下”抖动，也移除了整块 grid 高度动画的卡顿。
+- 未在 Windows 平台运行上述 E2E；该平台表现记为未验证。
 
 ## Out of Scope
 

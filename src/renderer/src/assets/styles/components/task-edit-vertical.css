@@ -559,7 +559,12 @@
 }
 
 .task-edit-vertical-container.is-inline .task-header-title-wrapper {
-  @apply border-0 px-0;
+  @apply items-start border-0 px-0;
+}
+
+/* 内联编辑的标题与收起态保持同一基线、同一字号，展开时文字不移动 */
+.task-edit-vertical-container.is-inline .task-title-input {
+  @apply block py-0 leading-normal;
 }
 
 .task-edit-vertical-container.is-inline .task-options {
@@ -578,6 +583,53 @@
 
 .task-edit-vertical-container.is-inline .task-actions {
   @apply mt-2 border-t border-border/50 pt-2;
+}
+
+/* 展开态下拉：标题行即时呈现，备注 / 步骤 / 属性从 0 高度平滑展开 */
+.task-edit-vertical-container.is-inline .task-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  min-height: 0;
+}
+
+.task-edit-vertical-container.is-inline .task-body-inner {
+  min-height: 0;
+}
+
+/* 仅在展开/收起过程中裁剪溢出，稳定后允许属性弹层溢出显示 */
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-enter-active .task-body-inner,
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-leave-active .task-body-inner {
+  overflow: hidden;
+}
+
+.task-body-expand-enter-active {
+  transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease;
+}
+
+.task-body-expand-leave-active {
+  transition: grid-template-rows 180ms ease-in, opacity 140ms ease;
+}
+
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-enter-from,
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-enter-to,
+.task-edit-vertical-container.is-inline .task-body.task-body-expand-leave-from {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.task-edit-vertical-container.is-inline .task-actions {
+  overflow: hidden;
+  animation: task-footer-reveal 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes task-footer-reveal {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 6rem; }
 }
 
 .task-edit-vertical-container.is-inline .task-steps,
@@ -632,5 +684,14 @@
   .task-edit-vertical .task-option-item,
   .task-edit-vertical .task-option-delete {
     @apply transition-none;
+  }
+
+  .task-body-expand-enter-active,
+  .task-body-expand-leave-active {
+    transition: none;
+  }
+
+  .task-edit-vertical-container.is-inline .task-actions {
+    animation: none;
   }
 }

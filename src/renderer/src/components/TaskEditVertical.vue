@@ -19,7 +19,7 @@
               <textarea ref="addTaskInput" v-model="newTaskContent" :aria-label="t('today.taskTitleLabel')"
                 :aria-invalid="!!titleError" :aria-describedby="titleError ? 'today-task-title-error' : undefined"
                 :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'" class="task-title-input" maxlength="1000"
-                rows="1" :style="{ minHeight: '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
+                rows="1" :style="{ minHeight: inline ? '1.75rem' : '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
                 @blur="handleInputBlur" @keydown="handleTitleKeydown"
                 @input="autoResize"></textarea>
               <div v-if="titleError" id="today-task-title-error" class="task-field-error" role="alert">
@@ -29,13 +29,19 @@
                   {{ t('common.retry') }}
                 </Button>
               </div>
-              <div class="task-input-counter" v-if="isAddingTask">
+              <div class="task-input-counter" v-if="isAddingTask && !inline">
                 {{ newTaskContent.length }}/1000
               </div>
             </div>
+
+            <slot name="header-actions" />
           </div>
         </div>
 
+        <!-- 展开区：标题行保持原位，备注 / 步骤 / 属性平滑下拉 -->
+        <Transition :name="inline ? 'task-body-expand' : 'none'" appear>
+        <div v-if="isAddingTask" class="task-body">
+        <div class="task-body-inner">
         <!-- 备注区域 -->
         <div v-if="isAddingTask" class="task-note">
           <div class="task-note-editor">
@@ -325,13 +331,19 @@
           </Teleport>
 
         </div>
+        </div>
+        </div>
+        </Transition>
 
       </div>
 
       <!-- 操作按钮区域 -->
       <div v-if="isAddingTask" class="task-actions">
         <div class="task-actions-left">
-          <IconButton size="icon-sm" class="task-action-close" :label="t('common.close')" @click="handleCancelAdding">
+          <IconButton size="icon-sm" class="task-action-close" :label="t('common.close')"
+            :aria-expanded="props.inline && props.isEditing ? true : undefined"
+            :aria-controls="props.inline && props.regionId ? props.regionId : undefined"
+            @click="handleCancelAdding">
             <X class="h-icon-md w-icon-md" aria-hidden="true" />
           </IconButton>
         </div>
@@ -405,6 +417,10 @@ const props = defineProps({
   inline: {
     type: Boolean,
     default: false
+  },
+  regionId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -1876,7 +1892,7 @@ const autoResize = () => {
   textarea.style.height = 'auto'
 
   // 计算新高度，限制在最小和最大值之间
-  const minHeight = 24 // 1.5rem = 24px
+  const minHeight = props.inline ? 28 : 24 // 内联标题与收起态行高一致（1.75rem）
   const maxHeight = 240 // 15rem = 240px
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
 

@@ -6,7 +6,7 @@
  */
 
 .today-task-row {
-  @apply relative flex flex-col px-2 py-1.5 rounded-lg;
+  @apply relative block px-2 py-1.5 rounded-lg;
   @apply transition-colors duration-150;
   @apply hover:bg-accent/40;
 }
@@ -37,11 +37,11 @@
 /* ===== 主行 ===== */
 
 .today-task-main {
-  @apply flex items-start gap-2 min-h-[28px];
+  @apply flex items-start gap-3 min-h-[28px];
 }
 
 .today-task-status {
-  @apply flex-shrink-0 flex items-center pt-0.5;
+  @apply flex-shrink-0 flex h-7 w-7 items-center justify-center;
 }
 
 .today-task-content {
@@ -49,7 +49,7 @@
 }
 
 .today-task-title {
-  @apply block w-full min-h-7 border-0 bg-transparent p-0 text-left text-sm font-medium leading-snug text-foreground;
+  @apply block w-full min-h-7 border-0 bg-transparent p-0 text-left text-sm font-medium leading-normal text-foreground;
   cursor: pointer;
 }
 
@@ -65,30 +65,13 @@
   @apply text-xs leading-relaxed text-muted-foreground mt-0.5;
 }
 
+/* 展开区域：标题行由编辑器即时呈现，备注 / 步骤 / 属性在编辑器内平滑下拉 */
 .today-task-expanded-shell {
-  @apply grid min-h-0;
-  grid-template-rows: 1fr;
+  @apply block min-h-0;
 }
 
 .today-task-expanded {
-  @apply min-h-0 overflow-hidden border-t border-border/50 pt-2;
-}
-
-.today-task-expand-enter-active,
-.today-task-expand-leave-active {
-  transition: grid-template-rows 210ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 170ms ease;
-}
-
-.today-task-expand-enter-from,
-.today-task-expand-leave-to {
-  grid-template-rows: 0fr;
-  opacity: 0;
-}
-
-.today-task-expand-enter-to,
-.today-task-expand-leave-from {
-  grid-template-rows: 1fr;
-  opacity: 1;
+  @apply min-h-0;
 }
 
 /* ===== 动作区（hover / focus-within 浮现；图标即动作） ===== */
@@ -110,7 +93,7 @@
 /* ===== 元信息行（与标题左缘对齐：16px 圆圈 + 8px 间距） ===== */
 
 .today-task-meta {
-  @apply flex items-center gap-2 mt-1 flex-wrap w-full pl-6;
+  @apply flex items-center gap-2 mt-1 flex-wrap w-full pl-10;
 }
 
 .today-task-meta-item {
@@ -150,9 +133,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .today-task-row,
-  .today-task-actions,
-  .today-task-expand-enter-active,
-  .today-task-expand-leave-active {
+  .today-task-actions {
     @apply transition-none;
   }
 }

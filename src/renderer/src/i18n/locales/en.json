@@ -612,8 +612,6 @@
     "clickToAddStepDblclickToEdit": "Click to add a step, double-click to edit",
     "clickToEdit": "Click to edit",
     "whenChipTitle": "Click to schedule",
-    "defaultList": "Default List",
-    "listFilterTitle": "Filter by list; new tasks go to the selected list",
     "reminderShort": "Remind",
     "startTask": "Start task",
     "resumeTask": "Resume task",

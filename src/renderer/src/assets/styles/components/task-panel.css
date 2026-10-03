@@ -52,6 +52,8 @@
 
 .task-panel-list-trigger {
   @apply flex items-center gap-1 px-1.5 py-1.5 rounded-lg;
+  /* 显式主题色：否则「全部清单」状态的图标继承浏览器默认黑色，暗色主题下不可见 */
+  @apply text-foreground/85;
   @apply hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
   @apply transition-colors cursor-pointer;
 }
@@ -159,19 +161,6 @@
 
 .quick-entry-chip-remove {
   @apply text-primary/60;
-}
-
-/* 目标清单 chip（弱化于日期 chip） */
-.quick-entry-chip-muted {
-  @apply bg-muted/70 text-muted-foreground font-normal;
-}
-
-.quick-entry-chip-muted:hover {
-  @apply bg-accent text-accent-foreground;
-}
-
-.quick-entry-chip .dropdown-arrow {
-  @apply w-2 h-2 text-muted-foreground/70 transition-transform duration-200;
 }
 
 /* ===== Task List Container ===== */
@@ -358,16 +347,9 @@
   @apply truncate;
 }
 
-/* ===== 面板内添加步骤（hover / focus-within 显现） ===== */
-
+/* ===== 面板内添加步骤（点击「+ 步骤」入口后展开，非 hover 显现） ===== */
 .task-add-step {
-  @apply items-center gap-1.5 pl-[26px] mt-0.5;
-  display: none;
-}
-
-.task-panel-card:hover .task-add-step,
-.task-panel-card:focus-within .task-add-step {
-  @apply flex;
+  @apply flex items-center gap-1.5 pl-[26px] mt-0.5;
 }
 
 .task-add-step > svg {

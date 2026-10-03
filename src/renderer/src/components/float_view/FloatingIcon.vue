@@ -7,12 +7,17 @@
       isPending ? 'floating-icon--pending' : ''
     ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @click="handleClick"
       :aria-label="$t('app.title')" :disabled="isPending">
-      <!-- 默认图标 -->
-      <div :class="[
-        'floating-icon-content floating-icon-content--default',
-        hasInProgressTasks ? 'floating-icon-content--in-progress' : ''
-      ]">
-        <Check :size="32" :stroke-width="2.5" aria-hidden="true" />
+      <!-- 默认图标：日历 logo（品牌色头带放星期 + 白底大对号，参考系统日历 App 图标） -->
+      <div class="floating-icon-content floating-icon-content--default">
+        <div class="floating-icon-calendar" aria-hidden="true">
+          <div class="floating-icon-calendar-header">{{ calendarWeekday }}</div>
+          <div :class="[
+            'floating-icon-calendar-body',
+            hasInProgressTasks ? 'floating-icon-calendar-body--blink' : ''
+          ]">
+            <Check class="floating-icon-calendar-check" :stroke-width="3" />
+          </div>
+        </div>
       </div>
 
       <!-- 提醒状态图标 -->
@@ -33,12 +38,25 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { AlarmClock, Check } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import '@/assets/styles/components/floating-icon.css'
 
+const { locale } = useI18n()
 const taskStore = useTaskStore()
 const taskCount = computed(() => taskStore.categoryCounts.today)
+
+// 头带星期：跟随应用语言（zh=星期五 / en=Friday），跨天自动刷新
+const calendarWeekday = ref('')
+const updateCalendarDate = () => {
+  const now = new Date()
+  const tag = locale.value === 'en' ? 'en-US' : 'zh-CN'
+  calendarWeekday.value = new Intl.DateTimeFormat(tag, { weekday: 'long' }).format(now)
+}
+watch(locale, updateCalendarDate)
+let calendarDateTimer = null
+
 const hasInProgressTasks = ref(false)
 const isAlert = ref(false)
 const isDragging = ref(false)
@@ -54,8 +72,8 @@ let hoverTimeout = null
 let hideTimeout = null
 
 // 鼠标穿透状态（issue #11）
-// 悬浮窗是方形，可见图标是圆形，方形里圆形之外的区域必须让鼠标事件穿透，
-// 否则会挡住下面应用的按钮。当前是否处于穿透态。
+// 悬浮窗是方形，可见图标是带圆角的方形，窗口里图标之外的区域（含四个圆角外
+// 的小角）必须让鼠标事件穿透，否则会挡住下面应用的按钮。当前是否处于穿透态。
 let isIgnoringMouse = null
 
 const setIgnoreMouse = (ignore) => {
@@ -68,18 +86,23 @@ const setIgnoreMouse = (ignore) => {
   }
 }
 
-// 判断光标是否落在可见圆形图标内
+// 判断光标是否落在可见圆角方形图标内（圆角外的四个小角穿透）
 const isPointInIcon = (clientX, clientY) => {
   const el = floatingIconRef.value
   if (!el) return false
 
   const rect = el.getBoundingClientRect()
-  const cx = rect.left + rect.width / 2
-  const cy = rect.top + rect.height / 2
-  const dx = clientX - cx
-  const dy = clientY - cy
-  // 半径留 1px 容差，避免边缘抖动
-  const radius = Math.min(rect.width, rect.height) / 2 + 1
+  const pad = 1 // 容差，避免边缘抖动
+  const x = clientX - rect.left
+  const y = clientY - rect.top
+  if (x < -pad || y < -pad || x > rect.width + pad || y > rect.height + pad) return false
+
+  // 与 CSS rounded-[20%] 保持一致的圆角半径
+  const radius = Math.min(rect.width, rect.height) * 0.20
+  const nearestX = Math.min(Math.max(x, radius), rect.width - radius)
+  const nearestY = Math.min(Math.max(y, radius), rect.height - radius)
+  const dx = x - nearestX
+  const dy = y - nearestY
 
   return dx * dx + dy * dy <= radius * radius
 }
@@ -250,8 +273,8 @@ const handleMouseDown = (event) => {
         floatingIcon.style.transform = ''
       }
 
-      // 1. 立即更新视觉反馈 - 60fps丝滑体验
-      floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.15)`
+      // 1. 立即更新视觉反馈（只位移不放大：窗口已铺满，放大边缘会被裁切）
+      floatingIcon.style.transform = `translate(${deltaX}px, ${deltaY}px)`
 
       // 2. 节流的IPC调用 - 让真实窗口跟上视觉元素
       if (initialWindowPos) {
@@ -395,14 +418,12 @@ const handleTaskReminder = (event, task) => {
   // 提醒状态将持续显示直到用户交互
 }
 
-// 让可见圆形的直径跟随设置里的图标大小。
-// 之前圆形是写死的，窗口却按配置缩放，放大后方窗里多出一圈看不见但会挡住
-// 下层应用的区域（issue #11）。留出 badge 和 hover 放大的余量。
+// 让图标边长跟随设置里的图标大小，并占满整个窗口。
+// macOS 26+ 会给透明窗口垫一层圆角白色衬底，只有内容完全铺满窗口才能把它
+// 盖住（用户反馈的"白底外框"），因此不再给 badge/hover 留缩放边距。
 const applyIconSize = (size) => {
   const windowSize = Number(size) || 50
-  // hover 时会放大到 1.1 倍，同时角标要露出来，圆形比窗口略小
-  const diameter = Math.max(24, Math.round(windowSize * 0.88))
-  document.documentElement.style.setProperty('--floating-icon-size', `${diameter}px`)
+  document.documentElement.style.setProperty('--floating-icon-size', `${windowSize}px`)
 }
 
 const handleConfigUpdate = (event, config) => {
@@ -442,6 +463,10 @@ const handlePanelUnpinned = () => {
 }
 
 onMounted(async () => {
+  // 初始化头带星期，跨天自动刷新
+  updateCalendarDate()
+  calendarDateTimer = setInterval(updateCalendarDate, 30 * 1000)
+
   // 初始化任务数据
   await taskStore.getAllTasks()
   await updateTaskCount()
@@ -466,13 +491,17 @@ onMounted(async () => {
     console.error('读取悬浮图标配置失败:', error)
   }
 
-  // 圆形命中区域：静止时让方形窗口的空白区域穿透鼠标事件
+  // 圆角方形命中区域：静止时让窗口空白区域穿透鼠标事件
   window.addEventListener('mousemove', handleWindowMouseMove)
   setIgnoreMouse(true)
 })
 
 onUnmounted(() => {
   // 清理定时器
+  if (calendarDateTimer) {
+    clearInterval(calendarDateTimer)
+    calendarDateTimer = null
+  }
   if (hoverTimeout) {
     clearTimeout(hoverTimeout)
     hoverTimeout = null

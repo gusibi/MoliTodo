@@ -4,12 +4,13 @@
 @tailwind utilities;
 
 /* Custom animations */
+/* 日期闪烁：只动透明度，颜色由使用处自定（日期是白卡上的深色数字） */
 @keyframes floating-icon-progress-blink {
   0%, 50% {
-    @apply text-white opacity-100;
+    opacity: 1;
   }
   51%, 100% {
-    @apply text-white opacity-60;
+    opacity: 0.55;
   }
 }
 
@@ -29,10 +30,11 @@
   }
 
   /* Main floating icon */
-  /* 直径跟随设置中的图标大小；--floating-icon-size 由 FloatingIcon.vue 注入 */
+  /* 边长跟随设置中的图标大小并铺满窗口（盖住 macOS 26+ 给透明窗口垫的白色衬底）；
+     --floating-icon-size 由 FloatingIcon.vue 注入。圆角 20% 须略小于系统衬底圆角。 */
   .floating-icon {
     @apply relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out;
-    @apply rounded-full shadow-lg pointer-events-auto;
+    @apply rounded-[20%] shadow-lg pointer-events-auto;
     width: var(--floating-icon-size, 48px);
     height: var(--floating-icon-size, 48px);
     -webkit-app-region: no-drag;
@@ -40,8 +42,7 @@
   }
 
   .floating-icon:hover {
-    @apply shadow-2xl scale-110;
-    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.25));
+    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35));
   }
 
   .floating-icon:focus {
@@ -69,16 +70,46 @@
   }
 
   /* Icon content */
+  /* inset-0：内容层铺满图标，日历 logo 才能真正占满（否则绝对定位收缩出蓝边） */
   .floating-icon-content {
-    @apply absolute flex items-center justify-center text-white transition-all duration-300;
+    @apply absolute inset-0 flex items-center justify-center text-white transition-all duration-300;
   }
 
   .floating-icon-content--default {
     @apply opacity-100;
   }
 
-  .floating-icon-content--default.floating-icon-content--in-progress {
-    color: hsl(var(--success));
+  /* 日历 logo（参考系统日历 App 图标）：一体式白卡铺满整个窗口，
+     品牌色头带放星期、下方大对号；无描边、无留边，远看就是一个 logo。
+     圆角 20% 与外层一致且小于系统衬底圆角，保证盖住白底。 */
+  .floating-icon-calendar {
+    @apply flex flex-col select-none overflow-hidden;
+    width: 100%;
+    height: 100%;
+    border-radius: 20%;
+    background: hsl(0 0% 100%);
+  }
+
+  .floating-icon-calendar-header {
+    @apply flex items-center justify-center font-semibold text-white;
+    height: 38%;
+    background: hsl(var(--primary));
+    font-size: calc(var(--floating-icon-size, 48px) * 0.19);
+    letter-spacing: 0.03em;
+  }
+
+  .floating-icon-calendar-body {
+    @apply flex flex-1 items-center justify-center;
+    color: hsl(240 10% 12%);
+  }
+
+  .floating-icon-calendar-check {
+    width: calc(var(--floating-icon-size, 48px) * 0.44);
+    height: calc(var(--floating-icon-size, 48px) * 0.44);
+  }
+
+  /* 有进行中任务时对号闪烁（原先闪烁在中间对号上） */
+  .floating-icon-calendar-body--blink {
     animation: floating-icon-progress-blink 1.5s infinite;
   }
 
@@ -95,9 +126,9 @@
     @apply opacity-100;
   }
 
-  /* Badge */
+  /* Badge（窗口已铺满图标，角标收进卡片内右下角，避免超出窗口被裁切） */
   .floating-icon-badge {
-    @apply absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center;
+    @apply absolute bottom-0.5 right-0.5 min-w-5 h-5 rounded-full flex items-center justify-center;
     @apply text-xs font-bold border-2 border-transparent transition-all duration-300;
     @apply opacity-0 scale-0;
     background: hsl(var(--destructive));
@@ -153,7 +184,7 @@
       animation: none;
     }
 
-    .floating-icon-content--default.floating-icon-content--in-progress {
+    .floating-icon-calendar-body--blink {
       animation: none;
     }
   }

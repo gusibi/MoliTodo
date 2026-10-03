@@ -176,8 +176,8 @@ test('悬浮窗单击标题原位编辑', async ({ app, window }) => {
   const row = panel.locator('.task-panel-card', { hasText: '原标题任务' });
   await expect(row).toBeVisible();
 
-  // 单击标题 → 行内输入框（进入编辑后标题在 input.value 里，需用面板级定位）→ 改名回车
-  await row.locator('.task-card-text').click();
+  // 双击标题 → 行内输入框（进入编辑后标题在 input.value 里，需用面板级定位）→ 改名回车
+  await row.locator('.task-card-text').dblclick();
   const editInput = panel.locator('.task-card-edit-input');
   await expect(editInput).toBeVisible();
   await editInput.fill('改好的标题');
@@ -205,10 +205,13 @@ test('悬浮窗面板内添加步骤', async ({ app, window }) => {
   const row = panel.locator('.task-panel-card', { hasText: '带步骤的任务' });
   await expect(row).toBeVisible();
 
-  // hover 行后显示添加步骤输入框
-  await row.hover();
-  await row.locator('.task-add-step-input').fill('第一步：准备工作');
-  await row.locator('.task-add-step-input').press('Enter');
+  // 单击标题展开「添加步骤」输入框；双击才是编辑内容
+  await row.locator('.task-card-text').click();
+  await panel.waitForTimeout(400);
+  const stepInput = row.locator('.task-add-step-input');
+  await expect(stepInput).toBeVisible();
+  await stepInput.fill('第一步：准备工作');
+  await stepInput.press('Enter');
 
   await expect.poll(async () => {
     return app.electronApp.evaluate(async () => {
@@ -295,7 +298,7 @@ test('悬浮窗删除任务进垃圾桶，可恢复与彻底删除', async ({ ap
   }, { timeout: 15000 }).toBe(false);
 });
 
-test('清单筛选 chip：选中清单后仅显示该清单任务，新任务归入该清单', async ({ app, window }) => {
+test('清单筛选：选中清单后仅显示该清单任务，新任务归入该清单', async ({ app, window }) => {
   await window.waitForSelector('.task-manager, .today-overview', { timeout: 45000 });
 
   await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.createTaskPanel());
@@ -323,8 +326,8 @@ test('清单筛选 chip：选中清单后仅显示该清单任务，新任务归
   await panel.locator('.dropdown-item', { hasText: '全部' }).first().click();
   await expect(panel.locator('.task-panel-card', { hasText: '默认清单任务' })).toBeVisible();
 
-  // chip 选择「筛选测试清单」→ 只显示该清单任务
-  await panel.locator('.quick-entry-chip-muted').click();
+  // 头部清单下拉选择「筛选测试清单」→ 只显示该清单任务
+  await panel.locator('.task-panel-list-trigger').click();
   await panel.locator('.dropdown-item', { hasText: '筛选测试清单' }).click();
 
   await expect(panel.locator('.task-panel-card', { hasText: '测试清单任务' })).toBeVisible();
