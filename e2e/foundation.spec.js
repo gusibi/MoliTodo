@@ -1,4 +1,4 @@
-const { test, expect } = require('./fixtures');
+const { test, expect, seedTasks } = require('./fixtures');
 
 /**
  * 阶段 5：离线冷启动与五套主题的可读性回归。
@@ -53,42 +53,68 @@ test('离线冷启动：无 Font Awesome CDN，核心图标本地渲染', async 
   await expect(window.getByRole('button', { name: '搜索任务...' })).toBeVisible();
 });
 
-test('五套颜色主题与明暗模式切换后基础组件仍可读', async ({ app, window }) => {
-  await window.waitForSelector('.task-manager, .today-overview', { timeout: 45000 });
-
-  const readVars = () => window.evaluate(() => {
-    const style = getComputedStyle(document.documentElement);
-    return {
-      primary: style.getPropertyValue('--primary').trim(),
-      background: style.getPropertyValue('--background').trim(),
-      foreground: style.getPropertyValue('--foreground').trim()
-    };
-  });
-
+test('五套主题明暗模式：正文对比度、报告表单与主窗布局', async ({ app, window }, testInfo) => {
+  await seedTasks(app.electronApp, [
+    { content: '主题验收：长中文任务正文不会遮挡现有操作' },
+    { content: 'Review long English task content and keyboard accessibility without adding features' }
+  ]);
+  await window.reload();
+  await window.getByRole('navigation').getByRole('button', { name: /全部/ }).click();
   const settings = await openSettings(app, window);
   await settings.locator('.setting-nav-item', { hasText: '外观' }).click();
-
   const options = settings.locator('.color-theme-option');
-  const count = await options.count();
-  expect(count).toBe(5);
+  await expect(options).toHaveCount(5);
 
-  const primaries = new Set();
-  for (let i = 0; i < count; i += 1) {
+  const settleMotion = () => window.evaluate(async () => {
+    await Promise.all(document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {})));
+  });
+  const textContrast = (locator) => locator.evaluate(el => {
+    const rgb = value => value.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const luminance = values => values.map(v => v / 255).map(v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const ancestors = [];
+    for (let ancestor = el; ancestor; ancestor = ancestor.parentElement) ancestors.unshift(ancestor);
+    let surface = [255, 255, 255];
+    for (const ancestor of ancestors) {
+      const color = getComputedStyle(ancestor).backgroundColor.match(/[\d.]+/g).map(Number);
+      const alpha = color[3] === undefined ? 1 : color[3];
+      surface = surface.map((value, i) => color[i] * alpha + value * (1 - alpha));
+    }
+    const foreground = luminance(rgb(getComputedStyle(el).color));
+    const background = luminance(surface);
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+  });
+
+  for (let i = 0; i < 5; i += 1) {
     await options.nth(i).click();
-    await expect.poll(async () => (await readVars()).primary, { timeout: 10000 }).not.toBe('');
-    primaries.add((await readVars()).primary);
+    const theme = await options.nth(i).innerText();
+    for (const mode of ['浅色', '深色']) {
+      await settings.getByRole('button', { name: mode, exact: true }).click();
+      await expect.poll(() => window.evaluate(() => document.documentElement.dataset.theme)).toBe(mode === '浅色' ? 'light' : 'dark');
+      const title = window.locator('.flat-task-item').first().locator('.flat-task-title');
+      await expect(title).toBeVisible();
+      await expect.poll(() => textContrast(title), { message: `${theme}/${mode} 任务正文对比度` }).toBeGreaterThanOrEqual(4.5);
+      await settleMotion();
+      await window.screenshot({ path: testInfo.outputPath(`theme-${i}-${mode}-main.png`) });
+      await window.getByRole('button', { name: 'AI 报告', exact: true }).click();
+      const dialog = window.getByRole('dialog', { name: '选择要生成报告的任务' });
+      await expect(dialog).toBeVisible();
+      await expect.poll(() => textContrast(dialog.locator('.task-content').first())).toBeGreaterThanOrEqual(4.5);
+      await dialog.getByRole('checkbox', { name: /主题验收/ }).focus();
+      await settleMotion();
+      await window.screenshot({ path: testInfo.outputPath(`theme-${i}-${mode}-report.png`) });
+      await window.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+    }
   }
-  // 不同主题提供不同主色，且都非空
-  expect(primaries.size).toBeGreaterThan(1);
-
-  // 通过真实深色开关切换，主窗口背景 token 随之变化
-  const light = await readVars();
-  expect(light.background).not.toBe('');
-  expect(light.foreground).not.toBe('');
-
-  await settings.getByRole('button', { name: '深色' }).click();
-  await expect.poll(async () => (await readVars()).background, { timeout: 10000 }).not.toBe(light.background);
-
-  await settings.getByRole('button', { name: '浅色' }).click();
-  await expect.poll(async () => (await readVars()).background, { timeout: 10000 }).toBe(light.background);
+  // 原生窗口尺寸回归：窄窗口仍可使用列表与报告表单。
+  await app.electronApp.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().includes('task-manager'));
+    win.setSize(800, 700);
+  });
+  await expect.poll(() => window.evaluate(() => window.innerWidth)).toBeLessThanOrEqual(1000);
+  await window.getByRole('button', { name: 'AI 报告', exact: true }).click();
+  await expect(window.getByRole('combobox', { name: '报告类型' })).toBeVisible();
+  await settleMotion();
+  await window.screenshot({ path: testInfo.outputPath('narrow-report.png') });
 });

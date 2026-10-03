@@ -820,6 +820,12 @@ class WindowManager {
   updateConfig(key, value) {
     this.configStore.set(key, value);
 
+    if (key === 'background') {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('background-updated', value);
+      }
+    }
+
     if (key.startsWith('floatingIcon.')) {
       this.applyFloatingIconConfig();
     }

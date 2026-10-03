@@ -55,6 +55,26 @@
     "unknown": "未知分类"
   },
   "settings": {
+    "background": {
+      "removed": "背景已移除，已恢复原主题。",
+      "choose": "选择图片",
+      "replace": "更换图片",
+      "uploadPrompt": "用一张喜欢的图片，让工作空间更有自己的感觉。",
+
+      "title": "窗口背景",
+      "description": "为主窗口和设置页选择背景，明暗蒙层让文字保持清晰。",
+      "mountains": "雾山",
+      "architecture": "暖色建筑",
+      "waves": "柔和波纹",
+      "upload": "上传自己的图片",
+      "uploadHint": "支持 JPG、PNG、WebP，最大 20 MB。图片会压缩并保存在本地。",
+      "matchColor": "跟随图片配色",
+      "colorHint": "从图片提取主色，用于按钮、选中项和强调文字。正文保持高对比度。",
+      "remove": "移除背景",
+      "saving": "正在保存…",
+      "saveError": "背景保存失败，请重试。",
+      "uploadError": "无法读取图片，请选择 20 MB 以内的 JPG、PNG 或 WebP 图片。"
+    },
     "title": "设置",
     "general": "通用",
     "generalDescription": "应用的基本设置和行为配置",
@@ -241,6 +261,7 @@
   },
  
   "tasks": {
+    "startFailed": "开始任务失败：{error}",
     "title": "任务",
     "newTask": "新建任务",
     "taskName": "任务名称",
@@ -379,6 +400,12 @@
     "confirmClear": "确定要清空所有数据吗？此操作不可撤销。"
   },
   "reports": {
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "selectModel": "选择 AI 模型",
+    "noModel": "未配置 AI 模型",
+    "reportType": "报告类型",
+    "aiReport": "AI 报告",
     "daily": "每日",
     "weekly": "每周",
     "period": "时间周期",

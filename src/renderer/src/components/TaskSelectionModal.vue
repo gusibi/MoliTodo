@@ -18,19 +18,12 @@
     <!-- 任务列表 -->
     <div class="task-selection-content">
       <div class="selection-header">
-        <label class="select-all-checkbox">
-          <input 
-            type="checkbox" 
-            :checked="isAllSelected"
-            :indeterminate="isPartiallySelected"
-            @change="toggleSelectAll"
-          />
-          <span class="checkmark"></span>
-          <span class="label-text">
-            {{ isAllSelected ? '取消全选' : '全选' }}
-            ({{ selectedTasks.length }}/{{ tasks.length }})
-          </span>
-        </label>
+        <div class="select-all-checkbox">
+          <Checkbox id="report-select-all" :model-value="isAllSelected" :indeterminate="isPartiallySelected"
+            :label="$t('reports.selectAll')" @update:model-value="toggleSelectAll" />
+          <label for="report-select-all" class="label-text">{{ $t(isAllSelected ? 'reports.deselectAll' : 'reports.selectAll') }}
+            ({{ selectedTasks.length }}/{{ tasks.length }})</label>
+        </div>
       </div>
       
       <div class="task-list">
@@ -40,14 +33,8 @@
           class="task-item"
           :class="{ 'selected': selectedTaskIds.has(task.id) }"
         >
-          <label class="task-checkbox">
-            <input 
-              type="checkbox" 
-              :checked="selectedTaskIds.has(task.id)"
-              @change="toggleTask(task.id)"
-            />
-            <span class="checkmark"></span>
-          </label>
+          <Checkbox :id="`report-task-${task.id}`" :model-value="selectedTaskIds.has(task.id)"
+            :label="task.content" @update:model-value="toggleTask(task.id)" />
           
           <div class="task-info">
             <div class="task-content">{{ task.content }}</div>
@@ -77,48 +64,26 @@
       <div class="selection-options">
         <div class="left-controls">
           <div class="ai-model-selector">
-            <div class="ai-model-dropdown" :class="{ 'open': showAIModelDropdown }">
-              <button 
-                class="ai-model-button"
-                @click="toggleAIModelDropdown"
-                :disabled="!hasAvailableModels"
-              >
-                <div v-if="selectedAIModel" class="selected-model">
-                  <span class="model-name">{{ selectedAIModel.name }}</span>
-                  <span class="model-provider">{{ selectedAIModel.provider }}</span>
-                </div>
-                <div v-else class="no-model">
-                  {{ hasAvailableModels ? '选择 AI 模型' : '未配置 AI 模型' }}
-                </div>
-                <ChevronDown class="dropdown-icon h-icon-sm w-icon-sm" aria-hidden="true" />
-              </button>
-              
-              <div v-if="showAIModelDropdown" class="ai-model-list">
-                <div 
-                  v-for="model in availableAIModels" 
-                  :key="model.id"
-                  class="ai-model-item"
-                  :class="{ 'selected': selectedAIModel?.id === model.id }"
-                  @click="selectAIModel(model)"
-                >
-                  <div class="ai-model-info">
-                    <div class="ai-model-name">{{ model.name }}</div>
-                    <div class="ai-model-provider">{{ model.provider }}</div>
-                  </div>
-                  <div v-if="selectedAIModel?.id === model.id" class="ai-model-check">
-                    <Check class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                  </div>
-                </div>
-                
-                <div v-if="!hasAvailableModels" class="no-models-message">
-                  <TriangleAlert class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                  <span>请先在设置中配置 AI 模型</span>
-                </div>
-              </div>
-            </div>
+            <DropdownMenu v-model:open="showAIModelDropdown">
+              <template #trigger>
+                <Button variant="outline" :disabled="!hasAvailableModels" :aria-label="$t('reports.selectModel')">
+                  <span class="selected-model" v-if="selectedAIModel">
+                    <span class="model-name">{{ selectedAIModel.name }}</span>
+                    <span class="model-provider">{{ selectedAIModel.provider }}</span>
+                  </span>
+                  <span v-else>{{ $t('reports.noModel') }}</span>
+                  <ChevronDown class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                </Button>
+              </template>
+              <DropdownMenuItem v-for="model in availableAIModels" :key="model.id"
+                role="menuitemradio" :aria-checked="selectedAIModel?.id === model.id"
+                :selected="selectedAIModel?.id === model.id" @select="selectAIModel(model)">
+                <span class="selected-model"><span>{{ model.name }}</span><span class="model-provider">{{ model.provider }}</span></span>
+              </DropdownMenuItem>
+            </DropdownMenu>
           </div>
            <div class="report-type-selector">
-            <select v-model="selectedReportType" class="report-type-select">
+            <select v-model="selectedReportType" class="report-type-select" :aria-label="$t('reports.reportType')">
               <option value="daily">日报</option>
               <option value="weekly">周报</option>
             </select>
@@ -128,7 +93,6 @@
         <div class="right-controls">
           <Button 
             variant="default"
-            class="confirm-btn"
             :disabled="selectedTasks.length === 0 || !selectedAIModel"
             @click="confirmGeneration"
           >
@@ -143,10 +107,13 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Bot, Calendar, CalendarDays, CalendarPlus, Check, ChevronDown, Inbox, ListChecks, TriangleAlert } from '@lucide/vue'
+import { Bot, Calendar, CalendarDays, CalendarPlus, ChevronDown, Inbox, ListChecks, TriangleAlert } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import Dialog from './ui/dialog/Dialog.vue'
 import Button from './ui/button/Button.vue'
+import Checkbox from './ui/checkbox/Checkbox.vue'
+import DropdownMenu from './ui/dropdown-menu/DropdownMenu.vue'
+import DropdownMenuItem from './ui/dropdown-menu/DropdownMenuItem.vue'
 
 // Props
 const props = defineProps({
@@ -271,11 +238,6 @@ const confirmGeneration = () => {
   })
   
   console.log('[TaskSelectionModal] confirm 事件已发送')
-}
-
-const toggleAIModelDropdown = () => {
-  if (!hasAvailableModels.value) return
-  showAIModelDropdown.value = !showAIModelDropdown.value
 }
 
 const selectAIModel = (model) => {
@@ -406,10 +368,6 @@ onMounted(() => {
   @apply bg-primary/5 border-primary/20;
 }
 
-.task-checkbox {
-  @apply flex-shrink-0 cursor-pointer;
-}
-
 .task-info {
   @apply flex-1 min-w-0;
 }
@@ -427,43 +385,23 @@ onMounted(() => {
 }
 
 .status-done {
-  @apply bg-green-100 text-green-700;
+  @apply text-status-done;
 }
 
 .status-doing {
-  @apply bg-blue-100 text-blue-700;
+  @apply text-status-doing;
 }
 
 .status-todo {
-  @apply bg-gray-100 text-gray-700;
+  @apply text-muted-foreground;
 }
 
 .status-overdue {
-  @apply bg-red-100 text-red-700;
+  @apply text-destructive;
 }
 
 .status-blocked {
-  @apply bg-yellow-100 text-yellow-700;
-}
-
-[data-theme="dark"] .status-done {
-  @apply bg-green-900/30 text-green-400;
-}
-
-[data-theme="dark"] .status-doing {
-  @apply bg-blue-900/30 text-blue-400;
-}
-
-[data-theme="dark"] .status-todo {
-  @apply bg-gray-800/50 text-gray-300;
-}
-
-[data-theme="dark"] .status-overdue {
-  @apply bg-red-900/30 text-red-400;
-}
-
-[data-theme="dark"] .status-blocked {
-  @apply bg-yellow-900/30 text-yellow-400;
+  @apply text-muted-foreground;
 }
 
 .task-time,
@@ -484,11 +422,11 @@ onMounted(() => {
 }
 
 .selection-options {
-  @apply flex items-center justify-between;
+  @apply flex flex-wrap items-center justify-between gap-3;
 }
 
 .left-controls {
-  @apply flex items-center gap-4;
+  @apply flex flex-wrap items-center gap-3;
 }
 
 .right-controls {
@@ -501,22 +439,11 @@ onMounted(() => {
 
 .report-type-select {
   @apply px-3 py-2 border border-border rounded bg-background text-foreground;
-  @apply h-10 min-w-[120px];
+  @apply h-control-md min-w-[120px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
 }
 
 .ai-model-selector {
   @apply flex items-center gap-2 text-sm;
-}
-
-.ai-model-dropdown {
-  @apply relative;
-}
-
-.ai-model-button {
-  @apply flex items-center justify-between gap-2 px-3 py-2 border border-border rounded bg-background text-foreground;
-  @apply hover:bg-muted transition-colors duration-200 min-w-[200px];
-  @apply disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply h-10;
 }
 
 .selected-model {
@@ -529,97 +456,6 @@ onMounted(() => {
 
 .model-provider {
   @apply text-2xs text-muted-foreground;
-}
-
-.no-model {
-  @apply text-muted-foreground;
-}
-
-.dropdown-icon {
-  @apply text-muted-foreground transition-transform duration-200;
-}
-
-.ai-model-dropdown.open .dropdown-icon {
-  @apply rotate-180;
-}
-
-.ai-model-list {
-  @apply absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10;
-  @apply max-h-48 overflow-y-auto;
-}
-
-.ai-model-item {
-  @apply flex items-center justify-between p-3 hover:bg-muted cursor-pointer;
-  @apply border-b border-border last:border-b-0;
-}
-
-.ai-model-item.selected {
-  @apply bg-primary/5 text-primary;
-}
-
-.ai-model-info {
-  @apply flex flex-col;
-}
-
-.ai-model-name {
-  @apply font-medium text-sm;
-}
-
-.ai-model-provider {
-  @apply text-xs text-muted-foreground;
-}
-
-.ai-model-check {
-  @apply text-primary;
-}
-
-.no-models-message {
-  @apply flex items-center gap-2 p-3 text-muted-foreground text-sm;
-}
-
-.no-models-message i {
-  @apply text-yellow-500;
-}
-
-.cancel-btn {
-  @apply px-4 py-2 bg-muted text-foreground rounded-md;
-  @apply hover:bg-muted/80 transition-colors duration-200;
-}
-
-.confirm-btn {
-  @apply px-4 py-2 bg-primary text-primary-foreground rounded-md;
-  @apply hover:bg-primary/90 transition-colors duration-200;
-  @apply flex items-center gap-2;
-  @apply disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply h-10;
-}
-
-/* 自定义复选框样式 */
-input[type="checkbox"] {
-  @apply sr-only;
-}
-
-.checkmark {
-  @apply w-4 h-4 border-2 border-border rounded flex-shrink-0;
-  @apply flex items-center justify-center transition-all duration-200;
-}
-
-input[type="checkbox"]:checked + .checkmark {
-  @apply bg-primary border-primary;
-}
-
-input[type="checkbox"]:checked + .checkmark::after {
-  content: '✓';
-  @apply text-primary-foreground text-xs font-bold;
-}
-
-input[type="checkbox"]:indeterminate + .checkmark {
-  @apply bg-primary/50 border-primary;
-}
-
-input[type="checkbox"]:indeterminate + .checkmark::after {
-  content: '−';
-  @apply text-primary-foreground text-xs font-bold;
 }
 
 .label-text {

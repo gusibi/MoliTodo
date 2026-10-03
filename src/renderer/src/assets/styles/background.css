@@ -1,0 +1,85 @@
+/* Overrides the global transparent !important window reset only when enabled. */
+/* Wallpaper stays below all application content and never captures input. */
+:root.has-app-background body > #app {
+  background-image: linear-gradient(hsl(var(--background) / 0.84), hsl(var(--background) / 0.84)), var(--app-background-image) !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+:root.has-app-background body .task-manager-view-container,
+:root.has-app-background body .kanban-board,
+:root.has-app-background body .unified-calendar,
+:root.has-app-background body .monthly-view,
+:root.has-app-background body .task-manager,
+:root.has-app-background body .task-manager-main-content,
+:root.has-app-background body .task-manager-sidebar,
+:root.has-app-background body .setting-main-container,
+:root.has-app-background body .setting-main-area,
+:root.has-app-background body .setting-sidebar,
+:root.has-app-background body .flat-task-list-container,
+:root.has-app-background body .today-overview {
+  background-color: transparent;
+}
+:root.has-app-background body .task-manager-view-container,
+:root.has-app-background body .setting-sidebar { backdrop-filter: none; }
+
+/* Distinct surfaces keep the wallpaper subordinate to navigation and task content. */
+:root.has-app-background {
+  --wallpaper-surface: hsl(var(--background) / 0.55);
+  --wallpaper-divider: hsl(var(--foreground) / 0.14);
+}
+:root.has-app-background body .task-manager-sidebar,
+:root.has-app-background body .setting-sidebar {
+  background-color: hsl(var(--sidebar) / 0.28);
+}
+:root.has-app-background body .task-manager-main-content,
+:root.has-app-background body .today-overview-calendar {
+  border-left-color: var(--wallpaper-divider);
+}
+:root.has-app-background body .task-manager-main-content {
+  padding-top: 0;
+}
+:root.has-app-background body .task-manager-category-header {
+  padding-top: 32px;
+  background-color: transparent;
+  border-bottom-color: var(--wallpaper-divider);
+}
+:root.has-app-background body .today-overview-calendar {
+  background-color: hsl(var(--background) / 0.3);
+}
+:root.has-app-background body .agenda-section {
+  background-color: hsl(var(--card) / 0.72);
+  border-color: var(--wallpaper-divider);
+  box-shadow: none;
+}
+:root.has-app-background body .task-manager-action-btn,
+:root.has-app-background body .future-calendar-back-btn,
+:root.has-app-background body .agenda-load-more button {
+  background-color: var(--wallpaper-surface);
+  border-color: var(--wallpaper-divider);
+}
+:root.has-app-background body .task-manager-action-btn:hover,
+:root.has-app-background body .future-calendar-back-btn:hover {
+  background-color: hsl(var(--accent) / 0.85);
+}
+:root.has-app-background body .future-calendar-month {
+  border-top-color: var(--wallpaper-divider);
+}
+:root.has-app-background body .future-calendar-month-title {
+  background-color: hsl(var(--background) / 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+/* Sticky group labels stay readable without an opaque stripe over the image. */
+:root.has-app-background body .flat-task-group-header,
+:root.has-app-background body .flat-task-group-header-static,
+:root.has-app-background body .flat-task-group-header-compact {
+  background-color: hsl(var(--background) / 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 6px;
+  border-bottom: 1px solid var(--wallpaper-divider);
+}

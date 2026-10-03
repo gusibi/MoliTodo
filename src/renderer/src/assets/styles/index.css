@@ -1,7 +1,7 @@
 @import './theme-variables.css';
+@import './background.css';
 @import './base.css';
 @import './components/ui.css';
-@import './components/ai-model-picker.css';
 @import './settings.css';
 @import './components/floating-icon.css';
 @import './components/task-panel.css';

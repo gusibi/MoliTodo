@@ -1,7 +1,7 @@
 # MoliTodo UI Foundation：Today 任务行首轮试点
 
 日期：2026-09-20  
-状态：实施草案；测试入口方案已提出，等待用户反馈  
+状态：试点已接入共享规范；最新收尾与验证结果见 [验收记录](./ui-foundation-acceptance.md)
 交付形式：本地 Spec，不创建 GitHub issue
 
 后续完整范围见 [全应用迁移 Spec](./ui-foundation-full-migration-spec.md)。本文保留为阶段 0，可独立实施与验收。

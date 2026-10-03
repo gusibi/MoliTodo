@@ -32,94 +32,15 @@
 }
 
 /* ===== Dropdown Trigger ===== */
-.task-panel-dropdown-trigger {
-  @apply flex items-center gap-1.5 px-2 py-1.5 rounded-lg;
-  @apply hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
-  @apply transition-colors cursor-pointer;
-}
-
-.task-panel-dropdown-trigger .category-icon {
-  @apply w-4 h-4 text-primary;
-}
-
-.task-panel-dropdown-trigger .category-label {
-  @apply font-semibold text-[13px] text-foreground;
-}
-
-.task-panel-dropdown-trigger .task-panel-count {
-  @apply text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full font-medium tabular-nums;
-}
-
-.task-panel-list-trigger {
-  @apply flex items-center gap-1 px-1.5 py-1.5 rounded-lg;
-  /* 显式主题色：否则「全部清单」状态的图标继承浏览器默认黑色，暗色主题下不可见 */
-  @apply text-foreground/85;
-  @apply hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
-  @apply transition-colors cursor-pointer;
-}
-
-.task-panel-list-trigger .dropdown-arrow,
-.task-panel-dropdown-trigger .dropdown-arrow {
-  @apply w-2.5 h-2.5 text-muted-foreground transition-transform duration-200;
-}
-
-.dropdown-arrow.open {
-  @apply rotate-180;
-}
 
 /* ===== Dropdown Menu（渲染在 ui Popover 内容层内） ===== */
 .task-panel-dropdown-menu {
   @apply flex flex-col;
 }
 
-.dropdown-item {
-  @apply flex items-center gap-2 px-2 py-1.5 text-xs rounded-md;
-  @apply text-popover-foreground hover:bg-accent;
-  @apply transition-colors cursor-pointer;
-}
-
-.dropdown-item.active {
-  @apply bg-primary/10 text-primary font-medium;
-}
-
-.dropdown-item-icon {
-  @apply w-3.5 h-3.5 text-muted-foreground flex-shrink-0;
-}
-
-.dropdown-item.active .dropdown-item-icon {
-  @apply text-primary;
-}
-
-.dropdown-item-count {
-  @apply ml-auto text-[10px] text-muted-foreground tabular-nums;
-}
-
-.dropdown-item.active .dropdown-item-count {
-  @apply text-primary;
-}
-
 /* 全部清单图标使用主题前景色 */
-.dropdown-item-icon-muted {
-  @apply text-muted-foreground;
-}
-
-.dropdown-item.active .dropdown-item-icon-muted {
-  @apply text-primary;
-}
 
 /* ===== Pin Button ===== */
-.task-panel-pin-btn {
-  @apply ml-auto p-1.5 rounded-lg transition-all duration-200 flex-shrink-0 flex items-center justify-center;
-  @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
-}
-
-.task-panel-pin-btn svg {
-  @apply w-3.5 h-3.5;
-}
-
-.task-panel-pin-btn.pinned {
-  @apply bg-primary/15 text-primary;
-}
 
 /* ===== Quick Add ===== */
 .task-panel-quick-add {
@@ -138,30 +59,7 @@
   @apply shadow-sm transition-all;
 }
 
-.task-panel-add-btn {
-  @apply absolute right-1.5 top-1/2 -translate-y-1/2;
-  @apply w-7 h-7 flex items-center justify-center rounded-md transition-all duration-200;
-  @apply text-muted-foreground/60 hover:bg-accent hover:text-accent-foreground;
-}
-
-.task-panel-add-btn.active {
-  @apply bg-primary text-primary-foreground rounded-full shadow-md hover:bg-primary/90;
-}
-
 /* 解析出的日期 chip 预览（点击移除 = 本次创建不设置日期） */
-.quick-entry-chip-row {
-  @apply flex items-center gap-1.5 mt-1.5 px-0.5;
-}
-
-.quick-entry-chip {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full;
-  @apply bg-primary/10 text-primary text-[11px] font-medium;
-  @apply hover:bg-primary/15 transition-colors cursor-pointer;
-}
-
-.quick-entry-chip-remove {
-  @apply text-primary/60;
-}
 
 /* ===== Task List Container ===== */
 .task-panel-list-container {
@@ -308,27 +206,6 @@
   @apply opacity-100;
 }
 
-.task-action-btn {
-  @apply w-7 h-7 flex items-center justify-center rounded-md transition-colors;
-  @apply text-muted-foreground;
-}
-
-.task-action-btn svg {
-  @apply w-3.5 h-3.5;
-}
-
-.task-action-btn:hover {
-  @apply text-accent-foreground bg-accent;
-}
-
-.task-action-btn.restore:hover {
-  @apply text-status-done bg-status-done/10;
-}
-
-.task-action-btn.delete:hover {
-  @apply text-destructive bg-destructive/10;
-}
-
 /* ===== Subtasks ===== */
 .task-card-subtasks {
   @apply mt-1 pl-[26px] space-y-0.5;
@@ -336,11 +213,6 @@
 
 .subtask-item {
   @apply flex items-center gap-1.5 text-[11px] text-muted-foreground;
-}
-
-.subtask-checkbox {
-  @apply w-4 h-4 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0;
-  @apply text-muted-foreground/50 hover:text-primary;
 }
 
 .subtask-text {
@@ -402,45 +274,20 @@
 /* ===== 提醒气泡（When 式）样式由共享组件 TaskReminderBubble 提供 ===== */
 
 /* ===== Context Menu ===== */
-.task-context-menu {
-  @apply bg-popover border border-border rounded-md shadow-lg py-0.5 min-w-[140px] z-50;
-}
-
-.context-menu-item {
-  @apply px-2.5 py-1.5 text-xs text-popover-foreground;
-  @apply hover:bg-accent cursor-pointer;
-  @apply flex items-center gap-1.5 transition-colors;
-}
-
-.context-menu-item svg {
-  @apply w-3 h-3 text-muted-foreground;
-}
-
-.context-menu-item-delete {
-  @apply text-destructive/90;
-}
-
-.context-menu-item-delete svg {
-  @apply text-destructive/70;
-}
-
-.context-menu-item-delete:hover {
-  @apply bg-destructive/10 text-destructive;
-}
-
-.context-menu-overlay {
-  @apply fixed inset-0 z-40;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .task-panel-card {
     animation: none;
   }
 
-  .task-panel-list-trigger .dropdown-arrow,
-  .task-panel-dropdown-trigger .dropdown-arrow,
-  .task-status-checkbox,
-  .task-card-actions {
-    @apply transition-none;
-  }
+  .dropdown-arrow { transition: none; }
 }
+
+/* 业务层仅安排共享控件的位置；尺寸、颜色和焦点由 components/ui 提供。 */
+.task-panel-pin-btn { @apply ml-auto shrink-0; }
+.task-panel-add-btn { @apply absolute right-1.5 top-1/2 -translate-y-1/2; }
+.task-panel-dropdown-trigger .category-label { @apply font-semibold; }
+.task-panel-dropdown-trigger .task-panel-count { @apply text-xs tabular-nums text-muted-foreground; }
+.dropdown-item-count { @apply ml-auto text-xs tabular-nums text-muted-foreground; }
+.dropdown-item-icon { @apply h-icon-sm w-icon-sm shrink-0; }
+.task-panel-card:focus-visible { @apply outline-none ring-2 ring-ring; }

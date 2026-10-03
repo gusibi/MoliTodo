@@ -1,5 +1,5 @@
 <template>
-  <ContextMenuRoot>
+  <ContextMenuRoot @update:open="$emit('update:open', $event)">
     <ContextMenuTrigger as-child :disabled="props.disabled" @keydown="handleTriggerKeydown">
       <slot name="trigger" />
     </ContextMenuTrigger>
@@ -26,7 +26,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false }
 })
 
-defineEmits(['escape-key-down'])
+defineEmits(['escape-key-down', 'update:open'])
 
 function handleTriggerKeydown(event) {
   if (props.disabled || !((event.shiftKey && event.key === 'F10') || event.key === 'ContextMenu')) return

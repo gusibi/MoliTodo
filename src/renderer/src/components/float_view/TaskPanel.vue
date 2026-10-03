@@ -3,95 +3,81 @@
     <!-- 面板头部 - 固定时可拖动 -->
     <div class="task-panel-header" :class="{ 'draggable': isPinned }" @mousedown="handleHeaderMouseDown">
       <!-- 分类下拉 -->
-      <Popover v-model:open="showDropdown" align="start" content-class="p-1 w-44">
+      <DropdownMenu v-model:open="showDropdown" align="start" content-class="w-44">
         <template #trigger>
-          <div class="task-panel-dropdown-trigger" role="button" tabindex="0"
+          <Button variant="ghost" size="sm" class="task-panel-dropdown-trigger"
             :aria-label="$t('floatView.selectCategory')">
-            <component :is="getCategoryIcon(selectedCategory)" class="category-icon" />
+            <component :is="getCategoryIcon(selectedCategory)" class="category-icon h-icon-sm w-icon-sm" />
             <span class="category-label">{{ getCategoryLabel(selectedCategory) }}</span>
             <span class="task-panel-count">{{ taskCount }}</span>
-            <svg class="dropdown-arrow" :class="{ 'open': showDropdown }" width="12" height="12" viewBox="0 0 24 24"
-              fill="none">
-              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </div>
+            <ChevronDown class="dropdown-arrow h-icon-sm w-icon-sm" :class="{ open: showDropdown }" aria-hidden="true" />
+          </Button>
         </template>
         <div class="task-panel-dropdown-menu">
-          <div v-for="category in categoryOptions" :key="category.value" class="dropdown-item" role="option"
-            :class="{ 'active': selectedCategory === category.value }"
-            @click.stop="selectCategory(category.value)">
+          <DropdownMenuItem v-for="category in categoryOptions" :key="category.value" class="dropdown-item"
+            role="menuitemradio" :aria-checked="selectedCategory === category.value" :selected="selectedCategory === category.value"
+            @select="selectCategory(category.value)">
             <component :is="category.icon" class="dropdown-item-icon" />
             <span>{{ category.label }}</span>
             <span class="dropdown-item-count">{{ getCategoryCount(category.value) }}</span>
-          </div>
+          </DropdownMenuItem>
         </div>
-      </Popover>
+      </DropdownMenu>
 
       <!-- 清单过滤下拉 -->
-      <Popover v-model:open="showListDropdown" align="end" content-class="p-1 w-40">
+      <DropdownMenu v-model:open="showListDropdown" align="end" content-class="w-40">
         <template #trigger>
-          <div class="task-panel-list-trigger" role="button" tabindex="0"
+          <Button variant="ghost" size="sm" class="task-panel-list-trigger"
             :aria-label="$t('floatView.allLists')">
             <ListIcon v-if="selectedListId !== null" :name="selectedListIconName" class="h-icon-sm w-icon-sm"
               :style="getListColorStyle(selectedListColor)" />
             <Layers v-else class="h-icon-sm w-icon-sm" :style="getListColorStyle(selectedListColor)"
               aria-hidden="true" />
-            <svg class="dropdown-arrow" :class="{ 'open': showListDropdown }" width="12" height="12" viewBox="0 0 24 24"
-              fill="none">
-              <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </div>
+            <ChevronDown class="dropdown-arrow h-icon-sm w-icon-sm" :class="{ open: showListDropdown }" aria-hidden="true" />
+          </Button>
         </template>
         <div class="task-panel-dropdown-menu list-dropdown-menu">
-          <div class="dropdown-item" :class="{ 'active': selectedListId === null }" @click.stop="selectList(null)">
+          <DropdownMenuItem class="dropdown-item" role="menuitemradio" :aria-checked="selectedListId === null" :selected="selectedListId === null" @select="selectList(null)">
             <Layers class="h-icon-sm w-icon-sm dropdown-item-icon dropdown-item-icon-muted" aria-hidden="true" />
             <span>{{ $t('floatView.allLists') }}</span>
             <span class="dropdown-item-count">{{ getAllListsTaskCount() }}</span>
-          </div>
-          <div v-for="list in sortedLists" :key="list.id" class="dropdown-item"
-            :class="{ 'active': selectedListId === list.id }" @click.stop="selectList(list.id)">
+          </DropdownMenuItem>
+          <DropdownMenuItem v-for="list in sortedLists" :key="list.id" class="dropdown-item"
+            role="menuitemradio" :aria-checked="selectedListId === list.id" :selected="selectedListId === list.id" @select="selectList(list.id)">
             <ListIcon :name="list.icon" class="h-icon-sm w-icon-sm dropdown-item-icon"
               :style="getListColorStyle(list.color)" />
             <span>{{ list.name }}</span>
             <span class="dropdown-item-count">{{ getListTaskCount(list.id) }}</span>
-          </div>
+          </DropdownMenuItem>
         </div>
-      </Popover>
+      </DropdownMenu>
 
       <!-- 固定按钮 -->
-      <button :class="['task-panel-pin-btn', { 'pinned': isPinned }]" @click.stop="togglePin"
-        :title="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
-        <svg v-if="isPinned" width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" fill="currentColor" />
-        </svg>
-        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" stroke="currentColor" stroke-width="1.5"
-            fill="none" />
-        </svg>
-      </button>
+      <IconButton size="icon-sm" class="task-panel-pin-btn" :aria-pressed="isPinned" :variant="isPinned ? 'secondary' : 'ghost'" @click.stop="togglePin"
+        :label="isPinned ? $t('floatView.unpinPanel') : $t('floatView.pinPanel')">
+        <Pin class="h-icon-sm w-icon-sm" aria-hidden="true" />
+      </IconButton>
     </div>
 
     <!-- 快速添加（Things Quick Entry 式：支持「明天下午3点」自然语言解析，chip 预览） -->
     <div class="task-panel-quick-add">
       <div class="task-panel-input-wrapper">
-        <input v-model="newTaskContent" type="text" class="task-panel-input" :placeholder="$t('floatView.addNewTask')"
+        <input v-model="newTaskContent" type="text" class="task-panel-input" :aria-label="$t('floatView.addNewTask')" :placeholder="$t('floatView.addNewTask')"
           maxlength="200" @keypress.enter="addTask" ref="quickAddInput"
           @focus="handleInputFocus" @blur="handleInputBlur"
           @compositionstart="handleCompositionStart" @compositionend="handleCompositionEnd">
-        <button class="task-panel-add-btn" :class="{ 'active': newTaskContent.trim() }" @click="addTask"
-          :title="$t('floatView.addTask')">
+        <IconButton size="icon-sm" class="task-panel-add-btn" :variant="newTaskContent.trim() ? 'default' : 'ghost'" @click="addTask"
+          :label="$t('floatView.addTask')">
           <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
-        </button>
+        </IconButton>
       </div>
       <div class="quick-entry-chip-row">
-        <button v-if="parsedDateChip" type="button" class="quick-entry-chip" @click="suppressParsedDate"
-          :title="$t('floatView.removeDateChip')">
+        <Button variant="secondary" size="sm" v-if="parsedDateChip" class="quick-entry-chip" @click="suppressParsedDate"
+          :aria-label="$t('floatView.removeDateChip')">
           <CalendarDays class="h-3 w-3" aria-hidden="true" />
           <span>{{ parsedDateChip }}</span>
           <X class="h-2.5 w-2.5 quick-entry-chip-remove" aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -104,14 +90,17 @@
             <span class="section-count">{{ section.tasks.length }}</span>
           </div>
           <div class="task-panel-list">
-            <div v-for="task in section.tasks" :key="task.id" :class="[
+            <ContextMenu v-for="task in section.tasks" :key="task.id"
+              @update:open="(open) => { showContextMenu = open; if (open) selectedTask = task }">
+            <template #trigger>
+            <div tabindex="0" :aria-label="task.content" :class="[
               'task-panel-card',
               `status-${task.status || (task.completed ? 'done' : 'todo')}`,
               {
                 'overtime': (task.status || (task.completed ? 'done' : 'todo')) === 'doing' && task.reminderTime && isReminderOverdue(task.reminderTime)
               }
             ]" :data-task-id="task.id" :data-status="task.status || (task.completed ? 'done' : 'todo')"
-              @contextmenu="showTaskContextMenu($event, task)">
+              @keydown.enter.self="handleTitleDblclick(task)">
 
               <!-- 主行：状态指示 + 内容 + 悬浮动作 -->
               <div class="task-card-main">
@@ -128,43 +117,43 @@
                     :title="$t('floatView.clickToAddStepDblclickToEdit')">
                     {{ task.content }}
                   </div>
-                  <input v-else v-model="editingContent" class="task-card-edit-input"
+                  <input v-else v-model="editingContent" class="task-card-edit-input" :aria-label="$t('common.edit')"
                     @keydown.enter="saveTaskEdit(task.id)" @keydown.esc="cancelTaskEdit" @blur="saveTaskEdit(task.id)"
                     ref="editInput" />
                 </div>
 
                 <!-- 悬浮动作按钮：图标即点击后的动作（开始/暂停/继续/完成/重做） -->
                 <div v-if="!isTrashView" class="task-card-actions">
-                  <button v-if="statusOf(task) === 'todo'" class="task-action-btn" @click="startTaskAction(task.id)"
-                    :title="$t('floatView.startTask')">
+                  <IconButton variant="ghost" size="icon-sm" v-if="statusOf(task) === 'todo'" class="task-action-btn" @click="startTaskAction(task.id)"
+                    :label="$t('floatView.startTask')">
                     <Play class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button v-else-if="statusOf(task) === 'doing'" class="task-action-btn"
-                    @click="pauseTask(task.id)" :title="$t('floatView.pauseTask')">
+                  </IconButton>
+                  <IconButton variant="ghost" size="icon-sm" v-else-if="statusOf(task) === 'doing'" class="task-action-btn"
+                    @click="pauseTask(task.id)" :label="$t('floatView.pauseTask')">
                     <Pause class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button v-else-if="statusOf(task) === 'paused'" class="task-action-btn"
-                    @click="startTaskAction(task.id)" :title="$t('floatView.resumeTask')">
+                  </IconButton>
+                  <IconButton variant="ghost" size="icon-sm" v-else-if="statusOf(task) === 'paused'" class="task-action-btn"
+                    @click="startTaskAction(task.id)" :label="$t('floatView.resumeTask')">
                     <Play class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button v-if="statusOf(task) !== 'done'" class="task-action-btn"
-                    @click="completeTaskAction(task.id)" :title="$t('floatView.completeTask')">
+                  </IconButton>
+                  <IconButton variant="ghost" size="icon-sm" v-if="statusOf(task) !== 'done'" class="task-action-btn"
+                    @click="completeTaskAction(task.id)" :label="$t('floatView.completeTask')">
                     <CircleCheck class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button v-if="statusOf(task) === 'done'" class="task-action-btn"
-                    @click="redoTaskAction(task.id)" :title="$t('floatView.redoTask')">
+                  </IconButton>
+                  <IconButton variant="ghost" size="icon-sm" v-if="statusOf(task) === 'done'" class="task-action-btn"
+                    @click="redoTaskAction(task.id)" :label="$t('floatView.redoTask')">
                     <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
+                  </IconButton>
                 </div>
                 <!-- 垃圾桶视图：恢复 / 彻底删除 -->
                 <div v-else class="task-card-actions">
-                  <button class="task-action-btn restore" @click="restoreTaskFromTrash(task.id)"
-                    :title="$t('floatView.restore')">
+                  <IconButton variant="ghost" size="icon-sm" class="task-action-btn restore" @click="restoreTaskFromTrash(task.id)"
+                    :label="$t('floatView.restore')">
                     <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button class="task-action-btn delete" @click="requestPurge(task)" :title="$t('floatView.purge')">
+                  </IconButton>
+                  <IconButton variant="ghost" size="icon-sm" class="task-action-btn delete" @click="requestPurge(task)" :label="$t('floatView.purge')">
                     <Trash2 class="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
+                  </IconButton>
                 </div>
               </div>
 
@@ -180,20 +169,13 @@
 
                 <!-- 进行中状态标签 -->
                 <div v-if="statusOf(task) === 'doing'" class="task-meta-tag doing">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                      fill="currentColor" />
-                  </svg>
+                  <CirclePlay class="h-icon-sm w-icon-sm" aria-hidden="true" />
                   <span>{{ formatDurationCompact(getTaskTotalDuration(task)) }}</span>
                 </div>
 
                 <!-- 子任务指示器 -->
                 <div v-if="task.metadata?.steps?.length > 0" class="task-meta-tag subtasks">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
-                      fill="currentColor" />
-                  </svg>
+                  <ListChecks class="h-icon-sm w-icon-sm" aria-hidden="true" />
                   <span>{{task.metadata.steps.filter(s => s.status === 'done').length}}/{{ task.metadata.steps.length
                   }}</span>
                 </div>
@@ -202,11 +184,9 @@
               <!-- 子任务列表 -->
               <div v-if="getIncompleteSteps(task).length > 0" class="task-card-subtasks">
                 <div v-for="step in getIncompleteSteps(task)" :key="step.id" class="subtask-item">
-                  <div class="subtask-checkbox" @click.stop="toggleStepStatus(task.id, step)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                  </div>
+                  <Checkbox :id="`panel-step-${task.id}-${step.id}`" class="subtask-checkbox"
+                    :label="step.content" :model-value="step.status === 'done'"
+                    @update:model-value="toggleStepStatus(task.id, step)" />
                   <span class="subtask-text">{{ step.content }}</span>
                 </div>
               </div>
@@ -216,11 +196,19 @@
                 class="task-add-step">
                 <Plus class="h-3 w-3" aria-hidden="true" />
                 <input v-model="stepDrafts[task.id]" :data-step-input="task.id" class="task-add-step-input"
-                  :placeholder="$t('tasks.addStep')" maxlength="200"
+                  :aria-label="$t('tasks.addStep')" :placeholder="$t('tasks.addStep')" maxlength="200"
                   @keypress.enter="addStep(task)" @keydown.esc="closeStepAdd(task)" @blur="closeStepAdd(task, true)"
                   @click.stop>
               </div>
             </div>
+            </template>
+            <ContextMenuItem class="context-menu-item" @select="createFloatingTask">
+              <Star class="h-icon-sm w-icon-sm" aria-hidden="true" />{{ $t('floatView.createFloatingTask') }}
+            </ContextMenuItem>
+            <ContextMenuItem variant="destructive" class="context-menu-item" @select="deleteTaskFromMenu">
+              <Trash2 class="h-icon-sm w-icon-sm" aria-hidden="true" />{{ $t('floatView.deleteTask') }}
+            </ContextMenuItem>
+            </ContextMenu>
           </div>
         </section>
       </template>
@@ -228,11 +216,7 @@
       <!-- 空状态 -->
       <div v-else class="task-panel-empty">
         <div class="empty-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor" />
-          </svg>
+          <Inbox class="h-12 w-12" aria-hidden="true" />
         </div>
         <template v-if="isTrashView">
           <h3 class="empty-title">{{ $t('floatView.trash') }}</h3>
@@ -254,33 +238,17 @@
 
     <!-- 面板底部 -->
     <div class="task-panel-footer">
-      <span class="footer-stats" @click="openTaskManager">{{ footerStats }}</span>
-      <span class="footer-link" @click="openTaskManager">→</span>
+      <Button variant="ghost" size="sm" class="footer-stats" @click="openTaskManager">{{ footerStats }}</Button>
+      <IconButton variant="ghost" size="icon-sm" class="footer-link" :label="$t('app.title')" @click="openTaskManager">→</IconButton>
     </div>
 
-    <!-- 右键菜单 -->
-    <div v-if="showContextMenu" class="task-context-menu" :style="contextMenuStyle" @click.stop>
-      <div class="context-menu-item" @click="createFloatingTask">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            fill="currentColor" />
-        </svg>
-        {{ $t('floatView.createFloatingTask') }}
-      </div>
-      <div class="context-menu-item context-menu-item-delete" @click="deleteTaskFromMenu">
-        <Trash2 class="h-3 w-3" aria-hidden="true" />
-        {{ $t('floatView.deleteTask') }}
-      </div>
-    </div>
 
-    <!-- 遮罩层 -->
-    <div v-if="showContextMenu" class="context-menu-overlay" @click="hideContextMenu"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, h, watch } from 'vue'
-import { CalendarDays, CircleCheck, Layers, Pause, Play, Plus, RotateCcw, Trash2, X } from '@lucide/vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { CalendarDays, CalendarRange, ChevronDown, CircleCheck, CirclePause, CirclePlay, Inbox, List, ListChecks, Pin, Star, Layers, Pause, Play, Plus, RotateCcw, Trash2, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -290,7 +258,13 @@ import { isReminderOverdue } from '@/utils/task-utils'
 import { dayLabel, formatTimeHM } from '@/utils/when-labels'
 import ListIcon from '../ui/ListIcon.vue'
 import AlertDialog from '../ui/alert-dialog/AlertDialog.vue'
-import Popover from '../ui/popover/Popover.vue'
+import DropdownMenu from '../ui/dropdown-menu/DropdownMenu.vue'
+import DropdownMenuItem from '../ui/dropdown-menu/DropdownMenuItem.vue'
+import ContextMenu from '../ui/context-menu/ContextMenu.vue'
+import ContextMenuItem from '../ui/context-menu/ContextMenuItem.vue'
+import Button from '../ui/button/Button.vue'
+import IconButton from '../ui/button/IconButton.vue'
+import Checkbox from '../ui/checkbox/Checkbox.vue'
 import TaskStatusCircle from '../task/TaskStatusCircle.vue'
 import TaskWhenBubble from '../task/TaskWhenBubble.vue'
 import TaskReminderBubble from '../task/TaskReminderBubble.vue'
@@ -389,52 +363,18 @@ const closeStepAdd = (task, keepDraft = false) => {
 
 // 右键菜单相关
 const showContextMenu = ref(false)
-const contextMenuStyle = ref({})
 const selectedTask = ref(null)
 
 // 分类选项配置
 const categoryOptions = computed(() => [
-  { value: 'today', label: $t('categories.today'), icon: CalendarDayIcon },
-  { value: 'planned', label: $t('categories.planned'), icon: CalendarWeekIcon },
-  { value: 'doing', label: $t('categories.doing'), icon: PlayCircleIcon },
-  { value: 'paused', label: $t('categories.paused'), icon: PauseCircleIcon },
-  { value: 'all', label: $t('categories.all'), icon: AllTasksIcon },
-  { value: 'inbox', label: $t('categories.inbox'), icon: InboxIcon },
-  { value: 'completed', label: $t('categories.completed'), icon: CheckCircleIcon },
-  { value: 'trash', label: $t('floatView.trash'), icon: TrashIcon }
-])
-
-// 图标组件
-const CalendarDayIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z', fill: 'currentColor' })
-])
-
-const CalendarWeekIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7v-5z', fill: 'currentColor' })
-])
-
-const PlayCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z', fill: 'currentColor' })
-])
-
-const PauseCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z', fill: 'currentColor' })
-])
-
-const AllTasksIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z', fill: 'currentColor' })
-])
-
-const InboxIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5v-3h3.56c.69 1.19 1.97 2 3.45 2s2.75-.81 3.45-2H19v3zm0-5h-4.99c0 1.1-.9 2-2 2s-2-.9-2-2H5V5h14v9z', fill: 'currentColor' })
-])
-
-const CheckCircleIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z', fill: 'currentColor' })
-])
-
-const TrashIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none' }, [
-  h('path', { d: 'M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
+  { value: 'today', label: $t('categories.today'), icon: CalendarDays },
+  { value: 'planned', label: $t('categories.planned'), icon: CalendarRange },
+  { value: 'doing', label: $t('categories.doing'), icon: CirclePlay },
+  { value: 'paused', label: $t('categories.paused'), icon: CirclePause },
+  { value: 'all', label: $t('categories.all'), icon: List },
+  { value: 'inbox', label: $t('categories.inbox'), icon: Inbox },
+  { value: 'completed', label: $t('categories.completed'), icon: CircleCheck },
+  { value: 'trash', label: $t('floatView.trash'), icon: Trash2 }
 ])
 
 // 引用
@@ -788,7 +728,7 @@ const getCategoryLabel = (category) => {
 
 const getCategoryIcon = (category) => {
   const option = categoryOptions.value.find(opt => opt.value === category)
-  return option ? option.icon : CalendarDayIcon
+  return option ? option.icon : CalendarDays
 }
 
 // 悬浮窗分类计数：与 taskSections 的展示口径一致（今天含未安排分组）
@@ -864,33 +804,6 @@ const openTaskManager = async () => {
 }
 
 // 右键菜单相关方法
-const showTaskContextMenu = (event, task) => {
-  event.preventDefault()
-  if (isTrashView.value) return
-  selectedTask.value = task
-
-  // 紧凑面板内按窗口可用尺寸夹取菜单位置，避免溢出被裁切
-  const menuWidth = 180
-  const menuHeight = 84
-  let left = event.clientX
-  let top = event.clientY
-  if (left + menuWidth > window.innerWidth) {
-    left = Math.max(4, window.innerWidth - menuWidth - 8)
-  }
-  if (top + menuHeight > window.innerHeight) {
-    top = Math.max(4, window.innerHeight - menuHeight - 8)
-  }
-
-  contextMenuStyle.value = {
-    position: 'fixed',
-    left: `${left}px`,
-    top: `${top}px`,
-    zIndex: 1000
-  }
-
-  showContextMenu.value = true
-}
-
 const hideContextMenu = () => {
   showContextMenu.value = false
   selectedTask.value = null

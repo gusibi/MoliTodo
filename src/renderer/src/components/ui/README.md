@@ -167,7 +167,7 @@ palette 等外观 token，不通过页面选择器重设组件外观。
   （图标选择器与预览）。
 - 清单图标选择器与展示共用 `list-icons.js` 映射；未知名称回退默认图标，不改写持久化数据。
 
-### 尚未迁移（后续阶段）
+### 阶段 2 交付时未迁移（历史）
 
 - 设置页（Settings、DataSettings）仍使用原生 `confirm`，属于阶段 3。
 - 悬浮界面（`float_view/TaskPanel`）仍使用 Font Awesome 与 `getListIconClass`，属于阶段 4。
@@ -192,7 +192,7 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 - 日期：Vue Datepicker 弹层通过 `vue-datepicker.css` 映射到语义 token 并传入 `:dark`；
   v-calendar 与 `ui/DatePicker` 保持既有 token 适配。
 
-### 阶段 3 尚未完成 / 后续
+### 阶段 3 交付时未完成（历史）
 
 - 设置页原生 `<select>` 选择器保留为平台控件（已统一外观），未引入独立 Select 组件。
 - TaskSelectionModal 内的 AI 模型下拉仍为历史自建实现，未迁移到共享 DropdownMenu。
@@ -209,7 +209,7 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 - E2E `e2e/float-view.spec.js` 验证真实 Electron 行为：悬浮窗口存在且置顶、任务面板显示/隐藏、
   面板新增任务跨窗口同步到主窗口、颜色主题跨窗口同步。
 
-### 阶段 4 尚未完成 / 后续
+### 阶段 4 交付时未完成（历史）
 
 - TaskPanel 的分类 / 清单下拉与右键菜单仍为历史自建实现，未迁移到共享 DropdownMenu。
 - TaskPanel 仍有内联本地 SVG 图标（分类、固定、状态勾选、右键菜单等）；它们已离线可用，但尚未统一为
@@ -231,10 +231,10 @@ palette 等外观 token，不通过页面选择器重设组件外观。
   基础组件布局与交互由 token 继承。
 - 离线冷启动与五套主题回归由 `e2e/foundation.spec.js` 覆盖。
 
-### 全量覆盖对照（最终）
+### 阶段 5 覆盖记录（历史）
 
 - 活跃界面：Today、普通列表、看板、日历、Inspector、清单管理、业务弹层、设置、统计、悬浮界面
-  均已迁移或验证；未使用目录 `components/unused/` 与仅被它引用的 `utils/icon-utils.js` 保留不动。
+  已进行分阶段迁移；这不代表每个历史控件均已收敛。未使用目录 `components/unused/` 与仅被它引用的 `utils/icon-utils.js` 保留不动。
 - 原生业务确认：活跃代码不再使用原生 `confirm`（系统文件/权限对话框按用途保留）。
 - 图标：核心 UI 图标本地可离线显示；清单图标旧名称兼容；Font Awesome CDN 已移除。
 - 主题：五套颜色主题 × 明暗模式继承同一基础组件规则，跨窗口同步。
@@ -243,6 +243,28 @@ palette 等外观 token，不通过页面选择器重设组件外观。
 ### 已知未验证项 / 后续
 
 - Windows 平台的窗口材质、标题栏与悬浮行为未在本环境验证（当前仅有 macOS）。
-- 设置页原生 `<select>`、TaskSelectionModal 的 AI 下拉、TaskPanel 的内联 SVG 图标未进一步统一；
-  它们功能与离线可用性正常，属于后续可选收敛。
-- 主窗体边距与圆角的最终视觉定稿需要真实应用截图确认；本轮仅将重阴影降级，未改动宽高计算。
+- 设置页原生 `<select>` 保留平台控件语义；报告类型选择器补充可访问名称。
+- TaskSelectionModal / AIModelPicker / TaskPanel 的菜单与 TaskPanel 图标在 2026-10-03 收尾中统一。
+- 主内容区在 2026-10-03 收尾中取消外卡片边距、圆角与阴影，并同步宽高计算。真实截图与验证边界见验收记录。
+
+## 2026-10-03 审查收尾
+
+- `DropdownMenu` / `DropdownMenuItem` 基于已安装的 Reka UI：键盘导航、Escape、选中语义与关闭后焦点恢复。
+  菜单在所在窗口 Portal 中渲染；悬浮面板跟踪打开状态，继续抑制自动隐藏。
+- `Checkbox` 新增布尔 `indeterminate`，同时设置原生半选属性和 `aria-checked="mixed"`。
+  用于报告全选；列表完成/多选及悬浮步骤复用基础 Checkbox。最小点击区域仍为 28×28。
+- 悬浮分类与清单使用 DropdownMenu；任务行使用 ContextMenu，支持 Shift+F10 / Context Menu 键；
+  普通动作复用 Button / IconButton，分类、固定与元信息图标统一本地 Lucide。
+- TaskSelectionModal 和 AIModelPicker 的模型菜单复用 DropdownMenu；TimeFilter 复用 Button 的
+  secondary / outline / destructive 与 loading 状态，移除独立渐变与重复 CSS。
+- 时间校验复用 Inspector 字段错误；开始任务失败由任务 store 的 `actionError` 交给当前窗口 App 的普通 Dialog。
+  不增加业务 IPC、不改变失败任务或时间数据，不新增通知系统。
+- 历史阶段日志只记录当时状态；本轮验收以 [验收记录](../../../../../doc/ui-foundation-acceptance.md) 为准。
+
+```vue
+<DropdownMenu v-model:open="open">
+  <template #trigger><Button variant="outline">选择</Button></template>
+  <DropdownMenuItem role="menuitemradio" :aria-checked="selected" :selected="selected" @select="choose">选项</DropdownMenuItem>
+</DropdownMenu>
+<Checkbox id="selection" label="全选" :model-value="allSelected" :indeterminate="partlySelected" />
+```

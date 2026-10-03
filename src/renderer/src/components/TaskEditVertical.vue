@@ -8,7 +8,7 @@
         <div class="task-header">
           <div class="task-header-title-wrapper">
             <!-- 复选框 -->
-            <div class="flat-task-checkbox">
+            <div v-if="inline" class="flat-task-checkbox">
               <Checkbox :id="`task-edit-${task?.id || 'new'}`" :model-value="task?.status === 'done'"
                 :label="t('today.taskStatusLabel')" indicator-class="ui-checkbox-indicator-flat"
                 @update:model-value="handleToggleComplete(task)" @click.stop />
@@ -19,7 +19,7 @@
               <textarea ref="addTaskInput" v-model="newTaskContent" :aria-label="t('today.taskTitleLabel')"
                 :aria-invalid="!!titleError" :aria-describedby="titleError ? 'today-task-title-error' : undefined"
                 :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'" class="task-title-input" maxlength="1000"
-                rows="1" :style="{ minHeight: inline ? '1.75rem' : '1.5rem', maxHeight: '15rem' }" @focus="handleStartAdding"
+                :rows="inline ? 1 : 2" :style="inline ? { minHeight: '1.75rem', maxHeight: '15rem' } : undefined" @focus="handleStartAdding"
                 @blur="handleInputBlur" @keydown="handleTitleKeydown"
                 @input="autoResize"></textarea>
               <div v-if="titleError" id="today-task-title-error" class="task-field-error" role="alert">
@@ -316,6 +316,7 @@
                 @click.stop
               >
                 <div class="date-picker-title">{{ datePickerTitle }}</div>
+                <p v-if="timeSaveError" class="task-field-error" role="alert">{{ timeSaveError }}</p>
                 <v-date-picker
                   v-model="dateTimeValue"
                   mode="dateTime"
@@ -1542,6 +1543,7 @@ const getMinTimeForDatePicker = () => {
 
 // 处理日期时间变化：按选择器用途分流（截止 / 安排开始 / 安排结束 / 绝对提醒）
 const handleDateTimeChange = async (newValue) => {
+  timeSaveError.value = ''
   if (datePickerMode.value === 'scheduleStart') {
     if (!newValue) return
     const start = newValue instanceof Date ? newValue : new Date(newValue)
@@ -1562,7 +1564,7 @@ const handleDateTimeChange = async (newValue) => {
     if (!newValue) return
     const end = newValue instanceof Date ? newValue : new Date(newValue)
     if (scheduleStart.value && end.getTime() < new Date(scheduleStart.value).getTime()) {
-      alert(t('tasks.scheduleEndBeforeStart'))
+      timeSaveError.value = t('tasks.scheduleEndBeforeStart')
       return
     }
     scheduleEnd.value = end
@@ -1574,7 +1576,7 @@ const handleDateTimeChange = async (newValue) => {
     if (!newValue) return
     const reminderTime = newValue instanceof Date ? newValue : new Date(newValue)
     if (reminderTime.getTime() <= Date.now()) {
-      alert(t('tasks.reminderInPast'))
+      timeSaveError.value = t('tasks.reminderInPast')
       return
     }
     await saveAbsoluteReminder(reminderTime)
@@ -1892,8 +1894,11 @@ const autoResize = () => {
   textarea.style.height = 'auto'
 
   // 计算新高度，限制在最小和最大值之间
-  const minHeight = props.inline ? 28 : 24 // 内联标题与收起态行高一致（1.75rem）
-  const maxHeight = 240 // 15rem = 240px
+  const style = getComputedStyle(textarea)
+  const lineHeight = parseFloat(style.lineHeight)
+  const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+  const minHeight = props.inline ? 28 : lineHeight * 2 + padding
+  const maxHeight = props.inline ? 240 : lineHeight * 6 + padding
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
 
   textarea.style.height = newHeight + 'px'

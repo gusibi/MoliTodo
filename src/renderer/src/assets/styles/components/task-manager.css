@@ -22,10 +22,10 @@
 
 /* 主要内容区域样式：以背景层次与分隔线组织，降低大卡片外边距与阴影 */
 .task-manager-main-content {
-  @apply flex flex-col overflow-hidden relative bg-background m-1 rounded-lg shadow-sm;
-  /* 使用 calc 计算固定宽度，减去侧边栏宽度和 margin */
-  width: calc(100% - 280px - 8px);
-  height: calc(100vh - 8px); /* 减去margin */
+  @apply flex flex-col overflow-hidden relative bg-background border-l border-border/50;
+  /* 保留侧边栏宽度，主内容填满剩余窗口区域。 */
+  width: calc(100% - 280px);
+  height: 100vh;
   min-height: 0; /* 重要：允许flex子元素收缩 */
 }
 

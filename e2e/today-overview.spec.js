@@ -745,13 +745,13 @@ test('列表视图复用同一 AI 模型下拉并可生成预览', async ({ app,
   await window.getByRole('navigation').getByRole('button', { name: /全部/ }).click();
   await expect(window.locator('.flat-task-list-container')).toBeVisible();
 
-  const toggle = window.locator('.flat-task-list-ai-toggle');
+  const toggle = window.locator('.flat-task-list-inline-options').getByRole('button', { name: 'AI', exact: true });
   await expect(toggle).toBeVisible();
   await toggle.click();
   const menu = window.getByRole('menu');
   await expect(menu).toBeVisible();
   await menu.getByRole('menuitemradio', { name: /gpt-4o/ }).click();
-  await expect(toggle).toContainText('gpt-4o');
+  await expect(window.locator('.flat-task-list-inline-options').getByRole('button', { name: 'gpt-4o', exact: true })).toBeVisible();
 
   await window.locator('.flat-task-list-textarea').fill('列表里生成任务');
   await window.locator('.flat-task-list-send-btn').click();

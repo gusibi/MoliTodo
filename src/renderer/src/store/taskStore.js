@@ -19,6 +19,7 @@ import {
 export const useTaskStore = defineStore('task', () => {
   const { t } = useI18n()
   
+  const actionError = ref('')
   const tasks = ref([])
   const lists = ref([])
   const loading = ref(false)
@@ -849,12 +850,12 @@ export const useTaskStore = defineStore('task', () => {
       } else {
         // 显示错误信息
         console.error('开始任务失败:', result.error)
-        alert(`开始任务失败: ${result.error}`)
+        actionError.value = t('tasks.startFailed', { error: result.error })
       }
       return result
     } catch (error) {
       console.error('开始任务失败:', error)
-      alert(`开始任务失败: ${error.message}`)
+      actionError.value = t('tasks.startFailed', { error: error.message })
       return { success: false, error: error.message }
     }
   }
@@ -2171,6 +2172,7 @@ export const useTaskStore = defineStore('task', () => {
     loadDeletedTasks,
     restoreTask,
     purgeTask,
+    actionError,
     startTask,
     pauseTask,
     moveTaskToList,

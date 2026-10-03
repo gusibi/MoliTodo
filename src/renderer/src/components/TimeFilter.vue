@@ -1,21 +1,15 @@
 <template>
   <div class="time-filter">
     <div class="filter-buttons">
-      <button v-for="filter in timeFilters" :key="filter.key"
-        :class="['filter-btn', { active: currentFilter === filter.key, 'filter-btn-overdue': filter.key === 'overdue' }]"
-        @click="handleFilterChange(filter.key)">
+      <Button v-for="filter in timeFilters" :key="filter.key" size="sm"
+        :variant="currentFilter === filter.key ? (filter.key === 'overdue' ? 'destructive' : 'secondary') : 'outline'"
+        :aria-pressed="currentFilter === filter.key" @click="handleFilterChange(filter.key)">
         <component :is="filter.icon" class="h-icon-sm w-icon-sm" aria-hidden="true" />
-        <span>{{ filter.label }}</span>
-        <span v-if="filter.count > 0" class="filter-count">{{ filter.count }}</span>
-      </button>
-
-      <!-- AI 报告按钮 -->
-      <button class="filter-btn ai-report-btn" :class="{ 'generating': isGeneratingReport }"
-        :disabled="isGeneratingReport || !hasValidTasks" @click="generateReport" title="生成AI报告">
-        <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" />
-        <span>AI报告</span>
-        <div v-if="isGeneratingReport" class="loading-spinner"></div>
-      </button>
+        <span>{{ filter.label }}</span><span v-if="filter.count > 0" class="filter-count">{{ filter.count }}</span>
+      </Button>
+      <Button size="sm" variant="outline" :loading="isGeneratingReport" :disabled="!hasValidTasks" @click="generateReport">
+        <Bot class="h-icon-sm w-icon-sm" aria-hidden="true" /><span>{{ $t('reports.aiReport') }}</span>
+      </Button>
     </div>
   </div>
 </template>
@@ -23,6 +17,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Bot, Calendar, CalendarDays, CalendarPlus, CalendarRange, TriangleAlert } from '@lucide/vue'
+import Button from './ui/button/Button.vue'
 import { useTaskStore } from '@/store/taskStore'
 
 const taskStore = useTaskStore()
@@ -146,83 +141,10 @@ defineExpose({
 </script>
 
 <style scoped>
-.time-filter {
-  @apply mb-0;
-}
-
 .filter-buttons {
   @apply flex flex-wrap gap-2;
 }
-
-.filter-btn {
-  @apply flex items-center justify-start px-3 py-2 text-sm font-medium rounded-lg cursor-pointer;
-  @apply bg-background border border-border text-foreground;
-  @apply hover:bg-accent hover:text-accent-foreground;
-  @apply transition-colors duration-150;
-}
-
-.filter-btn.active {
-  @apply bg-primary text-primary-foreground;
-}
-
-.filter-btn svg {
-  @apply w-3 h-3 flex-shrink-0;
-  @apply flex items-center justify-center;
-}
-
-.filter-btn span:not(.filter-count) {
-  @apply flex-shrink-0;
-  @apply flex items-center;
-}
-
 .filter-count {
-  @apply px-2 py-0.5 text-xs rounded-full min-w-[20px] text-center;
-  @apply bg-muted text-muted-foreground;
-  @apply flex items-center justify-center;
-  @apply flex-shrink-0;
-}
-
-.filter-btn.active .filter-count {
-  @apply bg-primary-foreground/20 text-primary-foreground;
-}
-
-/* 过期任务的特殊样式（除颜色外保留文案与图标语义） */
-.filter-btn-overdue {
-  @apply text-destructive border-destructive/30;
-}
-
-.filter-btn-overdue.active {
-  @apply bg-destructive text-destructive-foreground border-destructive;
-}
-
-/* AI 报告按钮样式 */
-.ai-report-btn {
-  @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0;
-  @apply hover:from-blue-600 hover:to-purple-700;
-  @apply disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply relative overflow-hidden;
-}
-
-.ai-report-btn.generating {
-  @apply from-blue-400 to-purple-500;
-}
-
-.loading-spinner {
-  @apply absolute right-2 top-1/2 transform -translate-y-1/2;
-  @apply w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin;
-}
-
-.ai-report-btn:disabled {
-  @apply from-gray-400 to-gray-500 hover:from-gray-400 hover:to-gray-500;
-}
-
-/* 深色模式下的 AI 按钮 */
-.dark .ai-report-btn {
-  @apply from-blue-600 to-purple-700;
-  @apply hover:from-blue-700 hover:to-purple-800;
-}
-
-.dark .ai-report-btn:disabled {
-  @apply from-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-700;
+  @apply text-xs tabular-nums opacity-80;
 }
 </style>

@@ -40,6 +40,26 @@
     "unknownError": "Unknown error"
   },
   "settings": {
+    "background": {
+      "removed": "Background removed. Your original theme has been restored.",
+      "choose": "Choose image",
+      "replace": "Replace image",
+      "uploadPrompt": "Make this workspace yours with a favorite image.",
+
+      "title": "Window background",
+      "description": "Choose a background for the main window and settings. A light or dark overlay keeps text readable.",
+      "mountains": "Misty mountains",
+      "architecture": "Warm architecture",
+      "waves": "Soft waves",
+      "upload": "Upload your image",
+      "uploadHint": "JPG, PNG or WebP, up to 20 MB. Images are resized and stored locally.",
+      "matchColor": "Match image colors",
+      "colorHint": "Use the image’s main color for buttons, selection and highlighted text. Body text keeps its contrast.",
+      "remove": "Remove background",
+      "saving": "Saving…",
+      "saveError": "Could not save the background. Please try again.",
+      "uploadError": "Could not read the image. Choose a JPG, PNG or WebP under 20 MB."
+    },
     "title": "Settings",
     "general": "General",
     "generalDescription": "Basic application settings and behavior configuration",
@@ -226,6 +246,7 @@
   },
   
   "tasks": {
+    "startFailed": "Could not start task: {error}",
     "title": "Tasks",
     "newTask": "New Task",
     "taskName": "Task Name",
@@ -364,6 +385,12 @@
     "confirmClear": "Are you sure you want to clear all data? This action cannot be undone."
   },
   "reports": {
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selectModel": "Select AI model",
+    "noModel": "No AI model configured",
+    "reportType": "Report type",
+    "aiReport": "AI report",
     "daily": "Daily",
     "weekly": "Weekly",
     "period": "Period",

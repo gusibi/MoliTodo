@@ -844,6 +844,7 @@ class IpcHandlers {
     ipcMain.handle('reset-config', () => {
       // 重置为默认配置
       const defaultConfig = {
+        background: null,
         floatingIcon: {
           x: 100,
           y: 100,

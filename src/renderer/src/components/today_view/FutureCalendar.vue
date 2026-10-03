@@ -1,21 +1,21 @@
 <template>
   <div class="future-calendar" role="group" :aria-label="$t('today.calendar.title')">
     <div class="future-calendar-toolbar">
-      <button class="future-calendar-back-btn" type="button" @click="$emit('expand-months', -1)"
+      <Button variant="outline" size="sm" class="future-calendar-back-btn" type="button" @click="$emit('expand-months', -1)"
         :title="$t('today.calendar.earlierMonths')">
         <ChevronUp class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('today.calendar.earlierMonths') }}</span>
-      </button>
-      <button class="future-calendar-back-btn today" type="button" @click="$emit('back-today')"
+      </Button>
+      <Button variant="outline" size="sm" class="future-calendar-back-btn today" type="button" @click="$emit('back-today')"
         :title="$t('today.calendar.backToday')">
         <CalendarCheck class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <span>{{ $t('today.calendar.backToday') }}</span>
-      </button>
-      <button class="future-calendar-back-btn" type="button" @click="$emit('expand-months', 1)"
+      </Button>
+      <Button variant="outline" size="sm" class="future-calendar-back-btn" type="button" @click="$emit('expand-months', 1)"
         :title="$t('today.calendar.laterMonths')">
         <span>{{ $t('today.calendar.laterMonths') }}</span>
         <ChevronDown class="h-icon-sm w-icon-sm" aria-hidden="true" />
-      </button>
+      </Button>
     </div>
 
     <div class="future-calendar-months" ref="monthsContainer">
@@ -54,6 +54,7 @@
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
+import Button from '../ui/button/Button.vue'
 import { useI18n } from 'vue-i18n'
 import { CalendarCheck, ChevronDown, ChevronUp } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'

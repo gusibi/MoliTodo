@@ -428,3 +428,48 @@ test('颜色主题切换跨窗口同步', async ({ app, window }) => {
   expect(after).not.toBe('');
   await expect.poll(() => readTheme(window), { timeout: 10000 }).toBe(after);
 });
+
+test('悬浮面板键盘可选择分类和清单、完成步骤及关闭右键菜单', async ({ app, window }) => {
+  await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.createTaskPanel());
+  const panel = await findWindow(app, (w) => w.url().includes('task-panel'));
+  await panel.waitForSelector('.task-panel-container');
+  const category = panel.getByRole('button', { name: '选择分类', exact: true });
+  await category.focus();
+  await category.press('Enter');
+  const all = panel.getByRole('menuitemradio', { name: /^全部/ });
+  await panel.keyboard.press('ArrowDown');
+  await panel.keyboard.press('End');
+  await panel.keyboard.press('ArrowUp');
+  // 键盘定位目标后确认选择，随后焦点回到触发控件。
+  await all.focus();
+  await all.press('Enter');
+  await expect(category).toBeFocused();
+  const lists = panel.locator('.task-panel-list-trigger');
+  await lists.press('Enter');
+  await panel.keyboard.press('ArrowDown');
+  await panel.keyboard.press('End');
+  await panel.keyboard.press('Enter');
+  await expect(lists).toBeFocused();
+
+  await panel.getByRole('textbox', { name: '添加新任务...' }).fill('键盘步骤测试');
+  await panel.locator('.task-panel-input').press('Enter');
+  const row = panel.locator('.task-panel-card', { hasText: '键盘步骤测试' });
+  await row.locator('.task-card-text').click();
+  const stepInput = row.getByRole('textbox', { name: '添加步骤' });
+  await stepInput.fill('键盘完成的步骤');
+  await stepInput.press('Enter');
+  const step = row.getByRole('checkbox', { name: '键盘完成的步骤' });
+  await step.focus();
+  await step.press('Space');
+  await expect(step).toHaveCount(0);
+  await expect.poll(() => app.electronApp.evaluate(async () => {
+    const tasks = await global.__moliTodoApp.taskService.getAllTasks();
+    return tasks.find(t => t.content === '键盘步骤测试')?.metadata?.steps?.[0]?.status;
+  })).toBe('done');
+  await row.focus();
+  await row.press('Shift+F10');
+  await expect(panel.getByRole('menuitem', { name: '删除任务', exact: true })).toBeVisible();
+  await panel.keyboard.press('Escape');
+  await expect(row).toBeFocused();
+  await expect(row).toBeVisible();
+});

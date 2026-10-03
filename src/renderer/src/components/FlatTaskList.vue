@@ -50,7 +50,7 @@
                   :title="t('common.collapse')" aria-hidden="true" />
                 <div class="flat-task-group-info">
                   <ListIcon :name="group.icon" :color="group.color" class="h-icon-sm w-icon-sm" />
-                  <span :style="{ color: group.color }">{{ group.name }}</span>
+                  <span>{{ group.name }}</span>
                   <span class="flat-task-group-count">({{ group.tasks.length }})</span>
                 </div>
               </div>
@@ -167,13 +167,13 @@
                   :models="taskStore.availableAIModels"
                   :selected-model="taskStore.selectedAIModel"
                   @select="taskStore.selectAIModel"
-                  v-slot="{ toggle, open, active, label }"
+                  v-slot="{ open, active, label }"
                 >
-                  <button class="flat-task-list-ai-toggle" :class="{ 'active': active }"
-                    aria-haspopup="menu" :aria-expanded="open" @click="toggle">
+                  <Button size="sm" :variant="active ? 'secondary' : 'ghost'"
+                    aria-haspopup="menu" :aria-expanded="open">
                     <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
                     <span class="flat-task-list-ai-label">{{ label }}</span>
-                  </button>
+                  </Button>
                 </AIModelPicker>
 
                 <!-- 任务拆分选项 -->
@@ -244,6 +244,7 @@ import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
 import FlatTaskItem from './FlatTaskItem.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
+import Button from './ui/button/Button.vue'
 import AIModelPicker from './AIModelPicker.vue'
 import TimeFilter from './TimeFilter.vue'
 import TaskSelectionModal from './TaskSelectionModal.vue'

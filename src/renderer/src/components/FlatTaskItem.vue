@@ -33,26 +33,14 @@
       <div class="flat-task-left">
         <!-- 多选模式下且显示选择复选框时 -->
         <div v-if="showSelectCheckbox" class="flat-task-select-checkbox" @click.stop>
-          <input
-            :id="`select-task-${task.id}`"
-            type="checkbox"
-            :checked="isSelected"
-            :aria-label="task.content"
-            @change="$emit('select-change')"
-          />
-          <label :for="`select-task-${task.id}`" class="flat-select-checkbox-label"></label>
+          <Checkbox :id="`select-task-${task.id}`" :model-value="isSelected" :label="task.content"
+            @update:model-value="$emit('select-change')" />
         </div>
-        <!-- 圆形勾选框 - 默认显示完成状态（保持任务完成语义） -->
-        <div v-else class="flat-task-checkbox">
-          <input
-            :id="`flat-task-${task.id}`"
-            type="checkbox"
-            :checked="task.status === 'done'"
-            :aria-label="task.status === 'done' ? $t('tasks.markIncomplete') : $t('tasks.markComplete')"
-            @change="handleToggleComplete"
-            @click.stop
-          />
-          <label :for="`flat-task-${task.id}`" class="flat-checkbox-label" @click.stop></label>
+        <div v-else class="flat-task-checkbox" @click.stop>
+          <Checkbox :id="`flat-task-${task.id}`" :model-value="task.status === 'done'"
+            indicator-class="ui-checkbox-indicator-flat"
+            :label="task.status === 'done' ? $t('tasks.markIncomplete') : $t('tasks.markComplete')"
+            @update:model-value="handleToggleComplete" />
         </div>
 
         <!-- 任务详情 -->
@@ -170,6 +158,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isVirtualInstance } from '../utils/today-agenda.js'
 import { localeCode } from '../utils/locale-format.js'
+import Checkbox from './ui/checkbox/Checkbox.vue'
 import IconButton from './ui/button/IconButton.vue'
 
 const { t, locale } = useI18n()

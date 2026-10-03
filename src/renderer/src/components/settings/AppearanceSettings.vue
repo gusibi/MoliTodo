@@ -20,6 +20,8 @@
       <ColorThemeSwitcher />
     </div>
 
+    <BackgroundSettings />
+
     <LogoSelector 
       :config="config" 
       @update:config="handleLogoConfigUpdate"
@@ -36,6 +38,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import BackgroundSettings from './BackgroundSettings.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import ColorThemeSwitcher from './ColorThemeSwitcher.vue'
 import LogoSelector from './LogoSelector.vue'

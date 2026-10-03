@@ -133,6 +133,7 @@ const electronAPI = {
         'task-updated',
         'lists-updated',
         'config-updated',
+        'background-updated',
         'task-reminder',
         'panel-mouse-enter',
         'panel-mouse-leave',

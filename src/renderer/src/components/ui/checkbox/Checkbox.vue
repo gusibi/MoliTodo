@@ -5,22 +5,26 @@
       type="checkbox"
       class="ui-checkbox-input"
       :checked="modelValue"
+      :indeterminate="indeterminate"
+      :aria-checked="indeterminate ? 'mixed' : undefined"
       :disabled="disabled"
       :aria-label="label"
       @change="$emit('update:modelValue', $event.target.checked)"
     />
     <span :class="['ui-checkbox-indicator', indicatorClass]" aria-hidden="true">
-      <Check v-if="modelValue" class="ui-checkbox-mark" />
+      <Minus v-if="indeterminate" class="ui-checkbox-mark" />
+      <Check v-else-if="modelValue" class="ui-checkbox-mark" />
     </span>
   </label>
 </template>
 
 <script setup>
-import { Check } from '@lucide/vue'
+import { Check, Minus } from '@lucide/vue'
 
 defineProps({
   id: { type: String, required: true },
   modelValue: { type: Boolean, default: false },
+  indeterminate: { type: Boolean, default: false },
   label: { type: String, required: true },
   indicatorClass: { type: String, default: '' },
   disabled: { type: Boolean, default: false }
@@ -62,7 +66,8 @@ defineEmits(['update:modelValue'])
   @apply h-3 w-3 text-primary-foreground;
 }
 
-.ui-checkbox-input:checked + .ui-checkbox-indicator {
+.ui-checkbox-input:checked + .ui-checkbox-indicator,
+.ui-checkbox-input:indeterminate + .ui-checkbox-indicator {
   @apply border-primary bg-primary;
 }
 

@@ -151,3 +151,49 @@ test('编辑器任务删除：统一确认、取消返回删除按钮、确认�
   await expect(window.getByRole('alertdialog')).toHaveCount(0);
   await expect(window.locator('.flat-task-item', { hasText: '编辑器删除任务' })).toHaveCount(0);
 });
+
+test('侧栏标题默认两行、最多六行并可滚动，编辑区无状态圆圈', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '标题高度检查', status: 'todo' }]);
+  await window.reload();
+  await waitForApp(window);
+  await window.getByRole('navigation').getByRole('button', { name: /全部/ }).click();
+  await window.locator('.flat-task-item', { hasText: '标题高度检查' }).click();
+  const title = window.getByRole('textbox', { name: '任务标题', exact: true });
+  await expect(title).toBeVisible();
+  await expect(window.getByRole('checkbox', { name: '任务完成状态', exact: true })).toHaveCount(0);
+  const measure = () => title.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      height: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      lineHeight: parseFloat(style.lineHeight),
+      padding: parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+    };
+  });
+  let size = await measure();
+  expect(size.height).toBeCloseTo(size.lineHeight * 2 + size.padding, 0);
+  await window.screenshot({ path: 'screenshots/inspector-title/two-lines.png' });
+  await title.fill(Array.from({ length: 10 }, (_, index) => `第${index + 1}行 Long task title 中文内容`).join('\n'));
+  size = await measure();
+  expect(size.height).toBeCloseTo(size.lineHeight * 6 + size.padding, 0);
+  expect(size.scrollHeight).toBeGreaterThan(size.height);
+  await title.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  expect(await title.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await window.screenshot({ path: 'screenshots/inspector-title/six-lines-scroll.png' });
+  await window.evaluate(() => {
+    const channel = new BroadcastChannel('theme-sync');
+    channel.postMessage({ type: 'theme-change', theme: 'dark' });
+    channel.close();
+  });
+  await expect(window.locator('html')).toHaveClass(/dark/);
+  await window.setViewportSize({ width: 1000, height: 800 });
+  await expect(title).toBeVisible();
+  size = await measure();
+  expect(size.height).toBeCloseTo(size.lineHeight * 6 + size.padding, 0);
+  await window.screenshot({ path: 'screenshots/inspector-title/dark-narrow.png' });
+  await title.fill('缩短后的标题');
+  size = await measure();
+  expect(size.height).toBeCloseTo(size.lineHeight * 2 + size.padding, 0);
+  await title.press('Tab');
+  await expect(window.locator('.flat-task-item', { hasText: '缩短后的标题' })).toBeVisible();
+});

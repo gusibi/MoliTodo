@@ -78,13 +78,7 @@
   @apply text-xs font-medium;
 }
 
-.flat-task-list-ai-toggle {
-  @apply flex items-center gap-1.5 px-2 py-1 border border-border rounded-md bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 text-xs;
-}
 
-.flat-task-list-ai-toggle.active {
-  @apply bg-primary text-primary-foreground border-primary;
-}
 
 .flat-task-list-ai-label {
   @apply font-medium;
@@ -306,31 +300,6 @@
   @apply relative flex-shrink-0;
 }
 
-.flat-task-checkbox input[type="checkbox"] {
-  @apply absolute opacity-0 w-0 h-0;
-}
-
-.flat-checkbox-label {
-  @apply block w-4 h-4 rounded-full cursor-pointer transition-all duration-200 relative border-2 border-border/40 border-primary/30;
-}
-
-.flat-checkbox-label:hover {
-  @apply border-primary;
-}
-
-.flat-task-checkbox input[type="checkbox"]:checked + .flat-checkbox-label {
-  @apply bg-primary border-primary;
-}
-
-.flat-task-checkbox input[type="checkbox"]:checked + .flat-checkbox-label::after {
-  content: '✓';
-  @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-primary-foreground;
-}
-
-.flat-task-checkbox input[type="checkbox"]:focus-visible + .flat-checkbox-label {
-  @apply ring-2 ring-ring ring-offset-1 ring-offset-background;
-}
-
 /* Task Details */
 .flat-task-details {
   @apply flex-1 min-w-0 ;
@@ -531,18 +500,6 @@
   @apply relative flex-shrink-0;
 }
 
-.flat-task-select-checkbox input[type="checkbox"] {
-  @apply w-4 h-4 rounded border-2 border-border cursor-pointer accent-primary;
-}
-
-.flat-task-select-checkbox input[type="checkbox"]:checked {
-  @apply bg-primary border-primary;
-}
-
-.flat-select-checkbox-label {
-  @apply hidden;
-}
-
 /* Selected task item styling */
 .flat-task-item-selected {
   @apply bg-primary/10 border-l-2 border-l-primary -ml-0.5 pl-0.5;
@@ -576,13 +533,6 @@
 /* 勾选框点击区域不小于 28×28，图形仍为 16px */
 .flat-task-item .flat-task-checkbox {
   @apply flex items-center justify-center w-control-sm h-control-sm -m-1.5;
-}
-
-.flat-task-item .flat-checkbox-label::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 9999px;
 }
 
 /* 次要操作在悬停、行内焦点或键盘聚焦时出现；始终保留空间，不挤动正文 */

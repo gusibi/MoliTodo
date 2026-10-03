@@ -174,8 +174,7 @@
 
 /* 底部操作区 */
 .setting-actions {
-  @apply border-t border-border px-8 py-4;
-  @apply flex justify-end space-x-3 bg-background;
+  @apply flex shrink-0 justify-end gap-3 px-8 py-3;
 }
 
 /* 消息提示 */

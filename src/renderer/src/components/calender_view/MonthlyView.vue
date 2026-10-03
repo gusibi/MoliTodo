@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-background text-foreground">
+  <div class="monthly-view flex h-screen bg-background text-foreground">
     <!-- 左侧任务列表 -->
     <div class="w-80 min-w-80 bg-card border-r border-border flex flex-col overflow-hidden">
       <div class="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">

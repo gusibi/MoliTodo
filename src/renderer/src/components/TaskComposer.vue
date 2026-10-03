@@ -112,7 +112,7 @@
           :selected-model="taskStore.selectedAIModel"
           align="left"
           @select="taskStore.selectAIModel"
-          v-slot="{ toggle, open: pickerOpen, active, label }"
+          v-slot="{ open: pickerOpen, active, label }"
         >
           <Button
             variant="outline"
@@ -122,7 +122,7 @@
             :title="$t('today.aiToggle')"
             aria-haspopup="menu"
             :aria-expanded="pickerOpen"
-            @click="toggle"
+
           >
             <WandSparkles class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ label }}</span>
