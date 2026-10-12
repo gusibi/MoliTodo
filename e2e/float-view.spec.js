@@ -473,3 +473,58 @@ test('悬浮面板键盘可选择分类和清单、完成步骤及关闭右键�
   await expect(row).toBeFocused();
   await expect(row).toBeVisible();
 });
+
+
+test('悬浮图标三状态：提醒优先，悬停保留提醒，处理后恢复待办与清空', async ({ app, window }) => {
+  const icon = await findWindow(app, page => {
+    const url = page.url();
+    return !url.includes('task-manager') && !url.includes('settings') && !url.includes('task-panel') && !url.includes('floating-task');
+  });
+  const button = icon.getByRole('button', { name: 'MoliTodo' });
+  await expect(button).toHaveAttribute('title', '今天已清空');
+  const bounds = await button.boundingBox();
+  expect(bounds.width).toBe(bounds.height);
+  const viewport = await icon.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  expect(bounds.width).toBe(viewport.width);
+  expect(bounds.height).toBe(viewport.height);
+  await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.floatingWindow.setSize(80, 80));
+  await expect.poll(async () => (await button.boundingBox()).height).toBe(80);
+  expect((await icon.locator('.floating-icon-calendar').boundingBox()).height).toBe(80);
+  await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.floatingWindow.setSize(50, 50));
+  await expect.poll(async () => (await button.boundingBox()).height).toBe(50);
+  await icon.screenshot({ path: 'test-results/floating-clear.png' });
+  const id = await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    const date = new Date();
+    const pad = value => String(value).padStart(2, '0');
+    const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    const task = await moli.taskService.createTaskInList('悬浮状态测试', 0, null, { dueDate: key });
+    moli.windowManager.floatingWindow.webContents.send('tasks-updated');
+    return task.id;
+  });
+  await expect(button).toHaveAttribute('title', '今天剩余 1 个任务');
+  await expect(icon.locator('.floating-icon-calendar-count')).toHaveText('1');
+  await icon.screenshot({ path: 'test-results/floating-pending.png' });
+  await app.electronApp.evaluate(async ({}, taskId) => {
+    const moli = global.__moliTodoApp;
+    const task = await moli.taskService.getTaskById(taskId);
+    task.reminderTime = new Date(Date.now() - 60000);
+    await moli.taskService.taskRepository.save(task);
+    moli.windowManager.floatingWindow.webContents.send('task-reminder', task.toJSON());
+  }, id);
+  await expect(button).toHaveAttribute('title', '有待处理提醒');
+  await expect(icon.locator('.floating-icon-calendar-count')).toHaveCount(0);
+  await expect(icon.locator('.floating-icon-calendar-dot')).toHaveCount(0);
+  await icon.screenshot({ path: 'test-results/floating-reminder.png' });
+  await button.press('Enter');
+  await button.dispatchEvent('mouseenter');
+  await expect(button).toHaveAttribute('title', '有待处理提醒');
+  const panel = await findWindow(app, page => page.url().includes('task-panel'));
+  await expect(panel.getByText('1 个待处理提醒', { exact: true })).toBeVisible();
+  const card = panel.locator('.task-panel-card', { hasText: '悬浮状态测试' });
+  await card.getByRole('button', { name: '开始任务', exact: true }).click();
+  await expect(button).toHaveAttribute('title', '今天剩余 1 个任务');
+  await expect(panel.getByText('1 个待处理提醒', { exact: true })).toHaveCount(0);
+  await card.getByRole('button', { name: '完成任务', exact: true }).click();
+  await expect(button).toHaveAttribute('title', '今天已清空');
+});

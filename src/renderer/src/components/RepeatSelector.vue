@@ -229,6 +229,9 @@
             v-model="reminderTimeValue"
             :dark="isDark"
             :time-picker="true"
+            :config="{ modeHeight: 96 }"
+            :ui="{ menu: 'repeat-time-menu' }"
+            teleport="body"
             :format="'HH:mm'"
             :preview-format="'HH:mm'"
             :text-input="false"
@@ -262,6 +265,7 @@
               v-model="endDateValue"
               :dark="isDark"
               :enable-time-picker="false"
+              teleport="body"
               :format="'yyyy-MM-dd'"
               :preview-format="'yyyy-MM-dd'"
               :text-input="false"
@@ -269,7 +273,7 @@
               :close-on-scroll="true"
               :close-on-click-outside="true"
               placeholder="选择结束日期"
-              class="vue-datepicker repeate-date-picker"
+              class="vue-datepicker repeat-date-picker"
               @update:model-value="updateEndDate"
             />
           </div>

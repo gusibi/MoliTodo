@@ -6,6 +6,7 @@ import i18n, { loadStoredLanguage } from './i18n'
 import VCalendar from 'v-calendar'
 
 // Import global styles
+import '@vuepic/vue-datepicker/dist/main.css'
 import './assets/styles/index.css'
 import './assets/global.css'
 

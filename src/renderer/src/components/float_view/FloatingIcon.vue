@@ -1,38 +1,26 @@
 <template>
   <div class="floating-icon-container">
-    <button ref="floatingIconRef" :class="[
-      'floating-icon',
+    <Button ref="floatingIconRef" variant="ghost" style="width: 100vw; height: 100vh; border-radius: 20%" :class="[
+      'floating-icon p-0',
       isAlert ? 'floating-icon--alert' : 'floating-icon--normal',
       isDragging ? 'floating-icon--dragging' : '',
       isPending ? 'floating-icon--pending' : ''
-    ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @click="handleClick"
-      :aria-label="$t('app.title')" :disabled="isPending">
-      <!-- 默认图标：日历 logo（品牌色头带放星期 + 白底大对号，参考系统日历 App 图标） -->
-      <div class="floating-icon-content floating-icon-content--default">
+    ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave"
+      @click="handleButtonClick" :title="isAlert ? $t('floatView.reminderState') : taskCount > 0 ? $t('floatView.pendingState', { count: taskCount }) : $t('floatView.clearedState')" :aria-label="$t('app.title')" :disabled="isPending">
+      <div class="floating-icon-content">
         <div class="floating-icon-calendar" aria-hidden="true">
           <div class="floating-icon-calendar-header">{{ calendarWeekday }}</div>
-          <div :class="[
-            'floating-icon-calendar-body',
-            hasInProgressTasks ? 'floating-icon-calendar-body--blink' : ''
-          ]">
-            <Check class="floating-icon-calendar-check" :stroke-width="3" />
+          <div class="floating-icon-calendar-body">
+            <AlarmClock v-if="isAlert" class="floating-icon-calendar-alarm" :stroke-width="2.5" />
+            <template v-else-if="taskCount > 0">
+              <span class="floating-icon-calendar-count">{{ taskCount > 99 ? '99+' : taskCount }}</span>
+              <span class="floating-icon-calendar-dot" />
+            </template>
+            <Check v-else class="floating-icon-calendar-check" :stroke-width="3" />
           </div>
         </div>
       </div>
-
-      <!-- 提醒状态图标 -->
-      <div class="floating-icon-content floating-icon-content--alert">
-        <AlarmClock :size="32" :stroke-width="2.5" aria-hidden="true" />
-      </div>
-
-      <!-- 任务数量角标 -->
-      <div v-if="taskCount > 0" :class="[
-        'floating-icon-badge',
-        taskCount > 0 ? 'floating-icon-badge--show' : ''
-      ]">
-        <span class="floating-icon-badge-text">{{ taskCount > 99 ? '99+' : taskCount }}</span>
-      </div>
-    </button>
+    </Button>
   </div>
 </template>
 
@@ -41,24 +29,26 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AlarmClock, Check } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
+import Button from '../ui/button/Button.vue'
+import { usePendingReminders } from '@/composables/usePendingReminders'
 import '@/assets/styles/components/floating-icon.css'
 
 const { locale } = useI18n()
 const taskStore = useTaskStore()
-const taskCount = computed(() => taskStore.categoryCounts.today)
+const taskCount = computed(() => taskStore.tasks.filter(task => task.status !== 'done' && task.status !== 'deleted' && taskStore.isTodayTask(task)).length)
+const { pendingReminders } = usePendingReminders()
+const isAlert = computed(() => pendingReminders.value.length > 0)
 
-// 头带星期：跟随应用语言（zh=星期五 / en=Friday），跨天自动刷新
+// 头带星期：跟随应用语言（zh=周五 / en=Fri），跨天自动刷新
 const calendarWeekday = ref('')
 const updateCalendarDate = () => {
   const now = new Date()
   const tag = locale.value === 'en' ? 'en-US' : 'zh-CN'
-  calendarWeekday.value = new Intl.DateTimeFormat(tag, { weekday: 'long' }).format(now)
+  calendarWeekday.value = new Intl.DateTimeFormat(tag, { weekday: 'short' }).format(now)
 }
 watch(locale, updateCalendarDate)
 let calendarDateTimer = null
 
-const hasInProgressTasks = ref(false)
-const isAlert = ref(false)
 const isDragging = ref(false)
 const isPending = ref(false)
 const dragStartPos = ref({ x: 0, y: 0 })
@@ -88,7 +78,7 @@ const setIgnoreMouse = (ignore) => {
 
 // 判断光标是否落在可见圆角方形图标内（圆角外的四个小角穿透）
 const isPointInIcon = (clientX, clientY) => {
-  const el = floatingIconRef.value
+  const el = floatingIconRef.value?.el
   if (!el) return false
 
   const rect = el.getBoundingClientRect()
@@ -118,6 +108,10 @@ const handleWindowMouseMove = (event) => {
 }
 
 
+const handleButtonClick = (event) => {
+  if (event.detail === 0) handleClick()
+}
+
 const handleClick = () => {
   // 如果面板可见，则隐藏面板
   if (panelVisible.value) {
@@ -130,7 +124,7 @@ const handleClick = () => {
       hideTimeout = null
     }
   } else {
-    console.log('面板不可见，点击无操作')
+    showTaskPanel()
   }
 }
 
@@ -142,11 +136,6 @@ const handleMouseEnter = () => {
     clearTimeout(hideTimeout)
     hideTimeout = null
     console.log('清除隐藏定时器')
-  }
-
-  // 清除提醒状态
-  if (isAlert.value) {
-    isAlert.value = false
   }
 
   // 延迟显示任务面板
@@ -392,30 +381,13 @@ const updateTaskCount = async () => {
   try {
     // 刷新任务数据以确保计数准确
     await taskStore.getAllTasks()
-
-    // 检查是否有进行中的任务
-    hasInProgressTasks.value = taskStore.categoryCounts.doing > 0
   } catch (error) {
     console.error('更新任务数量失败:', error)
-    hasInProgressTasks.value = false
   }
 }
 
-const handleTaskReminder = (event, task) => {
-  isAlert.value = true
-
-  // 强提醒：自动创建悬浮任务窗口
-  console.log('收到任务提醒，自动创建悬浮任务窗口:', task)
-  if (task && task.id) {
-    try {
-      window.electronAPI.windows.createFloatingTask(task.id)
-    } catch (error) {
-      console.error('自动创建悬浮任务失败:', error)
-    }
-  }
-
-  // 不自动清除提醒状态，只有用户悬浮到图标上时才清除
-  // 提醒状态将持续显示直到用户交互
+const handleTaskReminder = () => {
+  updateTaskCount()
 }
 
 // 让图标边长跟随设置里的图标大小，并占满整个窗口。

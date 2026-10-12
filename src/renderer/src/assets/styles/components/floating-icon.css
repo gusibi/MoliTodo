@@ -3,26 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations */
-/* 日期闪烁：只动透明度，颜色由使用处自定（日期是白卡上的深色数字） */
-@keyframes floating-icon-progress-blink {
-  0%, 50% {
-    opacity: 1;
-  }
-  51%, 100% {
-    opacity: 0.55;
-  }
-}
-
-@keyframes floating-icon-alert-pulse {
-  0%, 100% {
-    @apply scale-100;
-  }
-  50% {
-    @apply scale-105;
-  }
-}
-
 @layer components {
   /* Container */
   .floating-icon-container {
@@ -35,8 +15,8 @@
   .floating-icon {
     @apply relative flex items-center justify-center cursor-grab transition-all duration-300 ease-out;
     @apply rounded-[20%] shadow-lg pointer-events-auto;
-    width: var(--floating-icon-size, 48px);
-    height: var(--floating-icon-size, 48px);
+    width: 100vw;
+    height: 100vh;
     -webkit-app-region: no-drag;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
@@ -55,8 +35,7 @@
   }
 
   .floating-icon--alert {
-    background: linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--warning)));
-    animation: floating-icon-alert-pulse 2s infinite;
+    background: hsl(28 90% 52%);
   }
 
   .floating-icon--dragging {
@@ -75,13 +54,6 @@
     @apply absolute inset-0 flex items-center justify-center text-white transition-all duration-300;
   }
 
-  .floating-icon-content--default {
-    @apply opacity-100;
-  }
-
-  /* 日历 logo（参考系统日历 App 图标）：一体式白卡铺满整个窗口，
-     品牌色头带放星期、下方大对号；无描边、无留边，远看就是一个 logo。
-     圆角 20% 与外层一致且小于系统衬底圆角，保证盖住白底。 */
   .floating-icon-calendar {
     @apply flex flex-col select-none overflow-hidden;
     width: 100%;
@@ -93,99 +65,62 @@
   .floating-icon-calendar-header {
     @apply flex items-center justify-center font-semibold text-white;
     height: 38%;
-    background: hsl(var(--primary));
+    background: hsl(217 91% 60%);
     font-size: calc(var(--floating-icon-size, 48px) * 0.19);
     letter-spacing: 0.03em;
   }
 
   .floating-icon-calendar-body {
-    @apply flex flex-1 items-center justify-center;
+    @apply relative flex flex-1 items-center justify-center;
     color: hsl(240 10% 12%);
   }
 
   .floating-icon-calendar-check {
+    color: hsl(145 65% 36%);
     width: calc(var(--floating-icon-size, 48px) * 0.44);
     height: calc(var(--floating-icon-size, 48px) * 0.44);
   }
 
-  /* 有进行中任务时对号闪烁（原先闪烁在中间对号上） */
-  .floating-icon-calendar-body--blink {
-    animation: floating-icon-progress-blink 1.5s infinite;
+  .floating-icon--alert .floating-icon-calendar-header {
+    background: hsl(28 90% 52%);
   }
 
-  .floating-icon-content--alert {
-    @apply opacity-0;
+  .floating-icon-calendar-alarm {
+    width: calc(var(--floating-icon-size, 48px) * 0.40);
+    height: calc(var(--floating-icon-size, 48px) * 0.40);
+    color: hsl(28 90% 46%);
   }
 
-  /* Alert state overrides */
-  .floating-icon--alert .floating-icon-content--default {
-    @apply opacity-0;
+  .floating-icon-calendar-count {
+    font-size: calc(var(--floating-icon-size, 48px) * 0.40);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+    transform: translateY(calc(var(--floating-icon-size, 48px) * -0.04));
   }
 
-  .floating-icon--alert .floating-icon-content--alert {
-    @apply opacity-100;
-  }
-
-  /* Badge（窗口已铺满图标，角标收进卡片内右下角，避免超出窗口被裁切） */
-  .floating-icon-badge {
-    @apply absolute bottom-0.5 right-0.5 min-w-5 h-5 rounded-full flex items-center justify-center;
-    @apply text-xs font-bold border-2 border-transparent transition-all duration-300;
-    @apply opacity-0 scale-0;
-    background: hsl(var(--destructive));
-    color: hsl(var(--destructive-foreground));
-  }
-
-  .floating-icon-badge--show {
-    @apply opacity-100 scale-100;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  }
-
-  .floating-icon:hover .floating-icon-badge {
-    @apply scale-110;
-  }
-
-  .floating-icon-badge-text {
-    @apply leading-none px-1;
+  .floating-icon-calendar-dot {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    width: calc(var(--floating-icon-size, 48px) * 0.07);
+    height: calc(var(--floating-icon-size, 48px) * 0.07);
+    border-radius: 50%;
+    background: hsl(0 78% 54%);
   }
 }
 
-/* Responsive design */
-@layer utilities {
-  /* 注意：悬浮窗视口本身只有几十像素宽，这个媒体查询总是命中。
-     图标尺寸不要写在这里，否则会覆盖 --floating-icon-size。 */
-  @media (max-width: 768px) {
-    .floating-icon-badge {
-      @apply min-w-4 h-4 text-xs;
-    }
+@media (prefers-contrast: high) {
+  .floating-icon {
+    border: 2px solid hsl(var(--foreground));
   }
+}
 
-  /* High contrast mode */
-  @media (prefers-contrast: high) {
-    .floating-icon {
-      @apply border-2;
-      border-color: hsl(var(--foreground));
-    }
-
-    .floating-icon-badge {
-      @apply border-2;
-      border-color: hsl(var(--background));
-    }
-  }
-
-  /* Reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    .floating-icon,
-    .floating-icon-badge,
-    .floating-icon-content {
-      @apply transition-none;
-    }
-
-    .floating-icon--alert {
-      animation: none;
-    }
-
-    .floating-icon-calendar-body--blink {
-      animation: none;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .floating-icon,
+  .floating-icon-content {
+    transition: none;
   }
 }

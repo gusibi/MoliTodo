@@ -609,6 +609,10 @@
     "completed": "完成"
   },
   "floatView": {
+    "reminderState": "有待处理提醒",
+    "pendingState": "今天剩余 {count} 个任务",
+    "clearedState": "今天已清空",
+    "pendingReminders": "{count} 个待处理提醒",
     "defaultTaskName": "任务",
     "timeSpent": "用时",
     "todayTasks": "今日任务",

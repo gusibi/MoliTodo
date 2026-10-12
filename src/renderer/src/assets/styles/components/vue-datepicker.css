@@ -1,8 +1,8 @@
 /* Vue Datepicker 主题适配：弹层 Teleport 到 body，需全局覆盖并映射到语义 token。
-   使用比库内 `.dp__theme_light/dark` 更具体的选择器，保证顺序无关。 */
+   在库的基础样式之后加载，同时覆盖输入框与弹出菜单。 */
 
-.dp__menu.dp__theme_light,
-.dp__menu.dp__theme_dark {
+.dp__theme_light,
+.dp__theme_dark {
   --dp-background-color: hsl(var(--popover));
   --dp-text-color: hsl(var(--popover-foreground));
   --dp-hover-color: hsl(var(--accent));
@@ -29,5 +29,19 @@
   --dp-range-between-border-color: hsl(var(--accent));
   --dp-border-radius: var(--radius-md);
   --dp-font-family: var(--font-sans);
+}
+
+.dp__menu.dp__theme_light,
+.dp__menu.dp__theme_dark {
   box-shadow: var(--shadow-lg);
+}
+
+/* 重复提醒的纯时间弹层无需占用完整日历的空间。 */
+.dp__menu.repeat-time-menu {
+  --dp-time-font-size: 14px;
+  --dp-menu-min-width: 176px;
+}
+
+.repeat-time-menu .dp__time_col_reg_block {
+  padding: 0 10px;
 }

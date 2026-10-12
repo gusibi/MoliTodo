@@ -609,6 +609,10 @@
     "unknown": "Unknown Category"
   },
   "floatView": {
+    "reminderState": "Pending reminders",
+    "pendingState": "{count} tasks remaining today",
+    "clearedState": "Today is clear",
+    "pendingReminders": "{count} pending reminders",
     "defaultTaskName": "Task",
     "timeSpent": "Time spent",
     "todayTasks": "Today's Tasks",

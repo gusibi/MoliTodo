@@ -24,6 +24,10 @@
         </div>
       </DropdownMenu>
 
+      <span v-if="pendingReminders.length" class="task-panel-reminder-count text-xs text-muted-foreground">
+        {{ $t('floatView.pendingReminders', { count: pendingReminders.length }) }}
+      </span>
+
       <!-- 清单过滤下拉 -->
       <DropdownMenu v-model:open="showListDropdown" align="end" content-class="w-40">
         <template #trigger>
@@ -268,8 +272,10 @@ import Checkbox from '../ui/checkbox/Checkbox.vue'
 import TaskStatusCircle from '../task/TaskStatusCircle.vue'
 import TaskWhenBubble from '../task/TaskWhenBubble.vue'
 import TaskReminderBubble from '../task/TaskReminderBubble.vue'
+import { usePendingReminders } from '@/composables/usePendingReminders'
 
 const taskStore = useTaskStore()
+const { pendingReminders } = usePendingReminders()
 const { customReminderOptions } = storeToRefs(taskStore)
 const { t: $t, locale } = useI18n()
 
