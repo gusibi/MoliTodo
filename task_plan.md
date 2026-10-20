@@ -55,3 +55,10 @@ Run tests, build, protocol-level verification, and Electron runtime checks.
 | `node --test test` treated the directory as a module | 1 | Changed the script to target `test/*.test.js`. |
 | Planning skill completion script was not executable | 1 | Run it explicitly with `bash`. |
 | Completion script did not recognize the compact numbered format | 1 | Changed the plan to the script's expected heading and status format. |
+
+## 2026-10-13 重复任务与悬浮窗口修复
+- 复现 → 时间/Today/广播修复 → 隔离测试与截图。
+- 完成：定位并修复当天生成、Today 合并、系列时刻与已物化实例继承、跨窗口广播。
+- 完成：60 项相关单元与 11 项针对性 Electron E2E（隔离 SQLite/用户目录）通过；最终截图与样式构建检查收尾。
+- 完成：最终构建、明暗/820px 窄窗口/键盘截图与验收记录。无待实现步骤；全量测试的固定过期 AI 夹具失败已记录。
+- 后续完成：安排日期与时间可连续选择，点击外部再关闭并保存；相关 Electron 回归与构建通过。

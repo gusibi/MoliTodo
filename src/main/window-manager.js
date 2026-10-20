@@ -1,5 +1,6 @@
 const { BrowserWindow, screen, nativeImage, Tray, Menu, app } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const Store = require('electron-store');
 
 // 菜单栏下拉面板：宽度固定，高度由渲染层测量内容后回传，避免底部留白
@@ -868,11 +869,19 @@ class WindowManager {
   }
 
   getResourcePath(resourcePath) {
+    const projectRootPath = path.join(__dirname, '../../', resourcePath);
+
     if (process.env.NODE_ENV === 'development') {
-      return path.join(__dirname, '../../', resourcePath);
+      return projectRootPath;
     }
 
-    return path.join(process.resourcesPath, resourcePath);
+    // 生产环境使用安装资源目录；测试等非打包环境回退到项目根目录
+    const resourcesPath = path.join(process.resourcesPath, resourcePath);
+    if (process.env.NODE_ENV !== 'production' && !fs.existsSync(resourcesPath) && fs.existsSync(projectRootPath)) {
+      return projectRootPath;
+    }
+
+    return resourcesPath;
   }
 
   getLogoFileName(logoId) {
@@ -884,7 +893,18 @@ class WindowManager {
       b1: 'B1',
       b2: 'B2',
       b3: 'B3',
-      b4: 'B4'
+      b4: 'B4',
+      c1: 'C1',
+      c2: 'C2',
+      c3: 'C3',
+      c4: 'C4',
+      c5: 'C5',
+      c6: 'C6',
+      c7: 'C7',
+      c8: 'C8',
+      c9: 'C9',
+      c10: 'C10',
+      c11: 'C11'
     };
 
     return logoMap[logoId] || logoMap.b1;
@@ -912,7 +932,7 @@ class WindowManager {
   // 保留路径接口兼容性，同时避免把原始方形 PNG 直接交给 Dock/任务栏。
   resolveRuntimeAppIconPath(iconPath) {
     const sourcePath = String(iconPath || '');
-    const logoMatch = sourcePath.match(/[\\/]resources[\\/]logos[\\/]([ab][1-4])\.png$/i);
+    const logoMatch = sourcePath.match(/[\\/]resources[\\/]logos[\\/]([abc][1-9][0-9]?)\.png$/i);
 
     if (!logoMatch) {
       return sourcePath;

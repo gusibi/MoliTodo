@@ -130,7 +130,7 @@ test('快速录入自然语言日期：chip 预览并写入安排时间', async 
   }, { timeout: 15000 }).toBe(expectedStart.toISOString());
 });
 
-test('悬浮窗 When 气泡：行上快捷改期并持久化', async ({ app, window }) => {
+test('悬浮窗 When 气泡：点击直接打开范围选择器并持久化', async ({ app, window }) => {
   await window.waitForSelector('.task-manager, .today-overview', { timeout: 45000 });
 
   await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.createTaskPanel());
@@ -142,14 +142,22 @@ test('悬浮窗 When 气泡：行上快捷改期并持久化', async ({ app, win
   await panel.locator('.task-panel-input').press('Enter');
   await expect(panel.locator('.task-panel-card', { hasText: '要改期的任务' })).toBeVisible();
 
-  // 点击行上「未安排」chip → When 气泡（内容 Teleport 到 body，用面板级定位）→ 今天
+  // 点击行上「未安排」chip → 直接展示范围选择器（内容 Teleport 到 body，用面板级定位）→ 选今天 08:15
   const row = panel.locator('.task-panel-card', { hasText: '要改期的任务' });
   await row.locator('.task-when-chip').click();
-  await expect(panel.locator('.when-option-today')).toBeVisible();
-  await panel.locator('.when-option-today').click();
+  const picker = panel.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  const today = new Date();
+  await picker.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+  await picker.locator('.schedule-range-field').nth(1).click();
+  const timeInput = picker.locator('input[type=time]');
+  await expect(timeInput).toBeVisible();
+  await timeInput.fill('08:15');
+  await panel.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
 
   const expectedStart = new Date();
-  expectedStart.setHours(0, 0, 0, 0);
+  expectedStart.setHours(8, 15, 0, 0);
   await expect.poll(async () => {
     return app.electronApp.evaluate(async () => {
       const tasks = await global.__moliTodoApp.taskService.getAllTasks();
@@ -527,4 +535,13 @@ test('悬浮图标三状态：提醒优先，悬停保留提醒，处理后恢�
   await expect(panel.getByText('1 个待处理提醒', { exact: true })).toHaveCount(0);
   await card.getByRole('button', { name: '完成任务', exact: true }).click();
   await expect(button).toHaveAttribute('title', '今天已清空');
+});
+
+test('主窗口新增任务立即同步到已打开的悬浮面板', async ({ app, window }) => {
+  await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.createTaskPanel());
+  const panel = await findWindow(app, (page) => page.url().includes('task-panel'));
+  await panel.waitForSelector('.task-panel-container');
+  await expect(panel.locator('.task-panel-input')).toBeVisible();
+  await window.evaluate(() => window.electronAPI.tasks.create({ content: '主窗口实时同步任务' }));
+  await expect(panel.locator('.task-panel-card', { hasText: '主窗口实时同步任务' })).toBeVisible();
 });

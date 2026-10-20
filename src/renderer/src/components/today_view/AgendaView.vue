@@ -62,7 +62,7 @@
           </div>
         </section>
 
-        <!-- 待重新安排 -->
+        <!-- 过期任务 -->
         <section v-if="model.reschedule.length" class="agenda-section agenda-section-reschedule"
           data-agenda-section="reschedule">
           <div class="agenda-section-header">
@@ -587,7 +587,7 @@ function handleLoadMore() {
 // ---------- 滚动观察 ----------
 
 // 以 Agenda 顶部进入有效阅读区域的日期 section 作为 active 日期。
-// 停留在收件箱 / 已逾期 / 待重新安排等非日期分组时保留上一次有效日期。
+// 停留在收件箱 / 已逾期 / 过期任务等非日期分组时保留上一次有效日期。
 function computeActiveDate() {
   const container = scrollContainer.value
   if (!container) return

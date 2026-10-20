@@ -3,7 +3,7 @@
  *
  * 为 issue #14 的 Today 页面（Agenda + Future Calendar）提供页面级数据协调：
  * - 任务实例身份与合并：基础任务、重复系列头行、虚拟实例、物化实例按身份去重
- * - Agenda 分组：收件箱 / 已逾期 / 待重新安排 / 今天 / 未来日期
+ * - Agenda 分组：收件箱 / 已逾期 / 过期任务 / 今天 / 未来日期
  * - 日历日期点：主日期唯一计数
  * - 已加载日期范围的合并与缺口计算
  *
@@ -165,7 +165,16 @@ function mergeTaskWorld({ baseTasks = [], virtualInstances = [] }) {
     }
   }
 
-  const instances = baseOrder.map((entry) => entry.task);
+  const virtualByKey = new Map(virtualInstances.map((task) => [instanceKey(task), task]));
+  const instances = baseOrder.map((entry) => {
+    const head = entry.task;
+    const virtual = virtualByKey.get(entry.key);
+    // 无日期头行仍需保留当天发生日期，否则它会挡住虚拟实例并落入收件箱。
+    if (isSeriesHead(head) && !taskTime.getMainDateInfo(head) && virtual) {
+      return { ...head, seriesId: seriesKeyOf(head), occurrenceDate: virtual.occurrenceDate };
+    }
+    return head;
+  });
   let droppedVirtual = 0;
   for (const virtual of virtualInstances) {
     if (!virtual || virtual.status === 'deleted') continue;

@@ -278,7 +278,6 @@
     "today": "今天",
     "tomorrow": "明天",
     "thisWeek": "本周",
-    "nextWeek": "下周",
     "overdue": "已逾期",
     "noTasks": "暂无任务",
     "createTask": "创建任务",
@@ -306,7 +305,10 @@
     "clearDeadline": "清除截止时间",
     "clearDeadlineTime": "清除截止时刻，仅保留日期",
     "addDeadlineTime": "为截止日期添加具体时刻",
+    "recurringTimeAppliesToFuture": "应用到后续所有重复任务",
     "scheduleStartLabel": "计划开始时间",
+    "scheduleEndLabel": "计划结束时间",
+    "pickTime": "选择时间…",
     "customReminder": "自定义提醒时间",
     "deadlineLabel": "截止时间",
     "scheduleEndBeforeStart": "计划结束时间不能早于计划开始时间",
@@ -477,7 +479,7 @@
     "unplanned": "收件箱",
     "unplannedEmpty": "收件箱是空的",
     "overdue": "已逾期",
-    "reschedule": "待重新安排",
+    "reschedule": "过期任务",
     "reminderExpired": "已过期提醒",
     "todaySection": "今天",
     "todayEmpty": "今天暂无待处理任务",
@@ -502,7 +504,7 @@
       "reminderExpired": "提醒已过期",
       "scheduledElsewhere": "安排在其他日期",
       "overdue": "已逾期",
-      "reschedule": "待重新安排"
+      "reschedule": "过期任务"
     },
     "calendar": {
       "title": "未来日历",

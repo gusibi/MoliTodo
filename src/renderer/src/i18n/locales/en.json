@@ -263,7 +263,6 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "thisWeek": "This Week",
-    "nextWeek": "Next Week",
     "overdue": "Overdue",
     "noTasks": "No tasks",
     "createTask": "Create Task",
@@ -291,7 +290,10 @@
     "clearDeadline": "Clear deadline",
     "clearDeadlineTime": "Clear deadline time, keep date only",
     "addDeadlineTime": "Add a time to the deadline",
+    "recurringTimeAppliesToFuture": "Applies to all future occurrences",
     "scheduleStartLabel": "Scheduled start",
+    "scheduleEndLabel": "Scheduled end",
+    "pickTime": "Pick a time…",
     "customReminder": "Custom reminder time",
     "deadlineLabel": "Deadline",
     "scheduleEndBeforeStart": "End time cannot be earlier than the start time",
@@ -462,7 +464,7 @@
     "unplanned": "Inbox",
     "unplannedEmpty": "Inbox is empty",
     "overdue": "Overdue",
-    "reschedule": "To reschedule",
+    "reschedule": "Expired",
     "reminderExpired": "Expired reminders",
     "todaySection": "Today",
     "todayEmpty": "Nothing pending for today",
@@ -487,7 +489,7 @@
       "reminderExpired": "Reminder passed",
       "scheduledElsewhere": "Scheduled elsewhere",
       "overdue": "Overdue",
-      "reschedule": "To reschedule"
+      "reschedule": "Expired"
     },
     "calendar": {
       "title": "Future calendar",

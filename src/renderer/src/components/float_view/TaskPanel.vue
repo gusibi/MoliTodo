@@ -1050,6 +1050,7 @@ const stopUpdateTimer = () => {
 
 // 生命周期
 onMounted(async () => {
+  window.electronAPI.events.on('tasks-updated', handleTasksUpdated)
   await loadTasks()
 
   // 加载自定义提醒选项
@@ -1061,17 +1062,14 @@ onMounted(async () => {
     quickAddInput.value.focus()
   }
 
-  // 监听任务更新事件
-  window.electronAPI.events.on('tasks-updated', handleTasksUpdated)
-
   // 启动定时器
   startUpdateTimer()
+})
 
-  onUnmounted(() => {
-    stopUpdateTimer()
-    clearTimeout(titleClickTimer)
-    window.electronAPI.events.removeAllListeners('tasks-updated')
-  })
+onUnmounted(() => {
+  stopUpdateTimer()
+  clearTimeout(titleClickTimer)
+  window.electronAPI.events.off('tasks-updated', handleTasksUpdated)
 })
 
 // 监听清单变化，重新加载任务

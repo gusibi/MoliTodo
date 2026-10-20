@@ -112,6 +112,72 @@ const logoOptions = ref([
     name: 'B4 忧郁大眼',
     displayPath: './logos/B4.png',
     resourcePath: 'resources/logos/B4.png'
+  },
+  {
+    id: 'c1',
+    name: 'C1 粉蓝渐变',
+    displayPath: './logos/C1.png',
+    resourcePath: 'resources/logos/C1.png'
+  },
+  {
+    id: 'c2',
+    name: 'C2 黏土眨眼',
+    displayPath: './logos/C2.png',
+    resourcePath: 'resources/logos/C2.png'
+  },
+  {
+    id: 'c3',
+    name: 'C3 珐琅徽章',
+    displayPath: './logos/C3.png',
+    resourcePath: 'resources/logos/C3.png'
+  },
+  {
+    id: 'c4',
+    name: 'C4 金黄油画',
+    displayPath: './logos/C4.png',
+    resourcePath: 'resources/logos/C4.png'
+  },
+  {
+    id: 'c5',
+    name: 'C5 徽章看板',
+    displayPath: './logos/C5.png',
+    resourcePath: 'resources/logos/C5.png'
+  },
+  {
+    id: 'c6',
+    name: 'C6 蜜桃折纸',
+    displayPath: './logos/C6.png',
+    resourcePath: 'resources/logos/C6.png'
+  },
+  {
+    id: 'c7',
+    name: 'C7 圆章睡颜',
+    displayPath: './logos/C7.png',
+    resourcePath: 'resources/logos/C7.png'
+  },
+  {
+    id: 'c8',
+    name: 'C8 黏土白卡',
+    displayPath: './logos/C8.png',
+    resourcePath: 'resources/logos/C8.png'
+  },
+  {
+    id: 'c9',
+    name: 'C9 徽章清单',
+    displayPath: './logos/C9.png',
+    resourcePath: 'resources/logos/C9.png'
+  },
+  {
+    id: 'c10',
+    name: 'C10 徽章欢呼',
+    displayPath: './logos/C10.png',
+    resourcePath: 'resources/logos/C10.png'
+  },
+  {
+    id: 'c11',
+    name: 'C11 暗夜蜷缩',
+    displayPath: './logos/C11.png',
+    resourcePath: 'resources/logos/C11.png'
   }
 ])
 

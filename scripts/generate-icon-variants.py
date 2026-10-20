@@ -16,6 +16,10 @@ from PIL import Image, ImageDraw
 
 
 LOGO_NAMES = ("A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4")
+# C-series sources are square canvases that already carry their final shape
+# (rounded card corners or an irregular cut-out silhouette), so they only need
+# scaling onto the platform canvases and must not be re-masked.
+SHAPED_LOGO_NAMES = ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11")
 WINDOWS_ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 CANVAS_SIZE = 1024
 MACOS_FOOTPRINT_SIZE = 824
@@ -56,6 +60,17 @@ def prepare_macos_image(source: Image.Image) -> Image.Image:
     return canvas
 
 
+def prepare_macos_image_shaped(source: Image.Image) -> Image.Image:
+    footprint = source.resize(
+        (MACOS_FOOTPRINT_SIZE, MACOS_FOOTPRINT_SIZE),
+        Image.Resampling.LANCZOS,
+    )
+    canvas = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+    offset = (CANVAS_SIZE - MACOS_FOOTPRINT_SIZE) // 2
+    canvas.alpha_composite(footprint, (offset, offset))
+    return canvas
+
+
 def prepare_windows_image(source: Image.Image) -> Image.Image:
     return source.resize((CANVAS_SIZE, CANVAS_SIZE), Image.Resampling.LANCZOS)
 
@@ -73,6 +88,23 @@ def generate(source_dir: Path, output_dir: Path) -> None:
 
         source = prepare_source_image(source_path)
         prepare_macos_image(source).save(
+            macos_dir / f"{name}.png",
+            format="PNG",
+            optimize=True,
+        )
+        prepare_windows_image(source).save(
+            windows_dir / f"{name}.ico",
+            format="ICO",
+            sizes=[(size, size) for size in WINDOWS_ICON_SIZES],
+        )
+
+    for name in SHAPED_LOGO_NAMES:
+        source_path = source_dir / f"{name}.png"
+        if not source_path.is_file():
+            raise FileNotFoundError(f"Missing source logo: {source_path}")
+
+        source = prepare_source_image(source_path)
+        prepare_macos_image_shaped(source).save(
             macos_dir / f"{name}.png",
             format="PNG",
             optimize=True,

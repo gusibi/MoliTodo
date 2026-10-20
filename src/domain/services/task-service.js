@@ -254,7 +254,7 @@ class TaskService {
 
   _notifySchedule(task) {
     if (typeof this._scheduleNotification !== 'function') return;
-    if (!task || !task.reminderTime) return;
+    if (!task) return;
     if (task.status === 'done' || task.status === 'deleted') return;
     try {
       this._scheduleNotification(task);
@@ -1046,6 +1046,29 @@ class TaskService {
     if (recurrence) {
       task.setRecurrence(recurrence);
       await this.taskRepository.save(task);
+    }
+    // 已物化的未完成发生项也继承系列时刻；完成记录和过去日期保持原样。
+    const scheduleChanged = 'scheduledStartAt' in updates || 'scheduledEndAt' in updates;
+    const deadlineChanged = 'dueDate' in updates || 'dueTime' in updates;
+    if (scheduleChanged || deadlineChanged) {
+      const today = taskTime.localDateKey(new Date());
+      const overrides = await this.taskRepository.findOverrideInstances(task.getSeriesId());
+      for (const override of overrides) {
+        if (override.id === task.id || ['done', 'deleted'].includes(override.status) ||
+            taskTime.localDateKey(override.occurrenceDate) < today) continue;
+        const generated = task.createInstance(override.occurrenceDate, override.id);
+        const timeUpdates = {};
+        if (scheduleChanged) {
+          timeUpdates.scheduledStartAt = generated.scheduledStartAt;
+          timeUpdates.scheduledEndAt = generated.scheduledEndAt;
+        }
+        if (deadlineChanged) {
+          timeUpdates.dueDate = generated.dueDate;
+          timeUpdates.dueTime = generated.dueTime;
+        }
+        const updated = await this.updateTask(override.id, timeUpdates);
+        this._notifySchedule(updated);
+      }
     }
     return task;
   }

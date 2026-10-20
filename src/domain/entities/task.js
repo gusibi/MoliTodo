@@ -870,9 +870,9 @@ class Task {
     // 旧日期型系列不凭空增加截止，已有实例的 Deadline 原样保留。
     let dueDate = null;
     let dueTime = null;
-    if (this.dueDate && templateStart) {
+    if (this.dueDate && (templateStart || this.recurrence?.dueTime)) {
       const dueAnchor = new Date(`${this.dueDate}T00:00:00`);
-      const dayOffset = taskTime.localDayOffset(templateStart, dueAnchor);
+      const dayOffset = templateStart ? taskTime.localDayOffset(templateStart, dueAnchor) : 0;
       const instanceDue = new Date(occurrence);
       instanceDue.setDate(instanceDue.getDate() + dayOffset);
       dueDate = taskTime.localDateKey(instanceDue);

@@ -305,3 +305,47 @@ test('virtual instance ids use the local date key and stay reconstructable', () 
   assert.equal(keyFromIso, keyFromDate);
   assert.equal(keyFromDate, keyFromDateOnly);
 });
+
+test('weekly/monthly/yearly recurrence includes the creation day regardless of creation time', () => {
+  const created = new Date(2026, 9, 13, 22, 5);
+  for (const recurrence of [
+    { type: 'weekly', daysOfWeek: [2] },
+    { type: 'monthly', byMonthDay: [13] },
+    { type: 'yearly', byMonth: [10], byMonthDay: [13] }
+  ]) {
+    const template = new Task({ id: 'same-day', content: '当天重复', createdAt: created, recurrence });
+    const instances = RecurringTaskService.expandRecurringTask(template, new Date(2026, 9, 13), new Date(2026, 9, 13, 23, 59, 59));
+    assert.equal(instances.length, 1, recurrence.type);
+    assert.equal(taskTime.localDateKey(instances[0].occurrenceDate), '2026-10-13');
+  }
+});
+
+test('recurring deadline time without schedule applies on each occurrence day', () => {
+  const template = new Task({ id: 'deadline-only', content: '截止时刻', createdAt: new Date(2026, 9, 13, 22), recurrence: { type: 'daily', dueTime: '23:00' }, dueDate: '2026-10-13', dueTime: '23:00' });
+  const next = template.createInstance(new Date(2026, 9, 20), 'next');
+  assert.equal(next.dueDate, '2026-10-20');
+  assert.equal(next.dueTime, '23:00');
+  assert.equal(next.scheduledStartAt, null);
+});
+
+test('series time edits update future materialized occurrences and preserve completed history', async () => {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(today); start.setHours(9);
+  const dueDate = taskTime.localDateKey(today);
+  const template = new Task({ id: 'series-times', content: '系列时刻', createdAt: today, scheduledStartAt: start, dueDate, dueTime: '18:00', recurrence: { type: 'daily' } });
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  const future = template.createInstance(tomorrow, 'future-override');
+  future.metadata = { note: '保留实例备注' };
+  const completed = template.createInstance(today, 'completed-history'); completed.status = 'done';
+  const { taskService, repo } = setup([template, future, completed]);
+  const updatedStart = new Date(today); updatedStart.setHours(10, 30);
+  await taskService.updateRecurringTask(template.id, { scheduledStartAt: updatedStart, scheduledEndAt: null, dueDate, dueTime: '20:00' }, template.recurrence);
+  const updated = await repo.findById(future.id);
+  assert.equal(updated.scheduledStartAt.getHours(), 10);
+  assert.equal(updated.scheduledStartAt.getMinutes(), 30);
+  assert.equal(taskTime.localDateKey(updated.scheduledStartAt), taskTime.localDateKey(tomorrow));
+  assert.equal(updated.dueTime, '20:00');
+  assert.equal(updated.metadata.note, '保留实例备注');
+  assert.equal(completed.scheduledStartAt.getHours(), 9);
+  assert.equal(completed.dueTime, '18:00');
+});

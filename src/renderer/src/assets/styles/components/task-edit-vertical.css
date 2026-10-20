@@ -318,6 +318,19 @@
   @apply px-3 pt-2 pb-1 text-xs font-medium text-foreground;
 }
 
+/* 安排选择器：日期 / 时间分开切换，各自独立修改 */
+.date-picker-popup-fixed .schedule-picker-fields {
+  @apply flex items-center gap-2 px-1 pb-2;
+}
+
+.date-picker-popup-fixed .schedule-picker-field {
+  @apply flex-1 min-w-0 justify-center;
+}
+
+.date-picker-popup-fixed .schedule-picker-field.is-active {
+  @apply border-primary text-primary bg-primary/10;
+}
+
 /* 日期选择器 */
 .task-edit-vertical .date-picker {
   @apply p-3;

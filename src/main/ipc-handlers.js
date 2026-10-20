@@ -1,5 +1,6 @@
 const { ipcMain, dialog, app, shell } = require('electron');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 
 class IpcHandlers {
@@ -14,6 +15,7 @@ class IpcHandlers {
     // 服务内部生成重复实例后，通过该钩子注册提醒
     if (typeof this.taskService.setNotificationScheduler === 'function') {
       this.taskService.setNotificationScheduler((task) => {
+        this.notificationService.cancelTaskReminder(task.id);
         this.notificationService.scheduleTaskReminder(
           task,
           (remindedTask) => this.handleTaskReminder(remindedTask),
@@ -1243,19 +1245,20 @@ class IpcHandlers {
     // 应用图标更新
     ipcMain.handle('update-app-icon', async (event, iconPath) => {
       try {
-        // 解析图标路径
+        // 解析图标路径：开发/测试相对项目根目录，生产相对安装资源目录；
+        // 另一侧目录作为回退，保证 E2E 等非打包环境也能解析到真实文件
         let fullIconPath;
 
         if (path.isAbsolute(iconPath)) {
           fullIconPath = iconPath;
         } else {
-          // 相对路径处理
-          if (process.env.NODE_ENV === 'development') {
-            // 开发环境：相对于项目根目录
-            fullIconPath = path.join(__dirname, '../../', iconPath);
+          const projectRootPath = path.join(__dirname, '../../', iconPath);
+          const resourcesPath = path.join(process.resourcesPath, iconPath);
+
+          if (process.env.NODE_ENV === 'production') {
+            fullIconPath = fsSync.existsSync(resourcesPath) ? resourcesPath : projectRootPath;
           } else {
-            // 生产环境：使用 process.resourcesPath
-            fullIconPath = path.join(process.resourcesPath, iconPath);
+            fullIconPath = fsSync.existsSync(projectRootPath) ? projectRootPath : resourcesPath;
           }
         }
 
@@ -1283,7 +1286,9 @@ class IpcHandlers {
     const windows = [
       this.windowManager.floatingWindow,
       this.windowManager.taskManagerWindow,
-      this.windowManager.settingsWindow
+      this.windowManager.settingsWindow,
+      this.windowManager.taskPanelWindow,
+      this.windowManager.menuBarPanelWindow
     ];
 
     // 向主要窗口广播

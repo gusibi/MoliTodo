@@ -392,3 +392,14 @@ test('日期范围：枚举含首尾', () => {
   assert.deepEqual(agenda.enumerateDateKeys(TODAY, TOMORROW), [TODAY, TOMORROW]);
   assert.deepEqual(agenda.enumerateDateKeys(TOMORROW, TODAY), []);
 });
+
+test('无安排的系列当天发生时，头行保留状态并进入今天而非收件箱', () => {
+  const head = plainTask({ id: 's1', createdAt: `${TODAY}T22:05:00`, recurrence: { type: 'weekly', daysOfWeek: [6] } });
+  const virtual = virtualInstance({ occurrenceDate: `${TODAY}T00:00:00` });
+  const { instances } = agenda.mergeTaskWorld({ baseTasks: [head], virtualInstances: [virtual] });
+  const model = agenda.buildAgendaModel({ instances, todayKey: TODAY, browsingDates: [TODAY], now: nowAt(TODAY, 23) });
+  assert.equal(model.today.length, 1);
+  assert.equal(model.unplanned.length, 0);
+  assert.equal(instances.length, 1);
+  assert.equal(instances[0].id, 's1');
+});

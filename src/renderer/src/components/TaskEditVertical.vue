@@ -252,11 +252,11 @@
                   </div>
                 </Button>
                 <!-- 日期型截止与日期+时间截止的切换 -->
-                <Button variant="ghost" v-if="selectedDate && selectedTime" class="task-option-mini" @click="makeDeadlineDateOnly"
+                <Button variant="ghost" v-if="selectedDate && selectedTime && !selectedRecurrence" class="task-option-mini" @click="makeDeadlineDateOnly"
                   :title="t('tasks.clearDeadlineTime')">
                   仅日期
                 </Button>
-                <Button variant="ghost" v-if="selectedDate && !selectedTime" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
+                <Button variant="ghost" v-if="selectedDate && !selectedTime && !selectedRecurrence" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
                   :title="t('tasks.addDeadlineTime')">
                   加时间
                 </Button>
@@ -309,7 +309,7 @@
           <!-- 日期选择器 Portal - 固定定位在最上层 -->
           <Teleport to="body">
             <div v-if="showDatePicker" class="date-picker-overlay">
-              <div class="date-picker-backdrop" @click="showDatePicker = false"></div>
+              <div class="date-picker-backdrop" @click="closeDatePicker"></div>
               <div
                 class="date-picker-popup-fixed"
                 :style="datePickerStyle"
@@ -317,7 +317,49 @@
               >
                 <div class="date-picker-title">{{ datePickerTitle }}</div>
                 <p v-if="timeSaveError" class="task-field-error" role="alert">{{ timeSaveError }}</p>
-                <v-date-picker
+                <template v-if="isRecurringTimePicker">
+                  <Input type="time" class="dark:[color-scheme:dark]" :model-value="recurringPickerTime" :aria-label="datePickerTitle"
+                    @update:model-value="handleRecurringTimeChange" />
+                  <p class="text-xs text-muted-foreground mt-2">{{ t('tasks.recurringTimeAppliesToFuture') }}</p>
+                </template>
+                <!-- 安排：日期与时间分开，可各自独立修改 -->
+                <template v-else-if="isSchedulePicker">
+                  <div class="schedule-picker-fields">
+                    <Button variant="outline" size="sm" class="schedule-picker-field schedule-picker-date-field"
+                      :class="{ 'is-active': schedulePickerView === 'date' }"
+                      :aria-pressed="schedulePickerView === 'date'"
+                      @click="schedulePickerView = 'date'">
+                      <CalendarDays class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                      <span>{{ schedulePickerDateLabel }}</span>
+                    </Button>
+                    <Button variant="outline" size="sm" class="schedule-picker-field schedule-picker-time-field"
+                      :class="{ 'is-active': schedulePickerView === 'time' }"
+                      :aria-pressed="schedulePickerView === 'time'"
+                      @click="schedulePickerView = 'time'">
+                      <Clock class="h-icon-sm w-icon-sm" aria-hidden="true" />
+                      <span>{{ schedulePickerTimeLabel }}</span>
+                    </Button>
+                  </div>
+                  <v-date-picker v-if="schedulePickerView === 'date'"
+                    :model-value="schedulePickerDate"
+                    mode="date"
+                    :is-dark="isDark"
+                    :min-date="pickerMinDate"
+                    @update:modelValue="handleScheduleDateChange"
+                    class="v-calendar"
+                  ></v-date-picker>
+                  <v-date-picker v-else
+                    :model-value="schedulePickerTime"
+                    mode="time"
+                    is24hr
+                    :minute-increment="5"
+                    :is-dark="isDark"
+                    @update:modelValue="handleScheduleTimeChange"
+                    class="v-calendar"
+                  ></v-date-picker>
+                </template>
+                <!-- 截止：沿用日期+时间联动 -->
+                <v-date-picker v-else
                   v-model="dateTimeValue"
                   mode="dateTime"
                   is24hr
@@ -400,6 +442,7 @@ import Button from './ui/button/Button.vue'
 import IconButton from './ui/button/IconButton.vue'
 import Checkbox from './ui/checkbox/Checkbox.vue'
 import Switch from './ui/switch/Switch.vue'
+import Input from './ui/input/Input.vue'
 import { todayTaskIdentity, isVirtualInstance } from '../utils/today-agenda.js'
 
 // 导入 V-Calendar 样式文件
@@ -470,7 +513,38 @@ async function ensureEditableTask() {
   }
 }
 
+function findRecurringSeries(task) {
+  const seriesId = task.seriesId || task.id
+  return taskStore.tasks.find((item) => item.id === task.id && item.recurrence && item.status !== 'done') ||
+    taskStore.tasks.find((item) => item.recurrence && item.status !== 'done' &&
+      (item.id === seriesId || item.seriesId === seriesId)) || task
+}
+
 async function saveTaskUpdates(task, updates) {
+  if (selectedRecurrence.value && ['scheduledStartAt', 'scheduledEndAt', 'dueDate', 'dueTime'].some((key) => key in updates)) {
+    const series = findRecurringSeries(task)
+    const anchor = new Date(series.scheduledStartAt || series.occurrenceDate || series.createdAt)
+    const seriesUpdates = { ...updates }
+    for (const key of ['scheduledStartAt', 'scheduledEndAt']) {
+      if (!updates[key]) continue
+      const value = new Date(updates[key])
+      const rebased = new Date(anchor)
+      rebased.setHours(value.getHours(), value.getMinutes(), 0, 0)
+      if (key === 'scheduledEndAt' && updates.scheduledStartAt) {
+        const start = new Date(updates.scheduledStartAt)
+        if (value.getHours() * 60 + value.getMinutes() < start.getHours() * 60 + start.getMinutes()) {
+          rebased.setDate(rebased.getDate() + 1)
+        }
+      }
+      seriesUpdates[key] = rebased.toISOString()
+    }
+    if (updates.dueDate) seriesUpdates.dueDate = getLocalDateString(anchor)
+    const recurrence = { ...selectedRecurrence.value }
+    if ('dueTime' in updates) recurrence.dueTime = updates.dueTime
+    const result = await taskStore.updateRecurringTask(series.id, seriesUpdates, recurrence)
+    if (result?.success) selectedRecurrence.value = recurrence
+    return result?.success && series.id !== task.id ? { ...result, task: { ...task, ...updates } } : result
+  }
   if (task?.seriesId && task?.occurrenceDate) {
     const result = await taskStore.updateRecurringInstance(task.seriesId, task.occurrenceDate, updates)
     if (result?.success && result.task) materializedTask.value = result.task
@@ -635,6 +709,12 @@ const dateTimeValue = ref(null)
 const showDatePicker = ref(false)
 // 日期选择器用途：截止 / 安排开始 / 安排结束 / 自定义绝对提醒
 const datePickerMode = ref('deadline')
+const schedulePickerDirty = ref(false)
+// 安排选择器：日期与时间分开编辑，各自独立
+const schedulePickerView = ref('date')
+const schedulePickerDate = ref(null)
+const schedulePickerTime = ref(null)
+const DEFAULT_SCHEDULE_DURATION_MS = 60 * 60 * 1000
 
 // 安排相关状态
 const scheduleStart = ref(null)
@@ -742,21 +822,27 @@ const datePickerStyle = computed(() => {
 })
 
 // 切换日期选择器并计算位置（按用途初始化选择器当前值）
-const openPickerFor = (mode, btnEl) => {
+const openPickerFor = async (mode, btnEl) => {
   if (showDatePicker.value && datePickerMode.value === mode) {
-    showDatePicker.value = false
+    await closeDatePicker()
     return
   }
+  if (showDatePicker.value) await closeDatePicker()
 
   datePickerMode.value = mode
   if (mode === 'deadline') {
     dateTimeValue.value = selectedDate.value && selectedTime.value
       ? new Date(`${selectedDate.value}T${selectedTime.value}:00`)
       : null
-  } else if (mode === 'scheduleStart') {
-    dateTimeValue.value = scheduleStart.value ? new Date(scheduleStart.value) : null
-  } else if (mode === 'scheduleEnd') {
-    dateTimeValue.value = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  } else if (mode === 'scheduleStart' || mode === 'scheduleEnd') {
+    if (selectedRecurrence.value) {
+      // 重复任务只允许改时刻，沿用单时刻输入
+      dateTimeValue.value = mode === 'scheduleEnd'
+        ? (scheduleEnd.value ? new Date(scheduleEnd.value) : null)
+        : (scheduleStart.value ? new Date(scheduleStart.value) : null)
+    } else {
+      initSchedulePicker(mode)
+    }
   } else if (mode === 'reminderAbsolute') {
     dateTimeValue.value = null
     showReminderPicker.value = false
@@ -785,11 +871,182 @@ const openPickerFor = (mode, btnEl) => {
   showDatePicker.value = true
 }
 
+const closeDatePicker = async () => {
+  showDatePicker.value = false
+  if (!schedulePickerDirty.value) return
+  schedulePickerDirty.value = false
+  await saveSchedule()
+}
+
+// 安排选择器：日期与时间分开编辑（选日期不必先过日历，改时刻不必动日期）
+const isSchedulePicker = computed(() =>
+  datePickerMode.value === 'scheduleStart' || datePickerMode.value === 'scheduleEnd')
+
+const initSchedulePicker = (mode) => {
+  const seed = mode === 'scheduleEnd'
+    ? (scheduleEnd.value ? new Date(scheduleEnd.value)
+      : scheduleStart.value ? new Date(scheduleStart.value) : null)
+    : (scheduleStart.value ? new Date(scheduleStart.value) : null)
+  schedulePickerDate.value = seed ? new Date(seed) : null
+  schedulePickerTime.value = seed ? new Date(seed) : defaultScheduleTime(new Date())
+  // 首次设置安排时先选日期；已有安排时通常只想改时刻
+  schedulePickerView.value = mode === 'scheduleStart' && !scheduleStart.value ? 'date' : 'time'
+}
+
+const formatScheduleDateLabel = (date) => {
+  const key = getLocalDateString(date)
+  if (key === getLocalDateString(new Date())) return t('categories.today')
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  if (key === getLocalDateString(tomorrow)) return t('floatView.chipTomorrow')
+  return date.toLocaleDateString(localeCode(locale.value), { month: 'short', day: 'numeric', weekday: 'short' })
+}
+
+const schedulePickerDateLabel = computed(() =>
+  schedulePickerDate.value ? formatScheduleDateLabel(new Date(schedulePickerDate.value)) : t('tasks.pickDate'))
+
+const schedulePickerTimeLabel = computed(() => {
+  const date = schedulePickerTime.value
+  return date ? `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : t('tasks.pickTime')
+})
+
+// 默认开始时刻：今天取当前时刻（对齐 5 分钟），其他日期取 09:00
+const defaultScheduleTime = (date) => {
+  const result = new Date(date)
+  if (getLocalDateString(result) === getLocalDateString(new Date())) {
+    const now = new Date()
+    result.setHours(now.getHours(), Math.floor(now.getMinutes() / 5) * 5, 0, 0)
+  } else {
+    result.setHours(9, 0, 0, 0)
+  }
+  return result
+}
+
+const withScheduleTime = (date, time) => {
+  const result = new Date(date)
+  result.setHours(time.getHours(), time.getMinutes(), 0, 0)
+  return result
+}
+
+// 开始变化后同步结束：同日跟随到同一天；跨天整体平移保持时长
+const pairScheduleEndWithStart = (previousStart, nextStart, previousEnd) => {
+  if (!previousEnd) return
+  const wasSameDay = !previousStart ||
+    getLocalDateString(previousStart) === getLocalDateString(previousEnd)
+  let nextEnd = wasSameDay
+    ? withScheduleTime(nextStart, previousEnd)
+    : new Date(previousEnd.getTime() + (nextStart.getTime() - previousStart.getTime()))
+  if (nextEnd.getTime() < nextStart.getTime()) {
+    nextEnd = new Date(nextStart.getTime() + DEFAULT_SCHEDULE_DURATION_MS)
+  }
+  scheduleEnd.value = nextEnd
+}
+
+const applyScheduleStartDate = (picked) => {
+  const previousStart = scheduleStart.value ? new Date(scheduleStart.value) : null
+  const previousEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  const time = previousStart || schedulePickerTime.value || defaultScheduleTime(picked)
+  const nextStart = withScheduleTime(picked, time)
+  scheduleStart.value = nextStart
+  schedulePickerDate.value = new Date(nextStart)
+  schedulePickerTime.value = new Date(nextStart)
+  pairScheduleEndWithStart(previousStart, nextStart, previousEnd)
+}
+
+const applyScheduleStartTime = (picked) => {
+  const previousStart = scheduleStart.value ? new Date(scheduleStart.value) : null
+  const previousEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  const base = previousStart || schedulePickerDate.value || defaultScheduleTime(new Date())
+  const nextStart = withScheduleTime(base, picked)
+  scheduleStart.value = nextStart
+  schedulePickerDate.value = new Date(nextStart)
+  schedulePickerTime.value = new Date(nextStart)
+  pairScheduleEndWithStart(previousStart || base, nextStart, previousEnd)
+}
+
+const applyScheduleEndTime = (picked) => {
+  if (!scheduleStart.value) {
+    const base = defaultScheduleTime(new Date())
+    scheduleStart.value = base
+    schedulePickerDate.value = new Date(base)
+  }
+  const start = new Date(scheduleStart.value)
+  const previousEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  const crossDay = previousEnd && getLocalDateString(previousEnd) !== getLocalDateString(start)
+  // 跨天时保留原来的结束日期，只改时刻；同日则以开始日期为准，早于开始则顺延到次日
+  let nextEnd = withScheduleTime(crossDay ? previousEnd : start, picked)
+  if (nextEnd.getTime() < start.getTime()) {
+    nextEnd = new Date(nextEnd.getTime() + 24 * 60 * 60 * 1000)
+  }
+  scheduleEnd.value = nextEnd
+  schedulePickerDate.value = new Date(nextEnd)
+  schedulePickerTime.value = new Date(nextEnd)
+}
+
+const applyScheduleEndDate = (picked) => {
+  const start = scheduleStart.value ? new Date(scheduleStart.value) : null
+  const previousEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
+  const time = previousEnd || (start ? new Date(start.getTime() + DEFAULT_SCHEDULE_DURATION_MS) : defaultScheduleTime(picked))
+  let nextEnd = withScheduleTime(picked, time)
+  if (!start) {
+    scheduleStart.value = new Date(nextEnd.getTime() - DEFAULT_SCHEDULE_DURATION_MS)
+  } else if (nextEnd.getTime() < start.getTime()) {
+    nextEnd = new Date(start.getTime() + DEFAULT_SCHEDULE_DURATION_MS)
+  }
+  scheduleEnd.value = nextEnd
+  schedulePickerDate.value = new Date(nextEnd)
+  schedulePickerTime.value = new Date(nextEnd)
+}
+
+const handleScheduleDateChange = (value) => {
+  if (!value) return
+  const picked = value instanceof Date ? new Date(value) : new Date(value)
+  if (datePickerMode.value === 'scheduleEnd') applyScheduleEndDate(picked)
+  else applyScheduleStartDate(picked)
+  schedulePickerDirty.value = true
+}
+
+const handleScheduleTimeChange = (value) => {
+  if (!value) return
+  const picked = value instanceof Date ? new Date(value) : new Date(value)
+  if (datePickerMode.value === 'scheduleEnd') applyScheduleEndTime(picked)
+  else applyScheduleStartTime(picked)
+  schedulePickerDirty.value = true
+}
+
+const isRecurringTimePicker = computed(() => Boolean(selectedRecurrence.value) &&
+  ['scheduleStart', 'scheduleEnd', 'deadline'].includes(datePickerMode.value))
+const recurringPickerTime = computed(() => dateTimeValue.value
+  ? new Date(dateTimeValue.value).toTimeString().slice(0, 5) : '')
+
+const handleRecurringTimeChange = async (time) => {
+  if (!/^\d{2}:\d{2}$/.test(time)) return
+  const task = editingTask.value
+  const date = new Date(scheduleStart.value || task?.occurrenceDate || task?.createdAt || new Date())
+  const [hours, minutes] = time.split(':').map(Number)
+  date.setHours(hours, minutes, 0, 0)
+  if (datePickerMode.value === 'scheduleEnd' && scheduleStart.value && date < new Date(scheduleStart.value)) {
+    date.setDate(date.getDate() + 1)
+  }
+  dateTimeValue.value = date
+
+  // 重复任务只改系列内时刻，不涉及日期
+  if (datePickerMode.value === 'scheduleStart' || datePickerMode.value === 'scheduleEnd') {
+    if (datePickerMode.value === 'scheduleStart') scheduleStart.value = date
+    else scheduleEnd.value = date
+    schedulePickerDirty.value = true
+    return
+  }
+
+  if (datePickerMode.value === 'deadline') selectedRecurrence.value = { ...selectedRecurrence.value, dueTime: time }
+  await handleDateTimeChange(date)
+}
+
 // 选择器标题与最小日期：仅“新绝对提醒”限制不能选过去
 const datePickerTitle = computed(() => {
   switch (datePickerMode.value) {
     case 'scheduleStart': return t('tasks.scheduleStartLabel')
-    case 'scheduleEnd': return '计划结束时间'
+    case 'scheduleEnd': return t('tasks.scheduleEndLabel')
     case 'reminderAbsolute': return t('tasks.customReminder')
     default: return t('tasks.deadlineLabel')
   }
@@ -854,7 +1111,7 @@ const handleEscapeKeydown = (event) => {
   if (showDatePicker.value) {
     event.preventDefault()
     event.stopPropagation()
-    showDatePicker.value = false
+    void closeDatePicker()
     nextTick(() => datePickerTrigger.value?.focus?.())
     return
   }
@@ -915,7 +1172,7 @@ const flushPendingChanges = async () => {
     clearTimeout(noteDebounceTimer)
     noteDebounceTimer = null
   }
-  showDatePicker.value = false
+  await closeDatePicker()
   showReminderPicker.value = false
   showListPicker.value = false
   showRepeatPicker.value = false
@@ -955,6 +1212,10 @@ const resetAllStates = () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  schedulePickerDirty.value = false
+  schedulePickerView.value = 'date'
+  schedulePickerDate.value = null
+  schedulePickerTime.value = null
   showDatePicker.value = false
   selectedReminder.value = null
   reminderPolicy.value = null
@@ -999,7 +1260,7 @@ const handleInputBlur = async (event) => {
 }
 
 // 处理点击外部区域
-const handleClickOutside = (event) => {
+const handleClickOutside = async (event) => {
   if (taskEditContainer.value && !taskEditContainer.value.contains(event.target)) {
     const target = event.target instanceof Element ? event.target : null
     const targetRow = target?.closest('.today-task-row')
@@ -1009,8 +1270,8 @@ const handleClickOutside = (event) => {
     if (!newTaskContent.value.trim() && !props.isEditing) {
       resetAllStates()
     }
-    // 点击外部关闭所有选择器
-    showDatePicker.value = false
+    // 点击外部关闭所有选择器，保存已选定的完整安排。
+    await closeDatePicker()
     showReminderPicker.value = false
     showListPicker.value = false
     showRepeatPicker.value = false
@@ -1271,7 +1532,8 @@ const toggleRepeatEnabled = async (enabled) => {
     // 开启重复时，设置默认的重复配置
     selectedRecurrence.value = {
       type: 'daily',
-      interval: 1
+      interval: 1,
+      dueTime: selectedTime.value || null
     }
     // 开启时自动展开面板
     showRepeatPicker.value = true
@@ -1319,7 +1581,7 @@ const handleSaveRecurrence = async () => {
   failedRecurrenceSave.value = false
 
   try {
-    const task = await ensureEditableTask()
+    const task = editingTask.value
     if (!task) throw new Error(t('today.saveFailed', { error: '' }))
     // 清理重复规则对象，确保可序列化
     const cleanRecurrence = selectedRecurrence.value ? {
@@ -1330,7 +1592,8 @@ const handleSaveRecurrence = async () => {
       byWeekDay: selectedRecurrence.value.byWeekDay || null,
       byMonth: selectedRecurrence.value.byMonth || null,
       endCondition: selectedRecurrence.value.endCondition || null,
-      reminderTime: selectedRecurrence.value.reminderTime || null
+      reminderTime: selectedRecurrence.value.reminderTime || null,
+      dueTime: selectedRecurrence.value.dueTime || null
     } : null
 
     const updates = {
@@ -1339,11 +1602,11 @@ const handleSaveRecurrence = async () => {
 
     if (task.seriesId && selectedRecurrence.value) {
       // 更新重复任务系列
-      const result = await trackTaskWrite(taskStore.updateRecurringTask(task.id, updates, cleanRecurrence))
+      const result = await trackTaskWrite(taskStore.updateRecurringTask(findRecurringSeries(task).id, updates, cleanRecurrence))
       if (!result?.success) throw new Error(result?.error || '')
     } else if (selectedRecurrence.value && !task.seriesId) {
       // 将普通任务转换为重复任务
-      const result = await trackTaskWrite(taskStore.updateRecurringTask(task.id, updates, cleanRecurrence))
+      const result = await trackTaskWrite(taskStore.updateRecurringTask(findRecurringSeries(task).id, updates, cleanRecurrence))
       if (!result?.success) throw new Error(result?.error || '')
     } else if (!selectedRecurrence.value && task.seriesId) {
       // 将重复任务转换为普通任务
@@ -1385,9 +1648,11 @@ const toggleListPicker = () => {
 
 // 清除日期时间
 const clearDateTime = async () => {
+  if (selectedRecurrence.value) selectedRecurrence.value = { ...selectedRecurrence.value, dueTime: null }
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  schedulePickerDirty.value = false
   showDatePicker.value = false
   if (props.isEditing && props.task) {
     try {
@@ -1431,6 +1696,7 @@ const formatScheduleText = () => {
   const startStr = getLocalDateString(start)
   const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
 
+  if (selectedRecurrence.value) return timeStr
   if (startStr === todayStr) return t('tasks.startsToday', { time: timeStr })
   if (startStr === tomorrowStr) return t('tasks.startsTomorrow', { time: timeStr })
   const dateText = start.toLocaleDateString(localeCode(locale.value), { month: 'short', day: 'numeric' })
@@ -1444,6 +1710,7 @@ const formatScheduleEndText = () => {
   const start = scheduleStart.value ? new Date(scheduleStart.value) : null
   const timeStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
 
+  if (selectedRecurrence.value) return t('tasks.endsAt', { time: timeStr })
   if (start && getLocalDateString(start) === getLocalDateString(end)) {
     return t('tasks.endsAt', { time: timeStr })
   }
@@ -1541,37 +1808,9 @@ const getMinTimeForDatePicker = () => {
   return { hours: 0, minutes: 0 }
 }
 
-// 处理日期时间变化：按选择器用途分流（截止 / 安排开始 / 安排结束 / 绝对提醒）
+// 处理日期时间变化：按选择器用途分流（截止 / 绝对提醒）
 const handleDateTimeChange = async (newValue) => {
   timeSaveError.value = ''
-  if (datePickerMode.value === 'scheduleStart') {
-    if (!newValue) return
-    const start = newValue instanceof Date ? newValue : new Date(newValue)
-    const currentStart = scheduleStart.value ? new Date(scheduleStart.value) : null
-    const currentEnd = scheduleEnd.value ? new Date(scheduleEnd.value) : null
-    const duration = currentStart && currentEnd
-      ? currentEnd.getTime() - currentStart.getTime()
-      : null
-    scheduleStart.value = start
-    if (duration !== null && duration >= 0) {
-      scheduleEnd.value = new Date(start.getTime() + duration)
-    }
-    await saveSchedule()
-    return
-  }
-
-  if (datePickerMode.value === 'scheduleEnd') {
-    if (!newValue) return
-    const end = newValue instanceof Date ? newValue : new Date(newValue)
-    if (scheduleStart.value && end.getTime() < new Date(scheduleStart.value).getTime()) {
-      timeSaveError.value = t('tasks.scheduleEndBeforeStart')
-      return
-    }
-    scheduleEnd.value = end
-    await saveSchedule()
-    return
-  }
-
   if (datePickerMode.value === 'reminderAbsolute') {
     if (!newValue) return
     const reminderTime = newValue instanceof Date ? newValue : new Date(newValue)
@@ -1660,6 +1899,7 @@ const saveSchedule = async () => {
 
 // 清除安排（同步清除结束；相对提醒转关闭）
 const clearSchedule = async () => {
+  schedulePickerDirty.value = false
   scheduleStart.value = null
   scheduleEnd.value = null
   showDatePicker.value = false
@@ -1668,6 +1908,7 @@ const clearSchedule = async () => {
 
 // 只清除结束时间
 const clearScheduleEnd = async () => {
+  schedulePickerDirty.value = false
   scheduleEnd.value = null
   showDatePicker.value = false
   await saveSchedule()
@@ -1799,6 +2040,7 @@ const applyTimeWarning = (result) => {
 // 格式化选中的日期
 const formatSelectedDate = (date) => {
   if (!date) return ''
+  if (selectedRecurrence.value && selectedTime.value) return selectedTime.value
   const dateObj = new Date(date)
   const today = new Date()
   const tomorrow = new Date(today)
@@ -2190,8 +2432,9 @@ const loadTaskData = () => {
     selectedReminder.value = null
   }
 
-  if (task.recurrence) {
-    selectedRecurrence.value = task.recurrence
+  const seriesRule = task.recurrence || findRecurringSeries(task).recurrence
+  if (seriesRule) {
+    selectedRecurrence.value = JSON.parse(JSON.stringify(seriesRule))
     // 编辑现有重复任务时，默认不展开面板
     showRepeatPicker.value = false
   } else {
@@ -2213,6 +2456,13 @@ const loadTaskData = () => {
     }
   })
 }
+
+// 分组移动可能重建编辑器，关闭面板时同步已保存的规则，保留面板内正在调整的草稿。
+watch(() => editingTask.value && findRecurringSeries(editingTask.value).recurrence, (rule) => {
+  if (props.isEditing && !showRepeatPicker.value) {
+    selectedRecurrence.value = rule ? JSON.parse(JSON.stringify(rule)) : null
+  }
+})
 
 // 只在真正切换编辑目标时加载；store 刷新同一任务时保留正在编辑的草稿。
 watch(() => [props.isEditing, taskIdentity(props.task)], ([isEditing, identity], previous = []) => {

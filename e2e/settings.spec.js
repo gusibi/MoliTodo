@@ -63,6 +63,24 @@ test('清除所有数据：统一确认、取消不重启且焦点返回触发�
   await expect(clearBtn).toBeFocused();
 });
 
+test('应用图标：C 系列可选且选择持久化', async ({ app, window }) => {
+  const settings = await openSettings(app, window);
+
+  await settings.locator('.setting-nav-item', { hasText: '外观' }).click();
+
+  const options = settings.locator('.logo-option');
+  await expect(options).toHaveCount(19);
+
+  // A/B 系列 8 个 + C 系列 11 个，第 11 个是 C3 珐琅徽章
+  await options.nth(10).click();
+
+  const selectedLogo = await app.electronApp.evaluate(() =>
+    global.__moliTodoApp.windowManager.configStore.get('selectedLogo')
+  );
+  expect(selectedLogo).toBe('c3');
+  await expect(settings.locator('.logo-preview-name')).toHaveText('C3 珐琅徽章');
+});
+
 test('删除清单：统一确认、取消保留清单、确认删除', async ({ app, window }) => {
   await app.electronApp.evaluate(async () => {
     const moli = global.__moliTodoApp;

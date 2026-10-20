@@ -13,6 +13,7 @@ class TaskUseCases {
       typeof notificationService.scheduleTaskReminder === 'function'
     ) {
       taskService.setNotificationScheduler((task) => {
+        notificationService.cancelTaskReminder(task.id);
         notificationService.scheduleTaskReminder(task, onReminder, { skipPast: true });
       });
     }

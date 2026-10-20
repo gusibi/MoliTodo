@@ -925,7 +925,7 @@ test('展开态标题 Escape 先取消草稿，再次 Escape 收起任务', asyn
   }, { timeout: 15000 }).toBe(false);
 });
 
-test('When 气泡快捷改期：未安排任务改到明天并持久化', async ({ app, window }) => {
+test('When 气泡点击直接打开范围选择器：未安排任务选日期并持久化', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{ content: '要改期的任务' }]);
   await window.reload();
   await waitForToday(window);
@@ -935,14 +935,26 @@ test('When 气泡快捷改期：未安排任务改到明天并持久化', async 
   const row = window.locator('.today-task-row', { hasText: '要改期的任务' });
   await expect(row).toBeVisible();
 
-  // ghost chip → When 气泡 → 明天
+  // ghost chip → 点击直接展示范围选择器，不再有快捷菜单
   await row.locator('.task-when-chip').click();
-  await expect(window.locator('.when-option-tomorrow')).toBeVisible();
-  await window.locator('.when-option-tomorrow').click();
+  const picker = window.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  await expect(window.locator('.when-option')).toHaveCount(0);
+
+  // 选今天并把开始时间设为 09:30（结束留空）
+  const today = new Date();
+  await picker.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+  await picker.locator('.schedule-range-field').nth(1).click();
+  const timeInput = picker.locator('input[type=time]');
+  await expect(timeInput).toBeVisible();
+  await timeInput.fill('09:30');
+
+  // 点击外部/Escape 关闭弹层后才保存
+  await window.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
 
   const expected = new Date();
-  expected.setDate(expected.getDate() + 1);
-  expected.setHours(0, 0, 0, 0);
+  expected.setHours(9, 30, 0, 0);
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () =>
       global.__moliTodoApp.taskService.getAllTasks()
@@ -951,14 +963,14 @@ test('When 气泡快捷改期：未安排任务改到明天并持久化', async 
     return task && task.scheduledStartAt ? new Date(task.scheduledStartAt).toISOString() : null;
   }, { timeout: 15000 }).toBe(expected.toISOString());
 
-  // 改期后行进入明天的日期 section，chip 更新为「明天」
-  const tomorrowKey = localKey(expected);
-  const tomorrowSection = window.locator(`[data-date-section="${tomorrowKey}"]`);
-  await expect(tomorrowSection.locator('.today-task-row', { hasText: '要改期的任务' }).locator('.task-when-chip'))
-    .toContainText('明天');
+  // 改期后行进入今天的日期 section，chip 更新为「今天」
+  const todayKey = localKey(today);
+  const todaySection = window.locator(`[data-date-section="${todayKey}"]`);
+  await expect(todaySection.locator('.today-task-row', { hasText: '要改期的任务' }).locator('.task-when-chip'))
+    .toContainText('今天');
 });
 
-test('When 气泡改期按时长平移结束时间', async ({ app, window }) => {
+test('When 气泡改期：选新日期后开始与结束时刻保持不变', async ({ app, window }) => {
   await app.electronApp.evaluate(async () => {
     const moli = global.__moliTodoApp;
     const start = new Date();
@@ -981,15 +993,17 @@ test('When 气泡改期按时长平移结束时间', async ({ app, window }) => 
   await expect(row.locator('.task-when-chip')).toContainText('10:00');
   await expect(row.locator('.task-when-chip')).toContainText('11:00');
 
-  // 改到下周（下周一）：结束时间按时长平移，保留 1 小时时段
+  // 点击 chip 直接打开范围选择器，改到今天：开始与结束时刻保持不变
   await row.locator('.task-when-chip').click();
-  await window.locator('.when-option-next-week').click();
+  const picker = window.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  const today = new Date();
+  await picker.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+  await window.keyboard.press('Escape');
 
-  const nextMonday = new Date();
-  nextMonday.setDate(nextMonday.getDate() + (((1 - nextMonday.getDay() + 7) % 7) || 7));
-  nextMonday.setHours(0, 0, 0, 0);
-  const expectedStart = nextMonday.toISOString();
-  const expectedEnd = new Date(nextMonday.getTime() + 60 * 60 * 1000).toISOString();
+  const expectedStart = new Date();
+  expectedStart.setHours(10, 0, 0, 0);
+  const expectedEnd = new Date(expectedStart.getTime() + 60 * 60 * 1000);
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () =>
       global.__moliTodoApp.taskService.getAllTasks()
@@ -1000,10 +1014,10 @@ test('When 气泡改期按时长平移结束时间', async ({ app, window }) => 
       start: new Date(task.scheduledStartAt).toISOString(),
       end: new Date(task.scheduledEndAt).toISOString()
     };
-  }, { timeout: 15000 }).toEqual({ start: expectedStart, end: expectedEnd });
+  }, { timeout: 15000 }).toEqual({ start: expectedStart.toISOString(), end: expectedEnd.toISOString() });
 });
 
-test('When 气泡内嵌日历选择具体日期并持久化', async ({ app, window }) => {
+test('When 气泡内嵌范围选择：一次设置开始与结束，关闭后持久化', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{ content: '日历改期任务' }]);
   await window.reload();
   await waitForToday(window);
@@ -1011,14 +1025,34 @@ test('When 气泡内嵌日历选择具体日期并持久化', async ({ app, wind
   await window.locator('[data-agenda-section="unplanned"] .agenda-section-header').click();
   const row = window.locator('.today-task-row', { hasText: '日历改期任务' });
   await row.locator('.task-when-chip').click();
-  await window.locator('.when-option-picker').click();
 
-  const calendar = window.locator('.when-calendar');
-  await expect(calendar).toBeVisible();
+  const picker = window.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  const fields = picker.locator('.schedule-range-field');
 
-  // 选择当月今天所在的日子（min-date 为今天，当日必可点）
+  // 开始日期（默认激活）：日历直接可见
   const today = new Date();
-  await calendar.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+  await picker.locator('.vc-day-content', { hasText: new RegExp(`^${today.getDate()}$`) }).first().click();
+  await expect(picker).toBeVisible();
+
+  // 开始时间：点击时间块就地变成时间输入框，change 即提交（输入框保持到失焦）
+  await fields.nth(1).click();
+  const timeInput = picker.locator('input[type=time]');
+  await expect(timeInput).toBeVisible();
+  await timeInput.fill('15:30');
+  await expect(timeInput).toHaveValue('15:30');
+
+  // 结束时间：16:45（结束日期默认跟随开始，同一天）
+  await picker.locator('.schedule-range-field', { hasText: '选择时间' }).click();
+  await expect(timeInput).toBeVisible();
+  await timeInput.fill('16:45');
+  await expect(timeInput).toHaveValue('16:45');
+  await expect(picker).toBeVisible();
+
+  // 点击外部/Escape 关闭弹层后才保存
+  await window.screenshot({ path: 'test-results/when-range-picker.png', animations: 'disabled' });
+  await window.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
 
   const todayKey = localKey(today);
   await expect.poll(async () => {
@@ -1026,8 +1060,11 @@ test('When 气泡内嵌日历选择具体日期并持久化', async ({ app, wind
       global.__moliTodoApp.taskService.getAllTasks()
     );
     const task = tasks.find((t) => t.content === '日历改期任务');
-    return task && task.scheduledStartAt ? localKey(new Date(task.scheduledStartAt)) : null;
-  }, { timeout: 15000 }).toBe(todayKey);
+    if (!task || !task.scheduledStartAt || !task.scheduledEndAt) return null;
+    const start = new Date(task.scheduledStartAt);
+    const end = new Date(task.scheduledEndAt);
+    return `${localKey(start)} ${start.toTimeString().slice(0, 5)} -> ${localKey(end)} ${end.toTimeString().slice(0, 5)}`;
+  }, { timeout: 15000 }).toBe(`${todayKey} 15:30 -> ${todayKey} 16:45`);
 });
 
 test('提醒气泡：行上设置预设提醒并可清除', async ({ app, window }) => {
@@ -1124,13 +1161,18 @@ test('虚拟重复实例改期先物化为真实任务', async ({ app, window })
   const row = window.locator('.agenda-section-today .today-task-row', { hasText: '重复改期任务' });
   await expect(row).toBeVisible();
 
-  // 虚拟实例行上改期：先物化再执行，结果落在真实任务行
+  // 虚拟实例行上改时间：先物化再执行，结果落在真实任务行
   await row.locator('.task-when-chip').click();
-  await window.locator('.when-option-tomorrow').click();
+  const picker = window.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  await picker.locator('.schedule-range-field').nth(1).click();
+  const timeInput = picker.locator('input[type=time]');
+  await expect(timeInput).toBeVisible();
+  await timeInput.fill('15:30');
+  await window.keyboard.press('Escape');
 
   const expected = new Date();
-  expected.setDate(expected.getDate() + 1);
-  expected.setHours(0, 0, 0, 0);
+  expected.setHours(15, 30, 0, 0);
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () =>
       global.__moliTodoApp.taskService.getAllTasks()
@@ -1542,7 +1584,8 @@ test('清除安排时间保留截止，持久化结果一致', async ({ app, win
 
   const row = window.locator('.today-task-row', { hasText: '安排与截止并存' });
   await row.locator('.task-when-chip').click();
-  await window.getByText('清除安排时间').click();
+  await expect(window.locator('.when-popover')).toBeVisible();
+  await window.locator('.when-picker-clear').click();
 
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());

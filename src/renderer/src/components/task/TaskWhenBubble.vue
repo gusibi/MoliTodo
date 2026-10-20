@@ -14,31 +14,11 @@
       </span>
     </template>
     <div class="when-popover">
-      <template v-if="!pickerVisible">
-        <div class="when-option when-option-today" @click.stop="setWhenQuick('today')">
-          <CalendarDays class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
-          <span>{{ $t('categories.today') }}</span>
-        </div>
-        <div class="when-option when-option-tomorrow" @click.stop="setWhenQuick('tomorrow')">
-          <CalendarDays class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
-          <span>{{ $t('floatView.chipTomorrow') }}</span>
-        </div>
-        <div class="when-option when-option-next-week" @click.stop="setWhenQuick('nextWeek')">
-          <CalendarDays class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
-          <span>{{ $t('tasks.nextWeek') }}</span>
-        </div>
-        <div v-if="hasSchedule(task)" class="when-option when-option-clear" @click.stop="clearWhen">
-          <X class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
-          <span>{{ $t('tasks.clearSchedule') }}</span>
-        </div>
-        <div class="when-option when-option-picker" @click.stop="openPicker">
-          <CalendarClock class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
-          <span>{{ $t('tasks.pickDate') }}</span>
-        </div>
-      </template>
-      <div v-else class="when-calendar">
-        <v-date-picker v-model="pickerValue" mode="dateTime" is24hr :minute-increment="5"
-          :is-dark="isDark" :min-date="pickerMinDate" @update:modelValue="setFromPicker" borderless />
+      <ScheduleRangePicker v-model="pickerRange" :min-date="pickerMinDate"
+        @update:model-value="pickerDirty = true" />
+      <div v-if="hasSchedule(task)" class="when-option when-option-clear when-picker-clear" @click.stop="clearWhen">
+        <X class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
+        <span>{{ $t('tasks.clearSchedule') }}</span>
       </div>
     </div>
   </Popover>
@@ -58,12 +38,13 @@ import {
 } from '@/utils/task-time-rules'
 import { materializeVirtualInstance } from '@/utils/today-agenda'
 import { dayLabel, formatTimeHM } from '@/utils/when-labels'
-import { useTheme } from '@/composables/useTheme'
 import Popover from '../ui/popover/Popover.vue'
 import Tooltip from '../ui/tooltip/Tooltip.vue'
+import ScheduleRangePicker from './ScheduleRangePicker.vue'
 
 /**
  * 行上 When chip + When 气泡（悬浮窗与 Today 行共用的就地改期入口）。
+ * 点击 chip 直接展示范围选择器（预填当前安排），底部提供清除安排；
  * 安排优先、截止其次（逾期红）、未安排 ghost；虚拟重复实例先物化再执行。
  */
 const props = defineProps({
@@ -81,11 +62,10 @@ const emit = defineEmits(['updated', 'open-change'])
 
 const { t: $t, locale } = useI18n()
 const taskStore = useTaskStore()
-const { isDark } = useTheme()
 
 const open = ref(false)
-const pickerVisible = ref(false)
-const pickerValue = ref(null)
+const pickerRange = ref({ start: null, end: null })
+const pickerDirty = ref(false)
 
 const pickerMinDate = computed(() => {
   const start = new Date()
@@ -140,45 +120,48 @@ function toDateValue(value) {
 }
 
 function handleOpenChange(value) {
-  open.value = value
+  // 点击 chip 直接展示范围选择器并预填当前安排；
+  // 选日期/时间不会立即关闭弹层，方便一次设置开始与结束，点击外部/Escape 时统一保存一次。
   if (value) {
-    pickerVisible.value = false
-    pickerValue.value = null
+    pickerRange.value = {
+      start: toDateValue(props.task.scheduledStartAt),
+      end: toDateValue(props.task.scheduledEndAt)
+    }
+    pickerDirty.value = false
+    open.value = true
+    emit('open-change', true)
+    return
   }
-  emit('open-change', value)
+  const pendingStart = toDateValue(pickerRange.value.start)
+  if (pickerDirty.value && pendingStart) {
+    const pendingEnd = toDateValue(pickerRange.value.end)
+    pickerDirty.value = false
+    pickerRange.value = { start: null, end: null }
+    open.value = false
+    emit('open-change', false)
+    void applyRange(pendingStart, pendingEnd)
+    return
+  }
+  open.value = false
+  emit('open-change', false)
 }
 
-// 改安排：保留原有时长（有结束时间时按偏移平移）；相对提醒由应用层自动重算
-async function applyWhen(date) {
+// 一次提交开始与结束；相对提醒由应用层自动重算
+async function applyRange(nextStart, nextEnd) {
   const target = await materializeVirtualInstance(taskStore, props.task)
   if (!target) return
   try {
-    const payload = { scheduledStartAt: date.toISOString() }
-    const oldStart = toDateValue(target.scheduledStartAt)
-    const oldEnd = toDateValue(target.scheduledEndAt)
-    if (oldEnd && oldStart && oldEnd.getTime() > oldStart.getTime()) {
-      payload.scheduledEndAt = new Date(date.getTime() + (oldEnd.getTime() - oldStart.getTime())).toISOString()
-    }
-    await taskStore.updateTask(target.id, payload)
+    await taskStore.updateTask(target.id, {
+      scheduledStartAt: nextStart.toISOString(),
+      scheduledEndAt: nextEnd ? nextEnd.toISOString() : null
+    })
+    pickerDirty.value = false
+    pickerRange.value = { start: null, end: null }
     open.value = false
-    pickerVisible.value = false
     emit('updated', target)
   } catch (error) {
     console.error('更新安排失败:', error)
   }
-}
-
-function setWhenQuick(kind) {
-  const date = new Date()
-  date.setHours(0, 0, 0, 0)
-  if (kind === 'tomorrow') {
-    date.setDate(date.getDate() + 1)
-  } else if (kind === 'nextWeek') {
-    // 下周：取下周一（与「下周X」口语的锚点一致）
-    const diff = (1 - date.getDay() + 7) % 7 || 7
-    date.setDate(date.getDate() + diff)
-  }
-  applyWhen(date)
 }
 
 async function clearWhen() {
@@ -186,25 +169,13 @@ async function clearWhen() {
   if (!target) return
   try {
     await taskStore.updateTask(target.id, { scheduledStartAt: null, scheduledEndAt: null })
+    pickerDirty.value = false
+    pickerRange.value = { start: null, end: null }
     open.value = false
-    pickerVisible.value = false
     emit('updated', target)
   } catch (error) {
     console.error('清除安排失败:', error)
   }
-}
-
-function openPicker() {
-  // 未安排时不预填日期：预填会让点击同一天不触发 update（值未变化），日历仍显示当前月份
-  pickerValue.value = hasSchedule(props.task) ? scheduleStartDate(props.task) : null
-  pickerVisible.value = true
-}
-
-async function setFromPicker() {
-  if (!pickerValue.value) return
-  const date = toDateValue(pickerValue.value)
-  if (!date) return
-  await applyWhen(date)
 }
 </script>
 
@@ -236,13 +207,9 @@ async function setFromPicker() {
   @apply bg-destructive/10 text-destructive;
 }
 
-/* When 气泡内的日历 */
-.when-calendar {
-  @apply p-1;
-}
-
-.when-calendar :deep(.vc-container) {
-  @apply bg-popover border-0;
+/* 面板底部的清除安排入口：与范围选择器之间留分隔 */
+.when-picker-clear {
+  @apply mt-1 border-t border-border/60 pt-1.5;
 }
 
 /* When chip 的 Popover 锚点（Tooltip 与 Popover 触发器解耦用） */
