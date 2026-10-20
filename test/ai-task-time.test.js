@@ -2,6 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { AIService } = require('../src/infrastructure/ai/ai-service');
 
+function futureLocalDate(daysAhead) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 test('AI post-processing maps occurrence phrases to schedule', () => {
   const [task] = AIService.normalizeGeneratedTasks([
     { content: '明天10点写周报', scheduledStartAt: '2026-09-20T10:00:00+08:00' }
@@ -45,13 +52,15 @@ test('AI post-processing maps an explicit reminder to a relative policy', () => 
 });
 
 test('AI post-processing does not turn a deadline into a reminder', () => {
+  const dueDate = futureLocalDate(2);
+  const reminderTime = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const [task] = AIService.normalizeGeneratedTasks([
-    { content: '有截止也有提醒', dueDate: '2026-09-25', reminderTime: '2026-09-25T08:00:00+08:00' }
+    { content: '有截止也有提醒', dueDate, reminderTime }
   ]);
-  assert.equal(task.dueDate, '2026-09-25');
+  assert.equal(task.dueDate, dueDate);
   assert.equal(task.dueTime, null);
   assert.deepEqual(task.reminderPolicy, { mode: 'absolute', minutesBefore: null });
-  assert.equal(task.reminderTime, '2026-09-25T08:00:00+08:00');
+  assert.equal(task.reminderTime, reminderTime);
 });
 
 test('AI post-processing leaves an unscheduled task without invented time', () => {
