@@ -1,4 +1,6 @@
 const fs = require('fs').promises;
+const sqlite3 = require('sqlite3').verbose();
+const { open } = require('sqlite');
 
 /**
  * 数据库迁移管理类
@@ -9,7 +11,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 6; // 任务时间模型（安排 / 截止 / 提醒策略）
+    this.targetVersion = 7; // 工具域数据表（健康提醒 / 专注 / 成长 / 小院）
   }
 
   /**
@@ -124,6 +126,11 @@ class DatabaseMigration {
         version: 6,
         description: '添加软删除（垃圾桶）字段',
         migrate: () => this.migration_006_add_deleted_at()
+      },
+      {
+        version: 7,
+        description: '添加工具域数据表',
+        migrate: () => this.migration_007_create_tool_tables()
       }
     ];
 
@@ -351,12 +358,215 @@ class DatabaseMigration {
   }
 
   /**
+   * 迁移 007: 添加工具域数据表（健康提醒 / 专注 / 成长 / 小院）
+   * 只新增表，不修改 tasks 表结构或任务语义。
+   */
+  async migration_007_create_tool_tables() {
+    console.log('执行迁移: 添加工具域数据表');
+
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS reminder_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        interval_minutes INTEGER NOT NULL,
+        anchor_mode TEXT NOT NULL DEFAULT 'created',
+        anchor_minutes INTEGER NOT NULL,
+        weekdays TEXT NOT NULL DEFAULT '[]',
+        window_start TEXT NOT NULL,
+        window_end TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        pause_until TEXT,
+        next_run_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS reminder_occurrences (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rule_id INTEGER NOT NULL,
+        scheduled_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        snoozed_until TEXT,
+        snooze_count INTEGER NOT NULL DEFAULT 0,
+        responded_at TEXT,
+        local_date TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(rule_id, scheduled_at),
+        FOREIGN KEY (rule_id) REFERENCES reminder_rules(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS focus_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        linked_task_id TEXT,
+        planned_seconds INTEGER NOT NULL,
+        focus_seconds INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        ended_at TEXT,
+        paused_ms INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS activity_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dedupe_key TEXT NOT NULL UNIQUE,
+        source_type TEXT NOT NULL,
+        source_id TEXT,
+        event_type TEXT NOT NULL,
+        growth_points INTEGER NOT NULL DEFAULT 0,
+        occurred_at TEXT NOT NULL,
+        local_date TEXT NOT NULL,
+        tz_offset INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS activity_daily_summary (
+        local_date TEXT PRIMARY KEY,
+        focus_count INTEGER NOT NULL DEFAULT 0,
+        water_count INTEGER NOT NULL DEFAULT 0,
+        sun_count INTEGER NOT NULL DEFAULT 0,
+        total_growth INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS plant_instances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        species_id TEXT NOT NULL,
+        growth_score INTEGER NOT NULL DEFAULT 0,
+        stage TEXT NOT NULL DEFAULT 'seed',
+        planted_at TEXT NOT NULL,
+        matured_at TEXT,
+        status TEXT NOT NULL DEFAULT 'growing',
+        local_date_planted TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS seed_inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        species_id TEXT NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        UNIQUE(species_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS species_unlocks (
+        species_id TEXT PRIMARY KEY,
+        unlocked_at TEXT NOT NULL,
+        source TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS growth_days (
+        local_date TEXT PRIMARY KEY,
+        growth_score INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS garden_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        current_streak INTEGER NOT NULL DEFAULT 0,
+        longest_streak INTEGER NOT NULL DEFAULT 0,
+        total_growth_days INTEGER NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 1,
+        active_plant_id INTEGER,
+        auto_plant INTEGER NOT NULL DEFAULT 1,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS garden_expansions (
+        level INTEGER PRIMARY KEY,
+        unlocked_at TEXT NOT NULL,
+        condition_type TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS milestone_unlocks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        definition_id TEXT NOT NULL UNIQUE,
+        unlocked_at TEXT NOT NULL,
+        claim_status TEXT NOT NULL DEFAULT 'pending',
+        definition_version TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS reward_claims (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        unlock_id INTEGER NOT NULL UNIQUE,
+        selected_item_id TEXT,
+        claimed_at TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS inventory_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        catalog_id TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        origin_type TEXT NOT NULL,
+        origin_id TEXT NOT NULL,
+        acquired_at TEXT NOT NULL,
+        UNIQUE(origin_type, origin_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS garden_placements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inventory_id INTEGER NOT NULL UNIQUE,
+        region_id TEXT NOT NULL,
+        slot_id TEXT NOT NULL,
+        visible INTEGER NOT NULL DEFAULT 1,
+        placed_at TEXT NOT NULL,
+        UNIQUE(region_id, slot_id),
+        FOREIGN KEY (inventory_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_plant_instances_single_growing
+        ON plant_instances(status) WHERE status = 'growing';
+
+      CREATE INDEX IF NOT EXISTS idx_reminder_rules_next_run_at
+        ON reminder_rules(next_run_at);
+      CREATE INDEX IF NOT EXISTS idx_reminder_rules_enabled_next_run
+        ON reminder_rules(enabled, next_run_at);
+      CREATE INDEX IF NOT EXISTS idx_reminder_occurrences_status
+        ON reminder_occurrences(status);
+      CREATE INDEX IF NOT EXISTS idx_reminder_occurrences_local_date
+        ON reminder_occurrences(local_date);
+      CREATE INDEX IF NOT EXISTS idx_reminder_occurrences_snoozed_until
+        ON reminder_occurrences(snoozed_until);
+      CREATE INDEX IF NOT EXISTS idx_focus_sessions_started_at
+        ON focus_sessions(started_at);
+      CREATE INDEX IF NOT EXISTS idx_focus_sessions_status
+        ON focus_sessions(status);
+      CREATE INDEX IF NOT EXISTS idx_activity_events_local_date
+        ON activity_events(local_date);
+      CREATE INDEX IF NOT EXISTS idx_activity_events_event_type
+        ON activity_events(event_type);
+      CREATE INDEX IF NOT EXISTS idx_activity_events_occurred_at
+        ON activity_events(occurred_at);
+      CREATE INDEX IF NOT EXISTS idx_plant_instances_status
+        ON plant_instances(status);
+      CREATE INDEX IF NOT EXISTS idx_plant_instances_species_id
+        ON plant_instances(species_id);
+      CREATE INDEX IF NOT EXISTS idx_milestone_unlocks_claim_status
+        ON milestone_unlocks(claim_status);
+      CREATE INDEX IF NOT EXISTS idx_inventory_items_catalog_id
+        ON inventory_items(catalog_id);
+      CREATE INDEX IF NOT EXISTS idx_inventory_items_kind
+        ON inventory_items(kind);
+    `);
+
+    console.log('工具域数据表创建完成，索引已创建');
+  }
+
+  /**
    * 备份数据库
    */
   async backupDatabase() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupPath = `${this.dbPath}.backup.${timestamp}`;
-    
+
+    try {
+      // 备份前把 WAL 内容合并回主数据库文件，避免 copyFile 漏写已提交数据。
+      await this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    } catch (error) {
+      console.warn('数据库 WAL 检查点失败，备份可能不完整:', error.message);
+    }
+
     try {
       await fs.copyFile(this.dbPath, backupPath);
       console.log(`数据库已备份到: ${backupPath}`);
@@ -379,14 +589,27 @@ class DatabaseMigration {
     try {
       // 检查备份文件是否存在
       await fs.access(backupPath);
-      
-      // 关闭当前数据库连接
+
+      // 关闭当前数据库连接，避免在打开状态下覆盖数据库文件
       if (this.db) {
         await this.db.close();
+        this.db = null;
       }
-      
+
+      // 清理旧的 WAL / SHM 边车文件，防止用恢复后的主文件配上旧 WAL
+      await fs.rm(`${this.dbPath}-wal`, { force: true });
+      await fs.rm(`${this.dbPath}-shm`, { force: true });
+
       // 恢复备份
       await fs.copyFile(backupPath, this.dbPath);
+
+      // 重新打开连接，保证恢复后仍可继续使用
+      this.db = await open({
+        filename: this.dbPath,
+        driver: sqlite3.Database,
+        mode: sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE
+      });
+
       console.log(`数据库已从备份恢复: ${backupPath}`);
       return true;
     } catch (error) {
