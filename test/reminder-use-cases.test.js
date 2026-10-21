@@ -307,6 +307,28 @@ test('updateRule resets the anchor and next run when the interval changes', asyn
   assert.equal((await reminderRepository.findRuleById(rule.id)).intervalMinutes, 30);
 });
 
+test('pending occurrences are restored after restart only within ten minutes', async (t) => {
+  const { db, reminderUseCases } = await setup(t);
+  await reminderUseCases.createRule(ruleInput());
+
+  const ticked = await reminderUseCases.tick(new Date('2026-10-21T01:40:10.000Z'));
+  const occurrenceId = ticked.intents[0].occurrence.id;
+
+  const recent = await reminderUseCases.resumePending(new Date('2026-10-21T01:45:00.000Z'));
+  assert.equal(recent.length, 1);
+  assert.equal(recent[0].occurrence.id, occurrenceId);
+
+  await db.run(
+    'UPDATE reminder_occurrences SET created_at = ? WHERE id = ?',
+    ['2026-10-21T01:30:00.000Z', occurrenceId]
+  );
+  const expired = await reminderUseCases.resumePending(new Date('2026-10-21T01:45:00.000Z'));
+  assert.equal(expired.length, 0);
+
+  const stored = await db.get('SELECT status FROM reminder_occurrences WHERE id = ?', [occurrenceId]);
+  assert.equal(stored.status, 'expired');
+});
+
 test('tick cleans occurrences older than 30 days', async (t) => {
   const { clock, db, reminderUseCases, reminderRepository } = await setup(t);
   const rule = await reminderUseCases.createRule(ruleInput());

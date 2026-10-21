@@ -80,6 +80,8 @@ class ToolsRuntime {
     await this.gardenUseCases.initializeGarden(this.clock.now());
     await this.focusUseCases.interruptActive(this.clock.now());
     await this.tick();
+    const pending = await this.reminderUseCases.resumePending(this.clock.now());
+    await this.popupPresenter.present(pending);
     await this.tickFocus();
     this.start();
   }

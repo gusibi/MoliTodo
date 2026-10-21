@@ -13,6 +13,7 @@ const TICK_TOLERANCE_MS = 90 * 1000;
 const SNOOZE_MS = 10 * 60 * 1000;
 const MAX_SNOOZES = 2;
 const OCCURRENCE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const PENDING_RESTART_MS = 10 * 60 * 1000;
 
 function toDate(value, fieldName = '时间') {
   const date = value instanceof Date ? value : new Date(value);
@@ -233,6 +234,25 @@ class ReminderUseCases {
         dueRuleCount: dueRules.length,
         cleaned
       };
+    });
+  }
+
+  async resumePending(now = this.clock.now()) {
+    const instant = toDate(now, 'now');
+    const nowIso = instant.toISOString();
+    const cutoff = new Date(instant.getTime() - PENDING_RESTART_MS).toISOString();
+
+    return withTransaction(this.db, async () => {
+      await this.reminderRepository.expirePendingBefore(cutoff, nowIso);
+      const occurrences = await this.reminderRepository.listPendingSince(cutoff);
+      const intents = [];
+      for (const occurrence of occurrences) {
+        const rule = await this.reminderRepository.findRuleById(occurrence.ruleId);
+        if (!rule || rule.enabled !== 1) continue;
+        if (rule.pauseUntil && new Date(rule.pauseUntil).getTime() > instant.getTime()) continue;
+        intents.push({ rule, occurrence, scheduledAt: occurrence.scheduledAt });
+      }
+      return intents;
     });
   }
 

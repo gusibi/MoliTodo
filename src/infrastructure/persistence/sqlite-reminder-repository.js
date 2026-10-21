@@ -196,6 +196,26 @@ class SqliteReminderRepository {
     return rows.map((row) => this.rowToOccurrence(row));
   }
 
+  async listPendingSince(cutoffIso) {
+    const rows = await this.db.all(
+      `SELECT * FROM reminder_occurrences
+       WHERE status = 'pending' AND created_at >= ?
+       ORDER BY scheduled_at ASC, id ASC`,
+      [cutoffIso]
+    );
+    return rows.map((row) => this.rowToOccurrence(row));
+  }
+
+  async expirePendingBefore(cutoffIso, respondedAt) {
+    const result = await this.db.run(
+      `UPDATE reminder_occurrences
+       SET status = 'expired', responded_at = ?
+       WHERE status = 'pending' AND created_at < ?`,
+      [respondedAt, cutoffIso]
+    );
+    return result.changes;
+  }
+
   async deleteOccurrencesBefore(cutoffIso) {
     const result = await this.db.run(
       'DELETE FROM reminder_occurrences WHERE scheduled_at < ?',
