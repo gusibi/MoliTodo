@@ -57,7 +57,7 @@ const DEFAULT_MILESTONES = Object.freeze([
   { id: 'annual-gardener', metric: 'growthDayCount', threshold: 300 }
 ]);
 
-const DEFAULT_CATALOG = Object.freeze({ milestones: DEFAULT_MILESTONES });
+const DEFAULT_CATALOG = Object.freeze({ version: 1, milestones: DEFAULT_MILESTONES });
 
 function createInitialState() {
   return {
