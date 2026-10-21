@@ -10,6 +10,7 @@ const GardenUseCases = require('../application/garden-use-cases');
 const RewardUseCases = require('../application/reward-use-cases');
 const FocusUseCases = require('../application/focus-use-cases');
 const PlacementUseCases = require('../application/placement-use-cases');
+const ToolsDataPort = require('../application/tools-data-port');
 const ToolsReadModel = require('../application/tools-read-model');
 
 /**
@@ -55,6 +56,11 @@ class ToolsRuntime {
       db,
       clock,
       gardenRepository: this.gardenRepository
+    });
+    this.dataPort = new ToolsDataPort({
+      db,
+      clock,
+      gardenUseCases: this.gardenUseCases
     });
     this.readModel = new ToolsReadModel({
       clock,
@@ -245,6 +251,25 @@ class ToolsRuntime {
     const placement = await this.placementUseCases.removeItem(inventoryId);
     this.broadcastToolsUpdated();
     return placement;
+  }
+
+  async exportToolsData() {
+    return this.dataPort.exportToolsData();
+  }
+
+  async importToolsData(snapshot) {
+    const result = await this.dataPort.importToolsData(snapshot);
+    this.focusPausedForSleep = false;
+    this.popupPresenter.reset();
+    this.broadcastToolsUpdated();
+    return result;
+  }
+
+  async clearToolsData() {
+    await this.dataPort.clearToolsData();
+    this.focusPausedForSleep = false;
+    this.popupPresenter.reset();
+    this.broadcastToolsUpdated();
   }
 }
 

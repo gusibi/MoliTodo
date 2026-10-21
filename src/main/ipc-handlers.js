@@ -1068,11 +1068,12 @@ class IpcHandlers {
           const allTasks = await this.taskService.getAllTasks();
           const allLists = this.listService ? await this.listService.getAllLists() : [];
           const exportData = {
-            version: '2.0.0', // 升级版本以支持清单
+            version: '3.0.0',
             exportDate: new Date().toISOString(),
             tasks: allTasks.map(task => task.toJSON()),
             lists: allLists.map(list => list.toJSON()),
-            config: this.windowManager.getConfig()
+            config: this.windowManager.getConfig(),
+            tools: this.toolsRuntime ? await this.toolsRuntime.exportToolsData() : null
           };
 
           await fs.writeFile(result.filePath, JSON.stringify(exportData, null, 2), 'utf8');
@@ -1136,6 +1137,11 @@ class IpcHandlers {
             });
           }
 
+          // 导入工具域数据；旧备份没有 tools 时按空处理
+          if (this.toolsRuntime) {
+            await this.toolsRuntime.importToolsData(importData.tools);
+          }
+
           this.broadcastTaskUpdates();
           if (this.listService) {
             this.broadcastListUpdates();
@@ -1144,7 +1150,8 @@ class IpcHandlers {
           return {
             success: true,
             taskCount: importData.tasks.length,
-            listCount: importedLists
+            listCount: importedLists,
+            toolsImported: Boolean(this.toolsRuntime)
           };
         }
 
@@ -1160,6 +1167,9 @@ class IpcHandlers {
       try {
         await this.taskService.clearAllTasks();
         this.notificationService.clearAllSchedules();
+        if (this.toolsRuntime) {
+          await this.toolsRuntime.clearToolsData();
+        }
         this.broadcastTaskUpdates();
         return { success: true };
       } catch (error) {

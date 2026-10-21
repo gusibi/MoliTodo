@@ -117,6 +117,12 @@ class ReminderPopupPresenter {
     this.windowManager.closeReminderPopup();
   }
 
+  reset() {
+    this.clearExpiry();
+    this.queue = [];
+    this.windowManager.closeReminderPopup();
+  }
+
   dispose() {
     this.clearExpiry();
     this.queue = [];
