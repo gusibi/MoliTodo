@@ -191,6 +191,53 @@ class SqliteGardenRepository {
     };
   }
 
+  async findRewardClaimById(claimId) {
+    const row = await this.db.get('SELECT * FROM reward_claims WHERE id = ?', [claimId]);
+    return row ? this.rowToRewardClaim(row) : null;
+  }
+
+  async markRewardClaimClaimed({ id, selectedItemId, claimedAt }) {
+    const result = await this.db.run(
+      `UPDATE reward_claims
+       SET selected_item_id = ?, claimed_at = ?
+       WHERE id = ? AND claimed_at IS NULL`,
+      [selectedItemId, claimedAt, id]
+    );
+    return result.changes > 0;
+  }
+
+  async markMilestoneClaimed(unlockId) {
+    await this.db.run(
+      "UPDATE milestone_unlocks SET claim_status = 'claimed' WHERE id = ?",
+      [unlockId]
+    );
+  }
+
+  async listOwnedCatalogIds() {
+    const rows = await this.db.all(
+      'SELECT catalog_id FROM inventory_items WHERE quantity > 0'
+    );
+    return rows.map((row) => row.catalog_id);
+  }
+
+  async addStackableInventoryItem({
+    catalogId,
+    kind,
+    quantity = 1,
+    originType,
+    originId,
+    acquiredAt
+  }) {
+    await this.db.run(
+      `INSERT INTO inventory_items (
+        catalog_id, kind, quantity, origin_type, origin_id, acquired_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(origin_type, origin_id) DO UPDATE SET
+        quantity = inventory_items.quantity + excluded.quantity`,
+      [catalogId, kind, quantity, originType, String(originId), acquiredAt]
+    );
+  }
+
   async unlockSpecies({ speciesId, unlockedAt, source }) {
     const result = await this.db.run(
       `INSERT OR IGNORE INTO species_unlocks (species_id, unlocked_at, source)
@@ -210,6 +257,16 @@ class SqliteGardenRepository {
       maturedAt: row.matured_at,
       status: row.status,
       localDatePlanted: row.local_date_planted
+    };
+  }
+
+  rowToRewardClaim(row) {
+    return {
+      id: row.id,
+      unlockId: row.unlock_id,
+      selectedItemId: row.selected_item_id,
+      claimedAt: row.claimed_at,
+      createdAt: row.created_at
     };
   }
 
