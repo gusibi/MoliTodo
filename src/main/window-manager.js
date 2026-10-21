@@ -9,6 +9,10 @@ const MENUBAR_PANEL_INITIAL_HEIGHT = 460;
 const MENUBAR_PANEL_MIN_HEIGHT = 240;
 const MENUBAR_PANEL_MAX_HEIGHT = 720;
 
+const REMINDER_POPUP_WIDTH = 420;
+const REMINDER_POPUP_BASE_HEIGHT = 96;
+const REMINDER_POPUP_MAX_HEIGHT = 140;
+
 class WindowManager {
   constructor(appInstance = null) {
     this.floatingWindow = null;
@@ -17,6 +21,7 @@ class WindowManager {
     this.taskManagerWindow = null;
     this.settingsWindow = null;
     this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
+    this.reminderPopupWindow = null;
     this.tray = null;
     this.trayContextMenu = null; // 右键弹出的原生菜单引用
     this.appInstance = appInstance;
@@ -552,9 +557,128 @@ class WindowManager {
     this.createMenuBarPanel();
   }
 
+  computeReminderPopupBounds(height = REMINDER_POPUP_BASE_HEIGHT) {
+    const { screen } = require('electron');
+    const workArea = screen.getPrimaryDisplay().workArea;
+    return {
+      x: workArea.x + workArea.width - REMINDER_POPUP_WIDTH - 16,
+      y: workArea.y + workArea.height - height - 16,
+      width: REMINDER_POPUP_WIDTH,
+      height
+    };
+  }
+
+  showReminderPopup(intents = []) {
+    const count = Math.max(1, intents.length);
+    const height = Math.min(
+      REMINDER_POPUP_MAX_HEIGHT,
+      REMINDER_POPUP_BASE_HEIGHT + (count - 1) * 22
+    );
+    const bounds = this.computeReminderPopupBounds(height);
+
+    if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
+      this.reminderPopupWindow.setBounds(bounds);
+      this.sendReminderPopupIntents(intents);
+      if (!this.reminderPopupWindow.isVisible()) {
+        this.reminderPopupWindow.showInactive();
+      }
+      return;
+    }
+
+    this.reminderPopupWindow = new BrowserWindow({
+      ...bounds,
+      frame: false,
+      resizable: false,
+      movable: true,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      show: false,
+      hasShadow: true,
+      fullscreenable: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      this.reminderPopupWindow.loadURL(`${this.devBaseUrl}/#/reminder-popup`);
+    } else {
+      this.reminderPopupWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
+        hash: 'reminder-popup'
+      });
+    }
+
+    this.reminderPopupWindow.webContents.on('did-finish-load', () => {
+      this.sendReminderPopupIntents(intents);
+    });
+
+    this.reminderPopupWindow.once('ready-to-show', () => {
+      this.reminderPopupWindow.showInactive();
+      this.sendReminderPopupIntents(intents);
+    });
+
+    this.reminderPopupWindow.on('closed', () => {
+      this.reminderPopupWindow = null;
+    });
+  }
+
+  sendReminderPopupIntents(intents) {
+    if (!this.reminderPopupWindow || this.reminderPopupWindow.isDestroyed()) return;
+    if (this.reminderPopupWindow.webContents.isLoading()) {
+      this.reminderPopupWindow.webContents.once('did-finish-load', () => {
+        this.sendReminderPopupIntents(intents);
+      });
+      return;
+    }
+    this.reminderPopupWindow.webContents.send('reminder-popup-intents', intents);
+  }
+
+  closeReminderPopup() {
+    if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
+      this.reminderPopupWindow.close();
+    }
+    this.reminderPopupWindow = null;
+  }
+
+  broadcastToolsUpdated() {
+    const windows = [
+      this.floatingWindow,
+      this.taskManagerWindow,
+      this.settingsWindow,
+      this.taskPanelWindow,
+      this.menuBarPanelWindow
+    ];
+    windows.forEach((window) => {
+      if (window && !window.isDestroyed()) {
+        window.webContents.send('tools-updated');
+      }
+    });
+  }
+
+  openToolView(tool) {
+    this.createTaskManagerWindow();
+    if (!this.taskManagerWindow || this.taskManagerWindow.isDestroyed()) return;
+
+    const send = () => {
+      if (this.taskManagerWindow && !this.taskManagerWindow.isDestroyed()) {
+        this.taskManagerWindow.webContents.send('tools-open-view', tool);
+      }
+    };
+    if (this.taskManagerWindow.webContents.isLoading()) {
+      this.taskManagerWindow.webContents.once('did-finish-load', send);
+    } else {
+      send();
+    }
+    // 首次创建窗口时 Vue 可能在 did-finish-load 之后才挂载监听，补发一次。
+    setTimeout(send, 500);
+    this.taskManagerWindow.show();
+    this.taskManagerWindow.focus();
+  }
+
   // 设置面板固定状态
-  setPanelPinned(pinned) {
-    this.isPanelPinned = pinned;
+  setPanelPinned(pinned) {    this.isPanelPinned = pinned;
     
     if (pinned) {
       // 固定面板时，隐藏悬浮图标
@@ -1129,6 +1253,9 @@ class WindowManager {
     if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
       this.settingsWindow.close();
     }
+    if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
+      this.reminderPopupWindow.close();
+    }
 
     // Close all floating task windows
     this.floatingTaskWindows.forEach((window, taskId) => {
@@ -1171,6 +1298,9 @@ class WindowManager {
     }
     if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
       this.settingsWindow.close();
+    }
+    if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
+      this.reminderPopupWindow.close();
     }
 
     // Close all floating task windows

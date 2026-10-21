@@ -9,6 +9,7 @@ import TaskManagerView from '../views/TaskManagerView.vue'
 import TaskPanel from '../components/float_view/TaskPanel.vue'
 import FloatingTask from '../components/float_view/FloatingTask.vue'
 import MenuBarPanel from '../components/float_view/MenuBarPanel.vue'
+import ReminderPopup from '../components/float_view/ReminderPopup.vue'
 
 const routes = [
   {
@@ -58,6 +59,14 @@ const routes = [
     component: MenuBarPanel,
     meta: {
       title: '菜单栏面板'
+    }
+  },
+  {
+    path: '/reminder-popup',
+    name: 'ReminderPopup',
+    component: ReminderPopup,
+    meta: {
+      title: '健康提醒'
     }
   }
 ]

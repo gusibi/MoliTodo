@@ -6,12 +6,12 @@
   <template v-for="list in sortedLists" :key="list.id">
     <button type="button" class="nav-item" :data-list-id="list.id"
       :class="{ 
-        active: currentListId === list.id, 
+        active: !toolsActive && currentListId === list.id,
         'is-default': list.isDefault, 
         'has-tasks': getListTaskCount(list.id) > 0,
         'drag-over': dragOverListId === list.id
       }"
-      :aria-current="currentListId === list.id ? 'page' : undefined"
+      :aria-current="!toolsActive && currentListId === list.id ? 'page' : undefined"
       @click="selectList(list.id)" 
       @contextmenu.prevent="showListContextMenu(list, $event)"
       @dragover.prevent="handleDragOver($event, list.id)"
@@ -85,12 +85,18 @@ import AlertDialog from './ui/alert-dialog/AlertDialog.vue'
 
 export default {
   name: 'ListSidebar',
+  props: {
+    toolsActive: {
+      type: Boolean,
+      default: false
+    }
+  },
   components: {
     AlertDialog,
     ListCreateDialog,
     ListIcon
   },
-  setup() {
+  setup(props) {
     const { t } = useI18n()
     const taskStore = useTaskStore()
 
@@ -119,6 +125,7 @@ export default {
     // 方法
 
     const selectList = (listId) => {
+      taskStore.setCurrentTool('tasks')
       taskStore.setCurrentListId(listId)
       taskStore.setCurrentCategory('all') // 选择清单时显示该清单的所有任务
     }

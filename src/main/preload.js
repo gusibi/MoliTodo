@@ -112,6 +112,20 @@ const electronAPI = {
     getDailyActivityData: (days = 365) => ipcRenderer.invoke('get-daily-activity-data', { days })
   },
 
+  // 健康提醒 / 成长 / 小院 API
+  tools: {
+    getShellSnapshot: () => ipcRenderer.invoke('tools:get-shell-snapshot'),
+    getGardenView: () => ipcRenderer.invoke('tools:get-garden-view'),
+    listReminderRules: () => ipcRenderer.invoke('tools:list-reminder-rules'),
+    createReminderRule: (input) => ipcRenderer.invoke('tools:create-reminder-rule', input),
+    updateReminderRule: (ruleId, updates) => ipcRenderer.invoke('tools:update-reminder-rule', ruleId, updates),
+    respondReminder: (occurrenceId, action) => ipcRenderer.invoke('tools:respond-reminder', occurrenceId, action),
+    getClaimOptions: (claimId) => ipcRenderer.invoke('tools:get-claim-options', claimId),
+    claimReward: (claimId, selectedItemId) => ipcRenderer.invoke('tools:claim-reward', claimId, selectedItemId),
+    openGarden: () => ipcRenderer.invoke('tools:open-garden'),
+    openHealth: () => ipcRenderer.invoke('tools:open-health')
+  },
+
   // 应用相关 API
   app: {
     // 渲染进程需要它来区分毛玻璃（仅 macOS）和不透明背景
@@ -140,7 +154,10 @@ const electronAPI = {
         'panel-pinned-changed',
         'panel-unpinned',
         'play-notification-sound',
-        'menubar-panel-shown'
+        'menubar-panel-shown',
+        'tools-updated',
+        'tools-open-view',
+        'reminder-popup-intents'
       ];
 
       if (validChannels.includes(channel)) {

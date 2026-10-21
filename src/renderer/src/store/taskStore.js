@@ -26,6 +26,7 @@ export const useTaskStore = defineStore('task', () => {
   const listsLoading = ref(false)
   const currentCategory = ref('today')
   const currentListId = ref(null) // null表示显示所有清单的任务
+  const currentTool = ref('tasks') // tasks | health | garden
   const searchQuery = ref('')
   const searchOptions = ref({
     content: true,
@@ -1074,6 +1075,10 @@ export const useTaskStore = defineStore('task', () => {
       futureDate.setMonth(futureDate.getMonth() + 3) // 展开未来3个月的重复任务
       expandRecurringTasks(now, futureDate, listId)
     }
+  }
+
+  const setCurrentTool = (tool) => {
+    currentTool.value = tool
   }
 
   // 获取所有清单
@@ -2136,6 +2141,7 @@ export const useTaskStore = defineStore('task', () => {
     listsLoading,
     currentCategory,
     currentListId,
+    currentTool,
     searchQuery,
     searchOptions,
     showCompletedInAll,
@@ -2197,6 +2203,7 @@ export const useTaskStore = defineStore('task', () => {
     // 过滤和搜索方法
     setCurrentCategory,
     setCurrentListId,
+    setCurrentTool,
     setSearchQuery,
     setSearchOptions,
     clearSearch,

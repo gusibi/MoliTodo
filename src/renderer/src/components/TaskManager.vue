@@ -3,11 +3,12 @@
     <!-- 左侧边栏 - 导航 -->
     <aside class="task-manager-sidebar">
       <SidebarNav :current-category="currentCategory" :today-count-override="todayPendingCount"
-        @category-change="switchCategory" @open-settings="openSettings" />
+        :current-tool="currentTool"
+        @category-change="switchCategory" @open-settings="openSettings" @tool-change="handleToolChange" />
     </aside>
 
     <!-- 主要内容区域 -->
-    <main class="task-manager-main-content pt-4 flex flex-col">
+    <main v-if="currentTool === 'tasks'" class="task-manager-main-content pt-4 flex flex-col">
       <!-- 当前分类标题区域 -->
       <div class="task-manager-category-header">
         <div class="task-manager-category-title" @click="handleEasterEggClick">
@@ -169,6 +170,7 @@
       <!-- <TaskStatsBar :display-tasks="displayTasks" /> -->
     </main>
 
+    <ToolWorkspace v-else :tool="currentTool" />
 
     <!-- 自定义 Tooltip -->
     <div v-if="tooltip.show" class="task-manager-custom-tooltip" :style="tooltip.style">
@@ -197,6 +199,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CalendarDays, CircleCheck, Columns3, Info, List, Search, X } from '@lucide/vue'
 import { useTaskStore } from '@/store/taskStore'
+import { useToolsStore } from '@/store/toolsStore'
 import FlatTaskList from './FlatTaskList.vue'
 import MonthlyView from './calender_view/MonthlyView.vue'
 import SidebarNav from './SidebarNav.vue'
@@ -204,6 +207,7 @@ import TaskEditVertical from './TaskEditVertical.vue'
 import KanbanBoard from './kanban_view/KanbanBoard.vue'
 import TaskDetailsModal from './TaskDetailsModal.vue'
 import TodayOverview from './today_view/TodayOverview.vue'
+import ToolWorkspace from './tools/ToolWorkspace.vue'
 import CategoryIcon from './ui/CategoryIcon.vue'
 import ListIcon from './ui/ListIcon.vue'
 import IconButton from './ui/button/IconButton.vue'
@@ -213,6 +217,7 @@ import { useDeleteConfirm } from '@/composables/useDeleteConfirm.js'
 
 const { t, locale } = useI18n()
 const taskStore = useTaskStore()
+const toolsStore = useToolsStore()
 const isEditMode = ref(false)
 const editingTask = ref(null)
 const searchInput = ref(null)
@@ -288,6 +293,7 @@ const displayTasks = computed(() => {
 const currentCategory = computed(() => taskStore.currentCategory)
 const currentListId = computed(() => taskStore.currentListId)
 const currentList = computed(() => taskStore.currentList)
+const currentTool = computed(() => taskStore.currentTool)
 
 // Today 综合视图分支（Agenda + Future Calendar）
 const isTodayBranch = computed(() => currentCategory.value === 'today')
@@ -341,6 +347,7 @@ const loadTasks = async () => {
 }
 
 const switchCategory = (category) => {
+  taskStore.setCurrentTool('tasks')
   taskStore.setCurrentCategory(category)
   taskStore.setCurrentListId(null) // 切换智能分类时清除清单选择
   taskStore.clearSearch()
@@ -352,6 +359,11 @@ const switchCategory = (category) => {
   if (viewMode.value === 'monthly' && !['all', 'planned'].includes(category)) {
     viewMode.value = 'list'
   }
+}
+
+const handleToolChange = (tool) => {
+  taskStore.setCurrentTool(tool)
+  handleHideEditPanel()
 }
 
 const handleAddTask = async (taskData) => {
@@ -620,6 +632,16 @@ const openSettings = () => {
   window.electronAPI.windows.showSettings()
 }
 
+const handleToolsUpdated = () => {
+  toolsStore.loadShellSnapshot()
+}
+
+const handleOpenToolView = (tool) => {
+  if (tool === 'health' || tool === 'garden') {
+    taskStore.setCurrentTool(tool)
+  }
+}
+
 // 最后更新时间缓存，用于检测数据变化
 const lastUpdatedTime = ref(null)
 
@@ -683,6 +705,10 @@ onMounted(async () => {
   window.electronAPI.events.on('lists-updated', () => {
     taskStore.getAllLists()
   })
+  window.electronAPI.events.on('tools-updated', handleToolsUpdated)
+  window.electronAPI.events.on('tools-open-view', handleOpenToolView)
+
+  toolsStore.loadShellSnapshot()
 
   // 定时智能更新任务状态
   updateTimer.value = setInterval(() => {
@@ -698,6 +724,8 @@ onUnmounted(() => {
   // 清理事件监听器
   window.electronAPI.events.removeAllListeners('tasks-updated')
   window.electronAPI.events.removeAllListeners('lists-updated')
+  window.electronAPI.events.off('tools-updated', handleToolsUpdated)
+  window.electronAPI.events.off('tools-open-view', handleOpenToolView)
 })
 
 // 监听搜索查询变化

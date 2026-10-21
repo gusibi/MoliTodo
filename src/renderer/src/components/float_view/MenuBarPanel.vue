@@ -6,6 +6,14 @@
     <div class="menubar-panel-divider"></div>
 
     <nav class="menubar-panel-menu" aria-label="MoliTodo">
+      <button type="button" class="menubar-panel-menu-item" @click="openGarden">
+        <Sprout class="h-icon-sm w-icon-sm" aria-hidden="true" />
+        <span>{{ $t('tools.garden') }}</span>
+        <span v-if="pendingRewards > 0" class="menubar-panel-menu-badge">
+          {{ pendingRewards > 99 ? '99+' : pendingRewards }}
+        </span>
+      </button>
+
       <button type="button" class="menubar-panel-menu-item" @click="toggleFloatingIcon">
         <EyeOff v-if="floatingIconVisible" class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <Eye v-else class="h-icon-sm w-icon-sm" aria-hidden="true" />
@@ -38,7 +46,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Eye, EyeOff, ListTodo, LogOut, Settings } from '@lucide/vue'
+import { Eye, EyeOff, ListTodo, LogOut, Settings, Sprout } from '@lucide/vue'
 import Calendar from '@/components/ui/calendar/Calendar.vue'
 import { localeCode } from '@/utils/locale-format.js'
 import { isTaskToday } from '@/utils/task-time-rules.js'
@@ -54,6 +62,7 @@ const containerRef = ref(null)
 const selectedDate = ref(todayString())
 const floatingIconVisible = ref(true)
 const todayTaskCount = ref(0)
+const pendingRewards = ref(0)
 let resizeObserver = null
 
 function todayString() {
@@ -78,6 +87,15 @@ async function refreshState() {
   } catch (error) {
     console.warn('读取今日任务数量失败:', error)
   }
+
+  try {
+    if (window.electronAPI.tools) {
+      const snapshot = await window.electronAPI.tools.getShellSnapshot()
+      pendingRewards.value = snapshot?.badges?.pendingRewards || 0
+    }
+  } catch (error) {
+    console.warn('读取小院待领取数量失败:', error)
+  }
 }
 
 function toggleFloatingIcon() {
@@ -88,6 +106,15 @@ function toggleFloatingIcon() {
 async function openTaskManager() {
   await window.electronAPI.windows.hideMenuBarPanel()
   window.electronAPI.windows.showTaskManager()
+}
+
+async function openGarden() {
+  await window.electronAPI.windows.hideMenuBarPanel()
+  if (window.electronAPI.tools) {
+    await window.electronAPI.tools.openGarden()
+  } else {
+    window.electronAPI.windows.showTaskManager()
+  }
 }
 
 async function openSettings() {
@@ -122,6 +149,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   window.electronAPI.events.on('menubar-panel-shown', handlePanelShown)
   window.electronAPI.events.on('tasks-updated', handlePanelShown)
+  window.electronAPI.events.on('tools-updated', refreshState)
 
   resizeObserver = new ResizeObserver(reportContentHeight)
   resizeObserver.observe(containerRef.value)
@@ -131,6 +159,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
   window.electronAPI.events.off('menubar-panel-shown', handlePanelShown)
   window.electronAPI.events.off('tasks-updated', handlePanelShown)
+  window.electronAPI.events.off('tools-updated', refreshState)
 
   if (resizeObserver) {
     resizeObserver.disconnect()

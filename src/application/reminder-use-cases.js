@@ -236,6 +236,24 @@ class ReminderUseCases {
     });
   }
 
+  async expireOccurrence(occurrenceId, now = this.clock.now()) {
+    const instant = toDate(now, 'now');
+    const nowIso = instant.toISOString();
+
+    return withTransaction(this.db, async () => {
+      const occurrence = await this.reminderRepository.findOccurrenceById(occurrenceId);
+      if (!occurrence || occurrence.status !== 'pending') {
+        return { updated: false, occurrence };
+      }
+      const updated = await this.reminderRepository.updateOccurrence({
+        id: occurrence.id,
+        status: 'expired',
+        respondedAt: nowIso
+      });
+      return { updated: true, occurrence: updated };
+    });
+  }
+
   async respond(occurrenceId, action, now = this.clock.now()) {
     if (!['confirm', 'snooze', 'skip'].includes(action)) {
       throw new Error('响应动作只能是 confirm、snooze 或 skip');

@@ -49,6 +49,11 @@ class SqliteReminderRepository {
     return row ? this.rowToRule(row) : null;
   }
 
+  async listRules() {
+    const rows = await this.db.all('SELECT * FROM reminder_rules ORDER BY id ASC');
+    return rows.map((row) => this.rowToRule(row));
+  }
+
   async listDueRules(nowIso) {
     const rows = await this.db.all(
       `SELECT * FROM reminder_rules

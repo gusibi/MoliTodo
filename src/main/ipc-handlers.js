@@ -4,13 +4,14 @@ const fsSync = require('fs');
 const path = require('path');
 
 class IpcHandlers {
-  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer }) {
+  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer, toolsRuntime = null }) {
     this.taskService = taskService;
     this.listService = listService;
     this.notificationService = notificationService;
     this.windowManager = windowManager;
     this.taskStatusLogService = taskStatusLogService;
     this.localApiServer = localApiServer;
+    this.toolsRuntime = toolsRuntime;
 
     // 服务内部生成重复实例后，通过该钩子注册提醒
     if (typeof this.taskService.setNotificationScheduler === 'function') {
@@ -140,6 +141,7 @@ class IpcHandlers {
     this.setupTaskStatusLogHandlers();
     this.setupAppHandlers();
     this.setupLocalApiHandlers();
+    this.setupToolsHandlers();
   }
 
   setupTaskHandlers() {
@@ -1605,6 +1607,38 @@ class IpcHandlers {
           return { success: false, error: error.message };
         }
       }
+    });
+  }
+
+  setupToolsHandlers() {
+    const runtime = () => {
+      if (!this.toolsRuntime) {
+        throw new Error('工具域尚未初始化');
+      }
+      return this.toolsRuntime;
+    };
+
+    ipcMain.handle('tools:get-shell-snapshot', () => runtime().getShellSnapshot());
+    ipcMain.handle('tools:get-garden-view', () => runtime().getGardenView());
+    ipcMain.handle('tools:list-reminder-rules', () => runtime().listReminderRules());
+    ipcMain.handle('tools:create-reminder-rule', (event, input) => runtime().createReminderRule(input));
+    ipcMain.handle('tools:update-reminder-rule', (event, ruleId, updates) => (
+      runtime().updateReminderRule(ruleId, updates)
+    ));
+    ipcMain.handle('tools:respond-reminder', (event, occurrenceId, action) => (
+      runtime().respondReminder(occurrenceId, action)
+    ));
+    ipcMain.handle('tools:get-claim-options', (event, claimId) => runtime().getClaimOptions(claimId));
+    ipcMain.handle('tools:claim-reward', (event, claimId, selectedItemId) => (
+      runtime().claimReward(claimId, selectedItemId)
+    ));
+    ipcMain.handle('tools:open-garden', () => {
+      this.windowManager.openToolView('garden');
+      return { success: true };
+    });
+    ipcMain.handle('tools:open-health', () => {
+      this.windowManager.openToolView('health');
+      return { success: true };
     });
   }
 

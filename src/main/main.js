@@ -3,6 +3,8 @@ const path = require('path');
 const WindowManager = require('./window-manager');
 const IpcHandlers = require('./ipc-handlers');
 const LocalApiServer = require('./local-api-server');
+const ToolsRuntime = require('./tools-runtime');
+const { createClock } = require('./clock');
 
 // E2E 测试：使用独立用户数据目录与临时数据库，绝不读写开发者或用户真实数据
 if (process.env.MOLI_E2E_USER_DATA) {
@@ -31,6 +33,7 @@ class MoliTodoApp {
     this.listService = null;
     this.notificationService = new NotificationService();
     this.localApiServer = null;
+    this.toolsRuntime = null;
     
     this.isQuitting = false;
   }
@@ -57,6 +60,21 @@ class MoliTodoApp {
       // 将 WindowManager 传递给 TaskService
       this.taskService.windowManager = this.windowManager;
 
+      // 工具域运行时：花园初始化、提醒心跳、读模型与弹窗
+      if (this.taskRepository && this.taskRepository.db) {
+        try {
+          this.toolsRuntime = new ToolsRuntime({
+            db: this.taskRepository.db,
+            windowManager: this.windowManager,
+            clock: createClock()
+          });
+          await this.toolsRuntime.initialize();
+        } catch (error) {
+          console.error('工具域初始化失败，健康提醒与小院暂不可用:', error);
+          this.toolsRuntime = null;
+        }
+      }
+
       this.localApiServer = new LocalApiServer({
         taskService: this.taskService,
         listService: this.listService,
@@ -72,7 +90,8 @@ class MoliTodoApp {
         notificationService: this.notificationService,
         windowManager: this.windowManager,
         taskStatusLogService: this.taskStatusLogService,
-        localApiServer: this.localApiServer
+        localApiServer: this.localApiServer,
+        toolsRuntime: this.toolsRuntime
       });
       this.ipcHandlers.initialize();
 
@@ -188,6 +207,9 @@ class MoliTodoApp {
       if (!this.isQuitting) {
         this.isQuitting = true;
         this.notificationService.clearAllSchedules();
+        if (this.toolsRuntime) {
+          this.toolsRuntime.dispose();
+        }
         if (this.localApiServer) {
           this.localApiServer.dispose().catch(console.error);
         }
