@@ -26,6 +26,25 @@ class SqliteGardenRepository {
     );
   }
 
+  async updateGardenStats({
+    currentStreak,
+    longestStreak,
+    totalGrowthDays,
+    level,
+    updatedAt
+  }) {
+    await this.db.run(
+      `UPDATE garden_state SET
+        current_streak = ?,
+        longest_streak = ?,
+        total_growth_days = ?,
+        level = ?,
+        updated_at = ?
+      WHERE id = 1`,
+      [currentStreak, longestStreak, totalGrowthDays, level, updatedAt]
+    );
+  }
+
   async getActivePlant() {
     const row = await this.db.get(
       `SELECT * FROM plant_instances

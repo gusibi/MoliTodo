@@ -1,3 +1,8 @@
+const {
+  getExpansionLevel,
+  getNextExpansion
+} = require('../domain/services/expansion-policy');
+
 /**
  * 工具域读模型。
  * ShellSnapshot 供侧栏、菜单栏和提醒弹窗共用；GardenView 供 Moli 小院页面使用。
@@ -87,6 +92,10 @@ class ToolsReadModel {
       this.gardenRepository.countPendingRewards()
     ]);
 
+    const level = gardenState ? gardenState.level : 1;
+    const currentExpansion = getExpansionLevel(level) || getExpansionLevel(1);
+    const nextExpansion = getNextExpansion(level);
+
     return {
       generatedAt: instant.toISOString(),
       localDate,
@@ -94,12 +103,21 @@ class ToolsReadModel {
         pendingRewards
       },
       garden: {
-        level: gardenState ? gardenState.level : 1,
+        level,
+        capacity: currentExpansion.capacity,
         currentStreak: gardenState ? gardenState.currentStreak : 0,
         longestStreak: gardenState ? gardenState.longestStreak : 0,
         totalGrowthDays: gardenState ? gardenState.totalGrowthDays : 0,
         activePlantId: gardenState ? gardenState.activePlantId : null,
-        autoPlant: gardenState ? gardenState.autoPlant === 1 : true
+        autoPlant: gardenState ? gardenState.autoPlant === 1 : true,
+        nextExpansion: nextExpansion
+          ? {
+              level: nextExpansion.level,
+              capacity: nextExpansion.capacity,
+              streakDays: nextExpansion.streakDays,
+              totalGrowthDays: nextExpansion.totalGrowthDays
+            }
+          : null
       },
       plant: plant
         ? {

@@ -8,6 +8,10 @@ const {
   getMilestoneReward,
   getMilestoneClaimStatus
 } = require('../domain/services/reward-policy');
+const {
+  advanceGrowthStreak,
+  evaluateExpansionUnlocks
+} = require('../domain/services/expansion-policy');
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
 /**
@@ -79,6 +83,9 @@ class ToolsUseCases {
     const growthDays = await this.activityRepository.listGrowthDays();
     const unlockedMilestones = await this.gardenRepository.listUnlockedMilestones();
     const gardenState = await this.gardenRepository.getState();
+    const definitionVersion = this.catalog.version == null
+      ? null
+      : String(this.catalog.version);
 
     const { state, effects } = applyActivityEvent({
       state: {
@@ -130,6 +137,54 @@ class ToolsUseCases {
         growthScore: state.daily.totalGrowth,
         createdAt: occurredAtIso
       });
+    }
+
+    if (effects.growthDayEarned) {
+      const lastGrowthDate = growthDays.length > 0
+        ? growthDays[growthDays.length - 1]
+        : null;
+      const advanced = advanceGrowthStreak({
+        currentStreak: gardenState.currentStreak,
+        longestStreak: gardenState.longestStreak,
+        totalGrowthDays: gardenState.totalGrowthDays,
+        lastGrowthDate,
+        localDate
+      });
+      const expansionUnlocks = evaluateExpansionUnlocks({
+        currentLevel: gardenState.level,
+        currentStreak: advanced.currentStreak,
+        totalGrowthDays: advanced.totalGrowthDays
+      });
+      const nextLevel = expansionUnlocks.reduce(
+        (level, entry) => Math.max(level, entry.level),
+        gardenState.level
+      );
+
+      await this.gardenRepository.updateGardenStats({
+        currentStreak: advanced.currentStreak,
+        longestStreak: advanced.longestStreak,
+        totalGrowthDays: advanced.totalGrowthDays,
+        level: nextLevel,
+        updatedAt: occurredAtIso
+      });
+
+      for (const expansion of expansionUnlocks) {
+        await this.gardenRepository.unlockExpansion({
+          level: expansion.level,
+          unlockedAt: occurredAtIso,
+          conditionType: expansion.conditionType
+        });
+        const badge = await this.gardenRepository.unlockMilestone({
+          definitionId: `expansion-lv${expansion.level}`,
+          unlockedAt: occurredAtIso,
+          claimStatus: 'pending',
+          definitionVersion
+        });
+        await this.gardenRepository.createRewardClaim({
+          unlockId: badge.id,
+          createdAt: occurredAtIso
+        });
+      }
     }
 
     let updatedPlant = plantRow;
@@ -185,9 +240,6 @@ class ToolsUseCases {
       const definitions = new Map(
         (this.catalog.milestones || []).map((definition) => [definition.id, definition])
       );
-      const definitionVersion = this.catalog.version == null
-        ? null
-        : String(this.catalog.version);
 
       for (const definitionId of effects.eligibleMilestones) {
         const definition = definitions.get(definitionId);

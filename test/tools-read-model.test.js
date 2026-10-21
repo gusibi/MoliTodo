@@ -179,11 +179,18 @@ test('an empty garden view returns defaults without writing state', async (t) =>
   assert.deepEqual(view.badges, { pendingRewards: 0 });
   assert.deepEqual(view.garden, {
     level: 1,
+    capacity: 6,
     currentStreak: 0,
     longestStreak: 0,
     totalGrowthDays: 0,
     activePlantId: null,
-    autoPlant: true
+    autoPlant: true,
+    nextExpansion: {
+      level: 2,
+      capacity: 10,
+      streakDays: 10,
+      totalGrowthDays: 15
+    }
   });
   assert.equal(view.plant, null);
   assert.deepEqual(view.seeds, []);

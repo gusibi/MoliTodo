@@ -48,6 +48,35 @@
         <p v-else class="mt-4 text-sm text-muted-foreground">{{ $t('tools.noPlant') }}</p>
       </section>
 
+      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.expansion') }}</h2>
+          <span class="text-sm text-muted-foreground">
+            {{ $t('tools.capacity', { count: garden.capacity }) }}
+          </span>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span
+            v-for="entry in expansions"
+            :key="entry.level"
+            class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
+          >
+            Lv.{{ entry.level }}
+          </span>
+        </div>
+        <p class="mt-3 text-sm text-muted-foreground">
+          {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+        </p>
+        <p v-if="garden.nextExpansion" class="mt-1 text-sm text-muted-foreground">
+          {{ $t('tools.nextExpansion', {
+            level: garden.nextExpansion.level,
+            streak: garden.nextExpansion.streakDays,
+            total: garden.nextExpansion.totalGrowthDays
+          }) }}
+        </p>
+        <p v-else class="mt-1 text-sm text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
+      </section>
+
       <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.claims') }}</h2>
@@ -151,6 +180,7 @@ const garden = computed(() => gardenView.value?.garden || {
 })
 const seeds = computed(() => gardenView.value?.seeds || [])
 const inventory = computed(() => gardenView.value?.inventory || [])
+const expansions = computed(() => gardenView.value?.expansions || [])
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []
 ))

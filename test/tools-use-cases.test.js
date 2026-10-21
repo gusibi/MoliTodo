@@ -390,6 +390,90 @@ test('a species milestone unlocks the species and grants one seed exactly once',
   assert.equal(seedsAfter.quantity, 1, '重复事件不应再次发放物种种子');
 });
 
+test('a ten day streak unlocks expansion level 2 with a badge and item claim', async (t) => {
+  const { db, activityRepository, gardenRepository, useCases } = await setup(t, { withPlant: true });
+
+  await gardenRepository.ensureState('2026-10-12T01:00:00.000Z');
+  for (let day = 12; day <= 20; day += 1) {
+    await activityRepository.addGrowthDay({
+      localDate: `2026-10-${day}`,
+      growthScore: 7,
+      createdAt: `2026-10-${day}T01:00:00.000Z`
+    });
+  }
+  await db.run(
+    `UPDATE garden_state SET current_streak = 9, longest_streak = 9,
+      total_growth_days = 9, level = 1 WHERE id = 1`
+  );
+
+  const result = await useCases.recordActivity({
+    type: 'focus',
+    dedupeKey: 'focus:streak-10',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+
+  assert.equal(result.effects.growthDayEarned, true);
+
+  const state = await gardenRepository.getState();
+  assert.equal(state.currentStreak, 10);
+  assert.equal(state.longestStreak, 10);
+  assert.equal(state.totalGrowthDays, 10);
+  assert.equal(state.level, 2);
+
+  const expansion = await db.get('SELECT * FROM garden_expansions WHERE level = 2');
+  assert.equal(expansion.condition_type, 'streak');
+
+  const badge = await db.get(
+    'SELECT * FROM milestone_unlocks WHERE definition_id = ?',
+    ['expansion-lv2']
+  );
+  assert.equal(badge.claim_status, 'pending');
+
+  const claim = await db.get('SELECT * FROM reward_claims WHERE unlock_id = ?', [badge.id]);
+  assert.ok(claim);
+  assert.equal(claim.claimed_at, null);
+
+  const duplicate = await useCases.recordActivity({
+    type: 'focus',
+    dedupeKey: 'focus:streak-10',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+  assert.equal(duplicate.recorded, false);
+  assert.equal((await gardenRepository.getState()).currentStreak, 10);
+});
+
+test('the cumulative channel unlocks expansion level 2 even when the streak resets', async (t) => {
+  const { db, activityRepository, gardenRepository, useCases } = await setup(t, { withPlant: true });
+
+  await gardenRepository.ensureState('2026-10-01T01:00:00.000Z');
+  for (let day = 1; day <= 14; day += 1) {
+    const date = `2026-10-${String(day).padStart(2, '0')}`;
+    await activityRepository.addGrowthDay({
+      localDate: date,
+      growthScore: 7,
+      createdAt: `${date}T01:00:00.000Z`
+    });
+  }
+  await db.run(
+    `UPDATE garden_state SET current_streak = 0, longest_streak = 14,
+      total_growth_days = 14, level = 1 WHERE id = 1`
+  );
+
+  await useCases.recordActivity({
+    type: 'focus',
+    dedupeKey: 'focus:total-15',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+
+  const state = await gardenRepository.getState();
+  assert.equal(state.currentStreak, 1);
+  assert.equal(state.totalGrowthDays, 15);
+  assert.equal(state.level, 2);
+
+  const expansion = await db.get('SELECT * FROM garden_expansions WHERE level = 2');
+  assert.equal(expansion.condition_type, 'total');
+});
+
 test('recordActivity rolls back every write when a later step fails, then retries cleanly', async (t) => {
   const { db, gardenRepository, useCases, plantId } = await setup(t, { growthScore: 14 });
   const originalAddInventoryItem = gardenRepository.addInventoryItem;
