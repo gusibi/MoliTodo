@@ -247,6 +247,40 @@ class SqliteGardenRepository {
     return result.changes > 0;
   }
 
+  async hasSpeciesUnlock(speciesId) {
+    const row = await this.db.get(
+      'SELECT 1 AS found FROM species_unlocks WHERE species_id = ?',
+      [speciesId]
+    );
+    return Boolean(row);
+  }
+
+  async unlockExpansion({ level, unlockedAt, conditionType }) {
+    const result = await this.db.run(
+      `INSERT OR IGNORE INTO garden_expansions (level, unlocked_at, condition_type)
+       VALUES (?, ?, ?)`,
+      [level, unlockedAt, conditionType]
+    );
+    return result.changes > 0;
+  }
+
+  async addInventoryItemIfAbsent({
+    catalogId,
+    kind,
+    quantity = 1,
+    originType,
+    originId,
+    acquiredAt
+  }) {
+    const result = await this.db.run(
+      `INSERT OR IGNORE INTO inventory_items (
+        catalog_id, kind, quantity, origin_type, origin_id, acquired_at
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      [catalogId, kind, quantity, originType, String(originId), acquiredAt]
+    );
+    return result.changes > 0;
+  }
+
   rowToPlant(row) {
     return {
       id: row.id,
