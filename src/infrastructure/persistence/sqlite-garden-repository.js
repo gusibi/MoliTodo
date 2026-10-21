@@ -146,15 +146,58 @@ class SqliteGardenRepository {
     return rows.map((row) => row.definition_id);
   }
 
-  async unlockMilestones(definitionIds, unlockedAt, definitionVersion = null) {
-    for (const definitionId of definitionIds) {
-      await this.db.run(
-        `INSERT OR IGNORE INTO milestone_unlocks (
-          definition_id, unlocked_at, claim_status, definition_version
-        ) VALUES (?, ?, 'pending', ?)`,
-        [definitionId, unlockedAt, definitionVersion]
-      );
-    }
+  async unlockMilestone({
+    definitionId,
+    unlockedAt,
+    claimStatus = 'pending',
+    definitionVersion = null
+  }) {
+    const result = await this.db.run(
+      `INSERT OR IGNORE INTO milestone_unlocks (
+        definition_id, unlocked_at, claim_status, definition_version
+      ) VALUES (?, ?, ?, ?)`,
+      [definitionId, unlockedAt, claimStatus, definitionVersion]
+    );
+    const row = await this.db.get(
+      'SELECT * FROM milestone_unlocks WHERE definition_id = ?',
+      [definitionId]
+    );
+    return {
+      id: row.id,
+      definitionId: row.definition_id,
+      claimStatus: row.claim_status,
+      created: result.changes > 0
+    };
+  }
+
+  async createRewardClaim({ unlockId, createdAt }) {
+    const result = await this.db.run(
+      `INSERT OR IGNORE INTO reward_claims (
+        unlock_id, selected_item_id, claimed_at, created_at
+      ) VALUES (?, NULL, NULL, ?)`,
+      [unlockId, createdAt]
+    );
+    const row = await this.db.get(
+      'SELECT * FROM reward_claims WHERE unlock_id = ?',
+      [unlockId]
+    );
+    return {
+      id: row.id,
+      unlockId: row.unlock_id,
+      selectedItemId: row.selected_item_id,
+      claimedAt: row.claimed_at,
+      createdAt: row.created_at,
+      created: result.changes > 0
+    };
+  }
+
+  async unlockSpecies({ speciesId, unlockedAt, source }) {
+    const result = await this.db.run(
+      `INSERT OR IGNORE INTO species_unlocks (species_id, unlocked_at, source)
+       VALUES (?, ?, ?)`,
+      [speciesId, unlockedAt, source]
+    );
+    return result.changes > 0;
   }
 
   rowToPlant(row) {

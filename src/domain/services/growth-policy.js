@@ -39,22 +39,102 @@ const DEFAULT_GROWTH_POLICY = Object.freeze({
 });
 
 const DEFAULT_MILESTONES = Object.freeze([
-  { id: 'first-sprout', metric: 'focusCount', threshold: 1 },
-  { id: 'seven-day-garden', metric: 'growthDayCount', threshold: 7 },
-  { id: 'hydration-start', metric: 'healthCount', threshold: 30 },
-  { id: 'garden-begins', metric: 'growthDayCount', threshold: 30 },
-  { id: 'half-month-streak', metric: 'healthCount', threshold: 150 },
-  { id: 'focus-apprentice', metric: 'focusCount', threshold: 60 },
-  { id: 'season-garden', metric: 'growthDayCount', threshold: 60 },
-  { id: 'healthy-life', metric: 'healthCount', threshold: 300 },
-  { id: 'hundred-day-garden', metric: 'growthDayCount', threshold: 100 },
-  { id: 'focus-advanced', metric: 'focusCount', threshold: 120 },
-  { id: 'half-year-garden', metric: 'growthDayCount', threshold: 150 },
-  { id: 'focus-expert', metric: 'focusCount', threshold: 180 },
-  { id: 'hydration-master', metric: 'healthCount', threshold: 600 },
-  { id: 'deep-gardener', metric: 'growthDayCount', threshold: 210 },
-  { id: 'focus-master', metric: 'focusCount', threshold: 240 },
-  { id: 'annual-gardener', metric: 'growthDayCount', threshold: 300 }
+  {
+    id: 'first-sprout',
+    metric: 'focusCount',
+    threshold: 1,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'seven-day-garden',
+    metric: 'growthDayCount',
+    threshold: 7,
+    reward: { type: 'species', speciesId: 'species-2', seeds: 1 }
+  },
+  {
+    id: 'hydration-start',
+    metric: 'healthCount',
+    threshold: 30,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'garden-begins',
+    metric: 'growthDayCount',
+    threshold: 30,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'half-month-streak',
+    metric: 'healthCount',
+    threshold: 150,
+    reward: { type: 'species', speciesId: 'species-3', seeds: 1 }
+  },
+  {
+    id: 'focus-apprentice',
+    metric: 'focusCount',
+    threshold: 60,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'season-garden',
+    metric: 'growthDayCount',
+    threshold: 60,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'healthy-life',
+    metric: 'healthCount',
+    threshold: 300,
+    reward: { type: 'species', speciesId: 'species-4', seeds: 1 }
+  },
+  {
+    id: 'hundred-day-garden',
+    metric: 'growthDayCount',
+    threshold: 100,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'focus-advanced',
+    metric: 'focusCount',
+    threshold: 120,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'half-year-garden',
+    metric: 'growthDayCount',
+    threshold: 150,
+    reward: { type: 'species', speciesId: 'species-5', seeds: 1 }
+  },
+  {
+    id: 'focus-expert',
+    metric: 'focusCount',
+    threshold: 180,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'hydration-master',
+    metric: 'healthCount',
+    threshold: 600,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'deep-gardener',
+    metric: 'growthDayCount',
+    threshold: 210,
+    reward: { type: 'species', speciesId: 'species-6', seeds: 1 }
+  },
+  {
+    id: 'focus-master',
+    metric: 'focusCount',
+    threshold: 240,
+    reward: { type: 'item-choice' }
+  },
+  {
+    id: 'annual-gardener',
+    metric: 'growthDayCount',
+    threshold: 300,
+    reward: { type: 'item-choice', skin: 'annual-cabin' }
+  }
 ]);
 
 const DEFAULT_CATALOG = Object.freeze({ version: 1, milestones: DEFAULT_MILESTONES });

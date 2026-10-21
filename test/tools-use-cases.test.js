@@ -301,6 +301,12 @@ test('30 health confirmations unlock hydration-start only once', async (t) => {
   assert.equal(milestones[0].claim_status, 'pending');
   assert.equal(milestones[0].definition_version, '1');
 
+  const claims = await db.all('SELECT * FROM reward_claims');
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0].unlock_id, milestones[0].id);
+  assert.equal(claims[0].selected_item_id, null);
+  assert.equal(claims[0].claimed_at, null);
+
   const totals = await activityRepository.getTotals();
   assert.deepEqual(totals, { focusCount: 0, healthCount: 30 });
   assert.deepEqual(await activityRepository.listGrowthDays(), dates);
@@ -320,6 +326,68 @@ test('30 health confirmations unlock hydration-start only once', async (t) => {
 
   const after = await db.get('SELECT COUNT(*) AS count FROM milestone_unlocks');
   assert.equal(after.count, 1);
+  const claimsAfter = await db.get('SELECT COUNT(*) AS count FROM reward_claims');
+  assert.equal(claimsAfter.count, 1);
+});
+
+test('a species milestone unlocks the species and grants one seed exactly once', async (t) => {
+  const { db, activityRepository, useCases } = await setup(t, { withPlant: true });
+
+  for (let day = 15; day <= 20; day += 1) {
+    await activityRepository.addGrowthDay({
+      localDate: `2026-10-${day}`,
+      growthScore: 7,
+      createdAt: `2026-10-${day}T01:00:00.000Z`
+    });
+  }
+
+  const result = await useCases.recordActivity({
+    type: 'focus',
+    dedupeKey: 'focus:seven-day',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+
+  assert.deepEqual(result.effects.eligibleMilestones, ['first-sprout', 'seven-day-garden']);
+
+  const firstSprout = await db.get(
+    'SELECT * FROM milestone_unlocks WHERE definition_id = ?',
+    ['first-sprout']
+  );
+  const sevenDay = await db.get(
+    'SELECT * FROM milestone_unlocks WHERE definition_id = ?',
+    ['seven-day-garden']
+  );
+  assert.equal(firstSprout.claim_status, 'pending');
+  assert.equal(sevenDay.claim_status, 'granted');
+
+  const species = await db.get(
+    'SELECT * FROM species_unlocks WHERE species_id = ?',
+    ['species-2']
+  );
+  assert.equal(species.source, 'milestone:seven-day-garden');
+
+  const seeds = await db.get(
+    'SELECT quantity FROM seed_inventory WHERE species_id = ?',
+    ['species-2']
+  );
+  assert.equal(seeds.quantity, 1);
+
+  const claims = await db.all('SELECT * FROM reward_claims');
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0].unlock_id, firstSprout.id);
+
+  const duplicate = await useCases.recordActivity({
+    type: 'focus',
+    dedupeKey: 'focus:seven-day',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+  assert.equal(duplicate.recorded, false);
+
+  const seedsAfter = await db.get(
+    'SELECT quantity FROM seed_inventory WHERE species_id = ?',
+    ['species-2']
+  );
+  assert.equal(seedsAfter.quantity, 1, '重复事件不应再次发放物种种子');
 });
 
 test('recordActivity rolls back every write when a later step fails, then retries cleanly', async (t) => {

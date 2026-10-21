@@ -3,6 +3,11 @@ const {
   DEFAULT_CATALOG,
   applyActivityEvent
 } = require('../domain/services/growth-policy');
+const {
+  REWARD_TYPES,
+  getMilestoneReward,
+  getMilestoneClaimStatus
+} = require('../domain/services/reward-policy');
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
 /**
@@ -177,11 +182,43 @@ class ToolsUseCases {
     }
 
     if (effects.eligibleMilestones.length > 0) {
-      await this.gardenRepository.unlockMilestones(
-        effects.eligibleMilestones,
-        occurredAtIso,
-        this.catalog.version == null ? null : String(this.catalog.version)
+      const definitions = new Map(
+        (this.catalog.milestones || []).map((definition) => [definition.id, definition])
       );
+      const definitionVersion = this.catalog.version == null
+        ? null
+        : String(this.catalog.version);
+
+      for (const definitionId of effects.eligibleMilestones) {
+        const definition = definitions.get(definitionId);
+        if (!definition) continue;
+
+        const reward = getMilestoneReward(definition);
+        const unlock = await this.gardenRepository.unlockMilestone({
+          definitionId,
+          unlockedAt: occurredAtIso,
+          claimStatus: getMilestoneClaimStatus(definition),
+          definitionVersion
+        });
+
+        if (reward.type === REWARD_TYPES.ITEM_CHOICE) {
+          await this.gardenRepository.createRewardClaim({
+            unlockId: unlock.id,
+            createdAt: occurredAtIso
+          });
+        } else if (reward.type === REWARD_TYPES.SPECIES && unlock.created) {
+          await this.gardenRepository.unlockSpecies({
+            speciesId: reward.speciesId,
+            unlockedAt: occurredAtIso,
+            source: `milestone:${definitionId}`
+          });
+          await this.gardenRepository.addSeeds(
+            reward.speciesId,
+            reward.seeds || 1,
+            occurredAtIso
+          );
+        }
+      }
     }
 
     return {

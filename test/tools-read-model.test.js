@@ -109,11 +109,16 @@ test('the shell snapshot reflects today resources, plant stage, seeds and pendin
     occurredAt: '2026-10-21T01:00:00.000Z'
   });
   await gardenRepository.addSeeds('species-1', 2, '2026-10-21T01:00:00.000Z');
-  await gardenRepository.unlockMilestones(
-    ['hydration-start'],
-    '2026-10-21T01:00:00.000Z',
-    '1'
-  );
+  const unlock = await gardenRepository.unlockMilestone({
+    definitionId: 'hydration-start',
+    unlockedAt: '2026-10-21T01:00:00.000Z',
+    claimStatus: 'pending',
+    definitionVersion: '1'
+  });
+  await gardenRepository.createRewardClaim({
+    unlockId: unlock.id,
+    createdAt: '2026-10-21T01:00:00.000Z'
+  });
 
   const snapshot = await readModel.getShellSnapshot(new Date('2026-10-21T01:05:00.000Z'));
 
