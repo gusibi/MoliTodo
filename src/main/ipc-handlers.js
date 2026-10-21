@@ -1637,6 +1637,12 @@ class IpcHandlers {
     ipcMain.handle('tools:pause-focus', () => runtime().pauseFocus());
     ipcMain.handle('tools:resume-focus', () => runtime().resumeFocus());
     ipcMain.handle('tools:cancel-focus', () => runtime().cancelFocus());
+    ipcMain.handle('tools:place-item', (event, inventoryId, slotId) => (
+      runtime().placeItem(inventoryId, slotId)
+    ));
+    ipcMain.handle('tools:remove-placement', (event, inventoryId) => (
+      runtime().removePlacement(inventoryId)
+    ));
     ipcMain.handle('tools:open-garden', () => {
       this.windowManager.openToolView('garden');
       return { success: true };

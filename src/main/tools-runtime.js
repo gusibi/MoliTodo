@@ -9,6 +9,7 @@ const ReminderUseCases = require('../application/reminder-use-cases');
 const GardenUseCases = require('../application/garden-use-cases');
 const RewardUseCases = require('../application/reward-use-cases');
 const FocusUseCases = require('../application/focus-use-cases');
+const PlacementUseCases = require('../application/placement-use-cases');
 const ToolsReadModel = require('../application/tools-read-model');
 
 /**
@@ -49,6 +50,11 @@ class ToolsRuntime {
       clock,
       focusRepository: this.focusRepository,
       toolsUseCases: this.toolsUseCases
+    });
+    this.placementUseCases = new PlacementUseCases({
+      db,
+      clock,
+      gardenRepository: this.gardenRepository
     });
     this.readModel = new ToolsReadModel({
       clock,
@@ -227,6 +233,18 @@ class ToolsRuntime {
     );
     this.broadcastToolsUpdated();
     return result;
+  }
+
+  async placeItem(inventoryId, slotId) {
+    const placement = await this.placementUseCases.placeItem({ inventoryId, slotId });
+    this.broadcastToolsUpdated();
+    return placement;
+  }
+
+  async removePlacement(inventoryId) {
+    const placement = await this.placementUseCases.removeItem(inventoryId);
+    this.broadcastToolsUpdated();
+    return placement;
   }
 }
 

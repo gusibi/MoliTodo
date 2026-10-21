@@ -278,6 +278,21 @@ class SqliteGardenRepository {
     }));
   }
 
+  async findInventoryItemById(inventoryId) {
+    const row = await this.db.get('SELECT * FROM inventory_items WHERE id = ?', [inventoryId]);
+    return row
+      ? {
+          id: row.id,
+          catalogId: row.catalog_id,
+          kind: row.kind,
+          quantity: row.quantity,
+          originType: row.origin_type,
+          originId: row.origin_id,
+          acquiredAt: row.acquired_at
+        }
+      : null;
+  }
+
   async listPlacements() {
     const rows = await this.db.all(
       'SELECT * FROM garden_placements ORDER BY region_id ASC, slot_id ASC'
@@ -290,6 +305,69 @@ class SqliteGardenRepository {
       visible: row.visible === 1,
       placedAt: row.placed_at
     }));
+  }
+
+  async findPlacementByInventoryId(inventoryId) {
+    const row = await this.db.get(
+      'SELECT * FROM garden_placements WHERE inventory_id = ?',
+      [inventoryId]
+    );
+    return row
+      ? {
+          id: row.id,
+          inventoryId: row.inventory_id,
+          regionId: row.region_id,
+          slotId: row.slot_id,
+          visible: row.visible === 1,
+          placedAt: row.placed_at
+        }
+      : null;
+  }
+
+  async findPlacementBySlot(regionId, slotId) {
+    const row = await this.db.get(
+      'SELECT * FROM garden_placements WHERE region_id = ? AND slot_id = ?',
+      [regionId, slotId]
+    );
+    return row
+      ? {
+          id: row.id,
+          inventoryId: row.inventory_id,
+          regionId: row.region_id,
+          slotId: row.slot_id,
+          visible: row.visible === 1,
+          placedAt: row.placed_at
+        }
+      : null;
+  }
+
+  async addPlacement({ inventoryId, regionId, slotId, visible = 1, placedAt }) {
+    const result = await this.db.run(
+      `INSERT INTO garden_placements (
+        inventory_id, region_id, slot_id, visible, placed_at
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [inventoryId, regionId, slotId, visible, placedAt]
+    );
+    const row = await this.db.get(
+      'SELECT * FROM garden_placements WHERE id = ?',
+      [result.lastID]
+    );
+    return {
+      id: row.id,
+      inventoryId: row.inventory_id,
+      regionId: row.region_id,
+      slotId: row.slot_id,
+      visible: row.visible === 1,
+      placedAt: row.placed_at
+    };
+  }
+
+  async removePlacement(inventoryId) {
+    const result = await this.db.run(
+      'DELETE FROM garden_placements WHERE inventory_id = ?',
+      [inventoryId]
+    );
+    return result.changes > 0;
   }
 
   async listMilestoneUnlocks() {

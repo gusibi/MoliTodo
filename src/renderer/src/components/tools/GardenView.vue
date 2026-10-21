@@ -77,6 +77,47 @@
         <p v-else class="mt-1 text-sm text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
       </section>
 
+      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.placement') }}</h2>
+          <span class="text-sm text-muted-foreground">
+            {{ $t('tools.placementCount', { placed: placements.length, capacity: garden.capacity }) }}
+          </span>
+        </div>
+        <div class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
+          <div
+            v-for="slotId in capacitySlots"
+            :key="slotId"
+            class="flex min-h-16 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-background/40 p-2 text-center"
+          >
+            <template v-if="placementBySlot[slotId]">
+              <span class="max-w-full truncate text-xs text-foreground">
+                {{ inventoryById[placementBySlot[slotId].inventoryId]?.catalogId || '—' }}
+              </span>
+              <IconButton
+                size="icon-sm"
+                class="mt-1 h-5 w-5"
+                :label="$t('tools.placementRemove')"
+                @click="removePlacement(placementBySlot[slotId].inventoryId)"
+              >
+                <X class="h-3 w-3" />
+              </IconButton>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              @click="openPlacement(slotId)"
+            >
+              <Plus class="h-4 w-4" aria-hidden="true" />
+              {{ $t('tools.placementEmpty') }}
+            </button>
+          </div>
+        </div>
+        <p class="mt-3 text-sm text-muted-foreground">{{ $t('tools.placementHint') }}</p>
+        <p v-if="placementError" class="mt-2 text-sm text-destructive" role="alert">{{ placementError }}</p>
+      </section>
+
       <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.claims') }}</h2>
@@ -156,20 +197,51 @@
           </ul>
         </div>
       </section>
+
+      <Dialog
+        :open="placementDialogOpen"
+        :title="$t('tools.placementChoose')"
+        :description="$t('tools.placementHint')"
+        content-class="w-[min(94vw,28rem)]"
+        @update:open="(value) => { placementDialogOpen = value }"
+      >
+        <p v-if="unplacedInventory.length === 0" class="text-sm text-muted-foreground">
+          {{ $t('tools.placementNoItems') }}
+        </p>
+        <div v-else class="flex flex-col gap-2">
+          <Button
+            v-for="item in unplacedInventory"
+            :key="item.id"
+            variant="outline"
+            class="justify-start"
+            :loading="placingItemId === item.id"
+            @click="placeItem(item.id)"
+          >
+            {{ item.catalogId }}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Plus, X } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
+import IconButton from '@/components/ui/button/IconButton.vue'
+import Dialog from '@/components/ui/dialog/Dialog.vue'
 
 const toolsStore = useToolsStore()
 const selectedItemId = ref(null)
 const claimOptions = ref(null)
 const claiming = ref(false)
 const claimError = ref('')
+const placementDialogOpen = ref(false)
+const selectedSlotId = ref(null)
+const placingItemId = ref(null)
+const placementError = ref('')
 
 const gardenView = computed(() => toolsStore.gardenView)
 const plant = computed(() => gardenView.value?.plant || null)
@@ -181,6 +253,26 @@ const garden = computed(() => gardenView.value?.garden || {
 const seeds = computed(() => gardenView.value?.seeds || [])
 const inventory = computed(() => gardenView.value?.inventory || [])
 const expansions = computed(() => gardenView.value?.expansions || [])
+const placements = computed(() => gardenView.value?.placements || [])
+const inventoryById = computed(() => {
+  const map = {}
+  for (const item of inventory.value) map[item.id] = item
+  return map
+})
+const placementBySlot = computed(() => {
+  const map = {}
+  for (const placement of placements.value) {
+    if (placement.regionId === 'garden') map[placement.slotId] = placement
+  }
+  return map
+})
+const capacitySlots = computed(() => (
+  Array.from({ length: garden.value.capacity || 0 }, (_, index) => `slot-${index + 1}`)
+))
+const unplacedInventory = computed(() => {
+  const placedIds = new Set(placements.value.map((placement) => placement.inventoryId))
+  return inventory.value.filter((item) => !placedIds.has(item.id))
+})
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []
 ))
@@ -196,6 +288,36 @@ const progressWidth = computed(() => {
   if (!plant.value) return '0%'
   return `${Math.min(100, Math.round((plant.value.growthScore / 15) * 100))}%`
 })
+
+function openPlacement(slotId) {
+  selectedSlotId.value = slotId
+  placementError.value = ''
+  placementDialogOpen.value = true
+}
+
+async function placeItem(inventoryId) {
+  if (!selectedSlotId.value) return
+  placingItemId.value = inventoryId
+  placementError.value = ''
+  try {
+    await toolsStore.placeItem(inventoryId, selectedSlotId.value)
+    placementDialogOpen.value = false
+    selectedSlotId.value = null
+  } catch (err) {
+    placementError.value = err.message
+  } finally {
+    placingItemId.value = null
+  }
+}
+
+async function removePlacement(inventoryId) {
+  placementError.value = ''
+  try {
+    await toolsStore.removePlacement(inventoryId)
+  } catch (err) {
+    placementError.value = err.message
+  }
+}
 
 async function loadClaimOptions() {
   claimOptions.value = null

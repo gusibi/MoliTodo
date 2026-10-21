@@ -144,6 +144,32 @@ export const useToolsStore = defineStore('tools', () => {
     return window.electronAPI.tools.getClaimOptions(claimId)
   }
 
+  const placeItem = async (inventoryId, slotId) => {
+    if (!available.value) return null
+    error.value = ''
+    try {
+      const placement = await window.electronAPI.tools.placeItem(inventoryId, slotId)
+      await loadGardenView()
+      return placement
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const removePlacement = async (inventoryId) => {
+    if (!available.value) return null
+    error.value = ''
+    try {
+      const placement = await window.electronAPI.tools.removePlacement(inventoryId)
+      await loadGardenView()
+      return placement
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
   const claimReward = async (claimId, selectedItemId = null) => {
     if (!available.value) return null
     loading.value = true
@@ -181,6 +207,8 @@ export const useToolsStore = defineStore('tools', () => {
     resumeFocus,
     cancelFocus,
     getClaimOptions,
-    claimReward
+    claimReward,
+    placeItem,
+    removePlacement
   }
 })
