@@ -680,6 +680,8 @@
     "gardenLevel": "Lv.{level}",
     "seeds": "Seeds",
     "noSeeds": "No seeds yet",
+    "species": "Species",
+    "noSpecies": "No species yet",
     "inventory": "Collection",
     "noInventory": "Nothing collected yet",
     "expansion": "Garden expansions",

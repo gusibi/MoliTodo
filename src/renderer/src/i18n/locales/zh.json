@@ -680,6 +680,8 @@
     "gardenLevel": "Lv.{level}",
     "seeds": "种子",
     "noSeeds": "暂无种子",
+    "species": "物种",
+    "noSpecies": "暂无物种",
     "inventory": "收藏",
     "noInventory": "暂无收藏",
     "expansion": "小院扩建",

@@ -157,7 +157,26 @@
         </div>
       </section>
 
-      <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <section class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.species') }}</h2>
+            <span class="text-sm text-muted-foreground">{{ species.length }}</span>
+          </div>
+          <p v-if="species.length === 0" class="mt-4 text-sm text-muted-foreground">
+            {{ $t('tools.noSpecies') }}
+          </p>
+          <ul v-else class="mt-4 flex flex-wrap gap-2">
+            <li
+              v-for="entry in species"
+              :key="entry.speciesId"
+              class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
+            >
+              {{ entry.speciesId }}
+            </li>
+          </ul>
+        </div>
+
         <div class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.seeds') }}</h2>
@@ -251,6 +270,7 @@ const garden = computed(() => gardenView.value?.garden || {
   autoPlant: true
 })
 const seeds = computed(() => gardenView.value?.seeds || [])
+const species = computed(() => gardenView.value?.species || [])
 const inventory = computed(() => gardenView.value?.inventory || [])
 const expansions = computed(() => gardenView.value?.expansions || [])
 const placements = computed(() => gardenView.value?.placements || [])
