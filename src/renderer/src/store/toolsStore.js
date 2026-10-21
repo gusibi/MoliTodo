@@ -158,8 +158,35 @@ export const useToolsStore = defineStore('tools', () => {
     return window.electronAPI.tools.getClaimOptions(claimId)
   }
 
-  const placeItem = async (inventoryId, slotId) => {
+  const plantSeed = async (speciesId) => {
     if (!available.value) return null
+    error.value = ''
+    try {
+      const result = await window.electronAPI.tools.plantSeed(speciesId)
+      await loadGardenView()
+      await loadShellSnapshot()
+      return result
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const claimBasicSeed = async () => {
+    if (!available.value) return null
+    error.value = ''
+    try {
+      const result = await window.electronAPI.tools.claimBasicSeed()
+      await loadGardenView()
+      await loadShellSnapshot()
+      return result
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const placeItem = async (inventoryId, slotId) => {    if (!available.value) return null
     error.value = ''
     try {
       const placement = await window.electronAPI.tools.placeItem(inventoryId, slotId)
@@ -223,6 +250,8 @@ export const useToolsStore = defineStore('tools', () => {
     cancelFocus,
     getClaimOptions,
     claimReward,
+    plantSeed,
+    claimBasicSeed,
     placeItem,
     removePlacement
   }

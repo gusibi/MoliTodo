@@ -134,6 +134,72 @@ test('initializeGarden completes setup when garden_state already exists', async 
   assert.equal(result.state.activePlantId, result.plant.id);
 });
 
+test('initializeGarden repairs a missing plant when the initial species is already unlocked', async (t) => {
+  const { db, gardenRepository, gardenUseCases } = await setup(t);
+  await gardenRepository.ensureState('2026-10-20T01:00:00.000Z');
+  await gardenRepository.unlockSpecies({
+    speciesId: 'species-1',
+    unlockedAt: '2026-10-20T01:00:00.000Z',
+    source: 'initial'
+  });
+
+  const result = await gardenUseCases.initializeGarden();
+
+  assert.equal(result.initialized, false);
+  assert.equal(result.repaired, true);
+  assert.equal(result.plant.speciesId, 'species-1');
+  assert.equal((await db.get('SELECT COUNT(*) AS count FROM plant_instances')).count, 1);
+});
+
+test('plantSeed consumes a seed after the previous plant has matured', async (t) => {
+  const { db, gardenRepository, gardenUseCases } = await setup(t);
+  await gardenUseCases.initializeGarden();
+  const active = await gardenRepository.getActivePlant();
+  await gardenRepository.updatePlant({
+    id: active.id,
+    growthScore: 15,
+    stage: 'mature',
+    status: 'matured',
+    maturedAt: '2026-10-21T02:00:00.000Z'
+  });
+  await gardenRepository.addSeeds('species-2', 1, '2026-10-21T02:00:00.000Z');
+
+  const result = await gardenUseCases.plantSeed({ speciesId: 'species-2' });
+
+  assert.equal(result.plant.speciesId, 'species-2');
+  assert.equal(result.plant.status, 'growing');
+  assert.equal(result.state.activePlantId, result.plant.id);
+  const seeds = await db.get(
+    'SELECT quantity FROM seed_inventory WHERE species_id = ?',
+    ['species-2']
+  );
+  assert.equal(seeds.quantity, 0);
+});
+
+test('basic seed protection grants one seed only when no plant and no seeds remain', async (t) => {
+  const { db, gardenRepository, gardenUseCases } = await setup(t);
+  await gardenUseCases.initializeGarden();
+  const active = await gardenRepository.getActivePlant();
+  await gardenRepository.updatePlant({
+    id: active.id,
+    growthScore: 15,
+    stage: 'mature',
+    status: 'matured',
+    maturedAt: '2026-10-21T02:00:00.000Z'
+  });
+
+  const granted = await gardenUseCases.claimBasicSeed();
+
+  assert.deepEqual(granted.seeds.map((seed) => [seed.speciesId, seed.quantity]), [
+    ['species-1', 1]
+  ]);
+  await assert.rejects(gardenUseCases.claimBasicSeed(), /还有可用种子/);
+
+  const planted = await gardenUseCases.plantSeed({ speciesId: 'species-1' });
+  assert.equal(planted.plant.speciesId, 'species-1');
+  assert.equal((await db.get('SELECT COUNT(*) AS count FROM plant_instances')).count, 2);
+});
+
 test('initializeGarden reuses an existing growing plant instead of creating a second one', async (t) => {
   const { db, gardenRepository, gardenUseCases } = await setup(t);
   await gardenRepository.ensureState('2026-10-20T01:00:00.000Z');

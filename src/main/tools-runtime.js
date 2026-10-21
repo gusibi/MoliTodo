@@ -282,6 +282,18 @@ class ToolsRuntime {
     this.popupPresenter.reset();
     this.broadcastToolsUpdated();
   }
+
+  async plantSeed(speciesId) {
+    const result = await this.gardenUseCases.plantSeed({ speciesId });
+    this.broadcastToolsUpdated();
+    return result;
+  }
+
+  async claimBasicSeed() {
+    const result = await this.gardenUseCases.claimBasicSeed();
+    this.broadcastToolsUpdated();
+    return result;
+  }
 }
 
 module.exports = ToolsRuntime;

@@ -55,6 +55,19 @@ class SqliteGardenRepository {
     return row ? this.rowToPlant(row) : null;
   }
 
+  async hasAnyPlant() {
+    const row = await this.db.get('SELECT 1 AS found FROM plant_instances LIMIT 1');
+    return Boolean(row);
+  }
+
+  async listPlantInstances(limit = 20) {
+    const rows = await this.db.all(
+      'SELECT * FROM plant_instances ORDER BY id DESC LIMIT ?',
+      [limit]
+    );
+    return rows.map((row) => this.rowToPlant(row));
+  }
+
   async getPlantById(plantId) {
     const row = await this.db.get('SELECT * FROM plant_instances WHERE id = ?', [plantId]);
     return row ? this.rowToPlant(row) : null;

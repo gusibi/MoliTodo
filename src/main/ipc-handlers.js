@@ -1646,6 +1646,8 @@ class IpcHandlers {
     ipcMain.handle('tools:claim-reward', (event, claimId, selectedItemId) => (
       runtime().claimReward(claimId, selectedItemId)
     ));
+    ipcMain.handle('tools:plant-seed', (event, speciesId) => runtime().plantSeed(speciesId));
+    ipcMain.handle('tools:claim-basic-seed', () => runtime().claimBasicSeed());
     ipcMain.handle('tools:get-focus-state', () => runtime().getFocusState());
     ipcMain.handle('tools:start-focus', (event, input) => runtime().startFocus(input));
     ipcMain.handle('tools:pause-focus', () => runtime().pauseFocus());

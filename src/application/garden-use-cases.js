@@ -26,10 +26,18 @@ class GardenUseCases {
 
       const alreadyInitialized = await this.gardenRepository.hasSpeciesUnlock('species-1');
       if (alreadyInitialized) {
+        let plant = await this.gardenRepository.getActivePlant();
+        const hasAnyPlant = await this.gardenRepository.hasAnyPlant();
+        if (!plant && !hasAnyPlant) {
+          plant = await this._createInitialPlant(nowIso, localDate);
+        } else if (plant) {
+          await this.gardenRepository.setActivePlantId(plant.id, nowIso);
+        }
         return {
           initialized: false,
+          repaired: !hasAnyPlant && Boolean(plant),
           state: await this.gardenRepository.getState(),
-          plant: await this.gardenRepository.getActivePlant()
+          plant
         };
       }
 
@@ -62,18 +70,7 @@ class GardenUseCases {
 
       let plant = await this.gardenRepository.getActivePlant();
       if (!plant) {
-        await this.gardenRepository.addSeeds('species-1', 1, nowIso);
-        const consumed = await this.gardenRepository.consumeSeed('species-1', nowIso);
-        if (!consumed) {
-          throw new Error('初始种子发放失败');
-        }
-        const plantId = await this.gardenRepository.insertPlant({
-          speciesId: 'species-1',
-          plantedAt: nowIso,
-          localDatePlanted: localDate
-        });
-        await this.gardenRepository.setActivePlantId(plantId, nowIso);
-        plant = await this.gardenRepository.getPlantById(plantId);
+        plant = await this._createInitialPlant(nowIso, localDate);
       } else {
         await this.gardenRepository.setActivePlantId(plant.id, nowIso);
       }
@@ -82,6 +79,82 @@ class GardenUseCases {
         initialized: true,
         state: await this.gardenRepository.getState(),
         plant
+      };
+    });
+  }
+
+  async _createInitialPlant(nowIso, localDate) {
+    const existingSeeds = await this.gardenRepository.getSeedQuantity('species-1');
+    if (existingSeeds <= 0) {
+      await this.gardenRepository.addSeeds('species-1', 1, nowIso);
+    }
+    const consumed = await this.gardenRepository.consumeSeed('species-1', nowIso);
+    if (!consumed) {
+      throw new Error('初始种子发放失败');
+    }
+    const plantId = await this.gardenRepository.insertPlant({
+      speciesId: 'species-1',
+      plantedAt: nowIso,
+      localDatePlanted: localDate
+    });
+    await this.gardenRepository.setActivePlantId(plantId, nowIso);
+    return this.gardenRepository.getPlantById(plantId);
+  }
+
+  async plantSeed({ speciesId = 'species-1', now = this.clock.now() } = {}) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+    const nowIso = instant.toISOString();
+    const localDate = this.clock.localDate(instant);
+
+    return withTransaction(this.db, async () => {
+      const active = await this.gardenRepository.getActivePlant();
+      if (active) {
+        throw new Error('已有生长中的植物');
+      }
+      const quantity = await this.gardenRepository.getSeedQuantity(speciesId);
+      if (quantity <= 0) {
+        throw new Error('没有可用的种子');
+      }
+      const consumed = await this.gardenRepository.consumeSeed(speciesId, nowIso);
+      if (!consumed) {
+        throw new Error('种子消耗失败');
+      }
+      const plantId = await this.gardenRepository.insertPlant({
+        speciesId,
+        plantedAt: nowIso,
+        localDatePlanted: localDate
+      });
+      await this.gardenRepository.setActivePlantId(plantId, nowIso);
+      return {
+        state: await this.gardenRepository.getState(),
+        plant: await this.gardenRepository.getPlantById(plantId)
+      };
+    });
+  }
+
+  async claimBasicSeed(now = this.clock.now()) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+    const nowIso = instant.toISOString();
+
+    return withTransaction(this.db, async () => {
+      const active = await this.gardenRepository.getActivePlant();
+      if (active) {
+        throw new Error('已有生长中的植物');
+      }
+      const total = await this.gardenRepository.getSeedTotal();
+      if (total > 0) {
+        throw new Error('还有可用种子');
+      }
+      await this.gardenRepository.addSeeds('species-1', 1, nowIso);
+      return {
+        state: await this.gardenRepository.getState(),
+        seeds: await this.gardenRepository.listSeeds()
       };
     });
   }

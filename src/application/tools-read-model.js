@@ -1,8 +1,10 @@
 const {
   getExpansionLevel,
-  getNextExpansion
+  getNextExpansion,
+  EXPANSION_LEVELS
 } = require('../domain/services/expansion-policy');
 const { getFocusSummary } = require('../domain/services/focus-policy');
+const { DEFAULT_CATALOG } = require('../domain/services/growth-policy');
 
 /**
  * 工具域读模型。
@@ -10,11 +12,18 @@ const { getFocusSummary } = require('../domain/services/focus-policy');
  * 本阶段只读取，不写入。
  */
 class ToolsReadModel {
-  constructor({ clock, activityRepository, gardenRepository, focusRepository = null }) {
+  constructor({
+    clock,
+    activityRepository,
+    gardenRepository,
+    focusRepository = null,
+    catalog = DEFAULT_CATALOG
+  }) {
     this.clock = clock;
     this.activityRepository = activityRepository;
     this.gardenRepository = gardenRepository;
     this.focusRepository = focusRepository;
+    this.catalog = catalog;
   }
 
   async getShellSnapshot(now = this.clock.now()) {
@@ -81,7 +90,8 @@ class ToolsReadModel {
       milestones,
       expansions,
       rewardClaims,
-      pendingRewards
+      pendingRewards,
+      plantHistory
     ] = await Promise.all([
       this.gardenRepository.getActivePlant(),
       this.gardenRepository.getState(),
@@ -92,19 +102,19 @@ class ToolsReadModel {
       this.gardenRepository.listMilestoneUnlocks(),
       this.gardenRepository.listExpansions(),
       this.gardenRepository.listRewardClaims(),
-      this.gardenRepository.countPendingRewards()
+      this.gardenRepository.countPendingRewards(),
+      this.gardenRepository.listPlantInstances(10)
     ]);
 
     const level = gardenState ? gardenState.level : 1;
     const currentExpansion = getExpansionLevel(level) || getExpansionLevel(1);
     const nextExpansion = getNextExpansion(level);
+    const seedTotal = seeds.reduce((total, seed) => total + seed.quantity, 0);
 
     return {
       generatedAt: instant.toISOString(),
       localDate,
-      badges: {
-        pendingRewards
-      },
+      badges: this.buildBadges(milestones, expansions, pendingRewards),
       garden: {
         level,
         capacity: currentExpansion.capacity,
@@ -113,6 +123,7 @@ class ToolsReadModel {
         totalGrowthDays: gardenState ? gardenState.totalGrowthDays : 0,
         activePlantId: gardenState ? gardenState.activePlantId : null,
         autoPlant: gardenState ? gardenState.autoPlant === 1 : true,
+        canClaimBasicSeed: !plant && seedTotal === 0,
         nextExpansion: nextExpansion
           ? {
               level: nextExpansion.level,
@@ -140,7 +151,46 @@ class ToolsReadModel {
       placements,
       milestones,
       expansions,
-      rewardClaims
+      rewardClaims,
+      plantHistory
+    };
+  }
+
+  buildBadges(milestones, expansions, pendingRewards) {
+    const milestoneById = new Map(milestones.map((entry) => [entry.definitionId, entry]));
+    const expansionLevels = new Set(expansions.map((entry) => entry.level));
+    const items = [];
+
+    for (const definition of this.catalog.milestones || []) {
+      const unlocked = milestoneById.get(definition.id);
+      items.push({
+        id: `milestone:${definition.id}`,
+        kind: 'milestone',
+        definitionId: definition.id,
+        unlocked: Boolean(unlocked),
+        unlockedAt: unlocked ? unlocked.unlockedAt : null,
+        claimStatus: unlocked ? unlocked.claimStatus : null
+      });
+    }
+
+    for (const expansion of EXPANSION_LEVELS.filter((entry) => entry.level > 1)) {
+      const definitionId = `expansion-lv${expansion.level}`;
+      const unlocked = milestoneById.get(definitionId);
+      items.push({
+        id: `expansion:${expansion.level}`,
+        kind: 'expansion',
+        definitionId,
+        unlocked: expansionLevels.has(expansion.level) || Boolean(unlocked),
+        unlockedAt: unlocked ? unlocked.unlockedAt : null,
+        claimStatus: unlocked ? unlocked.claimStatus : null
+      });
+    }
+
+    return {
+      pendingRewards,
+      total: items.length,
+      unlocked: items.filter((item) => item.unlocked).length,
+      items
     };
   }
 }

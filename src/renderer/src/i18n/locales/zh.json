@@ -670,6 +670,14 @@
     "todayGrowth": "今日成长",
     "plant": "当前植物",
     "noPlant": "还没有生长中的植物",
+    "plantHistory": "生长记录",
+    "noPlantHistory": "还没有植物生长记录",
+    "plantSeed": "种植 {species}",
+    "claimBasicSeed": "领取基础种子",
+    "plantStatus": {
+      "growing": "生长中",
+      "matured": "已成熟"
+    },
     "stage": {
       "seed": "种子",
       "sprout": "发芽",
@@ -677,6 +685,36 @@
       "mature": "成熟"
     },
     "growthScore": "成长值 {score}/15",
+    "badges": {
+      "title": "徽章",
+      "summary": "已解锁 {unlocked}/{total}",
+      "locked": "未解锁",
+      "pending": "待领取奖励",
+      "claimed": "已领取",
+      "earned": "已获得"
+    },
+    "badgeNames": {
+      "first-sprout": "初次萌芽",
+      "seven-day-garden": "七日花园",
+      "hydration-start": "补水起步",
+      "garden-begins": "小院初成",
+      "half-month-streak": "半月坚持",
+      "focus-apprentice": "专注学徒",
+      "season-garden": "一季花园",
+      "healthy-life": "健康生活",
+      "hundred-day-garden": "百日花园",
+      "focus-advanced": "专注进阶",
+      "half-year-garden": "半年花园",
+      "focus-expert": "专注达人",
+      "hydration-master": "补水大师",
+      "deep-gardener": "深度园丁",
+      "focus-master": "专注专家",
+      "annual-gardener": "年度园丁",
+      "expansion-lv2": "右侧花圃",
+      "expansion-lv3": "后院林地",
+      "expansion-lv4": "草坪围栏",
+      "expansion-lv5": "池塘广场"
+    },
     "gardenLevel": "Lv.{level}",
     "seeds": "种子",
     "noSeeds": "暂无种子",

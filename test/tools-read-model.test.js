@@ -194,7 +194,6 @@ test('an empty garden view returns defaults without writing state', async (t) =>
   const view = await readModel.getGardenView(new Date('2026-10-21T01:00:00.000Z'));
 
   assert.equal(view.localDate, '2026-10-21');
-  assert.deepEqual(view.badges, { pendingRewards: 0 });
   assert.deepEqual(view.garden, {
     level: 1,
     capacity: 6,
@@ -203,6 +202,7 @@ test('an empty garden view returns defaults without writing state', async (t) =>
     totalGrowthDays: 0,
     activePlantId: null,
     autoPlant: true,
+    canClaimBasicSeed: true,
     nextExpansion: {
       level: 2,
       capacity: 10,
@@ -210,6 +210,11 @@ test('an empty garden view returns defaults without writing state', async (t) =>
       totalGrowthDays: 15
     }
   });
+  assert.equal(view.badges.pendingRewards, 0);
+  assert.equal(view.badges.total, 20);
+  assert.equal(view.badges.unlocked, 0);
+  assert.equal(view.badges.items.length, 20);
+  assert.equal(view.plantHistory.length, 0);
   assert.equal(view.plant, null);
   assert.deepEqual(view.seeds, []);
   assert.deepEqual(view.species, []);
@@ -260,7 +265,13 @@ test('the garden view reflects initialization, seeds, rewards and placements', a
   assert.equal(before.milestones[0].claimStatus, 'pending');
   assert.equal(before.rewardClaims.length, 1);
   assert.equal(before.rewardClaims[0].claimedAt, null);
-  assert.deepEqual(before.badges, { pendingRewards: 1 });
+  assert.equal(before.badges.pendingRewards, 1);
+  assert.equal(before.badges.unlocked, 1);
+  assert.equal(
+    before.badges.items.find((item) => item.definitionId === 'hydration-start').claimStatus,
+    'pending'
+  );
+  assert.equal(before.plantHistory.length, 1);
   assert.deepEqual(before.expansions.map((entry) => [entry.level, entry.conditionType]), [
     [1, 'initial']
   ]);
@@ -272,7 +283,11 @@ test('the garden view reflects initialization, seeds, rewards and placements', a
   );
 
   const after = await readModel.getGardenView(new Date('2026-10-21T02:00:00.000Z'));
-  assert.deepEqual(after.badges, { pendingRewards: 0 });
+  assert.equal(after.badges.pendingRewards, 0);
+  assert.equal(
+    after.badges.items.find((item) => item.definitionId === 'hydration-start').claimStatus,
+    'claimed'
+  );
   assert.equal(after.milestones[0].claimStatus, 'claimed');
   assert.equal(after.rewardClaims[0].claimedAt, '2026-10-21T02:00:00.000Z');
   assert.equal(after.rewardClaims[0].selectedItemId, 'furniture-3');

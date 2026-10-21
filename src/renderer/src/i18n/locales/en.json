@@ -670,6 +670,14 @@
     "todayGrowth": "Growth today",
     "plant": "Current plant",
     "noPlant": "No plant is growing yet",
+    "plantHistory": "Plant history",
+    "noPlantHistory": "No plant history yet",
+    "plantSeed": "Plant {species}",
+    "claimBasicSeed": "Claim a basic seed",
+    "plantStatus": {
+      "growing": "Growing",
+      "matured": "Matured"
+    },
     "stage": {
       "seed": "Seed",
       "sprout": "Sprout",
@@ -677,6 +685,36 @@
       "mature": "Mature"
     },
     "growthScore": "Growth {score}/15",
+    "badges": {
+      "title": "Badges",
+      "summary": "{unlocked}/{total} unlocked",
+      "locked": "Locked",
+      "pending": "Reward pending",
+      "claimed": "Claimed",
+      "earned": "Earned"
+    },
+    "badgeNames": {
+      "first-sprout": "First sprout",
+      "seven-day-garden": "Seven-day garden",
+      "hydration-start": "Hydration start",
+      "garden-begins": "Garden begins",
+      "half-month-streak": "Half-month streak",
+      "focus-apprentice": "Focus apprentice",
+      "season-garden": "Season garden",
+      "healthy-life": "Healthy life",
+      "hundred-day-garden": "Hundred-day garden",
+      "focus-advanced": "Focus advanced",
+      "half-year-garden": "Half-year garden",
+      "focus-expert": "Focus expert",
+      "hydration-master": "Hydration master",
+      "deep-gardener": "Deep gardener",
+      "focus-master": "Focus master",
+      "annual-gardener": "Annual gardener",
+      "expansion-lv2": "Right flower bed",
+      "expansion-lv3": "Back woodland",
+      "expansion-lv4": "Lawn fence",
+      "expansion-lv5": "Pond plaza"
+    },
     "gardenLevel": "Lv.{level}",
     "seeds": "Seeds",
     "noSeeds": "No seeds yet",
