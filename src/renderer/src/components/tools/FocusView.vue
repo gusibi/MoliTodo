@@ -28,15 +28,23 @@
           </div>
         </div>
 
-        <div v-else class="mt-6 flex flex-wrap gap-2">
-          <Button
-            v-for="minutes in durations"
-            :key="minutes"
-            :loading="starting === minutes"
-            @click="start(minutes)"
-          >
-            {{ $t('tools.focusView.start', { minutes }) }}
-          </Button>
+        <div v-else class="mt-6 flex flex-col gap-3">
+          <select v-model="linkedTaskId" class="tool-select max-w-sm">
+            <option value="">{{ $t('tools.focusView.noTask') }}</option>
+            <option v-for="task in taskOptions" :key="task.id" :value="task.id">
+              {{ task.content }}
+            </option>
+          </select>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              v-for="minutes in durations"
+              :key="minutes"
+              :loading="starting === minutes"
+              @click="start(minutes)"
+            >
+              {{ $t('tools.focusView.start', { minutes }) }}
+            </Button>
+          </div>
         </div>
 
         <p v-if="error" class="mt-3 text-sm text-destructive" role="alert">{{ error }}</p>
@@ -67,17 +75,23 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToolsStore } from '@/store/toolsStore'
+import { useTaskStore } from '@/store/taskStore'
 import Button from '@/components/ui/button/Button.vue'
 
 const toolsStore = useToolsStore()
+const taskStore = useTaskStore()
 const durations = [15, 25, 45]
 const starting = ref(null)
 const error = ref('')
 const remaining = ref(0)
+const linkedTaskId = ref('')
 let timer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
 const recent = computed(() => toolsStore.focusState?.recent || [])
+const taskOptions = computed(() => (
+  taskStore.tasks.filter((task) => task.status !== 'done')
+))
 const displayTime = computed(() => {
   const seconds = Math.max(0, remaining.value)
   const minutes = Math.floor(seconds / 60)
@@ -103,7 +117,10 @@ async function start(minutes) {
   error.value = ''
   starting.value = minutes
   try {
-    await toolsStore.startFocus({ plannedMinutes: minutes })
+    await toolsStore.startFocus({
+      plannedMinutes: minutes,
+      linkedTaskId: linkedTaskId.value || null
+    })
   } catch (err) {
     error.value = err.message
   } finally {
@@ -153,3 +170,11 @@ onUnmounted(() => {
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
 })
 </script>
+
+<style scoped>
+.tool-select {
+  @apply flex h-control-lg w-full rounded-md border border-input bg-background px-3 text-sm text-foreground;
+  @apply outline-none transition-colors duration-150;
+  @apply focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30;
+}
+</style>

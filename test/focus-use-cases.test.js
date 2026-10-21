@@ -150,6 +150,16 @@ test('active sessions left by a previous process are interrupted without reward'
   assert.equal((await db.get('SELECT COUNT(*) AS count FROM activity_events')).count, 0);
 });
 
+test('focus can be linked to a task without changing the task', async (t) => {
+  const { db, focusUseCases } = await setup(t);
+
+  const state = await focusUseCases.start({ plannedMinutes: 15, linkedTaskId: 'task-1' });
+  assert.equal(state.active.linkedTaskId, 'task-1');
+
+  const row = await db.get('SELECT linked_task_id FROM focus_sessions WHERE id = ?', [state.active.id]);
+  assert.equal(row.linked_task_id, 'task-1');
+});
+
 test('the 11th completed focus of the day is recorded with 0 growth', async (t) => {
   const { db, clock, focusUseCases } = await setup(t);
 

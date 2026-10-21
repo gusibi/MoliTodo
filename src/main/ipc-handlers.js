@@ -1672,6 +1672,11 @@ class IpcHandlers {
       this.windowManager.quit();
     });
 
+    ipcMain.handle('app-restart', () => {
+      app.relaunch();
+      this.windowManager.quit();
+    });
+
     // 获取应用版本
     ipcMain.handle('app-get-version', () => {
       return app.getVersion();

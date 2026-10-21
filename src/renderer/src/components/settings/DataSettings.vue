@@ -8,7 +8,7 @@
       <div class="setting-item">
         <div class="setting-item-info">
           <div class="setting-item-label">数据备份与恢复</div>
-          <div class="setting-item-description">导出或导入任务数据，清除所有数据</div>
+          <div class="setting-item-description">导出或导入任务与工具数据，清除所有数据</div>
         </div>
         <div class="setting-item-control">
           <div class="setting-button-group">

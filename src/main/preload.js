@@ -140,6 +140,7 @@ const electronAPI = {
     platform: process.platform,
     updateAppIcon: (iconPath) => ipcRenderer.invoke('update-app-icon', iconPath),
     quit: () => ipcRenderer.invoke('app-quit'),
+    restart: () => ipcRenderer.invoke('app-restart'),
     getVersion: () => ipcRenderer.invoke('app-get-version'),
     getChangelog: () => ipcRenderer.invoke('app-get-changelog'),
     getInfo: () => ipcRenderer.invoke('app-get-info'),
