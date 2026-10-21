@@ -1,6 +1,7 @@
 /**
- * 工具域轻量读模型。
- * ShellSnapshot 供侧栏、菜单栏和提醒弹窗共用；本阶段只读取，不写入。
+ * 工具域读模型。
+ * ShellSnapshot 供侧栏、菜单栏和提醒弹窗共用；GardenView 供 Moli 小院页面使用。
+ * 本阶段只读取，不写入。
  */
 class ToolsReadModel {
   constructor({ clock, activityRepository, gardenRepository }) {
@@ -52,6 +53,73 @@ class ToolsReadModel {
         seedCount,
         autoPlant: gardenState ? gardenState.autoPlant === 1 : true
       }
+    };
+  }
+
+  async getGardenView(now = this.clock.now()) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+
+    const localDate = this.clock.localDate(instant);
+    const [
+      plant,
+      gardenState,
+      seeds,
+      species,
+      inventory,
+      placements,
+      milestones,
+      expansions,
+      rewardClaims,
+      pendingRewards
+    ] = await Promise.all([
+      this.gardenRepository.getActivePlant(),
+      this.gardenRepository.getState(),
+      this.gardenRepository.listSeeds(),
+      this.gardenRepository.listSpeciesUnlocks(),
+      this.gardenRepository.listInventoryItems(),
+      this.gardenRepository.listPlacements(),
+      this.gardenRepository.listMilestoneUnlocks(),
+      this.gardenRepository.listExpansions(),
+      this.gardenRepository.listRewardClaims(),
+      this.gardenRepository.countPendingRewards()
+    ]);
+
+    return {
+      generatedAt: instant.toISOString(),
+      localDate,
+      badges: {
+        pendingRewards
+      },
+      garden: {
+        level: gardenState ? gardenState.level : 1,
+        currentStreak: gardenState ? gardenState.currentStreak : 0,
+        longestStreak: gardenState ? gardenState.longestStreak : 0,
+        totalGrowthDays: gardenState ? gardenState.totalGrowthDays : 0,
+        activePlantId: gardenState ? gardenState.activePlantId : null,
+        autoPlant: gardenState ? gardenState.autoPlant === 1 : true
+      },
+      plant: plant
+        ? {
+            id: plant.id,
+            speciesId: plant.speciesId,
+            stage: plant.stage,
+            growthScore: plant.growthScore,
+            status: plant.status,
+            plantedAt: plant.plantedAt,
+            maturedAt: plant.maturedAt,
+            localDatePlanted: plant.localDatePlanted
+          }
+        : null,
+      seeds,
+      species,
+      inventory,
+      placements,
+      milestones,
+      expansions,
+      rewardClaims
     };
   }
 }

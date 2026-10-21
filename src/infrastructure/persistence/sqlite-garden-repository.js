@@ -220,6 +220,90 @@ class SqliteGardenRepository {
     return rows.map((row) => row.catalog_id);
   }
 
+  async listSeeds() {
+    const rows = await this.db.all(
+      `SELECT * FROM seed_inventory
+       WHERE quantity > 0
+       ORDER BY species_id ASC`
+    );
+    return rows.map((row) => ({
+      speciesId: row.species_id,
+      quantity: row.quantity,
+      updatedAt: row.updated_at
+    }));
+  }
+
+  async listSpeciesUnlocks() {
+    const rows = await this.db.all(
+      'SELECT * FROM species_unlocks ORDER BY species_id ASC'
+    );
+    return rows.map((row) => ({
+      speciesId: row.species_id,
+      unlockedAt: row.unlocked_at,
+      source: row.source
+    }));
+  }
+
+  async listInventoryItems() {
+    const rows = await this.db.all(
+      'SELECT * FROM inventory_items ORDER BY kind ASC, catalog_id ASC, id ASC'
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      catalogId: row.catalog_id,
+      kind: row.kind,
+      quantity: row.quantity,
+      originType: row.origin_type,
+      originId: row.origin_id,
+      acquiredAt: row.acquired_at
+    }));
+  }
+
+  async listPlacements() {
+    const rows = await this.db.all(
+      'SELECT * FROM garden_placements ORDER BY region_id ASC, slot_id ASC'
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      inventoryId: row.inventory_id,
+      regionId: row.region_id,
+      slotId: row.slot_id,
+      visible: row.visible === 1,
+      placedAt: row.placed_at
+    }));
+  }
+
+  async listMilestoneUnlocks() {
+    const rows = await this.db.all(
+      'SELECT * FROM milestone_unlocks ORDER BY id ASC'
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      definitionId: row.definition_id,
+      unlockedAt: row.unlocked_at,
+      claimStatus: row.claim_status,
+      definitionVersion: row.definition_version
+    }));
+  }
+
+  async listExpansions() {
+    const rows = await this.db.all(
+      'SELECT * FROM garden_expansions ORDER BY level ASC'
+    );
+    return rows.map((row) => ({
+      level: row.level,
+      unlockedAt: row.unlocked_at,
+      conditionType: row.condition_type
+    }));
+  }
+
+  async listRewardClaims() {
+    const rows = await this.db.all(
+      'SELECT * FROM reward_claims ORDER BY id ASC'
+    );
+    return rows.map((row) => this.rowToRewardClaim(row));
+  }
+
   async addStackableInventoryItem({
     catalogId,
     kind,
