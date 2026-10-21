@@ -637,7 +637,7 @@ const handleToolsUpdated = () => {
 }
 
 const handleOpenToolView = (tool) => {
-  if (tool === 'health' || tool === 'garden') {
+  if (tool === 'health' || tool === 'focus' || tool === 'garden') {
     taskStore.setCurrentTool(tool)
   }
 }

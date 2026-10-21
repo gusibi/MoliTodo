@@ -3,10 +3,12 @@ const ReminderPopupPresenter = require('./reminder-popup-presenter');
 const SqliteActivityRepository = require('../infrastructure/persistence/sqlite-activity-repository');
 const SqliteGardenRepository = require('../infrastructure/persistence/sqlite-garden-repository');
 const SqliteReminderRepository = require('../infrastructure/persistence/sqlite-reminder-repository');
+const SqliteFocusRepository = require('../infrastructure/persistence/sqlite-focus-repository');
 const ToolsUseCases = require('../application/tools-use-cases');
 const ReminderUseCases = require('../application/reminder-use-cases');
 const GardenUseCases = require('../application/garden-use-cases');
 const RewardUseCases = require('../application/reward-use-cases');
+const FocusUseCases = require('../application/focus-use-cases');
 const ToolsReadModel = require('../application/tools-read-model');
 
 /**
@@ -19,11 +21,15 @@ class ToolsRuntime {
     this.clock = clock;
     this.tickIntervalMs = tickIntervalMs;
     this.timer = null;
+    this.focusTimer = null;
     this.tickInFlight = false;
+    this.focusTickInFlight = false;
+    this.focusPausedForSleep = false;
 
     this.activityRepository = new SqliteActivityRepository(db);
     this.gardenRepository = new SqliteGardenRepository(db);
     this.reminderRepository = new SqliteReminderRepository(db);
+    this.focusRepository = new SqliteFocusRepository(db);
     this.toolsUseCases = new ToolsUseCases({
       db,
       clock,
@@ -38,10 +44,17 @@ class ToolsRuntime {
     });
     this.gardenUseCases = new GardenUseCases({ db, clock, gardenRepository: this.gardenRepository });
     this.rewardUseCases = new RewardUseCases({ db, clock, gardenRepository: this.gardenRepository });
+    this.focusUseCases = new FocusUseCases({
+      db,
+      clock,
+      focusRepository: this.focusRepository,
+      toolsUseCases: this.toolsUseCases
+    });
     this.readModel = new ToolsReadModel({
       clock,
       activityRepository: this.activityRepository,
-      gardenRepository: this.gardenRepository
+      gardenRepository: this.gardenRepository,
+      focusRepository: this.focusRepository
     });
     this.popupPresenter = new ReminderPopupPresenter({
       windowManager,
@@ -53,7 +66,9 @@ class ToolsRuntime {
 
   async initialize() {
     await this.gardenUseCases.initializeGarden(this.clock.now());
+    await this.focusUseCases.interruptActive(this.clock.now());
     await this.tick();
+    await this.tickFocus();
     this.start();
   }
 
@@ -65,12 +80,23 @@ class ToolsRuntime {
       });
     }, this.tickIntervalMs);
     if (this.timer.unref) this.timer.unref();
+
+    this.focusTimer = setInterval(() => {
+      this.tickFocus().catch((error) => {
+        console.error('专注心跳失败:', error);
+      });
+    }, 2000);
+    if (this.focusTimer.unref) this.focusTimer.unref();
   }
 
   dispose() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if (this.focusTimer) {
+      clearInterval(this.focusTimer);
+      this.focusTimer = null;
     }
     this.popupPresenter.dispose();
   }
@@ -93,6 +119,67 @@ class ToolsRuntime {
       return result;
     } finally {
       this.tickInFlight = false;
+    }
+  }
+
+  async tickFocus(now = this.clock.now()) {
+    if (this.focusTickInFlight) return null;
+    this.focusTickInFlight = true;
+    try {
+      const result = await this.focusUseCases.tick(now);
+      if (result.completed) {
+        this.broadcastToolsUpdated();
+      }
+      return result;
+    } finally {
+      this.focusTickInFlight = false;
+    }
+  }
+
+  async getFocusState(now = this.clock.now()) {
+    return this.focusUseCases.getState(now);
+  }
+
+  async startFocus(input = {}) {
+    const state = await this.focusUseCases.start(input);
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async pauseFocus(now = this.clock.now()) {
+    const state = await this.focusUseCases.pause(now);
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async resumeFocus(now = this.clock.now()) {
+    const state = await this.focusUseCases.resume(now);
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async cancelFocus(now = this.clock.now()) {
+    const state = await this.focusUseCases.cancel(now);
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async handleSuspend() {
+    const active = await this.focusRepository.findActiveSession();
+    if (active && active.status === 'running') {
+      await this.focusUseCases.pause(this.clock.now());
+      this.focusPausedForSleep = true;
+      this.broadcastToolsUpdated();
+    }
+  }
+
+  async handleResume() {
+    if (!this.focusPausedForSleep) return;
+    this.focusPausedForSleep = false;
+    const active = await this.focusRepository.findActiveSession();
+    if (active && active.status === 'paused') {
+      await this.focusUseCases.resume(this.clock.now());
+      this.broadcastToolsUpdated();
     }
   }
 

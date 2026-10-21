@@ -693,6 +693,25 @@
     "claimHint": "从当前未拥有的物品中选择一件",
     "lastItem": "最后一件物品将直接领取",
     "fallback": "全部物品已拥有，将获得可堆叠的园艺纪念",
+    "focusView": {
+      "title": "番茄专注",
+      "description": "计时由主进程持有，休眠自动暂停；完成专注不会改变任务状态。",
+      "minimum": "最短 15 分钟",
+      "start": "开始 {minutes} 分钟",
+      "running": "专注中",
+      "paused": "已暂停",
+      "pause": "暂停",
+      "resume": "继续",
+      "cancel": "放弃",
+      "history": "最近专注",
+      "empty": "还没有专注记录",
+      "minutesUnit": "分钟",
+      "status": {
+        "completed": "已完成",
+        "cancelled": "已放弃",
+        "interrupted": "已中断"
+      }
+    },
     "reminder": {
       "create": "创建提醒",
       "description": "喝水、起身和护眼提醒只影响工具域，不会改变任务。",

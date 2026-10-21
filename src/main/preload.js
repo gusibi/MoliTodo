@@ -122,6 +122,11 @@ const electronAPI = {
     respondReminder: (occurrenceId, action) => ipcRenderer.invoke('tools:respond-reminder', occurrenceId, action),
     getClaimOptions: (claimId) => ipcRenderer.invoke('tools:get-claim-options', claimId),
     claimReward: (claimId, selectedItemId) => ipcRenderer.invoke('tools:claim-reward', claimId, selectedItemId),
+    getFocusState: () => ipcRenderer.invoke('tools:get-focus-state'),
+    startFocus: (input) => ipcRenderer.invoke('tools:start-focus', input),
+    pauseFocus: () => ipcRenderer.invoke('tools:pause-focus'),
+    resumeFocus: () => ipcRenderer.invoke('tools:resume-focus'),
+    cancelFocus: () => ipcRenderer.invoke('tools:cancel-focus'),
     openGarden: () => ipcRenderer.invoke('tools:open-garden'),
     openHealth: () => ipcRenderer.invoke('tools:open-health')
   },

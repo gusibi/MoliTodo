@@ -2,6 +2,7 @@ const {
   getExpansionLevel,
   getNextExpansion
 } = require('../domain/services/expansion-policy');
+const { getFocusSummary } = require('../domain/services/focus-policy');
 
 /**
  * 工具域读模型。
@@ -9,10 +10,11 @@ const {
  * 本阶段只读取，不写入。
  */
 class ToolsReadModel {
-  constructor({ clock, activityRepository, gardenRepository }) {
+  constructor({ clock, activityRepository, gardenRepository, focusRepository = null }) {
     this.clock = clock;
     this.activityRepository = activityRepository;
     this.gardenRepository = gardenRepository;
+    this.focusRepository = focusRepository;
   }
 
   async getShellSnapshot(now = this.clock.now()) {
@@ -22,12 +24,13 @@ class ToolsReadModel {
     }
 
     const localDate = this.clock.localDate(instant);
-    const [daily, plant, gardenState, seedCount, pendingRewards] = await Promise.all([
+    const [daily, plant, gardenState, seedCount, pendingRewards, activeFocus] = await Promise.all([
       this.activityRepository.getDailySummary(localDate),
       this.gardenRepository.getActivePlant(),
       this.gardenRepository.getState(),
       this.gardenRepository.getSeedTotal(),
-      this.gardenRepository.countPendingRewards()
+      this.gardenRepository.countPendingRewards(),
+      this.focusRepository ? this.focusRepository.findActiveSession() : null
     ]);
 
     return {
@@ -36,8 +39,8 @@ class ToolsReadModel {
       badges: {
         pendingRewards
       },
-      // 专注模块尚未实现，避免返回伪造的计时状态。
-      focus: null,
+      // 专注模块未运行时返回 null；运行中则提供轻量摘要。
+      focus: activeFocus ? getFocusSummary(activeFocus, instant) : null,
       today: {
         focusCount: daily ? daily.focusCount : 0,
         waterCount: daily ? daily.waterCount : 0,

@@ -32,9 +32,10 @@
         </button>
         <button
           type="button"
-          class="nav-item opacity-50 cursor-not-allowed"
-          disabled
-          :title="$t('tools.comingSoon')"
+          class="nav-item"
+          :class="{ active: currentTool === 'focus' }"
+          :aria-current="currentTool === 'focus' ? 'page' : undefined"
+          @click="switchTool('focus')"
         >
           <Timer class="h-icon-md w-icon-md" />
           <span>{{ $t('tools.focus') }}</span>

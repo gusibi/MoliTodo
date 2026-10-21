@@ -1632,6 +1632,11 @@ class IpcHandlers {
     ipcMain.handle('tools:claim-reward', (event, claimId, selectedItemId) => (
       runtime().claimReward(claimId, selectedItemId)
     ));
+    ipcMain.handle('tools:get-focus-state', () => runtime().getFocusState());
+    ipcMain.handle('tools:start-focus', (event, input) => runtime().startFocus(input));
+    ipcMain.handle('tools:pause-focus', () => runtime().pauseFocus());
+    ipcMain.handle('tools:resume-focus', () => runtime().resumeFocus());
+    ipcMain.handle('tools:cancel-focus', () => runtime().cancelFocus());
     ipcMain.handle('tools:open-garden', () => {
       this.windowManager.openToolView('garden');
       return { success: true };

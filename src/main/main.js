@@ -1,4 +1,4 @@
-const { app } = require('electron');
+const { app, powerMonitor } = require('electron');
 const path = require('path');
 const WindowManager = require('./window-manager');
 const IpcHandlers = require('./ipc-handlers');
@@ -69,6 +69,16 @@ class MoliTodoApp {
             clock: createClock()
           });
           await this.toolsRuntime.initialize();
+          powerMonitor.on('suspend', () => {
+            this.toolsRuntime.handleSuspend().catch((error) => {
+              console.error('休眠暂停专注失败:', error);
+            });
+          });
+          powerMonitor.on('resume', () => {
+            this.toolsRuntime.handleResume().catch((error) => {
+              console.error('唤醒恢复专注失败:', error);
+            });
+          });
         } catch (error) {
           console.error('工具域初始化失败，健康提醒与小院暂不可用:', error);
           this.toolsRuntime = null;

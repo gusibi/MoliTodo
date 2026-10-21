@@ -5,6 +5,7 @@ export const useToolsStore = defineStore('tools', () => {
   const shellSnapshot = ref(null)
   const gardenView = ref(null)
   const reminderRules = ref([])
+  const focusState = ref(null)
   const loading = ref(false)
   const error = ref('')
 
@@ -41,6 +42,69 @@ export const useToolsStore = defineStore('tools', () => {
     } catch (err) {
       error.value = err.message
       return []
+    }
+  }
+
+  const loadFocusState = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.getFocusState()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      return null
+    }
+  }
+
+  const startFocus = async (input) => {
+    if (!available.value) return null
+    loading.value = true
+    error.value = ''
+    try {
+      focusState.value = await window.electronAPI.tools.startFocus(input)
+      await loadShellSnapshot()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const pauseFocus = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.pauseFocus()
+      await loadShellSnapshot()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const resumeFocus = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.resumeFocus()
+      await loadShellSnapshot()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const cancelFocus = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.cancelFocus()
+      await loadShellSnapshot()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
     }
   }
 
@@ -101,6 +165,7 @@ export const useToolsStore = defineStore('tools', () => {
     shellSnapshot,
     gardenView,
     reminderRules,
+    focusState,
     loading,
     error,
     available,
@@ -108,8 +173,13 @@ export const useToolsStore = defineStore('tools', () => {
     loadShellSnapshot,
     loadGardenView,
     loadReminderRules,
+    loadFocusState,
     createReminderRule,
     updateReminderRule,
+    startFocus,
+    pauseFocus,
+    resumeFocus,
+    cancelFocus,
     getClaimOptions,
     claimReward
   }

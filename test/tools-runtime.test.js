@@ -98,4 +98,14 @@ test('the runtime initializes the garden, ticks a rule and records a confirmatio
   assert.equal(after.today.waterCount, 1);
   assert.equal(after.today.totalGrowth, 2);
   assert.equal(after.plant.growthScore, 2);
+
+  await runtime.startFocus({ plannedMinutes: 15 });
+  clock.setNow('2026-10-21T01:55:10.000Z');
+  const focusTick = await runtime.tickFocus();
+  assert.equal(focusTick.completed, true);
+
+  const focused = await runtime.getShellSnapshot();
+  assert.equal(focused.focus, null);
+  assert.equal(focused.today.focusCount, 1);
+  assert.equal(focused.plant.growthScore, 3);
 });

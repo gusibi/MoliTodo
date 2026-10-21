@@ -693,6 +693,25 @@
     "claimHint": "Choose one item you do not own yet",
     "lastItem": "The last item will be granted directly",
     "fallback": "All items owned; you will receive a stackable garden memorial",
+    "focusView": {
+      "title": "Focus timer",
+      "description": "Timing lives in the main process and pauses during sleep; completing focus never changes task state.",
+      "minimum": "Minimum 15 minutes",
+      "start": "Start {minutes} min",
+      "running": "Focusing",
+      "paused": "Paused",
+      "pause": "Pause",
+      "resume": "Resume",
+      "cancel": "Give up",
+      "history": "Recent focus",
+      "empty": "No focus sessions yet",
+      "minutesUnit": "min",
+      "status": {
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "interrupted": "Interrupted"
+      }
+    },
     "reminder": {
       "create": "Create reminder",
       "description": "Water, stand and eye reminders only affect the tools area, never tasks.",

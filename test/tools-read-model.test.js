@@ -6,6 +6,7 @@ const path = require('node:path');
 const SqliteTaskRepository = require('../src/infrastructure/persistence/sqlite-task-repository');
 const SqliteActivityRepository = require('../src/infrastructure/persistence/sqlite-activity-repository');
 const SqliteGardenRepository = require('../src/infrastructure/persistence/sqlite-garden-repository');
+const SqliteFocusRepository = require('../src/infrastructure/persistence/sqlite-focus-repository');
 const ToolsUseCases = require('../src/application/tools-use-cases');
 const ToolsReadModel = require('../src/application/tools-read-model');
 const GardenUseCases = require('../src/application/garden-use-cases');
@@ -49,13 +50,14 @@ async function setup(t, { withPlant = false, growthScore = 0 } = {}) {
   const clock = makeClock();
   const activityRepository = new SqliteActivityRepository(repo.db);
   const gardenRepository = new SqliteGardenRepository(repo.db);
+  const focusRepository = new SqliteFocusRepository(repo.db);
   const toolsUseCases = new ToolsUseCases({
     db: repo.db,
     clock,
     activityRepository,
     gardenRepository
   });
-  const readModel = new ToolsReadModel({ clock, activityRepository, gardenRepository });
+  const readModel = new ToolsReadModel({ clock, activityRepository, gardenRepository, focusRepository });
   const gardenUseCases = new GardenUseCases({ db: repo.db, clock, gardenRepository });
   const rewardUseCases = new RewardUseCases({ db: repo.db, clock, gardenRepository });
 
@@ -79,7 +81,7 @@ async function setup(t, { withPlant = false, growthScore = 0 } = {}) {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  return { db: repo.db, clock, activityRepository, gardenRepository, toolsUseCases, readModel, gardenUseCases, rewardUseCases };
+  return { db: repo.db, clock, activityRepository, gardenRepository, focusRepository, toolsUseCases, readModel, gardenUseCases, rewardUseCases };
 }
 
 test('an empty garden returns zero resources and does not create state', async (t) => {
@@ -168,6 +170,22 @@ test('the snapshot uses the local date and does not mix yesterday resources', as
     sunCount: 0,
     totalGrowth: 2
   });
+});
+
+test('the shell snapshot includes an active focus summary', async (t) => {
+  const { focusRepository, readModel } = await setup(t);
+
+  const session = await focusRepository.createSession({
+    plannedSeconds: 900,
+    startedAt: '2026-10-21T01:00:00.000Z',
+    createdAt: '2026-10-21T01:00:00.000Z'
+  });
+  const snapshot = await readModel.getShellSnapshot(new Date('2026-10-21T01:05:00.000Z'));
+
+  assert.equal(snapshot.focus.id, session.id);
+  assert.equal(snapshot.focus.status, 'running');
+  assert.equal(snapshot.focus.elapsedSeconds, 300);
+  assert.equal(snapshot.focus.remainingSeconds, 600);
 });
 
 test('an empty garden view returns defaults without writing state', async (t) => {
