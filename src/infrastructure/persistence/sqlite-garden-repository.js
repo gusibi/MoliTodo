@@ -79,6 +79,29 @@ class SqliteGardenRepository {
     return row ? row.quantity : 0;
   }
 
+  async getSeedTotal() {
+    const row = await this.db.get(
+      'SELECT COALESCE(SUM(quantity), 0) AS total FROM seed_inventory'
+    );
+    return row ? row.total : 0;
+  }
+
+  async countPendingRewards() {
+    const row = await this.db.get(`
+      SELECT
+        (SELECT COUNT(*) FROM milestone_unlocks WHERE claim_status = 'pending')
+        + (
+          SELECT COUNT(*) FROM reward_claims rc
+          WHERE rc.claimed_at IS NULL
+            AND NOT EXISTS (
+              SELECT 1 FROM milestone_unlocks mu
+              WHERE mu.id = rc.unlock_id AND mu.claim_status = 'pending'
+            )
+        ) AS count
+    `);
+    return row ? row.count : 0;
+  }
+
   async addSeeds(speciesId, quantity, now) {
     await this.db.run(
       `INSERT INTO seed_inventory (species_id, quantity, updated_at)
