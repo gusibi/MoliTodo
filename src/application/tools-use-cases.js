@@ -26,7 +26,21 @@ class ToolsUseCases {
     this.catalog = catalog;
   }
 
-  async recordActivity({ type, dedupeKey, sourceType = 'manual', sourceId = null, occurredAt } = {}) {
+  async recordActivity(input = {}) {
+    return withTransaction(this.db, () => this.recordActivityInTransaction(input));
+  }
+
+  /**
+   * 在调用方已经开启的事务内记录活动。
+   * 提醒确认需要把 occurrence 状态与成长写入放在同一个事务里。
+   */
+  async recordActivityInTransaction({
+    type,
+    dedupeKey,
+    sourceType = 'manual',
+    sourceId = null,
+    occurredAt
+  } = {}) {
     if (!type) {
       throw new TypeError('记录活动需要 type');
     }
@@ -42,145 +56,143 @@ class ToolsUseCases {
     const localDate = this.clock.localDate(instant);
     const tzOffset = this.clock.tzOffset(instant);
 
-    return withTransaction(this.db, async () => {
-      const existing = await this.activityRepository.findByDedupeKey(dedupeKey);
-      if (existing) {
-        return {
-          recorded: false,
-          duplicate: true,
-          event: existing,
-          effects: null
-        };
-      }
+    const existing = await this.activityRepository.findByDedupeKey(dedupeKey);
+    if (existing) {
+      return {
+        recorded: false,
+        duplicate: true,
+        event: existing,
+        effects: null
+      };
+    }
 
-      await this.gardenRepository.ensureState(occurredAtIso);
+    await this.gardenRepository.ensureState(occurredAtIso);
 
-      const plantRow = await this.gardenRepository.getActivePlant();
-      const dailyRow = await this.activityRepository.getDailySummary(localDate);
-      const totals = await this.activityRepository.getTotals();
-      const growthDays = await this.activityRepository.listGrowthDays();
-      const unlockedMilestones = await this.gardenRepository.listUnlockedMilestones();
-      const gardenState = await this.gardenRepository.getState();
+    const plantRow = await this.gardenRepository.getActivePlant();
+    const dailyRow = await this.activityRepository.getDailySummary(localDate);
+    const totals = await this.activityRepository.getTotals();
+    const growthDays = await this.activityRepository.listGrowthDays();
+    const unlockedMilestones = await this.gardenRepository.listUnlockedMilestones();
+    const gardenState = await this.gardenRepository.getState();
 
-      const { state, effects } = applyActivityEvent({
-        state: {
-          plant: plantRow,
-          daily: dailyRow || {
-            localDate,
-            focusCount: 0,
-            waterCount: 0,
-            sunCount: 0,
-            totalGrowth: 0
-          },
-          totals,
-          growthDays,
-          unlockedMilestones
+    const { state, effects } = applyActivityEvent({
+      state: {
+        plant: plantRow,
+        daily: dailyRow || {
+          localDate,
+          focusCount: 0,
+          waterCount: 0,
+          sunCount: 0,
+          totalGrowth: 0
         },
-        event: {
-          type,
-          occurredAt: occurredAtIso,
-          localDate
-        },
-        policy: this.growthPolicy,
-        catalog: this.catalog
-      });
-
-      const event = await this.activityRepository.appendEvent({
-        dedupeKey,
-        sourceType,
-        sourceId,
-        eventType: type,
-        growthPoints: effects.growthPoints,
+        totals,
+        growthDays,
+        unlockedMilestones
+      },
+      event: {
+        type,
         occurredAt: occurredAtIso,
+        localDate
+      },
+      policy: this.growthPolicy,
+      catalog: this.catalog
+    });
+
+    const event = await this.activityRepository.appendEvent({
+      dedupeKey,
+      sourceType,
+      sourceId,
+      eventType: type,
+      growthPoints: effects.growthPoints,
+      occurredAt: occurredAtIso,
+      localDate,
+      tzOffset,
+      createdAt: occurredAtIso
+    });
+
+    await this.activityRepository.saveDailySummary({
+      localDate,
+      focusCount: state.daily.focusCount,
+      waterCount: state.daily.waterCount,
+      sunCount: state.daily.sunCount,
+      totalGrowth: state.daily.totalGrowth,
+      updatedAt: occurredAtIso
+    });
+
+    if (state.growthDays.includes(localDate)) {
+      await this.activityRepository.addGrowthDay({
         localDate,
-        tzOffset,
+        growthScore: state.daily.totalGrowth,
         createdAt: occurredAtIso
       });
+    }
 
-      await this.activityRepository.saveDailySummary({
-        localDate,
-        focusCount: state.daily.focusCount,
-        waterCount: state.daily.waterCount,
-        sunCount: state.daily.sunCount,
-        totalGrowth: state.daily.totalGrowth,
-        updatedAt: occurredAtIso
+    let updatedPlant = plantRow;
+    if (plantRow && effects.appliedGrowth > 0) {
+      await this.gardenRepository.updatePlant({
+        id: plantRow.id,
+        growthScore: state.plant.growthScore,
+        stage: state.plant.stage,
+        status: state.plant.status,
+        maturedAt: state.plant.maturedAt || null
       });
+      updatedPlant = await this.gardenRepository.getPlantById(plantRow.id);
+    }
 
-      if (state.growthDays.includes(localDate)) {
-        await this.activityRepository.addGrowthDay({
-          localDate,
-          growthScore: state.daily.totalGrowth,
-          createdAt: occurredAtIso
-        });
-      }
+    let inventoryItemId = null;
+    let autoPlantedPlantId = null;
+    if (effects.matured) {
+      inventoryItemId = await this.gardenRepository.addInventoryItem({
+        catalogId: state.plant.speciesId,
+        kind: 'tree',
+        quantity: 1,
+        originType: 'plant_instance',
+        originId: plantRow.id,
+        acquiredAt: occurredAtIso
+      });
+      await this.gardenRepository.addSeeds(
+        state.plant.speciesId,
+        effects.seedYield.quantity,
+        occurredAtIso
+      );
 
-      let updatedPlant = plantRow;
-      if (plantRow && effects.appliedGrowth > 0) {
-        await this.gardenRepository.updatePlant({
-          id: plantRow.id,
-          growthScore: state.plant.growthScore,
-          stage: state.plant.stage,
-          status: state.plant.status,
-          maturedAt: state.plant.maturedAt || null
-        });
-        updatedPlant = await this.gardenRepository.getPlantById(plantRow.id);
-      }
-
-      let inventoryItemId = null;
-      let autoPlantedPlantId = null;
-      if (effects.matured) {
-        inventoryItemId = await this.gardenRepository.addInventoryItem({
-          catalogId: state.plant.speciesId,
-          kind: 'tree',
-          quantity: 1,
-          originType: 'plant_instance',
-          originId: plantRow.id,
-          acquiredAt: occurredAtIso
-        });
-        await this.gardenRepository.addSeeds(
+      if (gardenState.autoPlant === 1) {
+        const consumed = await this.gardenRepository.consumeSeed(
           state.plant.speciesId,
-          effects.seedYield.quantity,
           occurredAtIso
         );
-
-        if (gardenState.autoPlant === 1) {
-          const consumed = await this.gardenRepository.consumeSeed(
-            state.plant.speciesId,
-            occurredAtIso
-          );
-          if (consumed) {
-            autoPlantedPlantId = await this.gardenRepository.insertPlant({
-              speciesId: state.plant.speciesId,
-              plantedAt: occurredAtIso,
-              localDatePlanted: localDate
-            });
-            await this.gardenRepository.setActivePlantId(autoPlantedPlantId, occurredAtIso);
-          } else {
-            await this.gardenRepository.setActivePlantId(null, occurredAtIso);
-          }
+        if (consumed) {
+          autoPlantedPlantId = await this.gardenRepository.insertPlant({
+            speciesId: state.plant.speciesId,
+            plantedAt: occurredAtIso,
+            localDatePlanted: localDate
+          });
+          await this.gardenRepository.setActivePlantId(autoPlantedPlantId, occurredAtIso);
         } else {
           await this.gardenRepository.setActivePlantId(null, occurredAtIso);
         }
+      } else {
+        await this.gardenRepository.setActivePlantId(null, occurredAtIso);
       }
+    }
 
-      if (effects.eligibleMilestones.length > 0) {
-        await this.gardenRepository.unlockMilestones(
-          effects.eligibleMilestones,
-          occurredAtIso,
-          this.catalog.version == null ? null : String(this.catalog.version)
-        );
-      }
+    if (effects.eligibleMilestones.length > 0) {
+      await this.gardenRepository.unlockMilestones(
+        effects.eligibleMilestones,
+        occurredAtIso,
+        this.catalog.version == null ? null : String(this.catalog.version)
+      );
+    }
 
-      return {
-        recorded: true,
-        duplicate: false,
-        event,
-        effects,
-        plant: updatedPlant,
-        inventoryItemId,
-        autoPlantedPlantId
-      };
-    });
+    return {
+      recorded: true,
+      duplicate: false,
+      event,
+      effects,
+      plant: updatedPlant,
+      inventoryItemId,
+      autoPlantedPlantId
+    };
   }
 }
 
