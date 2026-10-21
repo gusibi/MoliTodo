@@ -25,6 +25,10 @@ class ReminderPopupPresenter {
     return this.queue.some((intent) => intent.occurrence.id === occurrenceId);
   }
 
+  getIntents() {
+    return this.queue.map((intent) => this.serialize(intent));
+  }
+
   serialize(intent) {
     return {
       occurrenceId: intent.occurrence.id,

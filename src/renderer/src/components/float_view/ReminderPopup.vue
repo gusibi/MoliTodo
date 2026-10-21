@@ -66,6 +66,10 @@ function handleIntents(nextIntents) {
   error.value = ''
 }
 
+function handleIntentsEvent(event, nextIntents) {
+  handleIntents(nextIntents)
+}
+
 async function respond(intent, action) {
   busyId.value = intent.occurrenceId
   error.value = ''
@@ -79,12 +83,18 @@ async function respond(intent, action) {
   }
 }
 
-onMounted(() => {
-  window.electronAPI.events.on('reminder-popup-intents', handleIntents)
+onMounted(async () => {
+  window.electronAPI.events.on('reminder-popup-intents', handleIntentsEvent)
+  try {
+    const initial = await window.electronAPI.tools.getPopupIntents()
+    handleIntents(initial)
+  } catch (err) {
+    error.value = err.message
+  }
 })
 
 onUnmounted(() => {
-  window.electronAPI.events.off('reminder-popup-intents', handleIntents)
+  window.electronAPI.events.off('reminder-popup-intents', handleIntentsEvent)
 })
 </script>
 

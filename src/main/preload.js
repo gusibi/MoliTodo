@@ -121,6 +121,7 @@ const electronAPI = {
     updateReminderRule: (ruleId, updates) => ipcRenderer.invoke('tools:update-reminder-rule', ruleId, updates),
     deleteReminderRule: (ruleId) => ipcRenderer.invoke('tools:delete-reminder-rule', ruleId),
     respondReminder: (occurrenceId, action) => ipcRenderer.invoke('tools:respond-reminder', occurrenceId, action),
+    getPopupIntents: () => ipcRenderer.invoke('tools:get-popup-intents'),
     getClaimOptions: (claimId) => ipcRenderer.invoke('tools:get-claim-options', claimId),
     claimReward: (claimId, selectedItemId) => ipcRenderer.invoke('tools:claim-reward', claimId, selectedItemId),
     getFocusState: () => ipcRenderer.invoke('tools:get-focus-state'),

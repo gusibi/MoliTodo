@@ -1641,6 +1641,7 @@ class IpcHandlers {
     ipcMain.handle('tools:respond-reminder', (event, occurrenceId, action) => (
       runtime().respondReminder(occurrenceId, action)
     ));
+    ipcMain.handle('tools:get-popup-intents', () => runtime().getReminderPopupIntents());
     ipcMain.handle('tools:get-claim-options', (event, claimId) => runtime().getClaimOptions(claimId));
     ipcMain.handle('tools:claim-reward', (event, claimId, selectedItemId) => (
       runtime().claimReward(claimId, selectedItemId)

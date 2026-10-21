@@ -219,8 +219,11 @@ class ToolsRuntime {
     return result;
   }
 
-  async respondReminder(occurrenceId, action) {
-    const result = this.popupPresenter.has(occurrenceId)
+  getReminderPopupIntents() {
+    return this.popupPresenter.getIntents();
+  }
+
+  async respondReminder(occurrenceId, action) {    const result = this.popupPresenter.has(occurrenceId)
       ? await this.popupPresenter.respond(occurrenceId, action)
       : await this.reminderUseCases.respond(occurrenceId, action, this.clock.now());
     this.broadcastToolsUpdated();

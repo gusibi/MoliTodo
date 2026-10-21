@@ -642,6 +642,10 @@ const handleOpenToolView = (tool) => {
   }
 }
 
+const handleOpenToolViewEvent = (event, tool) => {
+  handleOpenToolView(tool)
+}
+
 // 最后更新时间缓存，用于检测数据变化
 const lastUpdatedTime = ref(null)
 
@@ -706,7 +710,7 @@ onMounted(async () => {
     taskStore.getAllLists()
   })
   window.electronAPI.events.on('tools-updated', handleToolsUpdated)
-  window.electronAPI.events.on('tools-open-view', handleOpenToolView)
+  window.electronAPI.events.on('tools-open-view', handleOpenToolViewEvent)
 
   toolsStore.loadShellSnapshot()
 
@@ -725,7 +729,7 @@ onUnmounted(() => {
   window.electronAPI.events.removeAllListeners('tasks-updated')
   window.electronAPI.events.removeAllListeners('lists-updated')
   window.electronAPI.events.off('tools-updated', handleToolsUpdated)
-  window.electronAPI.events.off('tools-open-view', handleOpenToolView)
+  window.electronAPI.events.off('tools-open-view', handleOpenToolViewEvent)
 })
 
 // 监听搜索查询变化
