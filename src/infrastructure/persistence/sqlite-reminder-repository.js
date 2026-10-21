@@ -120,6 +120,12 @@ class SqliteReminderRepository {
     return this.findRuleById(id);
   }
 
+  async deleteRule(ruleId) {
+    await this.db.run('DELETE FROM reminder_occurrences WHERE rule_id = ?', [ruleId]);
+    const result = await this.db.run('DELETE FROM reminder_rules WHERE id = ?', [ruleId]);
+    return result.changes > 0;
+  }
+
   async findOccurrenceByRuleAndScheduled(ruleId, scheduledAt) {
     const row = await this.db.get(
       'SELECT * FROM reminder_occurrences WHERE rule_id = ? AND scheduled_at = ?',

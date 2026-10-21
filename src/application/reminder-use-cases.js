@@ -274,6 +274,17 @@ class ReminderUseCases {
     });
   }
 
+  async deleteRule(ruleId) {
+    return withTransaction(this.db, async () => {
+      const existing = await this.reminderRepository.findRuleById(ruleId);
+      if (!existing) {
+        throw new Error('提醒规则不存在');
+      }
+      await this.reminderRepository.deleteRule(ruleId);
+      return true;
+    });
+  }
+
   async respond(occurrenceId, action, now = this.clock.now()) {
     if (!['confirm', 'snooze', 'skip'].includes(action)) {
       throw new Error('响应动作只能是 confirm、snooze 或 skip');

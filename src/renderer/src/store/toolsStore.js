@@ -139,6 +139,20 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  const deleteReminderRule = async (ruleId) => {
+    if (!available.value) return null
+    error.value = ''
+    try {
+      const result = await window.electronAPI.tools.deleteReminderRule(ruleId)
+      await loadReminderRules()
+      await loadShellSnapshot()
+      return result
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
   const getClaimOptions = async (claimId) => {
     if (!available.value) return null
     return window.electronAPI.tools.getClaimOptions(claimId)
@@ -202,6 +216,7 @@ export const useToolsStore = defineStore('tools', () => {
     loadFocusState,
     createReminderRule,
     updateReminderRule,
+    deleteReminderRule,
     startFocus,
     pauseFocus,
     resumeFocus,

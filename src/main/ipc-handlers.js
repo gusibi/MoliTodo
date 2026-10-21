@@ -1635,6 +1635,9 @@ class IpcHandlers {
     ipcMain.handle('tools:update-reminder-rule', (event, ruleId, updates) => (
       runtime().updateReminderRule(ruleId, updates)
     ));
+    ipcMain.handle('tools:delete-reminder-rule', (event, ruleId) => (
+      runtime().deleteReminderRule(ruleId)
+    ));
     ipcMain.handle('tools:respond-reminder', (event, occurrenceId, action) => (
       runtime().respondReminder(occurrenceId, action)
     ));

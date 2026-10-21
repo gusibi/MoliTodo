@@ -732,6 +732,9 @@
       "windowStart": "Start time",
       "windowEnd": "End time",
       "enabled": "Enabled",
+      "delete": "Delete reminder",
+      "deleteTitle": "Delete reminder rule",
+      "deleteConfirm": "This deletes the \"{type}\" reminder and its pending occurrences permanently.",
       "nextRun": "Next reminder: {time}",
       "empty": "No reminder rules yet"
     }

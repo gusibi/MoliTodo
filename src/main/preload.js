@@ -119,6 +119,7 @@ const electronAPI = {
     listReminderRules: () => ipcRenderer.invoke('tools:list-reminder-rules'),
     createReminderRule: (input) => ipcRenderer.invoke('tools:create-reminder-rule', input),
     updateReminderRule: (ruleId, updates) => ipcRenderer.invoke('tools:update-reminder-rule', ruleId, updates),
+    deleteReminderRule: (ruleId) => ipcRenderer.invoke('tools:delete-reminder-rule', ruleId),
     respondReminder: (occurrenceId, action) => ipcRenderer.invoke('tools:respond-reminder', occurrenceId, action),
     getClaimOptions: (claimId) => ipcRenderer.invoke('tools:get-claim-options', claimId),
     claimReward: (claimId, selectedItemId) => ipcRenderer.invoke('tools:claim-reward', claimId, selectedItemId),

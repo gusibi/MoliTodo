@@ -74,22 +74,46 @@
                 :label="$t('tools.reminder.enabled')"
                 @update:model-value="toggleRule(rule, $event)"
               />
+              <IconButton
+                size="icon-sm"
+                :label="$t('tools.reminder.delete')"
+                @click="requestDelete(rule)"
+              >
+                <Trash2 class="h-icon-sm w-icon-sm" />
+              </IconButton>
             </div>
           </li>
         </ul>
       </section>
     </div>
+
+    <AlertDialog
+      :open="deleteOpen"
+      :title="$t('tools.reminder.deleteTitle')"
+      :description="$t('tools.reminder.deleteConfirm', { type: deletingRule ? $t(`tools.reminder.${deletingRule.type}`) : '' })"
+      :cancel-label="$t('common.cancel')"
+      :confirm-label="$t('common.delete')"
+      confirm-variant="destructive"
+      :loading="deleteLoading"
+      :error="deleteError"
+      @update:open="(value) => { if (!value) closeDelete() }"
+      @confirm="confirmDelete"
+      @cancel="closeDelete"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Trash2 } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
+import IconButton from '@/components/ui/button/IconButton.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Switch from '@/components/ui/switch/Switch.vue'
 import FormField from '@/components/ui/form-field/FormField.vue'
+import AlertDialog from '@/components/ui/alert-dialog/AlertDialog.vue'
 
 const { locale } = useI18n()
 const toolsStore = useToolsStore()
@@ -102,6 +126,10 @@ const form = reactive({
 })
 const error = ref('')
 const rules = computed(() => toolsStore.reminderRules)
+const deletingRule = ref(null)
+const deleteOpen = ref(false)
+const deleteLoading = ref(false)
+const deleteError = ref('')
 
 function formatNextRun(value) {
   if (!value) return '—'
@@ -135,6 +163,32 @@ async function toggleRule(rule, enabled) {
     await toolsStore.updateReminderRule(rule.id, { enabled })
   } catch (err) {
     error.value = err.message
+  }
+}
+
+function requestDelete(rule) {
+  deletingRule.value = rule
+  deleteError.value = ''
+  deleteLoading.value = false
+  deleteOpen.value = true
+}
+
+function closeDelete() {
+  deleteOpen.value = false
+  deletingRule.value = null
+}
+
+async function confirmDelete() {
+  if (!deletingRule.value) return
+  deleteLoading.value = true
+  deleteError.value = ''
+  try {
+    await toolsStore.deleteReminderRule(deletingRule.value.id)
+    closeDelete()
+  } catch (err) {
+    deleteError.value = err.message
+  } finally {
+    deleteLoading.value = false
   }
 }
 

@@ -213,6 +213,12 @@ class ToolsRuntime {
     return rule;
   }
 
+  async deleteReminderRule(ruleId) {
+    const result = await this.reminderUseCases.deleteRule(ruleId);
+    this.broadcastToolsUpdated();
+    return result;
+  }
+
   async respondReminder(occurrenceId, action) {
     const result = this.popupPresenter.has(occurrenceId)
       ? await this.popupPresenter.respond(occurrenceId, action)

@@ -732,6 +732,9 @@
       "windowStart": "开始时间",
       "windowEnd": "结束时间",
       "enabled": "启用",
+      "delete": "删除提醒",
+      "deleteTitle": "删除提醒规则",
+      "deleteConfirm": "将删除「{type}」提醒规则及其未处理实例，此操作不可恢复。",
       "nextRun": "下次提醒：{time}",
       "empty": "还没有提醒规则"
     }

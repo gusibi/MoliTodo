@@ -329,6 +329,18 @@ test('pending occurrences are restored after restart only within ten minutes', a
   assert.equal(stored.status, 'expired');
 });
 
+test('deleting a rule removes its pending occurrences', async (t) => {
+  const { db, reminderUseCases, reminderRepository } = await setup(t);
+  const rule = await reminderUseCases.createRule(ruleInput());
+  await reminderUseCases.tick(new Date('2026-10-21T01:40:10.000Z'));
+
+  const deleted = await reminderUseCases.deleteRule(rule.id);
+
+  assert.equal(deleted, true);
+  assert.equal(await reminderRepository.findRuleById(rule.id), null);
+  assert.equal((await db.get('SELECT COUNT(*) AS count FROM reminder_occurrences')).count, 0);
+});
+
 test('tick cleans occurrences older than 30 days', async (t) => {
   const { clock, db, reminderUseCases, reminderRepository } = await setup(t);
   const rule = await reminderUseCases.createRule(ruleInput());
