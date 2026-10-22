@@ -215,6 +215,8 @@ test('an empty garden view returns defaults without writing state', async (t) =>
   assert.equal(view.badges.unlocked, 0);
   assert.equal(view.badges.items.length, 20);
   assert.equal(view.plantHistory.length, 0);
+  assert.equal(view.collection.length, 24);
+  assert.equal(view.collection.filter((entry) => entry.owned || entry.unlocked).length, 0);
   assert.equal(view.plant, null);
   assert.deepEqual(view.seeds, []);
   assert.deepEqual(view.species, []);
@@ -272,6 +274,11 @@ test('the garden view reflects initialization, seeds, rewards and placements', a
     'pending'
   );
   assert.equal(before.plantHistory.length, 1);
+  assert.equal(before.collection.length, 24);
+  assert.equal(
+    before.collection.filter((entry) => entry.owned || entry.unlocked).length,
+    3
+  );
   assert.deepEqual(before.expansions.map((entry) => [entry.level, entry.conditionType]), [
     [1, 'initial']
   ]);

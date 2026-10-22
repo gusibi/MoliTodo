@@ -1,6 +1,19 @@
 <template>
   <div class="h-full overflow-auto px-7 py-6">
     <div class="mx-auto flex max-w-4xl flex-col gap-6">
+      <div class="relative h-44 overflow-hidden rounded-xl border border-border/60">
+        <GardenScene :level="garden.level" class="absolute inset-0" />
+        <div class="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+        <div class="absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
+          <p class="text-lg font-semibold text-foreground">
+            {{ $t('tools.garden') }} · {{ $t('tools.gardenLevel', { level: garden.level }) }}
+          </p>
+          <p class="text-sm text-muted-foreground">
+            {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+          </p>
+        </div>
+      </div>
+
       <section class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="tool-stat">
           <span class="tool-stat-label">{{ $t('tools.todayWater') }}</span>
@@ -30,7 +43,7 @@
 
         <div v-if="plant" class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <component :is="plantIcon" class="h-14 w-14" :stroke-width="1.6" aria-hidden="true" />
+            <PlantArt :stage="plant.stage" :species-id="plant.speciesId" class="h-20 w-20" />
           </div>
           <div class="min-w-0 flex-1">
             <div class="flex items-end justify-between gap-3">
@@ -88,8 +101,13 @@
             class="flex items-center gap-3 rounded-lg border border-border/50 bg-background/50 px-3 py-2"
             :class="{ 'opacity-50': !badge.unlocked }"
           >
-            <Award v-if="badge.unlocked" class="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-            <Lock v-else class="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <BadgeArt
+              :definition-id="badge.definitionId"
+              :kind="badge.kind"
+              :unlocked="badge.unlocked"
+              class="h-9 w-9 shrink-0"
+              :class="{ 'grayscale opacity-45': !badge.unlocked }"
+            />
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm text-foreground">
                 {{ $t(`tools.badgeNames.${badge.definitionId}`) }}
@@ -101,6 +119,32 @@
                 <template v-else>{{ $t('tools.badges.locked') }}</template>
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.collection.title') }}</h2>
+          <span class="text-sm text-muted-foreground">
+            {{ $t('tools.collection.summary', {
+              owned: collection.filter((entry) => entry.owned || entry.unlocked).length,
+              total: collection.length
+            }) }}
+          </span>
+        </div>
+        <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          <div
+            v-for="entry in collection"
+            :key="entry.id"
+            class="flex flex-col items-center gap-1 rounded-lg border border-border/50 bg-background/40 p-2 text-center"
+            :class="{ 'opacity-45 grayscale': !entry.owned && !entry.unlocked }"
+          >
+            <div class="h-12 w-12">
+              <ItemArt :variant="entry.variant" />
+            </div>
+            <p class="line-clamp-1 text-xs text-foreground">{{ itemName(entry) }}</p>
+            <p class="text-2xs text-muted-foreground">{{ collectionStatus(entry) }}</p>
           </div>
         </div>
       </section>
@@ -170,8 +214,11 @@
             class="flex min-h-16 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-background/40 p-2 text-center"
           >
             <template v-if="placementBySlot[slotId]">
+              <div class="h-7 w-7 text-primary">
+                <ItemArt :variant="placementEntry(placementBySlot[slotId].inventoryId)?.variant || 'box'" />
+              </div>
               <span class="max-w-full truncate text-xs text-foreground">
-                {{ inventoryById[placementBySlot[slotId].inventoryId]?.catalogId || '—' }}
+                {{ itemName(placementEntry(placementBySlot[slotId].inventoryId)) || '—' }}
               </span>
               <IconButton
                 size="icon-sm"
@@ -288,9 +335,13 @@
             <li
               v-for="item in inventory"
               :key="item.id"
-              class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
+              class="flex items-center gap-1.5 rounded-full border border-border/50 bg-background/60 px-2.5 py-1 text-xs text-foreground"
             >
-              {{ item.catalogId }}<span class="ml-1 text-muted-foreground">×{{ item.quantity }}</span>
+              <div class="h-5 w-5 text-primary">
+                <ItemArt :variant="collectionByCatalogId[item.catalogId]?.variant || 'box'" />
+              </div>
+              {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+              <span class="text-muted-foreground">×{{ item.quantity }}</span>
             </li>
           </ul>
         </div>
@@ -315,7 +366,7 @@
             :loading="placingItemId === item.id"
             @click="placeItem(item.id)"
           >
-            {{ item.catalogId }}
+            {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
           </Button>
         </div>
       </Dialog>
@@ -326,11 +377,15 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, X, Sprout, Leaf, TreePine, Award, Lock } from '@lucide/vue'
+import { Plus, X } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
 import Dialog from '@/components/ui/dialog/Dialog.vue'
+import PlantArt from './art/PlantArt.vue'
+import BadgeArt from './art/BadgeArt.vue'
+import ItemArt from './art/ItemArt.vue'
+import GardenScene from './art/GardenScene.vue'
 
 const { t } = useI18n()
 const toolsStore = useToolsStore()
@@ -355,17 +410,23 @@ const garden = computed(() => gardenView.value?.garden || {
 const seeds = computed(() => gardenView.value?.seeds || [])
 const species = computed(() => gardenView.value?.species || [])
 const plantHistory = computed(() => gardenView.value?.plantHistory || [])
+const collection = computed(() => gardenView.value?.collection || [])
+const collectionByCatalogId = computed(() => {
+  const map = {}
+  for (const entry of collection.value) {
+    if (entry.category === 'item' || entry.category === 'fallback') {
+      map[entry.id] = entry
+    } else if (entry.category === 'species' && entry.speciesId) {
+      map[entry.speciesId] = entry
+    }
+  }
+  return map
+})
 const badges = computed(() => gardenView.value?.badges || {
   pendingRewards: 0,
   total: 0,
   unlocked: 0,
   items: []
-})
-const plantIcon = computed(() => {
-  if (!plant.value) return Sprout
-  if (plant.value.stage === 'mature') return TreePine
-  if (plant.value.stage === 'sapling') return Leaf
-  return Sprout
 })
 const inventory = computed(() => gardenView.value?.inventory || [])
 const expansions = computed(() => gardenView.value?.expansions || [])
@@ -461,6 +522,29 @@ function badgeStatus(badge) {
   if (badge.claimStatus === 'claimed') return t('tools.badges.claimed')
   if (badge.claimStatus === 'pending') return t('tools.badges.pending')
   return t('tools.badges.earned')
+}
+
+function itemName(entry) {
+  if (!entry) return ''
+  if (entry.category === 'species') {
+    return t(`tools.speciesNames.${entry.speciesId}`)
+  }
+  return t(`tools.itemNames.${entry.id}`)
+}
+
+function collectionStatus(entry) {
+  if (entry.category === 'species') {
+    if (entry.owned) return t('tools.collection.ownedTree')
+    if (entry.unlocked) return t('tools.collection.unlockedTree')
+    return t('tools.collection.locked')
+  }
+  return entry.owned ? t('tools.collection.owned') : t('tools.collection.locked')
+}
+
+function placementEntry(inventoryId) {
+  const item = inventoryById.value[inventoryId]
+  if (!item) return null
+  return collectionByCatalogId.value[item.catalogId] || null
 }
 
 async function loadClaimOptions() {

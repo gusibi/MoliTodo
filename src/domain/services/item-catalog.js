@@ -4,24 +4,33 @@
  */
 
 const ITEM_CATALOG = Object.freeze([
-  { id: 'furniture-1', kind: 'furniture' },
-  { id: 'furniture-2', kind: 'furniture' },
-  { id: 'furniture-3', kind: 'furniture' },
-  { id: 'furniture-4', kind: 'furniture' },
-  { id: 'furniture-5', kind: 'furniture' },
-  { id: 'furniture-6', kind: 'furniture' },
-  { id: 'decor-1', kind: 'decor' },
-  { id: 'decor-2', kind: 'decor' },
-  { id: 'decor-3', kind: 'decor' },
-  { id: 'decor-4', kind: 'decor' },
-  { id: 'decor-5', kind: 'decor' },
-  { id: 'decor-6', kind: 'decor' },
-  { id: 'pet-1', kind: 'pet' },
-  { id: 'pet-2', kind: 'pet' },
-  { id: 'pet-3', kind: 'pet' },
-  { id: 'pet-4', kind: 'pet' },
-  { id: 'special-tree-1', kind: 'special-tree' }
+  { id: 'furniture-1', kind: 'furniture', variant: 'chair' },
+  { id: 'furniture-2', kind: 'furniture', variant: 'table' },
+  { id: 'furniture-3', kind: 'furniture', variant: 'bench' },
+  { id: 'furniture-4', kind: 'furniture', variant: 'shelf' },
+  { id: 'furniture-5', kind: 'furniture', variant: 'lamp' },
+  { id: 'furniture-6', kind: 'furniture', variant: 'stool' },
+  { id: 'decor-1', kind: 'decor', variant: 'pot' },
+  { id: 'decor-2', kind: 'decor', variant: 'lantern' },
+  { id: 'decor-3', kind: 'decor', variant: 'fountain' },
+  { id: 'decor-4', kind: 'decor', variant: 'birdhouse' },
+  { id: 'decor-5', kind: 'decor', variant: 'stone' },
+  { id: 'decor-6', kind: 'decor', variant: 'cottage' },
+  { id: 'pet-1', kind: 'pet', variant: 'cat' },
+  { id: 'pet-2', kind: 'pet', variant: 'dog' },
+  { id: 'pet-3', kind: 'pet', variant: 'bird' },
+  { id: 'pet-4', kind: 'pet', variant: 'rabbit' },
+  { id: 'special-tree-1', kind: 'special-tree', variant: 'moon-tree' }
 ].map(Object.freeze));
+
+const SPECIES_IDS = Object.freeze([
+  'species-1',
+  'species-2',
+  'species-3',
+  'species-4',
+  'species-5',
+  'species-6'
+]);
 
 const INITIAL_ITEM_IDS = Object.freeze(['furniture-1', 'decor-1']);
 
@@ -54,6 +63,7 @@ function getChoiceCandidates(ownedIds, {
 
 module.exports = {
   ITEM_CATALOG,
+  SPECIES_IDS,
   INITIAL_ITEM_IDS,
   FALLBACK_ITEM,
   CHOICE_LIMIT,

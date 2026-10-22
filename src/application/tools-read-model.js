@@ -5,6 +5,11 @@ const {
 } = require('../domain/services/expansion-policy');
 const { getFocusSummary } = require('../domain/services/focus-policy');
 const { DEFAULT_CATALOG } = require('../domain/services/growth-policy');
+const {
+  ITEM_CATALOG,
+  SPECIES_IDS,
+  FALLBACK_ITEM
+} = require('../domain/services/item-catalog');
 
 /**
  * 工具域读模型。
@@ -148,12 +153,62 @@ class ToolsReadModel {
       seeds,
       species,
       inventory,
+      collection: this.buildCollection(inventory, species),
       placements,
       milestones,
       expansions,
       rewardClaims,
       plantHistory
     };
+  }
+
+  buildCollection(inventory, species) {
+    const ownedMap = new Map();
+    for (const item of inventory) {
+      if (item.quantity > 0) {
+        ownedMap.set(item.catalogId, (ownedMap.get(item.catalogId) || 0) + item.quantity);
+      }
+    }
+    const unlockedSpecies = new Set(species.map((entry) => entry.speciesId));
+
+    const items = ITEM_CATALOG.map((item) => ({
+      id: item.id,
+      kind: item.kind,
+      variant: item.variant,
+      category: 'item',
+      owned: ownedMap.has(item.id),
+      unlocked: ownedMap.has(item.id),
+      quantity: ownedMap.get(item.id) || 0
+    }));
+
+    const trees = SPECIES_IDS.map((speciesId) => {
+      const matureCount = inventory
+        .filter((item) => item.kind === 'tree' && item.catalogId === speciesId)
+        .reduce((total, item) => total + item.quantity, 0);
+      const unlocked = unlockedSpecies.has(speciesId);
+      return {
+        id: `species-tree:${speciesId}`,
+        kind: 'species-tree',
+        variant: 'tree',
+        category: 'species',
+        speciesId,
+        owned: matureCount > 0,
+        unlocked,
+        quantity: matureCount
+      };
+    });
+
+    const fallback = {
+      id: FALLBACK_ITEM.id,
+      kind: FALLBACK_ITEM.kind,
+      variant: 'memorial',
+      category: 'fallback',
+      owned: ownedMap.has(FALLBACK_ITEM.id),
+      unlocked: ownedMap.has(FALLBACK_ITEM.id),
+      quantity: ownedMap.get(FALLBACK_ITEM.id) || 0
+    };
+
+    return [...items, ...trees, fallback];
   }
 
   buildBadges(milestones, expansions, pendingRewards) {
