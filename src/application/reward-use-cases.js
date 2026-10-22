@@ -91,6 +91,7 @@ class RewardUseCases {
         };
       }
 
+      let inventoryItemId = null;
       if (fallback) {
         await this.gardenRepository.addStackableInventoryItem({
           catalogId: item.id,
@@ -101,7 +102,7 @@ class RewardUseCases {
           acquiredAt: nowIso
         });
       } else {
-        await this.gardenRepository.addInventoryItem({
+        inventoryItemId = await this.gardenRepository.addInventoryItem({
           catalogId: item.id,
           kind: item.kind,
           quantity: 1,
@@ -118,7 +119,8 @@ class RewardUseCases {
         duplicate: false,
         claim: await this.gardenRepository.findRewardClaimById(claimId),
         item,
-        fallback
+        fallback,
+        inventoryItemId
       };
     });
   }

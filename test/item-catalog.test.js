@@ -50,6 +50,6 @@ test('the last remaining item is the only candidate and fallback is exposed when
 });
 
 test('catalog lookup returns items and tolerates unknown ids', () => {
-  assert.deepEqual(getCatalogItem('pet-1'), { id: 'pet-1', kind: 'pet', variant: 'cat' });
+  assert.deepEqual(getCatalogItem('pet-1'), { id: 'pet-1', kind: 'pet', variant: 'cat', size: 1 });
   assert.equal(getCatalogItem('missing'), null);
 });

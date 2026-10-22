@@ -3,6 +3,10 @@ const {
   getNextExpansion,
   EXPANSION_LEVELS
 } = require('../domain/services/expansion-policy');
+const {
+  COLUMNS,
+  getPetCapacity
+} = require('../domain/services/garden-layout');
 const { getFocusSummary } = require('../domain/services/focus-policy');
 const { DEFAULT_CATALOG } = require('../domain/services/growth-policy');
 const {
@@ -22,13 +26,15 @@ class ToolsReadModel {
     activityRepository,
     gardenRepository,
     focusRepository = null,
-    catalog = DEFAULT_CATALOG
+    catalog = DEFAULT_CATALOG,
+    getAutoPlace = () => true
   }) {
     this.clock = clock;
     this.activityRepository = activityRepository;
     this.gardenRepository = gardenRepository;
     this.focusRepository = focusRepository;
     this.catalog = catalog;
+    this.getAutoPlace = getAutoPlace;
   }
 
   async getShellSnapshot(now = this.clock.now()) {
@@ -123,6 +129,9 @@ class ToolsReadModel {
       garden: {
         level,
         capacity: currentExpansion.capacity,
+        columns: COLUMNS,
+        petCapacity: getPetCapacity(level),
+        autoPlace: Boolean(this.getAutoPlace()),
         currentStreak: gardenState ? gardenState.currentStreak : 0,
         longestStreak: gardenState ? gardenState.longestStreak : 0,
         totalGrowthDays: gardenState ? gardenState.totalGrowthDays : 0,
@@ -175,6 +184,7 @@ class ToolsReadModel {
       id: item.id,
       kind: item.kind,
       variant: item.variant,
+      size: item.size || 1,
       category: 'item',
       owned: ownedMap.has(item.id),
       unlocked: ownedMap.has(item.id),
@@ -190,6 +200,7 @@ class ToolsReadModel {
         id: `species-tree:${speciesId}`,
         kind: 'species-tree',
         variant: 'tree',
+        size: 1,
         category: 'species',
         speciesId,
         owned: matureCount > 0,
@@ -202,6 +213,7 @@ class ToolsReadModel {
       id: FALLBACK_ITEM.id,
       kind: FALLBACK_ITEM.kind,
       variant: 'memorial',
+      size: 1,
       category: 'fallback',
       owned: ownedMap.has(FALLBACK_ITEM.id),
       unlocked: ownedMap.has(FALLBACK_ITEM.id),

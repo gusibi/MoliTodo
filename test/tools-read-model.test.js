@@ -197,6 +197,9 @@ test('an empty garden view returns defaults without writing state', async (t) =>
   assert.deepEqual(view.garden, {
     level: 1,
     capacity: 6,
+    columns: 4,
+    petCapacity: 2,
+    autoPlace: true,
     currentStreak: 0,
     longestStreak: 0,
     totalGrowthDays: 0,

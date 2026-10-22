@@ -186,12 +186,26 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
-  const placeItem = async (inventoryId, slotId) => {    if (!available.value) return null
+  const placeItem = async (inventoryId, slotId) => {
+    if (!available.value) return null
     error.value = ''
     try {
       const placement = await window.electronAPI.tools.placeItem(inventoryId, slotId)
       await loadGardenView()
       return placement
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const setAutoPlace = async (enabled) => {
+    if (!available.value) return null
+    error.value = ''
+    try {
+      const result = await window.electronAPI.tools.setAutoPlace(enabled)
+      await loadGardenView()
+      return result
     } catch (err) {
       error.value = err.message
       throw err
@@ -253,6 +267,7 @@ export const useToolsStore = defineStore('tools', () => {
     plantSeed,
     claimBasicSeed,
     placeItem,
-    removePlacement
+    removePlacement,
+    setAutoPlace
   }
 })

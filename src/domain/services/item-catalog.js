@@ -4,23 +4,23 @@
  */
 
 const ITEM_CATALOG = Object.freeze([
-  { id: 'furniture-1', kind: 'furniture', variant: 'chair' },
-  { id: 'furniture-2', kind: 'furniture', variant: 'table' },
-  { id: 'furniture-3', kind: 'furniture', variant: 'bench' },
-  { id: 'furniture-4', kind: 'furniture', variant: 'shelf' },
-  { id: 'furniture-5', kind: 'furniture', variant: 'lamp' },
-  { id: 'furniture-6', kind: 'furniture', variant: 'stool' },
-  { id: 'decor-1', kind: 'decor', variant: 'pot' },
-  { id: 'decor-2', kind: 'decor', variant: 'lantern' },
-  { id: 'decor-3', kind: 'decor', variant: 'fountain' },
-  { id: 'decor-4', kind: 'decor', variant: 'birdhouse' },
-  { id: 'decor-5', kind: 'decor', variant: 'stone' },
-  { id: 'decor-6', kind: 'decor', variant: 'cottage' },
-  { id: 'pet-1', kind: 'pet', variant: 'cat' },
-  { id: 'pet-2', kind: 'pet', variant: 'dog' },
-  { id: 'pet-3', kind: 'pet', variant: 'bird' },
-  { id: 'pet-4', kind: 'pet', variant: 'rabbit' },
-  { id: 'special-tree-1', kind: 'special-tree', variant: 'moon-tree' }
+  { id: 'furniture-1', kind: 'furniture', variant: 'chair', size: 1 },
+  { id: 'furniture-2', kind: 'furniture', variant: 'table', size: 2 },
+  { id: 'furniture-3', kind: 'furniture', variant: 'bench', size: 2 },
+  { id: 'furniture-4', kind: 'furniture', variant: 'shelf', size: 1 },
+  { id: 'furniture-5', kind: 'furniture', variant: 'lamp', size: 1 },
+  { id: 'furniture-6', kind: 'furniture', variant: 'stool', size: 1 },
+  { id: 'decor-1', kind: 'decor', variant: 'pot', size: 1 },
+  { id: 'decor-2', kind: 'decor', variant: 'lantern', size: 1 },
+  { id: 'decor-3', kind: 'decor', variant: 'fountain', size: 2 },
+  { id: 'decor-4', kind: 'decor', variant: 'birdhouse', size: 1 },
+  { id: 'decor-5', kind: 'decor', variant: 'stone', size: 1 },
+  { id: 'decor-6', kind: 'decor', variant: 'cottage', size: 3 },
+  { id: 'pet-1', kind: 'pet', variant: 'cat', size: 1 },
+  { id: 'pet-2', kind: 'pet', variant: 'dog', size: 1 },
+  { id: 'pet-3', kind: 'pet', variant: 'bird', size: 1 },
+  { id: 'pet-4', kind: 'pet', variant: 'rabbit', size: 1 },
+  { id: 'special-tree-1', kind: 'special-tree', variant: 'moon-tree', size: 3 }
 ].map(Object.freeze));
 
 const SPECIES_IDS = Object.freeze([
@@ -37,6 +37,8 @@ const INITIAL_ITEM_IDS = Object.freeze(['furniture-1', 'decor-1']);
 const FALLBACK_ITEM = Object.freeze({
   id: 'garden-memorial',
   kind: 'decor',
+  variant: 'memorial',
+  size: 1,
   stackable: true
 });
 

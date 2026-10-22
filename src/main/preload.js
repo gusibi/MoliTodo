@@ -133,6 +133,7 @@ const electronAPI = {
     cancelFocus: () => ipcRenderer.invoke('tools:cancel-focus'),
     placeItem: (inventoryId, slotId) => ipcRenderer.invoke('tools:place-item', inventoryId, slotId),
     removePlacement: (inventoryId) => ipcRenderer.invoke('tools:remove-placement', inventoryId),
+    setAutoPlace: (enabled) => ipcRenderer.invoke('tools:set-auto-place', enabled),
     openGarden: () => ipcRenderer.invoke('tools:open-garden'),
     openHealth: () => ipcRenderer.invoke('tools:open-health')
   },

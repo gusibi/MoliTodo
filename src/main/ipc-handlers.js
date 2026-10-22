@@ -1659,6 +1659,9 @@ class IpcHandlers {
     ipcMain.handle('tools:remove-placement', (event, inventoryId) => (
       runtime().removePlacement(inventoryId)
     ));
+    ipcMain.handle('tools:set-auto-place', (event, enabled) => (
+      runtime().setAutoPlace(enabled)
+    ));
     ipcMain.handle('tools:open-garden', () => {
       this.windowManager.openToolView('garden');
       return { success: true };

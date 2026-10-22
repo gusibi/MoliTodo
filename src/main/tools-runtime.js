@@ -27,6 +27,7 @@ class ToolsRuntime {
     this.tickInFlight = false;
     this.focusTickInFlight = false;
     this.focusPausedForSleep = false;
+    this.autoPlace = windowManager?.configStore?.get?.('tools.autoPlace', true) ?? true;
 
     this.activityRepository = new SqliteActivityRepository(db);
     this.gardenRepository = new SqliteGardenRepository(db);
@@ -66,7 +67,8 @@ class ToolsRuntime {
       clock,
       activityRepository: this.activityRepository,
       gardenRepository: this.gardenRepository,
-      focusRepository: this.focusRepository
+      focusRepository: this.focusRepository,
+      getAutoPlace: () => this.autoPlace
     });
     this.popupPresenter = new ReminderPopupPresenter({
       windowManager,
@@ -147,12 +149,30 @@ class ToolsRuntime {
     try {
       const result = await this.focusUseCases.tick(now);
       if (result.completed) {
+        await this.autoPlaceNewItem(result.activity?.inventoryItemId);
         this.broadcastToolsUpdated();
       }
       return result;
     } finally {
       this.focusTickInFlight = false;
     }
+  }
+
+  async autoPlaceNewItem(inventoryItemId) {
+    if (!this.autoPlace || !inventoryItemId) return [];
+    return this.placementUseCases.autoPlace({
+      now: this.clock.now(),
+      inventoryIds: [inventoryItemId]
+    });
+  }
+
+  async setAutoPlace(enabled) {
+    this.autoPlace = Boolean(enabled);
+    if (this.windowManager?.configStore?.set) {
+      this.windowManager.configStore.set('tools.autoPlace', this.autoPlace);
+    }
+    this.broadcastToolsUpdated();
+    return this.autoPlace;
   }
 
   async getFocusState(now = this.clock.now()) {
@@ -228,9 +248,11 @@ class ToolsRuntime {
     return this.popupPresenter.getIntents();
   }
 
-  async respondReminder(occurrenceId, action) {    const result = this.popupPresenter.has(occurrenceId)
+  async respondReminder(occurrenceId, action) {
+    const result = this.popupPresenter.has(occurrenceId)
       ? await this.popupPresenter.respond(occurrenceId, action)
       : await this.reminderUseCases.respond(occurrenceId, action, this.clock.now());
+    await this.autoPlaceNewItem(result.activity?.inventoryItemId);
     this.broadcastToolsUpdated();
     return result;
   }
@@ -253,6 +275,7 @@ class ToolsRuntime {
       { selectedItemId },
       this.clock.now()
     );
+    await this.autoPlaceNewItem(result.inventoryItemId);
     this.broadcastToolsUpdated();
     return result;
   }
