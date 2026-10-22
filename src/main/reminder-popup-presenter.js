@@ -9,7 +9,8 @@ class ReminderPopupPresenter {
     clock,
     maxQueue = 3,
     expiryMs = 45 * 1000,
-    onUpdated = () => {}
+    onUpdated = () => {},
+    onShown = () => {}
   }) {
     this.windowManager = windowManager;
     this.reminderUseCases = reminderUseCases;
@@ -17,6 +18,7 @@ class ReminderPopupPresenter {
     this.maxQueue = maxQueue;
     this.expiryMs = expiryMs;
     this.onUpdated = onUpdated;
+    this.onShown = onShown;
     this.queue = [];
     this.expiryTimer = null;
   }
@@ -65,6 +67,7 @@ class ReminderPopupPresenter {
     }
     this.windowManager.showReminderPopup(this.queue.map((intent) => this.serialize(intent)));
     this.startExpiry();
+    this.onShown();
   }
 
   startExpiry() {

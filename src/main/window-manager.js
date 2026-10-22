@@ -657,6 +657,20 @@ class WindowManager {
     });
   }
 
+  playNotificationSound() {
+    const windows = [
+      this.floatingWindow,
+      this.taskManagerWindow,
+      this.settingsWindow,
+      this.menuBarPanelWindow
+    ];
+    windows.forEach((window) => {
+      if (window && !window.isDestroyed()) {
+        window.webContents.send('play-notification-sound');
+      }
+    });
+  }
+
   openToolView(tool) {
     this.createTaskManagerWindow();
     if (!this.taskManagerWindow || this.taskManagerWindow.isDestroyed()) return;

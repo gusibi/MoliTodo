@@ -72,7 +72,12 @@ class ToolsRuntime {
       windowManager,
       reminderUseCases: this.reminderUseCases,
       clock,
-      onUpdated: () => this.broadcastToolsUpdated()
+      onUpdated: () => this.broadcastToolsUpdated(),
+      onShown: () => {
+        if (windowManager && typeof windowManager.playNotificationSound === 'function') {
+          windowManager.playNotificationSound();
+        }
+      }
     });
   }
 

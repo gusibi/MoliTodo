@@ -29,6 +29,32 @@
           <FormField :label="$t('tools.reminder.windowEnd')" html-for="reminder-end">
             <Input id="reminder-end" v-model="form.windowEnd" type="time" />
           </FormField>
+
+          <FormField :label="$t('tools.reminder.anchorMode')" html-for="reminder-anchor">
+            <select id="reminder-anchor" v-model="form.anchorMode" class="tool-select">
+              <option value="created">{{ $t('tools.reminder.anchorCreated') }}</option>
+              <option value="hour">{{ $t('tools.reminder.anchorHour') }}</option>
+            </select>
+          </FormField>
+        </div>
+
+        <div class="mt-4">
+          <p class="text-sm font-medium text-foreground">{{ $t('tools.reminder.weekdays') }}</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <label
+              v-for="day in weekdays"
+              :key="day.value"
+              class="flex items-center gap-1.5 rounded-md border border-border/50 px-2 py-1 text-sm text-foreground"
+            >
+              <Checkbox
+                :id="`reminder-day-${day.value}`"
+                :model-value="form.weekdays.includes(day.value)"
+                :label="day.label"
+                @update:model-value="toggleWeekday(day.value, $event)"
+              />
+              {{ day.label }}
+            </label>
+          </div>
         </div>
 
         <div class="mt-4 flex items-center gap-3">
@@ -64,6 +90,7 @@
               </p>
               <p class="mt-1 text-sm text-muted-foreground">
                 {{ rule.windowStart }}–{{ rule.windowEnd }}
+                · {{ weekdaySummary(rule.weekdays) }}
                 · {{ $t('tools.reminder.nextRun', { time: formatNextRun(rule.nextRunAt) }) }}
               </p>
             </div>
@@ -112,17 +139,30 @@ import Button from '@/components/ui/button/Button.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Switch from '@/components/ui/switch/Switch.vue'
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import FormField from '@/components/ui/form-field/FormField.vue'
 import AlertDialog from '@/components/ui/alert-dialog/AlertDialog.vue'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const toolsStore = useToolsStore()
 const intervals = [10, 20, 30, 45, 60, 90]
 const form = reactive({
   type: 'water',
   intervalMinutes: 60,
   windowStart: '09:00',
-  windowEnd: '18:00'
+  windowEnd: '18:00',
+  anchorMode: 'created',
+  weekdays: [0, 1, 2, 3, 4, 5, 6]
+})
+const weekdays = computed(() => {
+  const formatter = new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'zh-CN', {
+    weekday: 'short'
+  })
+  // 2024-01-07 is a Sunday, so index 0 maps to Sunday.
+  return [0, 1, 2, 3, 4, 5, 6].map((value) => ({
+    value,
+    label: formatter.format(new Date(2024, 0, 7 + value))
+  }))
 })
 const error = ref('')
 const rules = computed(() => toolsStore.reminderRules)
@@ -141,16 +181,35 @@ function formatNextRun(value) {
   })
 }
 
+function weekdaySummary(days) {
+  if (!Array.isArray(days) || days.length === 0 || days.length === 7) {
+    return t('tools.reminder.everyDay')
+  }
+  return days
+    .map((day) => weekdays.value.find((entry) => entry.value === day)?.label)
+    .filter(Boolean)
+    .join('、')
+}
+
+function toggleWeekday(day, checked) {
+  if (checked) {
+    if (!form.weekdays.includes(day)) form.weekdays.push(day)
+    form.weekdays.sort((a, b) => a - b)
+  } else {
+    form.weekdays = form.weekdays.filter((entry) => entry !== day)
+  }
+}
+
 async function createRule() {
   error.value = ''
   try {
     await toolsStore.createReminderRule({
       type: form.type,
       intervalMinutes: form.intervalMinutes,
-      anchorMode: 'created',
+      anchorMode: form.anchorMode,
       windowStart: form.windowStart,
       windowEnd: form.windowEnd,
-      weekdays: []
+      weekdays: [...form.weekdays]
     })
   } catch (err) {
     error.value = err.message
