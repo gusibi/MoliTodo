@@ -46,13 +46,13 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   }
   expect(await page.getByText('未解锁', { exact: true }).count()).toBeGreaterThan(0);
 
+  await page.getByRole('button', { name: '布置小院', exact: true }).click();
   const firstEmptySlot = page.getByRole('button', { name: '空槽位' }).first();
   await firstEmptySlot.click();
   await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toBeVisible();
   await page.getByRole('button', { name: '椅子', exact: true }).click();
-  await expect(page.getByText('椅子', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '椅子', exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: '收起' }).click();
-  await expect(page.getByText('椅子', { exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '空槽位' }).first()).toBeVisible();
 
   // 专注：开始、暂停、继续、放弃

@@ -1,13 +1,97 @@
 <template>
   <div class="h-full overflow-auto px-7 py-6">
     <div class="mx-auto flex max-w-4xl flex-col gap-6">
-      <div class="relative h-44 overflow-hidden rounded-xl border border-border/60">
+      <div class="relative aspect-[800/520] max-h-[520px] w-full overflow-hidden rounded-xl border border-border/60">
         <GardenScene :level="garden.level" class="absolute inset-0" />
-        <div class="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
-        <div class="absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
-          <p class="text-lg font-semibold text-foreground">
-            {{ $t('tools.garden') }} · {{ $t('tools.gardenLevel', { level: garden.level }) }}
-          </p>
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/5 to-transparent" />
+
+        <div class="absolute right-3 top-3 z-30 flex items-center gap-2">
+          <span class="text-xs text-muted-foreground">{{ $t('tools.autoPlace') }}</span>
+          <Switch
+            :model-value="garden.autoPlace"
+            :label="$t('tools.autoPlace')"
+            @update:model-value="toggleAutoPlace"
+          />
+          <Button size="sm" variant="outline" @click="toggleLayout">
+            {{ layoutMode ? $t('tools.layoutDone') : $t('tools.layoutEdit') }}
+          </Button>
+        </div>
+
+        <div class="absolute inset-0">
+          <button
+            v-for="plot in scenePlots"
+            :key="plot.key"
+            type="button"
+            class="absolute aspect-square -translate-x-1/2 -translate-y-1/2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            :class="{ 'pointer-events-none': plot.placement }"
+            :style="plot.style"
+            :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.placementEmpty')"
+            :disabled="!plot.placement && !layoutMode"
+            @click="!plot.placement && layoutMode ? openPlacement(plot.slotId, 'garden') : null"
+          >
+            <template v-if="plot.placement">
+              <div class="group relative h-full w-full">
+                <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
+                <IconButton
+                  v-if="layoutMode"
+                  size="icon-sm"
+                  class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
+                  :label="$t('tools.placementRemove')"
+                  @click.stop="removePlacement(plot.placement.inventoryId)"
+                >
+                  <X class="h-3 w-3" />
+                </IconButton>
+              </div>
+            </template>
+            <span
+              v-else-if="layoutMode"
+              class="flex h-full w-full rotate-45 items-center justify-center rounded-md border border-dashed border-primary/60 bg-background/60 text-primary shadow-sm"
+            >
+              <Plus class="h-4 w-4 -rotate-45" aria-hidden="true" />
+            </span>
+          </button>
+
+          <button
+            v-for="plot in scenePetPlots"
+            :key="plot.key"
+            type="button"
+            class="absolute aspect-square -translate-x-1/2 -translate-y-1/2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            :class="{ 'pointer-events-none': plot.placement }"
+            :style="plot.style"
+            :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.petSlotEmpty')"
+            :disabled="!plot.placement && !layoutMode"
+            @click="!plot.placement && layoutMode ? openPlacement(plot.slotId, 'pet') : null"
+          >
+            <template v-if="plot.placement">
+              <div class="group relative h-full w-full">
+                <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
+                <IconButton
+                  v-if="layoutMode"
+                  size="icon-sm"
+                  class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
+                  :label="$t('tools.placementRemove')"
+                  @click.stop="removePlacement(plot.placement.inventoryId)"
+                >
+                  <X class="h-3 w-3" />
+                </IconButton>
+              </div>
+            </template>
+            <span
+              v-else-if="layoutMode"
+              class="flex h-full w-full items-center justify-center rounded-full border border-dashed border-primary/60 bg-background/60 text-primary shadow-sm"
+            >
+              <Plus class="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+          </button>
+        </div>
+
+        <div class="pointer-events-none absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
+          <div>
+            <p class="text-lg font-semibold text-foreground">
+              {{ $t('tools.garden') }} · {{ $t('tools.gardenLevel', { level: garden.level }) }}
+            </p>
+            <p class="mt-0.5 text-xs text-muted-foreground">{{ $t('tools.sceneHint') }}</p>
+          </div>
           <p class="text-sm text-muted-foreground">
             {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
           </p>
@@ -200,106 +284,6 @@
         <p v-else class="mt-1 text-sm text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
       </section>
 
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.placement') }}</h2>
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground">
-              {{ $t('tools.placementCount', { placed: gardenPlacements.length, capacity: garden.capacity }) }}
-            </span>
-            <span class="text-sm text-muted-foreground">{{ $t('tools.autoPlace') }}</span>
-            <Switch
-              :model-value="garden.autoPlace"
-              :label="$t('tools.autoPlace')"
-              @update:model-value="toggleAutoPlace"
-            />
-          </div>
-        </div>
-
-        <div
-          class="mt-4 grid gap-2"
-          :style="{ gridTemplateColumns: `repeat(${gardenColumns}, minmax(0, 1fr))` }"
-        >
-          <div
-            v-for="cell in gardenCells"
-            :key="cell.key"
-            :style="cell.style"
-            class="flex min-h-16 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-background/40 p-2 text-center"
-          >
-            <template v-if="cell.placement">
-              <div class="h-7 w-7 text-primary">
-                <ItemArt :variant="placementEntry(cell.placement.inventoryId)?.variant || 'box'" />
-              </div>
-              <span class="max-w-full truncate text-xs text-foreground">
-                {{ itemName(placementEntry(cell.placement.inventoryId)) || '—' }}
-              </span>
-              <IconButton
-                size="icon-sm"
-                class="mt-1 h-5 w-5"
-                :label="$t('tools.placementRemove')"
-                @click="removePlacement(cell.placement.inventoryId)"
-              >
-                <X class="h-3 w-3" />
-              </IconButton>
-            </template>
-            <button
-              v-else
-              type="button"
-              class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-              @click="openPlacement(cell.slotId, 'garden')"
-            >
-              <Plus class="h-4 w-4" aria-hidden="true" />
-              {{ $t('tools.placementEmpty') }}
-            </button>
-          </div>
-        </div>
-
-        <div class="mt-5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-foreground">{{ $t('tools.petSlots') }}</h3>
-            <span class="text-sm text-muted-foreground">
-              {{ petPlacements.length }}/{{ garden.petCapacity }}
-            </span>
-          </div>
-          <div class="mt-2 grid grid-cols-3 gap-2">
-            <div
-              v-for="cell in petCells"
-              :key="cell.slotId"
-              class="flex min-h-16 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-background/40 p-2 text-center"
-            >
-              <template v-if="cell.placement">
-                <div class="h-7 w-7 text-primary">
-                  <ItemArt :variant="placementEntry(cell.placement.inventoryId)?.variant || 'box'" />
-                </div>
-                <span class="max-w-full truncate text-xs text-foreground">
-                  {{ itemName(placementEntry(cell.placement.inventoryId)) || '—' }}
-                </span>
-                <IconButton
-                  size="icon-sm"
-                  class="mt-1 h-5 w-5"
-                  :label="$t('tools.placementRemove')"
-                  @click="removePlacement(cell.placement.inventoryId)"
-                >
-                  <X class="h-3 w-3" />
-                </IconButton>
-              </template>
-              <button
-                v-else
-                type="button"
-                class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                @click="openPlacement(cell.slotId, 'pet')"
-              >
-                <Plus class="h-4 w-4" aria-hidden="true" />
-                {{ $t('tools.petSlotEmpty') }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p class="mt-3 text-sm text-muted-foreground">{{ $t('tools.placementHint') }}</p>
-        <p v-if="placementError" class="mt-2 text-sm text-destructive" role="alert">{{ placementError }}</p>
-      </section>
-
       <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.claims') }}</h2>
@@ -490,7 +474,6 @@ const expansions = computed(() => gardenView.value?.expansions || [])
 const placements = computed(() => gardenView.value?.placements || [])
 const gardenPlacements = computed(() => placements.value.filter((placement) => placement.regionId === 'garden'))
 const petPlacements = computed(() => placements.value.filter((placement) => placement.regionId === 'pet'))
-const gardenColumns = computed(() => garden.value.columns || 6)
 const inventoryById = computed(() => {
   const map = {}
   for (const item of inventory.value) map[item.id] = item
@@ -502,15 +485,26 @@ const petMap = computed(() => {
   return map
 })
 const placementRegion = ref('garden')
-const petCells = computed(() => (
+const layoutMode = ref(false)
+const scenePetPlots = computed(() => (
   Array.from({ length: garden.value.petCapacity || 0 }, (_, index) => {
     const slotId = `pet-${index + 1}`
-    return { slotId, placement: petMap.value[slotId] || null }
+    return {
+      key: `pet-${index + 1}`,
+      slotId,
+      placement: petMap.value[slotId] || null,
+      style: {
+        left: `${14 + index * 9}%`,
+        top: `${76 + index * 4}%`,
+        width: '6%',
+        zIndex: 24 + index
+      }
+    }
   })
 ))
-const gardenCells = computed(() => {
+const scenePlots = computed(() => {
   const capacity = garden.value.capacity || 0
-  const columns = gardenColumns.value
+  const columns = garden.value.columns || 4
   const anchors = new Map()
   const occupied = new Set()
 
@@ -532,27 +526,18 @@ const gardenCells = computed(() => {
   for (let slot = 1; slot <= capacity; slot += 1) {
     if (occupied.has(slot) && !anchors.has(slot)) continue
     const anchor = anchors.get(slot)
-    if (anchor) {
-      cells.push({
-        key: `placed-${slot}`,
-        slotId: `slot-${slot}`,
-        placement: anchor.placement,
-        style: {
-          gridColumn: `${anchor.column + 1} / span ${anchor.size}`,
-          gridRow: `${anchor.row + 1} / span ${anchor.size}`
-        }
-      })
-      continue
-    }
     const row = Math.floor((slot - 1) / columns)
     const column = (slot - 1) % columns
+    const size = anchor?.size || 1
     cells.push({
-      key: `empty-${slot}`,
+      key: anchor ? `placed-${slot}` : `empty-${slot}`,
       slotId: `slot-${slot}`,
-      placement: null,
+      placement: anchor?.placement || null,
       style: {
-        gridColumn: `${column + 1}`,
-        gridRow: `${row + 1}`
+        left: `${40 + column * 11 + row * 2}%`,
+        top: `${62 + row * 4.4}%`,
+        width: `${anchor ? 6 + size * 3 : 3.2}%`,
+        zIndex: 20 + row * 4 + column
       }
     })
   }
@@ -623,6 +608,10 @@ async function toggleAutoPlace(enabled) {
   } catch (err) {
     placementError.value = err.message
   }
+}
+
+function toggleLayout() {
+  layoutMode.value = !layoutMode.value
 }
 
 async function plantSeed(speciesId) {
