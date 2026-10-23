@@ -784,6 +784,8 @@
     "placementEmpty": "Empty plot",
     "placementChoose": "Choose an item to place",
     "placementNoItems": "No items available to place",
+    "placementNoFit": "Does not fit",
+    "placementNoFitHint": "This item is too large for this plot. Try an earlier or more left-hand plot.",
     "placementRemove": "Store",
     "placementHint": "Click an empty plot to choose an item; use the button on a placed item to store it.",
     "autoPlace": "Auto place",

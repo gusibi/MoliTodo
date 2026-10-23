@@ -60,10 +60,33 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   const firstEmptySlot = page.getByRole('button', { name: '空地' }).first();
   await firstEmptySlot.click();
   await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toBeVisible();
-  await page.getByRole('button', { name: '椅子', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /^椅子/ }).click();
   await expect(page.getByRole('button', { name: /椅子/ }).first()).toBeVisible();
   await page.getByRole('button', { name: /收起/ }).click();
   await expect(page.getByRole('button', { name: '空地' }).first()).toBeVisible();
+
+  // 大件物品在边缘空地会被禁用，避免后端拒绝请求
+  await app.electronApp.evaluate(async () => {
+    const moliApp = global.__moliTodoApp;
+    await moliApp.toolsRuntime.gardenRepository.addInventoryItem({
+      catalogId: 'furniture-2',
+      kind: 'furniture',
+      quantity: 1,
+      originType: 'e2e',
+      originId: `e2e-table-${Date.now()}`,
+      acquiredAt: new Date().toISOString()
+    });
+    moliApp.toolsRuntime.broadcastToolsUpdated();
+  });
+  await page.getByRole('button', { name: '空地' }).nth(3).click();
+  await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button', { name: /^小桌/ })).toBeDisabled();
+  await expect(page.getByRole('dialog').getByRole('button', { name: /^椅子/ })).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toHaveCount(0);
+  await page.getByRole('button', { name: '空地' }).first().click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: /^小桌/ })).toBeEnabled();
+  await page.keyboard.press('Escape');
 
   // 专注：开始、暂停、继续、放弃
   await sidebar.getByRole('button', { name: '番茄专注' }).click();

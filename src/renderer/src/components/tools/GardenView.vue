@@ -437,20 +437,32 @@
         content-class="w-[min(94vw,28rem)]"
         @update:open="(value) => { placementDialogOpen = value }"
       >
-        <p v-if="unplacedInventory.length === 0" class="text-sm text-muted-foreground">
+        <p v-if="placementOptions.length === 0" class="text-sm text-muted-foreground">
           {{ $t('tools.placementNoItems') }}
         </p>
         <div v-else class="flex flex-col gap-2">
           <Button
-            v-for="item in unplacedInventory"
+            v-for="item in placementOptions"
             :key="item.id"
             variant="outline"
             class="justify-start"
+            :disabled="!item.fits"
             :loading="placingItemId === item.id"
             @click="placeItem(item.id)"
           >
-            {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+            <span class="min-w-0 flex-1 truncate text-left">
+              {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+            </span>
+            <span class="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+              {{ item.size }}×{{ item.size }}
+            </span>
+            <span v-if="!item.fits" class="shrink-0 text-[10px] text-destructive">
+              {{ $t('tools.placementNoFit') }}
+            </span>
           </Button>
+          <p v-if="fittingPlacementCount === 0" class="text-xs text-muted-foreground">
+            {{ $t('tools.placementNoFitHint') }}
+          </p>
         </div>
         <p v-if="placementError" class="mt-3 text-sm text-destructive" role="alert">{{ placementError }}</p>
       </Dialog>
@@ -597,6 +609,31 @@ const unplacedInventory = computed(() => {
     return placementRegion.value === 'pet' ? item.kind === 'pet' : item.kind !== 'pet'
   })
 })
+function itemSize(item) {
+  const entry = collectionByCatalogId.value[item.catalogId]
+  if (item.kind === 'tree' || entry?.category === 'species') return 1
+  return entry?.size || 1
+}
+function itemFitsSlot(item, slotId, region) {
+  if (region === 'pet' || !slotId) return true
+  const size = itemSize(item)
+  const columns = garden.value.columns || 4
+  const capacity = garden.value.capacity || 0
+  const anchor = parseSlotNumber(slotId)
+  const column = (anchor - 1) % columns
+  const row = Math.floor((anchor - 1) / columns)
+  if (column + size > columns) return false
+  const lastCell = (row + size - 1) * columns + column + size
+  return lastCell <= capacity
+}
+const placementOptions = computed(() => unplacedInventory.value.map((item) => ({
+  ...item,
+  size: itemSize(item),
+  fits: itemFitsSlot(item, selectedSlotId.value, placementRegion.value)
+})))
+const fittingPlacementCount = computed(() => (
+  placementOptions.value.filter((item) => item.fits).length
+))
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []
 ))

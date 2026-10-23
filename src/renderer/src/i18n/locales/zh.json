@@ -784,6 +784,8 @@
     "placementEmpty": "空地",
     "placementChoose": "选择要摆放的物品",
     "placementNoItems": "没有可摆放的物品",
+    "placementNoFit": "放不下",
+    "placementNoFitHint": "这个位置放不下当前物品，请换一个更靠前或更靠左的空地。",
     "placementRemove": "收起",
     "placementHint": "点击空地选择物品；点击已摆放物品上的按钮可收起。",
     "autoPlace": "自动摆放",
