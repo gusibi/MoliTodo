@@ -143,7 +143,11 @@ test('the runtime initializes the garden, ticks a rule and records a confirmatio
   assert.equal(focusTick.completed, true);
 
   const focused = await runtime.getShellSnapshot();
-  assert.equal(focused.focus, null);
+  assert.equal(focused.focus.phase, 'break');
+  assert.equal(focused.focus.remainingSeconds, 300);
   assert.equal(focused.today.focusCount, 1);
   assert.equal(focused.plant.growthScore, 3);
+
+  await runtime.skipFocusBreak();
+  assert.equal((await runtime.getShellSnapshot()).focus, null);
 });

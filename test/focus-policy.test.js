@@ -43,6 +43,14 @@ test('summary exposes remaining seconds and clamps to the plan', () => {
   assert.equal(summary.elapsedSeconds, 300);
   assert.equal(summary.remainingSeconds, 600);
   assert.equal(summary.status, 'running');
+  assert.equal(summary.phase, 'focus');
+
+  const breakSummary = getFocusSummary(
+    session({ phase: 'break', plannedSeconds: 300 }),
+    '2026-10-21T01:01:00.000Z'
+  );
+  assert.equal(breakSummary.phase, 'break');
+  assert.equal(breakSummary.remainingSeconds, 240);
 
   const finished = getFocusSummary(
     session({ status: 'completed', plannedSeconds: 900, focusSeconds: 900 }),

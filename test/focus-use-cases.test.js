@@ -102,7 +102,10 @@ test('pause stops the clock, resume continues and completion writes focus growth
   const completed = await focusUseCases.tick();
 
   assert.equal(completed.completed, true);
-  assert.equal(completed.state.active, null);
+  assert.equal(completed.breakStarted, true);
+  assert.equal(completed.state.active.phase, 'break');
+  assert.equal(completed.state.active.remainingSeconds, 300);
+  assert.equal(completed.state.active.status, 'running');
   assert.equal(completed.state.recent[0].status, 'completed');
 
   const events = await db.all('SELECT * FROM activity_events');
@@ -112,6 +115,49 @@ test('pause stops the clock, resume continues and completion writes focus growth
 
   const plant = await db.get("SELECT * FROM plant_instances WHERE status = 'growing'");
   assert.equal(plant.growth_score, 1);
+});
+
+test('a completed focus starts a five-minute break without writing extra growth', async (t) => {
+  const { db, clock, focusUseCases } = await setup(t);
+
+  await focusUseCases.start({ plannedMinutes: 15 });
+  clock.advanceSeconds(15 * 60);
+  const completed = await focusUseCases.tick();
+
+  assert.equal(completed.breakStarted, true);
+  assert.equal(completed.state.active.phase, 'break');
+  assert.equal(completed.state.active.plannedSeconds, 300);
+  assert.equal(completed.state.active.remainingSeconds, 300);
+
+  clock.advanceSeconds(300);
+  const breakCompleted = await focusUseCases.tick();
+
+  assert.equal(breakCompleted.completed, false);
+  assert.equal(breakCompleted.breakCompleted, true);
+  assert.equal(breakCompleted.state.active, null);
+  assert.equal((await db.get('SELECT COUNT(*) AS count FROM activity_events')).count, 1);
+});
+
+test('a break can be skipped, and starting a new focus also ends it', async (t) => {
+  const { db, clock, focusUseCases } = await setup(t);
+
+  await focusUseCases.start({ plannedMinutes: 15 });
+  clock.advanceSeconds(15 * 60);
+  await focusUseCases.tick();
+
+  const skipped = await focusUseCases.skipBreak();
+  assert.equal(skipped.active, null);
+  assert.equal(skipped.recent.length, 1);
+  assert.equal(skipped.recent[0].phase, 'focus');
+
+  await focusUseCases.start({ plannedMinutes: 15 });
+  clock.advanceSeconds(15 * 60);
+  await focusUseCases.tick();
+  const next = await focusUseCases.start({ plannedMinutes: 25 });
+
+  assert.equal(next.active.phase, 'focus');
+  assert.equal(next.active.plannedSeconds, 1500);
+  assert.equal((await db.get('SELECT COUNT(*) AS count FROM focus_sessions')).count, 5);
 });
 
 test('early cancellation keeps history but writes no growth', async (t) => {

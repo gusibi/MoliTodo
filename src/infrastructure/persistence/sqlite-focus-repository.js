@@ -9,6 +9,7 @@ class SqliteFocusRepository {
   async createSession({
     linkedTaskId = null,
     plannedSeconds,
+    phase = 'focus',
     status = 'running',
     startedAt,
     endedAt = null,
@@ -17,10 +18,10 @@ class SqliteFocusRepository {
   }) {
     const result = await this.db.run(
       `INSERT INTO focus_sessions (
-        linked_task_id, planned_seconds, focus_seconds, status,
+        linked_task_id, planned_seconds, phase, focus_seconds, status,
         started_at, ended_at, paused_ms, created_at
-      ) VALUES (?, ?, 0, ?, ?, ?, ?, ?)`,
-      [linkedTaskId, plannedSeconds, status, startedAt, endedAt, pausedMs, createdAt]
+      ) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)`,
+      [linkedTaskId, plannedSeconds, phase, status, startedAt, endedAt, pausedMs, createdAt]
     );
     return this.findSessionById(result.lastID);
   }
@@ -73,7 +74,7 @@ class SqliteFocusRepository {
   async listRecentSessions(limit = 10) {
     const rows = await this.db.all(
       `SELECT * FROM focus_sessions
-       WHERE status IN ('completed', 'cancelled', 'interrupted')
+       WHERE phase = 'focus' AND status IN ('completed', 'cancelled', 'interrupted')
        ORDER BY id DESC
        LIMIT ?`,
       [limit]
@@ -86,6 +87,7 @@ class SqliteFocusRepository {
       id: row.id,
       linkedTaskId: row.linked_task_id,
       plannedSeconds: row.planned_seconds,
+      phase: row.phase || 'focus',
       focusSeconds: row.focus_seconds,
       status: row.status,
       startedAt: row.started_at,

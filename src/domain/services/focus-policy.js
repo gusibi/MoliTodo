@@ -4,6 +4,9 @@
  */
 
 const MIN_FOCUS_SECONDS = 15 * 60;
+const BREAK_SECONDS = 5 * 60;
+const FOCUS_PHASE = 'focus';
+const BREAK_PHASE = 'break';
 
 function toDate(value) {
   const date = value instanceof Date ? value : new Date(value);
@@ -43,6 +46,7 @@ function getFocusSummary(session, now) {
   );
   return {
     id: session.id,
+    phase: session.phase || FOCUS_PHASE,
     status: session.status,
     plannedSeconds,
     elapsedSeconds,
@@ -55,6 +59,9 @@ function getFocusSummary(session, now) {
 
 module.exports = {
   MIN_FOCUS_SECONDS,
+  BREAK_SECONDS,
+  FOCUS_PHASE,
+  BREAK_PHASE,
   normalizePlannedSeconds,
   getFocusElapsedSeconds,
   getFocusSummary

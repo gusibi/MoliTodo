@@ -78,7 +78,7 @@ test('migration 005 adds the task time model columns to an old database', async 
   assert.ok(names.includes('deleted_at'));
 
   const version = await repo.db.get('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
-  assert.equal(version.version, 7);
+  assert.equal(version.version, 8);
 });
 
 test('SQLite repository round-trips schedule, deadline and reminder policy', async (t) => {

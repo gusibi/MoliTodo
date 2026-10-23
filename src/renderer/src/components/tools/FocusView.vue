@@ -11,9 +11,16 @@
         </div>
 
         <div v-if="active" class="mt-6 flex flex-col items-center gap-4">
-          <p class="text-5xl font-semibold tabular-nums text-foreground">{{ displayTime }}</p>
-          <p class="text-sm text-muted-foreground">
-            {{ active.status === 'paused' ? $t('tools.focusView.paused') : $t('tools.focusView.running') }}
+          <span
+            class="rounded-full px-3 py-1 text-xs font-medium"
+            :class="isBreak ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-primary/10 text-primary'"
+          >
+            {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.focusBadge') }}
+          </span>
+          <p class="text-5xl font-semibold tabular-nums text-foreground" aria-live="polite">{{ displayTime }}</p>
+          <p class="text-sm text-muted-foreground">{{ statusLabel }}</p>
+          <p v-if="isBreak" class="text-sm text-muted-foreground">
+            {{ $t('tools.focusView.breakHint', { minutes: breakMinutes }) }}
           </p>
           <div class="flex flex-wrap justify-center gap-2">
             <Button v-if="active.status === 'running'" variant="outline" @click="pause">
@@ -22,7 +29,10 @@
             <Button v-else @click="resume">
               {{ $t('tools.focusView.resume') }}
             </Button>
-            <Button variant="destructive" @click="cancel">
+            <Button v-if="isBreak" variant="outline" @click="skipBreak">
+              {{ $t('tools.focusView.skipBreak') }}
+            </Button>
+            <Button v-else variant="destructive" @click="cancel">
               {{ $t('tools.focusView.cancel') }}
             </Button>
           </div>
@@ -74,12 +84,14 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToolsStore } from '@/store/toolsStore'
 import { useTaskStore } from '@/store/taskStore'
 import Button from '@/components/ui/button/Button.vue'
 
 const toolsStore = useToolsStore()
 const taskStore = useTaskStore()
+const { t } = useI18n()
 const durations = [15, 25, 45]
 const starting = ref(null)
 const error = ref('')
@@ -89,6 +101,16 @@ let timer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
 const recent = computed(() => toolsStore.focusState?.recent || [])
+const isBreak = computed(() => active.value?.phase === 'break')
+const breakMinutes = computed(() => Math.max(1, Math.round((active.value?.plannedSeconds || 0) / 60)))
+const statusLabel = computed(() => {
+  if (!active.value) return ''
+  const paused = active.value.status === 'paused'
+  if (isBreak.value) {
+    return paused ? t('tools.focusView.breakPaused') : t('tools.focusView.breakRunning')
+  }
+  return paused ? t('tools.focusView.paused') : t('tools.focusView.running')
+})
 const taskOptions = computed(() => (
   taskStore.tasks.filter((task) => task.status !== 'done')
 ))
@@ -150,6 +172,15 @@ async function cancel() {
   error.value = ''
   try {
     await toolsStore.cancelFocus()
+  } catch (err) {
+    error.value = err.message
+  }
+}
+
+async function skipBreak() {
+  error.value = ''
+  try {
+    await toolsStore.skipFocusBreak()
   } catch (err) {
     error.value = err.message
   }

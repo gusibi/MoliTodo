@@ -108,6 +108,18 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  const skipFocusBreak = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.skipFocusBreak()
+      await loadShellSnapshot()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
   const createReminderRule = async (input) => {
     if (!available.value) return null
     loading.value = true
@@ -262,6 +274,7 @@ export const useToolsStore = defineStore('tools', () => {
     pauseFocus,
     resumeFocus,
     cancelFocus,
+    skipFocusBreak,
     getClaimOptions,
     claimReward,
     plantSeed,

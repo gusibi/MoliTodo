@@ -60,7 +60,7 @@ class ToolsDataPort {
     }
     return {
       version: '1',
-      schemaVersion: 7,
+      schemaVersion: 8,
       catalogVersion: this.catalogVersion,
       tables
     };

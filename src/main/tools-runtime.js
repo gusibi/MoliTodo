@@ -148,8 +148,10 @@ class ToolsRuntime {
     this.focusTickInFlight = true;
     try {
       const result = await this.focusUseCases.tick(now);
-      if (result.completed) {
-        await this.autoPlaceNewItem(result.activity?.inventoryItemId);
+      if (result.completed || result.breakCompleted) {
+        if (result.completed) {
+          await this.autoPlaceNewItem(result.activity?.inventoryItemId);
+        }
         this.broadcastToolsUpdated();
       }
       return result;
@@ -199,6 +201,12 @@ class ToolsRuntime {
 
   async cancelFocus(now = this.clock.now()) {
     const state = await this.focusUseCases.cancel(now);
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async skipFocusBreak(now = this.clock.now()) {
+    const state = await this.focusUseCases.skipBreak(now);
     this.broadcastToolsUpdated();
     return state;
   }

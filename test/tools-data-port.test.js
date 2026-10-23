@@ -128,7 +128,7 @@ test('export, clear and import round-trip all fifteen tool tables', async (t) =>
   );
 
   const snapshot = await dataPort.exportToolsData();
-  assert.equal(snapshot.schemaVersion, 7);
+  assert.equal(snapshot.schemaVersion, 8);
   assert.deepEqual(Object.keys(snapshot.tables).sort(), [...TOOL_TABLES].sort());
   assert.equal(snapshot.tables.activity_events.length, 1);
   assert.equal(snapshot.tables.reminder_rules.length, 1);

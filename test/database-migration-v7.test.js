@@ -133,7 +133,7 @@ async function assertToolTablesExist(db) {
   }
 }
 
-test('fresh database migrates from 0 to v7 with all tool tables', async (t) => {
+test('fresh database migrates from 0 to v8 with all tool tables', async (t) => {
   const { dir, dbPath } = tempDbPath();
   const repo = new SqliteTaskRepository(dbPath);
   await repo.initialize();
@@ -143,8 +143,11 @@ test('fresh database migrates from 0 to v7 with all tool tables', async (t) => {
   });
 
   const version = await repo.db.get('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
-  assert.equal(version.version, 7);
+  assert.equal(version.version, 8);
   await assertToolTablesExist(repo.db);
+
+  const focusColumns = await repo.db.all('PRAGMA table_info(focus_sessions)');
+  assert.ok(focusColumns.some((column) => column.name === 'phase'));
 
   const columns = await repo.db.all('PRAGMA table_info(tasks)');
   const names = columns.map((column) => column.name);
@@ -153,7 +156,7 @@ test('fresh database migrates from 0 to v7 with all tool tables', async (t) => {
   assert.ok(!names.includes('growth_score'), 'tasks 不应混入工具域字段');
 });
 
-test('v6 database migrates to v7 without changing tasks schema or data', async (t) => {
+test('v6 database migrates to v8 without changing tasks schema or data', async (t) => {
   const { dir, dbPath } = tempDbPath();
   await createV6Fixture(dbPath);
 
@@ -170,7 +173,7 @@ test('v6 database migrates to v7 without changing tasks schema or data', async (
   });
 
   const version = await repo.db.get('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
-  assert.equal(version.version, 7);
+  assert.equal(version.version, 8);
   await assertToolTablesExist(repo.db);
 
   const columnsAfter = await repo.db.all('PRAGMA table_info(tasks)');

@@ -1,4 +1,7 @@
 const {
+  BREAK_SECONDS,
+  FOCUS_PHASE,
+  BREAK_PHASE,
   normalizePlannedSeconds,
   getFocusElapsedSeconds,
   getFocusSummary
@@ -44,12 +47,25 @@ class FocusUseCases {
 
     return withTransaction(this.db, async () => {
       const active = await this.focusRepository.findActiveSession();
-      if (active) {
+      if (active && active.phase !== BREAK_PHASE) {
         throw new Error('已有进行中的专注');
+      }
+      if (active) {
+        const breakElapsed = Math.min(
+          active.plannedSeconds,
+          getFocusElapsedSeconds(active, instant)
+        );
+        await this.focusRepository.updateSession({
+          id: active.id,
+          status: 'cancelled',
+          focusSeconds: breakElapsed,
+          endedAt: nowIso
+        });
       }
       await this.focusRepository.createSession({
         linkedTaskId,
         plannedSeconds,
+        phase: FOCUS_PHASE,
         startedAt: nowIso,
         createdAt: nowIso
       });
@@ -126,12 +142,26 @@ class FocusUseCases {
     return withTransaction(this.db, async () => {
       const active = await this.focusRepository.findActiveSession();
       if (!active || active.status !== 'running') {
-        return { completed: false, state: await this.getState(instant) };
+        return { completed: false, breakCompleted: false, state: await this.getState(instant) };
       }
 
       const elapsed = getFocusElapsedSeconds(active, instant);
       if (elapsed < active.plannedSeconds) {
-        return { completed: false, state: await this.getState(instant) };
+        return { completed: false, breakCompleted: false, state: await this.getState(instant) };
+      }
+
+      if (active.phase === BREAK_PHASE) {
+        await this.focusRepository.updateSession({
+          id: active.id,
+          status: 'completed',
+          focusSeconds: active.plannedSeconds,
+          endedAt: nowIso
+        });
+        return {
+          completed: false,
+          breakCompleted: true,
+          state: await this.getState(instant)
+        };
       }
 
       await this.focusRepository.updateSession({
@@ -149,11 +179,44 @@ class FocusUseCases {
         occurredAt: nowIso
       });
 
+      await this.focusRepository.createSession({
+        plannedSeconds: BREAK_SECONDS,
+        phase: BREAK_PHASE,
+        startedAt: nowIso,
+        createdAt: nowIso
+      });
+
       return {
         completed: true,
+        breakStarted: true,
+        breakCompleted: false,
         activity,
         state: await this.getState(instant)
       };
+    });
+  }
+
+  async skipBreak(now = this.clock.now()) {
+    const instant = toDate(now);
+    const nowIso = instant.toISOString();
+
+    return withTransaction(this.db, async () => {
+      const active = await this.focusRepository.findActiveSession();
+      if (!active || active.phase !== BREAK_PHASE) {
+        return this.getState(instant);
+      }
+
+      const elapsed = Math.min(
+        active.plannedSeconds,
+        getFocusElapsedSeconds(active, instant)
+      );
+      await this.focusRepository.updateSession({
+        id: active.id,
+        status: 'cancelled',
+        focusSeconds: elapsed,
+        endedAt: nowIso
+      });
+      return this.getState(instant);
     });
   }
 

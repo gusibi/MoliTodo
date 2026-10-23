@@ -11,7 +11,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 7; // 工具域数据表（健康提醒 / 专注 / 成长 / 小院）
+    this.targetVersion = 8; // 工具域数据表与专注休息阶段
   }
 
   /**
@@ -131,6 +131,11 @@ class DatabaseMigration {
         version: 7,
         description: '添加工具域数据表',
         migrate: () => this.migration_007_create_tool_tables()
+      },
+      {
+        version: 8,
+        description: '为专注会话添加休息阶段',
+        migrate: () => this.migration_008_add_focus_phase()
       }
     ];
 
@@ -551,6 +556,27 @@ class DatabaseMigration {
     `);
 
     console.log('工具域数据表创建完成，索引已创建');
+  }
+
+  /**
+   * 迁移 008: 区分专注与休息会话。
+   */
+  async migration_008_add_focus_phase() {
+    console.log('执行迁移: 添加专注休息阶段');
+
+    const columns = await this.db.all('PRAGMA table_info(focus_sessions)');
+    if (!columns.some((column) => column.name === 'phase')) {
+      await this.db.exec(
+        "ALTER TABLE focus_sessions ADD COLUMN phase TEXT NOT NULL DEFAULT 'focus'"
+      );
+      console.log('已添加 phase 字段');
+    }
+
+    await this.db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_focus_sessions_phase ON focus_sessions(phase)'
+    );
+
+    console.log('专注休息阶段迁移完成');
   }
 
   /**

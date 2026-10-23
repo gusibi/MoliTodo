@@ -131,6 +131,7 @@ const electronAPI = {
     pauseFocus: () => ipcRenderer.invoke('tools:pause-focus'),
     resumeFocus: () => ipcRenderer.invoke('tools:resume-focus'),
     cancelFocus: () => ipcRenderer.invoke('tools:cancel-focus'),
+    skipFocusBreak: () => ipcRenderer.invoke('tools:skip-focus-break'),
     placeItem: (inventoryId, slotId) => ipcRenderer.invoke('tools:place-item', inventoryId, slotId),
     removePlacement: (inventoryId) => ipcRenderer.invoke('tools:remove-placement', inventoryId),
     setAutoPlace: (enabled) => ipcRenderer.invoke('tools:set-auto-place', enabled),

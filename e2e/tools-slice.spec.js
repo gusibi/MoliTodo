@@ -66,4 +66,22 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   await expect(toolMain.getByText('专注中', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '放弃', exact: true }).click();
   await expect(page.getByRole('button', { name: '开始 15 分钟', exact: true })).toBeVisible();
+
+  // 专注完成后自动进入 5 分钟休息，可跳过并回到开始状态
+  await page.getByRole('button', { name: '开始 15 分钟', exact: true }).click();
+  await expect(page.getByText('专注中')).toBeVisible();
+  await app.electronApp.evaluate(async ({}, startedAt) => {
+    const moliApp = global.__moliTodoApp;
+    await moliApp.taskRepository.db.run(
+      `UPDATE focus_sessions SET started_at = ?
+       WHERE status = 'running' AND phase = 'focus'`,
+      [startedAt]
+    );
+    await moliApp.toolsRuntime.tickFocus(new Date());
+  }, new Date(Date.now() - 16 * 60 * 1000).toISOString());
+
+  await expect(toolMain.getByText('休息中', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '跳过休息', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '跳过休息', exact: true }).click();
+  await expect(page.getByRole('button', { name: '开始 15 分钟', exact: true })).toBeVisible();
 });
