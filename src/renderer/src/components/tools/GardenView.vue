@@ -86,7 +86,7 @@
               />
             </div>
             <div class="absolute aspect-square -translate-x-1/2" :style="plantSceneStyle">
-              <div class="absolute bottom-[2%] left-1/2 h-[14%] w-[52%] -translate-x-1/2 rounded-[50%] border border-dashed border-foreground/25 bg-[#b68153]/15" />
+              <div class="absolute bottom-[2%] left-1/2 h-[9%] w-[34%] -translate-x-1/2 border-2 border-[#6d442c]/30 bg-[#98653f]/30 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
               <div
                 class="relative h-full w-full origin-bottom transition-transform duration-700 ease-out"
                 :style="{ transform: `scale(${plantScale})` }"
@@ -127,12 +127,12 @@
               v-for="plot in scenePlots"
               :key="plot.key"
               type="button"
-              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 rounded-[38%] border border-dashed outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
               :class="plot.placement
                 ? 'pointer-events-none border-transparent'
                 : layoutMode
-                  ? 'border-primary/70 bg-background/70 hover:bg-background/90'
-                  : 'border-foreground/20 bg-background/25 hover:border-primary/60 hover:bg-background/60'"
+                  ? 'border-[#6d442c]/70 bg-[#b98a55]/70 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:bg-[#c99b63]'
+                  : 'border-[#6d442c]/40 bg-[#8a5a3b]/35 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:border-[#6d442c]/70 hover:bg-[#b98a55]/65'"
               :style="plot.style"
               :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.placementEmpty')"
               @click="openPlacement(plot.slotId, 'garden')"
@@ -151,7 +151,7 @@
                   </IconButton>
                 </div>
               </template>
-              <span v-else class="flex h-full w-full items-center justify-center text-primary/70">
+              <span v-else class="flex h-full w-full items-center justify-center text-[#f7f2dd]">
                 <Plus
                   class="h-3 w-3 transition-opacity"
                   :class="layoutMode ? 'opacity-100' : 'opacity-50 group-hover:opacity-100 group-focus:opacity-100'"
@@ -162,14 +162,15 @@
 
             <button
               v-for="plot in scenePetPlots"
+              v-show="plot.placement || layoutMode"
               :key="plot.key"
               type="button"
-              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
               :class="plot.placement
                 ? 'pointer-events-none border-transparent'
                 : layoutMode
-                  ? 'border-primary/70 bg-background/70 hover:bg-background/90'
-                  : 'border-foreground/20 bg-background/20 hover:border-primary/60 hover:bg-background/55'"
+                  ? 'border-[#4f8f3f]/80 bg-[#7fbd56]/85 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:bg-[#8fce62]'
+                  : 'border-[#4f8f3f]/50 bg-[#7fbd56]/55 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:border-[#4f8f3f]/80 hover:bg-[#8fce62]'"
               :style="plot.style"
               :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.petSlotEmpty')"
               @click="openPlacement(plot.slotId, 'pet')"
@@ -188,10 +189,10 @@
                   </IconButton>
                 </div>
               </template>
-              <span v-else class="flex h-full w-full items-center justify-center text-primary/70">
+              <span v-else class="flex h-full w-full items-center justify-center text-[#2f5f2a]">
                 <Plus
                   class="h-3 w-3 transition-opacity"
-                  :class="layoutMode ? 'opacity-100' : 'opacity-50 group-hover:opacity-100 group-focus:opacity-100'"
+                  :class="layoutMode ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-focus:opacity-100'"
                   aria-hidden="true"
                 />
               </span>
@@ -649,8 +650,8 @@ const scenePetPlots = computed(() => (
       slotId,
       placement: petMap.value[slotId] || null,
       style: {
-        left: `${12 + index * 7}%`,
-        top: `${84 + index * 2}%`,
+        left: `${84 + index * 5.5}%`,
+        top: `${74 + index * 3}%`,
         width: '5.4%',
         zIndex: 24 + index
       }
@@ -678,6 +679,9 @@ const scenePlots = computed(() => {
   }
 
   const cells = []
+  const dense = capacity > 16
+  const emptySize = dense ? 2.2 : 3
+  const rowGap = dense ? 3.5 : 4.4
   for (let slot = 1; slot <= capacity; slot += 1) {
     if (occupied.has(slot) && !anchors.has(slot)) continue
     const anchor = anchors.get(slot)
@@ -690,8 +694,8 @@ const scenePlots = computed(() => {
       placement: anchor?.placement || null,
       style: {
         left: `${48 + column * 10 + row * 0.2}%`,
-        top: `${68 + row * 3.6}%`,
-        width: `${anchor ? 6 + size * 3 : 2.1}%`,
+        top: `${68 + row * rowGap}%`,
+        width: `${anchor ? 6 + size * 3 : emptySize}%`,
         zIndex: anchor ? 20 + row * 4 + column : 16 + row
       }
     })

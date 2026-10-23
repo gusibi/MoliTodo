@@ -4,173 +4,282 @@
     viewBox="0 0 800 520"
     preserveAspectRatio="xMidYMid slice"
     aria-hidden="true"
+    shape-rendering="geometricPrecision"
     xmlns="http://www.w3.org/2000/svg"
   >
     <defs>
-      <linearGradient id="garden-bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#f6ecdd" />
-        <stop offset="100%" stop-color="#ead8bd" />
-      </linearGradient>
-      <linearGradient id="garden-ground" x1="0" y1="0" x2="0.8" y2="1">
-        <stop offset="0%" stop-color="#a6d987" />
-        <stop offset="100%" stop-color="#6cb65d" />
-      </linearGradient>
-      <linearGradient id="garden-roof" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#7b4f38" />
-        <stop offset="100%" stop-color="#4a2d21" />
-      </linearGradient>
-      <linearGradient id="garden-wall" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f7e7c6" />
-        <stop offset="100%" stop-color="#e4cda5" />
-      </linearGradient>
+      <g id="scene-leaf-block">
+        <polygon points="24,0 48,9 24,18 0,9" fill="#86ce63" />
+        <polygon points="0,9 24,18 24,48 0,39" fill="#5fa84a" />
+        <polygon points="24,18 48,9 48,39 24,48" fill="#407d35" />
+      </g>
+      <g id="scene-post">
+        <rect x="-5" y="0" width="10" height="56" fill="#8a5a3b" />
+        <rect x="0" y="0" width="5" height="56" fill="#6d442c" />
+        <polygon points="0,-4 8,0 0,4 -8,0" fill="#a06b3f" />
+      </g>
     </defs>
 
-    <rect width="800" height="520" fill="url(#garden-bg)" />
-    <circle cx="690" cy="80" r="44" fill="#f7c45b" opacity="0.38" />
-    <ellipse cx="140" cy="90" rx="58" ry="18" fill="#ffffff" opacity="0.35" />
-    <ellipse cx="185" cy="82" rx="38" ry="20" fill="#ffffff" opacity="0.35" />
+    <!-- 天空 -->
+    <rect width="800" height="520" fill="#bfe3ff" />
 
-    <!-- 地面 -->
-    <path d="M400 238 738 352 400 512 62 352Z" fill="url(#garden-ground)" />
-    <path d="M400 258 700 360 400 496 100 360Z" fill="#7fc56b" opacity="0.45" />
-    <path d="M400 285 662 372 400 480 138 372Z" fill="#8fd17a" opacity="0.5" />
-    <path d="M400 300 620 380 400 466 180 380Z" fill="#7cc968" opacity="0.55" />
+    <!-- 像素云 -->
+    <g fill="#ffffff" opacity="0.82">
+      <rect x="84" y="58" width="104" height="16" />
+      <rect x="110" y="42" width="62" height="16" />
+      <rect x="62" y="74" width="56" height="12" />
+      <rect x="522" y="76" width="112" height="16" />
+      <rect x="552" y="60" width="64" height="16" />
+      <rect x="650" y="82" width="58" height="12" />
+    </g>
 
-    <!-- 石板路 -->
-    <path d="M300 512 340 430 400 408 470 430 520 512Z" fill="#e5c79b" opacity="0.9" />
-    <path d="M320 490 350 440 400 422 452 440 486 490Z" fill="#f0d7ae" opacity="0.6" />
+    <!-- 方块太阳 -->
+    <g fill="#ffe08a">
+      <rect x="692" y="50" width="40" height="8" />
+      <rect x="680" y="58" width="64" height="12" />
+      <rect x="672" y="70" width="80" height="28" />
+      <rect x="680" y="98" width="64" height="12" />
+      <rect x="692" y="110" width="40" height="8" />
+    </g>
 
-    <!-- 后排树（Lv.3+） -->
-    <g v-if="level >= 3" opacity="0.85">
-      <g transform="translate(120 210) scale(.62)">
-        <rect x="-8" y="70" width="16" height="80" rx="6" fill="#8b5a3c" />
-        <circle cx="0" cy="45" r="48" fill="#5daa4c" />
-        <circle cx="-32" cy="65" r="32" fill="#70bb58" />
-        <circle cx="34" cy="65" r="32" fill="#70bb58" />
+    <!-- 草地平台 -->
+    <g class="garden-ground">
+      <polygon points="400,236 760,368 400,500 40,368" fill="#7fbd56" />
+      <polygon points="40,368 400,500 400,520 40,388" fill="#8a5a3b" />
+      <polygon points="400,500 760,368 760,388 400,520" fill="#6d442c" />
+
+      <!-- 草皮边缘 -->
+      <polygon points="40,368 400,500 400,511 40,379" fill="#5c9a40" />
+      <polygon points="400,500 760,368 760,379 400,511" fill="#4d8435" />
+
+      <!-- 等距网格 -->
+      <g stroke="#69a847" stroke-width="2" opacity="0.38" fill="none">
+        <path d="M445,252 85,384M490,269 130,401M535,286 175,418M580,303 220,435M625,320 265,452M670,337 310,469M715,354 355,486" />
+        <path d="M355,252 715,384M310,269 670,401M265,286 625,418M220,303 580,435M175,320 535,452M130,337 490,469M85,354 445,486" />
       </g>
-      <g transform="translate(710 230) scale(.55)">
-        <rect x="-8" y="70" width="16" height="80" rx="6" fill="#8b5a3c" />
-        <circle cx="0" cy="45" r="48" fill="#5daa4c" />
-        <circle cx="-32" cy="65" r="32" fill="#70bb58" />
-        <circle cx="34" cy="65" r="32" fill="#70bb58" />
+
+      <!-- 像素草点 -->
+      <g fill="#a3d873" opacity="0.8">
+        <rect x="120" y="390" width="14" height="5" />
+        <rect x="250" y="430" width="10" height="4" />
+        <rect x="520" y="420" width="16" height="5" />
+        <rect x="620" y="392" width="10" height="4" />
+        <rect x="440" y="452" width="12" height="4" />
+      </g>
+    </g>
+
+    <!-- 石板小路 -->
+    <g class="garden-path">
+      <polygon points="190,386 230,400 190,414 150,400" fill="#c9c9c9" />
+      <polygon points="150,400 190,414 190,420 150,406" fill="#8f8f8f" />
+      <polygon points="230,400 270,414 230,428 190,414" fill="#b5b5b5" />
+      <polygon points="190,414 230,428 230,434 190,420" fill="#7f7f7f" />
+      <polygon points="270,414 310,428 270,442 230,428" fill="#c9c9c9" />
+      <polygon points="230,428 270,442 270,448 230,434" fill="#8f8f8f" />
+      <polygon points="310,428 350,442 310,456 270,442" fill="#b5b5b5" />
+      <polygon points="270,442 310,456 310,462 270,448" fill="#7f7f7f" />
+    </g>
+
+    <!-- Lv.3 背景树 -->
+    <g v-if="level >= 3" class="garden-back-trees">
+      <g transform="translate(54 208)">
+        <rect x="24" y="58" width="16" height="58" fill="#8b5a3c" />
+        <rect x="32" y="58" width="8" height="58" fill="#6d442c" />
+        <use href="#scene-leaf-block" transform="translate(0 18) scale(.9)" />
+        <use href="#scene-leaf-block" transform="translate(28 0) scale(1.05)" />
+        <use href="#scene-leaf-block" transform="translate(54 24) scale(.82)" />
+      </g>
+      <g transform="translate(660 196)">
+        <rect x="24" y="62" width="16" height="62" fill="#8b5a3c" />
+        <rect x="32" y="62" width="8" height="62" fill="#6d442c" />
+        <use href="#scene-leaf-block" transform="translate(0 22) scale(.86)" />
+        <use href="#scene-leaf-block" transform="translate(26 2) scale(1.02)" />
+        <use href="#scene-leaf-block" transform="translate(52 26) scale(.8)" />
       </g>
     </g>
 
     <!-- 木屋 -->
-    <g class="garden-house">
-      <ellipse cx="248" cy="438" rx="150" ry="30" fill="#3d6d38" opacity="0.22" />
-      <path d="M118 254 300 298 300 444 118 398Z" fill="url(#garden-wall)" />
-      <path d="M300 298 386 268 386 414 300 444Z" fill="#ddc49a" />
-      <path d="M118 254 300 298 386 268 204 222Z" fill="#ead4ae" />
-      <path d="M104 250 292 296 292 248 176 196Z" fill="url(#garden-roof)" />
-      <path d="M292 296 390 264 270 158 176 196Z" fill="#6b432f" />
-      <path d="M104 250 176 196 270 158 292 248Z" fill="#8d5d42" />
-      <path d="M118 254 300 298 300 312 118 268Z" fill="#c79c6b" opacity="0.55" />
-      <path d="M128 302 220 324 220 402 128 378Z" fill="#4b8b4a" />
-      <path d="M136 308 212 327 212 394 136 374Z" fill="#5fa558" />
-      <circle cx="200" cy="354" r="5" fill="#f2d27a" />
-      <path d="M244 330 282 339 282 402 244 392Z" fill="#8fbfd0" />
-      <path d="M250 336 276 343 276 395 250 388Z" fill="#bfe4ed" />
-      <path d="M252 344 274 349 274 357 252 352Z" fill="#ffffff" opacity="0.55" />
-      <path d="M128 380 148 386 148 404 128 398Z" fill="#c98b56" />
-      <path d="M212 300 300 320 300 334 212 314Z" fill="#7a4d36" opacity="0.35" />
-      <circle cx="206" cy="236" r="27" fill="#6b432f" />
-      <circle cx="206" cy="236" r="20" fill="#dff0f4" />
-      <path d="M186 236h40M206 216v40" stroke="#8b5a3c" stroke-width="3" />
-      <path d="M338 178 352 174 352 208 338 212Z" fill="#6b432f" />
-      <path d="M120 404 300 448 300 462 120 418Z" fill="#b68153" />
-      <g transform="translate(120 352)">
-        <path d="M0 26h34l-6 24H6Z" fill="#c56f53" />
-        <path d="M17 24V6" stroke="#4f8a45" stroke-width="4" />
-        <circle cx="17" cy="4" r="8" fill="#f1a25f" />
-        <circle cx="4" cy="14" r="6" fill="#f4bd5d" />
-        <circle cx="30" cy="14" r="6" fill="#ef8c8c" />
+    <polygon points="76,346 268,398 366,350 172,298" fill="#356634" opacity="0.16" />
+    <g class="garden-house" transform="translate(-6 -30) scale(.86)">
+      <polygon points="105,336 318,392 318,488 105,432" fill="#e7d2a5" />
+      <polygon points="318,392 428,338 428,434 318,488" fill="#cbb183" />
+      <polygon points="215,282 428,338 318,392 105,336" fill="#f1deba" />
+
+      <!-- 墙体像素纹理 -->
+      <g fill="#d8c094" opacity="0.55">
+        <rect x="126" y="356" width="22" height="4" />
+        <rect x="158" y="365" width="34" height="4" />
+        <rect x="232" y="386" width="28" height="4" />
+        <rect x="348" y="382" width="26" height="4" />
+        <rect x="386" y="394" width="22" height="4" />
       </g>
-      <g transform="translate(270 350)">
-        <path d="M0 20h30l-5 20H5Z" fill="#cf7b5b" />
-        <path d="M15 18V2" stroke="#4f8a45" stroke-width="4" />
-        <circle cx="15" cy="0" r="7" fill="#f6c85f" />
+
+      <!-- 门与门框 -->
+      <polygon points="168,392 224,407 224,474 168,459" fill="#5b3822" />
+      <polygon points="174,396 218,408 218,467 174,455" fill="#7d4d2c" />
+      <rect x="207" y="432" width="5" height="5" fill="#f2c14e" />
+      <polygon points="168,392 224,407 224,414 168,399" fill="#8a5a3b" />
+
+      <!-- 窗户 -->
+      <polygon points="118,366 166,379 166,410 118,397" fill="#5f4632" />
+      <polygon points="122,370 162,381 162,405 122,394" fill="#9fd4e8" />
+      <path d="M140,375v27M124,382l36,9" stroke="#dff3fb" stroke-width="3" />
+      <polygon points="342,376 392,390 392,422 342,408" fill="#5f4632" />
+      <polygon points="347,381 387,392 387,417 347,406" fill="#9fd4e8" />
+      <path d="M366,386v28M349,394l34,9" stroke="#dff3fb" stroke-width="3" />
+
+      <!-- 窗台花箱 -->
+      <polygon points="114,397 170,412 170,422 114,407" fill="#8a5a3b" />
+      <rect x="124" y="398" width="5" height="8" fill="#5fa84a" />
+      <rect x="124" y="392" width="5" height="5" fill="#f2a03d" />
+      <rect x="142" y="403" width="5" height="8" fill="#5fa84a" />
+      <rect x="142" y="397" width="5" height="5" fill="#ef7f8f" />
+      <polygon points="338,408 396,424 396,434 338,418" fill="#8a5a3b" />
+      <rect x="350" y="409" width="5" height="8" fill="#5fa84a" />
+      <rect x="350" y="403" width="5" height="5" fill="#f2a03d" />
+
+      <!-- 烟囱 -->
+      <g class="garden-chimney" transform="translate(0 38)">
+        <polygon points="352,206 380,215 352,224 324,215" fill="#a86a4c" />
+        <polygon points="324,215 352,224 352,266 324,257" fill="#7a4632" />
+        <polygon points="352,224 380,215 380,257 352,266" fill="#5f3626" />
+        <g fill="#ffffff" opacity="0.55">
+          <rect x="360" y="178" width="10" height="10" />
+          <rect x="372" y="164" width="8" height="8" />
+          <rect x="350" y="152" width="6" height="6" />
+        </g>
+      </g>
+
+      <!-- 阶梯屋顶 -->
+      <g class="garden-roof">
+        <polygon points="188,264 442,327 318,383 72,326" fill="#a86945" />
+        <polygon points="72,326 318,383 318,399 72,342" fill="#6d3f2b" />
+        <polygon points="318,383 442,327 442,343 318,399" fill="#7a4a32" />
+
+        <polygon points="210,244 420,296 318,346 118,296" fill="#b7784e" />
+        <polygon points="118,296 318,346 318,360 118,310" fill="#7a4632" />
+        <polygon points="318,346 420,296 420,310 318,360" fill="#8a5438" />
+
+        <g stroke="#8a5438" stroke-width="4" opacity="0.35" fill="none">
+          <path d="M130,306 330,360M156,296 356,350M182,286 382,340M208,276 408,330" />
+        </g>
+        <polygon points="72,342 318,399 318,407 72,350" fill="#5f3626" />
+        <polygon points="318,399 442,343 442,351 318,407" fill="#5f3626" />
       </g>
     </g>
 
-    <!-- 中央生长空地：植物由页面按真实成长阶段覆盖渲染 -->
-    <g class="garden-plant-bed">
-      <ellipse cx="430" cy="430" rx="118" ry="26" fill="#356634" opacity="0.16" />
-      <ellipse cx="430" cy="430" rx="74" ry="18" fill="#b68153" opacity="0.32" />
-    </g>
-
-    <!-- 栅栏与花架 -->
+    <!-- 木栅栏 -->
     <g class="garden-fence">
-      <path d="M556 300 616 280 616 430 556 450Z" fill="#b9855b" opacity="0.18" />
-      <path d="M568 300v132M606 288v132M644 276v132M682 264v132" stroke="#a8734c" stroke-width="10" stroke-linecap="round" />
-      <path d="M560 330 690 292M560 364 690 326M560 398 690 360" stroke="#bd8a5e" stroke-width="7" stroke-linecap="round" />
-      <path d="M576 286c18-20 30-30 46-36M610 320c16-18 28-26 42-32M648 300c16-16 26-24 38-30" stroke="#4f8a45" stroke-width="4" fill="none" />
-      <g fill="#f4bd5d">
-        <circle cx="600" cy="270" r="9" />
-        <circle cx="622" cy="250" r="10" />
-        <circle cx="648" cy="242" r="9" />
-        <circle cx="668" cy="260" r="8" />
-        <circle cx="690" cy="246" r="9" />
+      <g fill="#8a5a3b">
+        <path d="M558 352 742 402 742 416 558 366Z" />
+        <path d="M558 380 742 430 742 444 558 394Z" />
       </g>
-      <g fill="#f08c7a">
-        <circle cx="590" cy="286" r="6" />
-        <circle cx="636" cy="266" r="6" />
-        <circle cx="676" cy="280" r="6" />
+      <g fill="#6d442c">
+        <path d="M558 366 742 416 742 420 558 370Z" />
+        <path d="M558 394 742 444 742 448 558 398Z" />
+      </g>
+      <g transform="translate(570 324)">
+        <use href="#scene-post" />
+      </g>
+      <g transform="translate(620 338)">
+        <use href="#scene-post" />
+      </g>
+      <g transform="translate(670 352)">
+        <use href="#scene-post" />
+      </g>
+      <g transform="translate(720 366)">
+        <use href="#scene-post" />
+      </g>
+      <g>
+        <rect x="574" y="316" width="7" height="8" fill="#5fa84a" />
+        <rect x="570" y="310" width="7" height="7" fill="#ef7f8f" />
+        <rect x="624" y="330" width="7" height="8" fill="#5fa84a" />
+        <rect x="620" y="324" width="7" height="7" fill="#f2c14e" />
+        <rect x="674" y="344" width="7" height="8" fill="#5fa84a" />
+        <rect x="670" y="338" width="7" height="7" fill="#ef7f8f" />
+        <rect x="724" y="358" width="7" height="8" fill="#5fa84a" />
+        <rect x="720" y="352" width="7" height="7" fill="#f2c14e" />
       </g>
     </g>
 
-    <!-- 挂灯 -->
-    <g class="garden-lantern">
-      <path d="M748 120v38" stroke="#5b4a3e" stroke-width="3" />
-      <path d="M730 158h36l-6 44h-24Z" fill="#3e3935" />
-      <path d="M736 164h24l-4 32h-16Z" fill="#f6d27a" opacity="0.85" />
-      <path d="M724 158h48M732 202h32" stroke="#2c2927" stroke-width="4" stroke-linecap="round" />
-      <circle cx="748" cy="180" r="18" fill="#f6d27a" opacity="0.18" />
+    <!-- 方块挂灯 -->
+    <g class="garden-lantern" transform="translate(0 52)">
+      <rect x="736" y="250" width="8" height="96" fill="#5b4a3e" />
+      <rect x="740" y="250" width="4" height="96" fill="#41332b" />
+      <polygon points="740,232 764,240 740,248 716,240" fill="#4b4038" />
+      <polygon points="716,240 740,248 740,292 716,284" fill="#332c27" />
+      <polygon points="740,248 764,240 764,284 740,292" fill="#241f1c" />
+      <rect x="724" y="252" width="16" height="24" fill="#f6d27a" />
+      <rect x="728" y="256" width="8" height="16" fill="#fff0b0" />
+      <rect x="712" y="286" width="56" height="8" fill="#332c27" />
+      <g fill="#ffe9a3" opacity="0.2">
+        <rect x="704" y="244" width="72" height="56" />
+      </g>
     </g>
 
-    <!-- 花圃（Lv.2+） -->
+    <!-- Lv.2 花圃 -->
     <g v-if="level >= 2" class="garden-flower-bed">
-      <path d="M180 430 320 470 286 500 146 460Z" fill="#b9794d" opacity="0.55" />
-      <g fill="#f08c7a">
-        <circle cx="184" cy="438" r="9" /><circle cx="210" cy="446" r="10" /><circle cx="238" cy="454" r="9" />
-        <circle cx="266" cy="462" r="10" /><circle cx="292" cy="470" r="9" />
-      </g>
-      <g fill="#f6c85f">
-        <circle cx="198" cy="456" r="7" /><circle cx="228" cy="464" r="7" /><circle cx="258" cy="472" r="7" />
-        <circle cx="286" cy="480" r="7" />
-      </g>
-      <g fill="#4f8a45">
-        <circle cx="170" cy="446" r="6" /><circle cx="248" cy="442" r="6" /><circle cx="304" cy="454" r="6" />
+      <polygon points="64,408 184,442 142,466 22,432" fill="#98653f" />
+      <polygon points="22,432 142,466 142,476 22,442" fill="#7a4c2f" />
+      <g>
+        <rect x="56" y="418" width="4" height="12" fill="#5fa84a" />
+        <rect x="52" y="412" width="7" height="7" fill="#ef7f8f" />
+        <rect x="84" y="428" width="4" height="12" fill="#5fa84a" />
+        <rect x="80" y="422" width="7" height="7" fill="#f2c14e" />
+        <rect x="112" y="438" width="4" height="12" fill="#5fa84a" />
+        <rect x="108" y="432" width="7" height="7" fill="#ef7f8f" />
+        <rect x="136" y="446" width="4" height="10" fill="#5fa84a" />
+        <rect x="132" y="440" width="7" height="7" fill="#f2c14e" />
       </g>
     </g>
 
-    <!-- 池塘（Lv.5+） -->
+    <!-- Lv.4 石墙 -->
+    <g v-if="level >= 4" class="garden-stone-wall">
+      <polygon points="520,336 596,358 596,382 520,360" fill="#8f8f8f" />
+      <polygon points="520,360 596,382 596,390 520,368" fill="#6e6e6e" />
+      <g fill="#b5b5b5">
+        <rect x="530" y="342" width="18" height="8" />
+        <rect x="558" y="350" width="18" height="8" />
+        <rect x="540" y="360" width="18" height="8" />
+      </g>
+    </g>
+
+    <!-- Lv.5 池塘 -->
     <g v-if="level >= 5" class="garden-pond">
-      <ellipse cx="628" cy="470" rx="94" ry="28" fill="#6fb6c9" opacity="0.65" />
-      <ellipse cx="628" cy="466" rx="78" ry="20" fill="#9ad7df" opacity="0.7" />
-      <path d="M568 462c14-6 26-6 40 0s26 6 40 0 26-6 40 0" stroke="#e8fbfd" stroke-width="3" fill="none" opacity="0.7" />
-      <circle cx="656" cy="458" r="7" fill="#5fae58" />
-      <circle cx="680" cy="468" r="5" fill="#5fae58" />
+      <polygon points="608,456 724,490 664,512 548,478" fill="#64b5d6" />
+      <polygon points="608,464 712,494 664,508 560,480" fill="#8bd3e8" />
+      <g fill="#dff8ff" opacity="0.7">
+        <rect x="612" y="476" width="18" height="4" />
+        <rect x="650" y="486" width="22" height="4" />
+        <rect x="584" y="482" width="14" height="4" />
+      </g>
+      <polygon points="548,478 664,512 664,516 548,482" fill="#4b8f68" />
     </g>
 
-    <!-- 前景花丛 -->
+    <!-- 前景像素花与草 -->
     <g class="garden-front-flowers">
-      <g fill="#f08c7a">
-        <circle cx="90" cy="470" r="12" /><circle cx="116" cy="486" r="10" /><circle cx="66" cy="492" r="9" />
-        <circle cx="726" cy="456" r="11" /><circle cx="754" cy="474" r="12" /><circle cx="700" cy="480" r="9" />
+      <g>
+        <rect x="44" y="462" width="4" height="14" fill="#4f8f3f" />
+        <rect x="39" y="455" width="8" height="8" fill="#ef7f8f" />
+        <rect x="66" y="472" width="4" height="12" fill="#4f8f3f" />
+        <rect x="61" y="466" width="8" height="7" fill="#f2c14e" />
+        <rect x="90" y="480" width="4" height="10" fill="#4f8f3f" />
+        <rect x="85" y="474" width="8" height="7" fill="#f7f2dd" />
       </g>
-      <g fill="#f6c85f">
-        <circle cx="78" cy="452" r="8" /><circle cx="106" cy="468" r="8" /><circle cx="740" cy="438" r="9" />
-        <circle cx="768" cy="454" r="8" />
+      <g>
+        <rect x="706" y="456" width="4" height="14" fill="#4f8f3f" />
+        <rect x="701" y="449" width="8" height="8" fill="#f2c14e" />
+        <rect x="734" y="468" width="4" height="12" fill="#4f8f3f" />
+        <rect x="729" y="462" width="8" height="7" fill="#ef7f8f" />
+        <rect x="758" y="478" width="4" height="10" fill="#4f8f3f" />
+        <rect x="753" y="472" width="8" height="7" fill="#f7f2dd" />
       </g>
-      <g fill="#4f8a45">
-        <circle cx="58" cy="476" r="7" /><circle cx="130" cy="470" r="7" /><circle cx="712" cy="466" r="8" />
-        <circle cx="778" cy="482" r="7" />
+      <g fill="#4f8f3f">
+        <rect x="250" y="470" width="3" height="10" />
+        <rect x="262" y="474" width="3" height="8" />
+        <rect x="484" y="462" width="3" height="10" />
+        <rect x="498" y="468" width="3" height="8" />
       </g>
-    </g>
-
-    <g class="garden-grass" stroke="#4f8a45" stroke-width="4" stroke-linecap="round" opacity="0.55" fill="none">
-      <path d="M340 500c2-16 6-24 12-32M360 504c0-14 4-24 10-32M560 486c0-14 4-24 10-30M582 490c0-12 2-20 8-28" />
     </g>
   </svg>
 </template>
@@ -188,32 +297,15 @@ defineProps({
 .garden-scene {
   @apply h-full w-full;
   display: block;
-  background: #f4eadc;
+  background: #bfe3ff;
 }
 
 .garden-house,
 .garden-fence,
 .garden-lantern,
+.garden-back-trees,
 .garden-flower-bed,
 .garden-front-flowers {
-  filter: drop-shadow(0 10px 14px rgba(74, 45, 33, 0.12));
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .garden-plant-bed {
-    animation: garden-breathe 9s ease-in-out infinite;
-    transform-origin: 430px 430px;
-  }
-
-  @keyframes garden-breathe {
-    0%, 100% { opacity: 0.82; }
-    50% { opacity: 1; }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .garden-plant-bed {
-    animation: none;
-  }
+  filter: drop-shadow(0 6px 0 rgba(56, 78, 43, 0.12));
 }
 </style>

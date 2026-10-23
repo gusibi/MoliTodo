@@ -4,48 +4,72 @@
     viewBox="0 0 160 160"
     role="img"
     :aria-label="stage"
+    xml:space="preserve"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <g class="plant-art-sway">
-      <ellipse cx="80" cy="139" rx="52" ry="10" class="plant-soil-shadow" />
-      <path d="M28 139 Q80 124 132 139 L132 147 Q80 132 28 147 Z" class="plant-soil" />
+    <defs>
+      <g id="plant-leaf-block">
+        <polygon points="20,0 40,8 20,16 0,8" fill="#86ce63" />
+        <polygon points="0,8 20,16 20,40 0,32" fill="#5fa84a" />
+        <polygon points="20,16 40,8 40,32 20,40" fill="#407d35" />
+      </g>
+    </defs>
 
-      <template v-if="stage === 'seed'">
-        <ellipse cx="80" cy="126" rx="13" ry="18" class="plant-seed" />
-        <path d="M73 119 Q80 124 87 119" class="plant-seed-line" />
-        <path d="M80 108 L82 100 M88 110 L93 104 M72 110 L67 104" class="plant-sparkle" />
-      </template>
+    <!-- 泥土方块 -->
+    <polygon points="80,132 126,120 80,108 34,120" fill="#98653f" />
+    <polygon points="34,120 80,132 80,142 34,130" fill="#7a4c2f" />
+    <polygon points="80,132 126,120 126,130 80,142" fill="#654027" />
+    <polygon points="80,128 120,117 80,106 40,117" fill="#7fbd56" opacity="0.45" />
 
-      <template v-else-if="stage === 'sprout'">
-        <path d="M80 132 C80 118 80 106 80 96" class="plant-stem" />
-        <path d="M80 112 C65 110 56 101 55 89 C69 89 79 98 80 112Z" class="plant-leaf-soft" />
-        <path d="M80 106 C94 104 102 96 103 85 C90 85 81 94 80 106Z" class="plant-leaf" />
-        <circle cx="80" cy="93" r="4" :style="{ fill: accent }" class="plant-flower" />
-      </template>
+    <template v-if="stage === 'seed'">
+      <rect x="71" y="103" width="18" height="20" fill="#7a4f2e" />
+      <rect x="75" y="99" width="10" height="8" fill="#a06b3f" />
+      <rect x="78" y="88" width="4" height="12" fill="#5fa84a" />
+      <rect x="72" y="84" width="8" height="5" fill="#86ce63" />
+      <rect x="84" y="90" width="7" height="5" fill="#86ce63" />
+    </template>
 
-      <template v-else-if="stage === 'sapling'">
-        <path d="M80 134 C79 112 81 88 80 66" class="plant-stem" />
-        <path d="M80 112 C64 109 55 99 54 85 C69 86 78 96 80 112Z" class="plant-leaf-soft" />
-        <path d="M81 104 C96 101 105 91 106 78 C92 79 83 89 81 104Z" class="plant-leaf" />
-        <path d="M80 92 C68 89 61 81 60 70 C72 71 79 80 80 92Z" class="plant-leaf" />
-        <path d="M81 84 C92 81 98 75 99 66 C89 67 83 74 81 84Z" class="plant-leaf-soft" />
-        <circle cx="80" cy="64" r="5" :style="{ fill: accent }" class="plant-flower" />
-        <circle cx="66" cy="78" r="3" :style="{ fill: accent }" class="plant-flower-soft" />
-      </template>
+    <template v-else-if="stage === 'sprout'">
+      <rect x="77" y="70" width="6" height="52" fill="#5fa84a" />
+      <rect x="80" y="70" width="3" height="52" fill="#407d35" />
+      <rect x="57" y="86" width="20" height="8" fill="#86ce63" />
+      <rect x="57" y="94" width="20" height="4" fill="#5fa84a" />
+      <rect x="83" y="74" width="20" height="8" fill="#86ce63" />
+      <rect x="83" y="82" width="20" height="4" fill="#5fa84a" />
+      <rect x="73" y="66" width="14" height="8" fill="#86ce63" />
+      <rect x="73" y="74" width="14" height="4" fill="#407d35" />
+      <rect x="78" y="60" width="4" height="8" fill="#5fa84a" />
+      <rect x="78" y="56" width="6" height="6" :fill="accent" />
+    </template>
 
-      <template v-else>
-        <path d="M76 136 C77 118 78 100 80 82 C82 100 83 118 84 136Z" class="plant-trunk" />
-        <path d="M80 104 L62 88 M81 108 L101 90 M80 116 L70 104" class="plant-branch" />
-        <circle cx="56" cy="80" r="22" class="plant-canopy-soft" />
-        <circle cx="104" cy="78" r="23" class="plant-canopy" />
-        <circle cx="80" cy="62" r="28" class="plant-canopy-soft" />
-        <circle cx="78" cy="82" r="21" class="plant-canopy" />
-        <circle cx="60" cy="66" r="3" :style="{ fill: accent }" class="plant-fruit" />
-        <circle cx="95" cy="58" r="3" :style="{ fill: accent }" class="plant-fruit" />
-        <circle cx="102" cy="88" r="3" :style="{ fill: accent }" class="plant-fruit" />
-        <circle cx="72" cy="96" r="2.5" :style="{ fill: accent }" class="plant-fruit" />
-      </template>
-    </g>
+    <template v-else-if="stage === 'sapling'">
+      <rect x="73" y="58" width="14" height="64" fill="#8b5a3c" />
+      <rect x="80" y="58" width="7" height="64" fill="#6d442c" />
+      <rect x="70" y="92" width="20" height="6" fill="#8b5a3c" />
+      <rect x="86" y="84" width="6" height="14" fill="#8b5a3c" />
+      <use href="#plant-leaf-block" transform="translate(48 58) scale(.62)" />
+      <use href="#plant-leaf-block" transform="translate(76 38) scale(.72)" />
+      <use href="#plant-leaf-block" transform="translate(94 60) scale(.58)" />
+      <rect x="92" y="54" width="5" height="5" :fill="accent" />
+      <rect x="62" y="72" width="4" height="4" :fill="accent" />
+    </template>
+
+    <template v-else>
+      <rect x="70" y="44" width="20" height="82" fill="#8b5a3c" />
+      <rect x="80" y="44" width="10" height="82" fill="#6d442c" />
+      <rect x="62" y="86" width="24" height="7" fill="#8b5a3c" />
+      <rect x="90" y="72" width="8" height="20" fill="#6d442c" />
+      <use href="#plant-leaf-block" transform="translate(28 50) scale(.86)" />
+      <use href="#plant-leaf-block" transform="translate(48 30) scale(1.02)" />
+      <use href="#plant-leaf-block" transform="translate(82 26) scale(.98)" />
+      <use href="#plant-leaf-block" transform="translate(106 48) scale(.84)" />
+      <use href="#plant-leaf-block" transform="translate(58 66) scale(.9)" />
+      <use href="#plant-leaf-block" transform="translate(86 62) scale(.82)" />
+      <rect x="48" y="42" width="6" height="6" :fill="accent" />
+      <rect x="98" y="36" width="6" height="6" :fill="accent" />
+      <rect x="112" y="60" width="5" height="5" :fill="accent" />
+      <rect x="68" y="84" width="5" height="5" :fill="accent" />
+    </template>
   </svg>
 </template>
 
@@ -64,7 +88,7 @@ const props = defineProps({
 })
 
 const ACCENTS = {
-  'species-1': '#f59e0b',
+  'species-1': '#f5a623',
   'species-2': '#ec4899',
   'species-3': '#8b5cf6',
   'species-4': '#06b6d4',
@@ -72,106 +96,15 @@ const ACCENTS = {
   'species-6': '#22c55e'
 }
 
-const accent = computed(() => ACCENTS[props.speciesId] || '#f59e0b')
+const accent = computed(() => ACCENTS[props.speciesId] || '#f5a623')
 </script>
 
 <style scoped>
 .plant-art {
-  @apply h-full w-full;
+  @apply block;
+  width: 100%;
+  height: 100%;
   overflow: visible;
-}
-
-.plant-soil-shadow {
-  fill: #3d6d38;
-  opacity: 0.12;
-}
-
-.plant-soil {
-  fill: #8b5a3c;
-  opacity: 0.22;
-}
-
-.plant-seed {
-  fill: currentColor;
-  opacity: 0.75;
-}
-
-.plant-seed-line {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  opacity: 0.45;
-}
-
-.plant-sparkle {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  opacity: 0.5;
-}
-
-.plant-stem {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 4;
-  stroke-linecap: round;
-}
-
-.plant-trunk {
-  fill: #8b5a3c;
-  opacity: 0.9;
-}
-
-.plant-branch {
-  fill: none;
-  stroke: #8b5a3c;
-  stroke-width: 3;
-  stroke-linecap: round;
-  opacity: 0.72;
-}
-
-.plant-leaf,
-.plant-leaf-soft {
-  fill: currentColor;
-}
-
-.plant-leaf-soft {
-  opacity: 0.62;
-}
-
-.plant-canopy {
-  fill: currentColor;
-  opacity: 0.78;
-}
-
-.plant-canopy-soft {
-  fill: currentColor;
-  opacity: 0.48;
-}
-
-.plant-flower,
-.plant-fruit {
-  opacity: 0.95;
-}
-
-.plant-flower-soft {
-  opacity: 0.6;
-}
-
-.plant-art-sway {
-  transform-origin: 80px 136px;
-  animation: plant-breathe 6s ease-in-out infinite;
-}
-
-@keyframes plant-breathe {
-  0%, 100% { transform: rotate(-1.2deg); }
-  50% { transform: rotate(1.2deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .plant-art-sway {
-    animation: none;
-  }
+  shape-rendering: geometricPrecision;
 }
 </style>
