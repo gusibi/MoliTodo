@@ -40,12 +40,22 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
 
   // 小院页面展示植物成长与摆放交互
   await sidebar.getByRole('button', { name: 'Moli 小院' }).click();
-  await expect(page.getByText('成长值 2/15')).toBeVisible();
-  for (const label of ['椅子', '小屋', '初次萌芽']) {
+  await expect(page.getByText('种子 · 2/15')).toBeVisible();
+  await page.getByRole('tab', { name: /小院/ }).focus();
+  await page.keyboard.press('ArrowRight');
+  const collectionTab = page.getByRole('tab', { name: /收藏图鉴/ });
+  await expect(collectionTab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toBeVisible();
+  for (const label of ['椅子', '小屋']) {
+    await expect(page.getByText(label, { exact: true })).toHaveCount(1);
+  }
+  await page.getByRole('tab', { name: /徽章/ }).click();
+  for (const label of ['初次萌芽']) {
     await expect(page.getByText(label, { exact: true })).toHaveCount(1);
   }
   expect(await page.getByText('未解锁', { exact: true }).count()).toBeGreaterThan(0);
 
+  await page.getByRole('tab', { name: /小院/ }).click();
   await page.getByRole('button', { name: '布置小院', exact: true }).click();
   const firstEmptySlot = page.getByRole('button', { name: '空槽位' }).first();
   await firstEmptySlot.click();

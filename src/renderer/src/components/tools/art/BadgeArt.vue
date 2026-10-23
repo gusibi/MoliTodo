@@ -135,7 +135,7 @@ const variant = computed(() => VARIANTS[props.definitionId] || 'star')
 
 <style scoped>
 .badge-art {
-  @apply h-full w-full;
+  @apply block;
   overflow: visible;
 }
 

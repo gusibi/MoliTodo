@@ -23,10 +23,6 @@
         <stop offset="0%" stop-color="#f7e7c6" />
         <stop offset="100%" stop-color="#e4cda5" />
       </linearGradient>
-      <radialGradient id="garden-tree-light" cx="0.4" cy="0.3" r="0.8">
-        <stop offset="0%" stop-color="#9dde83" />
-        <stop offset="100%" stop-color="#4f9e46" />
-      </radialGradient>
     </defs>
 
     <rect width="800" height="520" fill="url(#garden-bg)" />
@@ -97,35 +93,10 @@
       </g>
     </g>
 
-    <!-- 大树 -->
-    <g class="garden-tree">
-      <ellipse cx="438" cy="430" rx="118" ry="26" fill="#356634" opacity="0.28" />
-      <path d="M428 420c-4-60 2-108 18-150 8 48 12 100 12 150Z" fill="#8b5a3c" />
-      <path d="M444 330c18-16 34-24 52-30" stroke="#8b5a3c" stroke-width="10" stroke-linecap="round" />
-      <path d="M430 300c-16-12-28-24-36-38" stroke="#8b5a3c" stroke-width="8" stroke-linecap="round" />
-      <circle cx="430" cy="188" r="92" fill="url(#garden-tree-light)" />
-      <circle cx="344" cy="220" r="62" fill="#6fbf5c" />
-      <circle cx="512" cy="214" r="66" fill="#72c35e" />
-      <circle cx="386" cy="132" r="58" fill="#87d071" />
-      <circle cx="482" cy="126" r="52" fill="#96dd7e" />
-      <circle cx="430" cy="240" r="52" fill="#5aab4c" />
-      <path d="M360 180c30-24 70-34 112-22" stroke="#b9ea9f" stroke-width="6" stroke-linecap="round" opacity="0.5" />
-      <circle cx="386" cy="200" r="4" fill="#f6c85f" />
-      <circle cx="470" cy="174" r="4" fill="#f6c85f" />
-      <circle cx="440" cy="222" r="4" fill="#f6c85f" />
-      <g transform="translate(498 290)">
-        <path d="M0 0v18" stroke="#8b5a3c" stroke-width="3" />
-        <path d="M-16 18h32l-6 20h-20Z" fill="#c56f53" />
-        <circle cx="-6" cy="12" r="7" fill="#f4bd5d" />
-        <circle cx="8" cy="10" r="7" fill="#ef8c8c" />
-        <circle cx="16" cy="16" r="6" fill="#f6c85f" />
-      </g>
-      <g transform="translate(432 400)">
-        <ellipse cx="0" cy="18" rx="32" ry="10" fill="#a85f45" />
-        <path d="M-28 10h56l-8 26h-40Z" fill="#c97b56" />
-        <circle cx="0" cy="-4" r="12" fill="#f6c85f" />
-        <circle cx="-12" cy="2" r="7" fill="#f0df9c" />
-      </g>
+    <!-- 中央生长空地：植物由页面按真实成长阶段覆盖渲染 -->
+    <g class="garden-plant-bed">
+      <ellipse cx="430" cy="430" rx="118" ry="26" fill="#356634" opacity="0.16" />
+      <ellipse cx="430" cy="430" rx="74" ry="18" fill="#b68153" opacity="0.32" />
     </g>
 
     <!-- 栅栏与花架 -->
@@ -146,27 +117,6 @@
         <circle cx="636" cy="266" r="6" />
         <circle cx="676" cy="280" r="6" />
       </g>
-    </g>
-
-    <!-- 长椅与小桌 -->
-    <g class="garden-furniture">
-      <ellipse cx="650" cy="420" rx="84" ry="18" fill="#356634" opacity="0.2" />
-      <path d="M588 380 704 350 704 368 588 398Z" fill="#a8734c" />
-      <path d="M588 398 704 368 704 436 588 458Z" fill="#8d5d42" />
-      <path d="M600 368 600 330 716 302 716 344Z" fill="#b9855b" />
-      <path d="M604 382 620 378 620 402 604 406Z" fill="#6b432f" opacity="0.4" />
-      <path d="M640 374 660 369 660 394 640 399Z" fill="#6b432f" opacity="0.35" />
-      <g transform="translate(626 330)">
-        <path d="M0 18h20l-4 18H4Z" fill="#8fbfd0" />
-        <path d="M10 16V4" stroke="#4f8a45" stroke-width="3" />
-        <circle cx="10" cy="2" r="6" fill="#f4bd5d" />
-      </g>
-      <g transform="translate(664 322)">
-        <path d="M0 14h18l-3 16H3Z" fill="#c56f53" />
-        <path d="M9 12V0" stroke="#4f8a45" stroke-width="3" />
-        <circle cx="9" cy="-2" r="5" fill="#ef8c8c" />
-      </g>
-      <path d="M600 436 600 470M700 410 700 444" stroke="#6b432f" stroke-width="8" stroke-linecap="round" />
     </g>
 
     <!-- 挂灯 -->
@@ -242,9 +192,7 @@ defineProps({
 }
 
 .garden-house,
-.garden-tree,
 .garden-fence,
-.garden-furniture,
 .garden-lantern,
 .garden-flower-bed,
 .garden-front-flowers {
@@ -252,19 +200,19 @@ defineProps({
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .garden-tree {
-    transform-origin: 450px 400px;
-    animation: garden-sway 9s ease-in-out infinite;
+  .garden-plant-bed {
+    animation: garden-breathe 9s ease-in-out infinite;
+    transform-origin: 430px 430px;
   }
 
-  @keyframes garden-sway {
-    0%, 100% { transform: rotate(-0.5deg); }
-    50% { transform: rotate(0.5deg); }
+  @keyframes garden-breathe {
+    0%, 100% { opacity: 0.82; }
+    50% { opacity: 1; }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .garden-tree {
+  .garden-plant-bed {
     animation: none;
   }
 }

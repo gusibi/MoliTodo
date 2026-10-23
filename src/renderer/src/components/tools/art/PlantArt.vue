@@ -77,18 +77,18 @@ const accent = computed(() => ACCENTS[props.speciesId] || '#f59e0b')
 
 <style scoped>
 .plant-art {
-  @apply h-full w-full text-primary;
+  @apply h-full w-full;
   overflow: visible;
 }
 
 .plant-soil-shadow {
-  fill: currentColor;
-  opacity: 0.1;
+  fill: #3d6d38;
+  opacity: 0.12;
 }
 
 .plant-soil {
-  fill: currentColor;
-  opacity: 0.18;
+  fill: #8b5a3c;
+  opacity: 0.22;
 }
 
 .plant-seed {
@@ -119,16 +119,16 @@ const accent = computed(() => ACCENTS[props.speciesId] || '#f59e0b')
 }
 
 .plant-trunk {
-  fill: currentColor;
-  opacity: 0.55;
+  fill: #8b5a3c;
+  opacity: 0.9;
 }
 
 .plant-branch {
   fill: none;
-  stroke: currentColor;
+  stroke: #8b5a3c;
   stroke-width: 3;
   stroke-linecap: round;
-  opacity: 0.45;
+  opacity: 0.72;
 }
 
 .plant-leaf,

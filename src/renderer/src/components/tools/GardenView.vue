@@ -1,223 +1,380 @@
 <template>
-  <div class="h-full overflow-auto px-7 py-6">
-    <div class="mx-auto flex max-w-4xl flex-col gap-6">
-      <div class="relative aspect-[800/520] max-h-[520px] w-full overflow-hidden rounded-xl border border-border/60">
-        <GardenScene :level="garden.level" class="absolute inset-0" />
-        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/5 to-transparent" />
-
-        <div class="absolute right-3 top-3 z-30 flex items-center gap-2">
-          <span class="text-xs text-muted-foreground">{{ $t('tools.autoPlace') }}</span>
-          <Switch
-            :model-value="garden.autoPlace"
-            :label="$t('tools.autoPlace')"
-            @update:model-value="toggleAutoPlace"
-          />
-          <Button size="sm" variant="outline" @click="toggleLayout">
-            {{ layoutMode ? $t('tools.layoutDone') : $t('tools.layoutEdit') }}
-          </Button>
-        </div>
-
-        <div class="absolute inset-0">
-          <button
-            v-for="plot in scenePlots"
-            :key="plot.key"
-            type="button"
-            class="absolute aspect-square -translate-x-1/2 -translate-y-1/2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            :class="{ 'pointer-events-none': plot.placement }"
-            :style="plot.style"
-            :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.placementEmpty')"
-            :disabled="!plot.placement && !layoutMode"
-            @click="!plot.placement && layoutMode ? openPlacement(plot.slotId, 'garden') : null"
-          >
-            <template v-if="plot.placement">
-              <div class="group relative h-full w-full">
-                <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
-                <IconButton
-                  v-if="layoutMode"
-                  size="icon-sm"
-                  class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
-                  :label="$t('tools.placementRemove')"
-                  @click.stop="removePlacement(plot.placement.inventoryId)"
-                >
-                  <X class="h-3 w-3" />
-                </IconButton>
-              </div>
-            </template>
-            <span
-              v-else-if="layoutMode"
-              class="flex h-full w-full rotate-45 items-center justify-center rounded-md border border-dashed border-primary/60 bg-background/60 text-primary shadow-sm"
-            >
-              <Plus class="h-4 w-4 -rotate-45" aria-hidden="true" />
-            </span>
-          </button>
-
-          <button
-            v-for="plot in scenePetPlots"
-            :key="plot.key"
-            type="button"
-            class="absolute aspect-square -translate-x-1/2 -translate-y-1/2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            :class="{ 'pointer-events-none': plot.placement }"
-            :style="plot.style"
-            :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.petSlotEmpty')"
-            :disabled="!plot.placement && !layoutMode"
-            @click="!plot.placement && layoutMode ? openPlacement(plot.slotId, 'pet') : null"
-          >
-            <template v-if="plot.placement">
-              <div class="group relative h-full w-full">
-                <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
-                <IconButton
-                  v-if="layoutMode"
-                  size="icon-sm"
-                  class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
-                  :label="$t('tools.placementRemove')"
-                  @click.stop="removePlacement(plot.placement.inventoryId)"
-                >
-                  <X class="h-3 w-3" />
-                </IconButton>
-              </div>
-            </template>
-            <span
-              v-else-if="layoutMode"
-              class="flex h-full w-full items-center justify-center rounded-full border border-dashed border-primary/60 bg-background/60 text-primary shadow-sm"
-            >
-              <Plus class="h-3.5 w-3.5" aria-hidden="true" />
-            </span>
-          </button>
-        </div>
-
-        <div class="pointer-events-none absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
-          <div>
-            <p class="text-lg font-semibold text-foreground">
-              {{ $t('tools.garden') }} · {{ $t('tools.gardenLevel', { level: garden.level }) }}
-            </p>
-            <p class="mt-0.5 text-xs text-muted-foreground">{{ $t('tools.sceneHint') }}</p>
-          </div>
-          <p class="text-sm text-muted-foreground">
-            {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+  <div class="h-full overflow-auto px-6 py-6">
+    <div class="mx-auto flex max-w-5xl flex-col gap-5">
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-xs font-medium uppercase tracking-[0.22em] text-primary/80">
+            {{ $t('tools.gardenEyebrow') }}
+          </p>
+          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+            {{ $t('tools.gardenHeroTitle') }}
+          </h1>
+          <p class="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {{ $t('tools.gardenHeroDescription') }}
           </p>
         </div>
-      </div>
-
-      <section class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="tool-stat">
-          <span class="tool-stat-label">{{ $t('tools.todayWater') }}</span>
-          <span class="tool-stat-value">{{ today.waterCount }}</span>
-        </div>
-        <div class="tool-stat">
-          <span class="tool-stat-label">{{ $t('tools.todaySun') }}</span>
-          <span class="tool-stat-value">{{ today.sunCount }}</span>
-        </div>
-        <div class="tool-stat">
-          <span class="tool-stat-label">{{ $t('tools.todayGrowth') }}</span>
-          <span class="tool-stat-value">{{ today.totalGrowth }}</span>
-        </div>
-        <div class="tool-stat">
-          <span class="tool-stat-label">{{ $t('tools.pendingRewards') }}</span>
-          <span class="tool-stat-value">{{ pendingRewardCount }}</span>
-        </div>
-      </section>
-
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.plant') }}</h2>
-          <span v-if="plant" class="text-sm text-muted-foreground">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium text-foreground">
             {{ $t('tools.gardenLevel', { level: garden.level }) }}
           </span>
+          <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
+            {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+          </span>
+          <span
+            v-if="pendingRewardCount"
+            class="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+          >
+            {{ $t('tools.pendingRewards') }} {{ pendingRewardCount }}
+          </span>
         </div>
+      </header>
 
-        <div v-if="plant" class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <PlantArt :stage="plant.stage" :species-id="plant.speciesId" class="h-20 w-20" />
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-end justify-between gap-3">
-              <div>
-                <p class="text-xl font-semibold text-foreground">
-                  {{ $t(`tools.stage.${plant.stage}`) }}
-                </p>
-                <p class="mt-1 text-sm text-muted-foreground">{{ plant.speciesId }}</p>
-              </div>
-              <p class="text-sm font-medium text-muted-foreground">
-                {{ $t('tools.growthScore', { score: plant.growthScore }) }}
-              </p>
-            </div>
-            <div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-              <div class="h-full rounded-full bg-primary transition-all" :style="{ width: progressWidth }" />
-            </div>
-          </div>
-        </div>
+      <nav
+        role="tablist"
+        :aria-label="$t('tools.gardenTabsLabel')"
+        class="flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-border/60 bg-card/60 p-1"
+      >
+        <button
+          v-for="(tab, index) in tabs"
+          :id="`garden-tab-${tab.id}`"
+          :key="tab.id"
+          type="button"
+          role="tab"
+          :aria-controls="`garden-panel-${tab.id}`"
+          :aria-selected="activeTab === tab.id"
+          :tabindex="activeTab === tab.id ? 0 : -1"
+          class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          :class="activeTab === tab.id
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'"
+          @click="activeTab = tab.id"
+          @keydown="handleTabKeydown($event, index)"
+        >
+          <component :is="tab.icon" class="h-4 w-4" aria-hidden="true" />
+          <span>{{ tab.label }}</span>
+          <span
+            v-if="tab.count !== null"
+            class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground"
+          >
+            {{ tab.count }}
+          </span>
+        </button>
+      </nav>
 
-        <div v-else class="mt-4 flex flex-col gap-3">
-          <p class="text-sm text-muted-foreground">{{ $t('tools.noPlant') }}</p>
-          <div v-if="seeds.length > 0" class="flex flex-wrap gap-2">
-            <Button
-              v-for="seed in seeds"
-              :key="seed.speciesId"
-              size="sm"
-              :loading="plantingSpecies === seed.speciesId"
-              @click="plantSeed(seed.speciesId)"
+      <section
+        v-if="activeTab === 'garden'"
+        id="garden-panel-garden"
+        role="tabpanel"
+        aria-labelledby="garden-tab-garden"
+        class="flex flex-col gap-5"
+      >
+        <div class="relative aspect-[800/520] max-h-[520px] w-full overflow-hidden rounded-2xl border border-border/60 shadow-sm">
+          <GardenScene :level="garden.level" class="absolute inset-0" />
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-background/10 to-transparent" />
+
+          <div class="pointer-events-none absolute inset-0 z-[5]">
+            <div
+              v-if="lastMaturedPlant"
+              class="absolute aspect-square -translate-x-1/2"
+              :style="maturedSceneStyle"
+              aria-hidden="true"
             >
-              {{ $t('tools.plantSeed', { species: seed.speciesId }) }}
+              <PlantArt
+                :stage="lastMaturedPlant.stage"
+                :species-id="lastMaturedPlant.speciesId"
+                class="h-full w-full text-emerald-700 drop-shadow-[0_14px_18px_rgba(42,84,34,0.16)]"
+              />
+            </div>
+            <div class="absolute aspect-square -translate-x-1/2" :style="plantSceneStyle">
+              <div class="absolute bottom-[2%] left-1/2 h-[14%] w-[52%] -translate-x-1/2 rounded-[50%] border border-dashed border-foreground/25 bg-[#b68153]/15" />
+              <div
+                class="relative h-full w-full origin-bottom transition-transform duration-700 ease-out"
+                :style="{ transform: `scale(${plantScale})` }"
+              >
+                <Transition name="plant-stage" mode="out-in">
+                  <PlantArt
+                    v-if="plant"
+                    :key="plant.stage"
+                    :stage="plant.stage"
+                    :species-id="plant.speciesId"
+                    class="h-full w-full text-emerald-600 drop-shadow-[0_18px_20px_rgba(42,84,34,0.18)]"
+                  />
+                  <PlantArt
+                    v-else
+                    key="ghost"
+                    stage="mature"
+                    class="h-full w-full opacity-15 grayscale"
+                  />
+                </Transition>
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute right-3 top-3 z-30 flex max-w-[72%] flex-wrap items-center justify-end gap-2 rounded-lg border border-border/40 bg-background/75 p-1.5 backdrop-blur">
+            <span class="hidden text-xs text-muted-foreground sm:inline">{{ $t('tools.autoPlace') }}</span>
+            <Switch
+              :model-value="garden.autoPlace"
+              :label="$t('tools.autoPlace')"
+              @update:model-value="toggleAutoPlace"
+            />
+            <Button size="sm" variant="outline" @click="toggleLayout">
+              {{ layoutMode ? $t('tools.layoutDone') : $t('tools.layoutEdit') }}
             </Button>
           </div>
-          <Button
-            v-else-if="garden.canClaimBasicSeed"
-            size="sm"
-            :loading="claimingSeed"
-            @click="claimBasicSeed"
-          >
-            {{ $t('tools.claimBasicSeed') }}
-          </Button>
-        </div>
-      </section>
 
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.badges.title') }}</h2>
-          <span class="text-sm text-muted-foreground">
-            {{ $t('tools.badges.summary', { unlocked: badges.unlocked, total: badges.total }) }}
-          </span>
-        </div>
-        <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="badge in badges.items"
-            :key="badge.id"
-            class="flex items-center gap-3 rounded-lg border border-border/50 bg-background/50 px-3 py-2"
-            :class="{ 'opacity-50': !badge.unlocked }"
-          >
-            <BadgeArt
-              :definition-id="badge.definitionId"
-              :kind="badge.kind"
-              :unlocked="badge.unlocked"
-              class="h-9 w-9 shrink-0"
-              :class="{ 'grayscale opacity-45': !badge.unlocked }"
-            />
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm text-foreground">
-                {{ $t(`tools.badgeNames.${badge.definitionId}`) }}
+          <div class="absolute inset-0">
+            <button
+              v-for="plot in scenePlots"
+              :key="plot.key"
+              type="button"
+              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 rounded-[38%] border border-dashed outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              :class="plot.placement
+                ? 'pointer-events-none border-transparent'
+                : layoutMode
+                  ? 'border-primary/70 bg-background/70 hover:bg-background/90'
+                  : 'border-foreground/20 bg-background/25 hover:border-primary/60 hover:bg-background/60'"
+              :style="plot.style"
+              :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.placementEmpty')"
+              @click="openPlacement(plot.slotId, 'garden')"
+            >
+              <template v-if="plot.placement">
+                <div class="group relative h-full w-full">
+                  <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
+                  <IconButton
+                    v-if="layoutMode"
+                    size="icon-sm"
+                    class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
+                    :label="$t('tools.placementRemove')"
+                    @click.stop="removePlacement(plot.placement.inventoryId)"
+                  >
+                    <X class="h-3 w-3" />
+                  </IconButton>
+                </div>
+              </template>
+              <span v-else class="flex h-full w-full items-center justify-center text-primary/70">
+                <Plus
+                  class="h-3 w-3 transition-opacity"
+                  :class="layoutMode ? 'opacity-100' : 'opacity-50 group-hover:opacity-100 group-focus:opacity-100'"
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+
+            <button
+              v-for="plot in scenePetPlots"
+              :key="plot.key"
+              type="button"
+              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              :class="plot.placement
+                ? 'pointer-events-none border-transparent'
+                : layoutMode
+                  ? 'border-primary/70 bg-background/70 hover:bg-background/90'
+                  : 'border-foreground/20 bg-background/20 hover:border-primary/60 hover:bg-background/55'"
+              :style="plot.style"
+              :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.petSlotEmpty')"
+              @click="openPlacement(plot.slotId, 'pet')"
+            >
+              <template v-if="plot.placement">
+                <div class="group relative h-full w-full">
+                  <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
+                  <IconButton
+                    v-if="layoutMode"
+                    size="icon-sm"
+                    class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
+                    :label="$t('tools.placementRemove')"
+                    @click.stop="removePlacement(plot.placement.inventoryId)"
+                  >
+                    <X class="h-3 w-3" />
+                  </IconButton>
+                </div>
+              </template>
+              <span v-else class="flex h-full w-full items-center justify-center text-primary/70">
+                <Plus
+                  class="h-3 w-3 transition-opacity"
+                  :class="layoutMode ? 'opacity-100' : 'opacity-50 group-hover:opacity-100 group-focus:opacity-100'"
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+          </div>
+
+          <div class="pointer-events-none absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
+            <div class="min-w-0">
+              <p class="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">
+                <span>{{ $t('tools.garden') }} · {{ $t('tools.gardenLevel', { level: garden.level }) }}</span>
+                <span
+                  v-if="plant"
+                  class="rounded-full border border-border/50 bg-background/70 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur"
+                >
+                  {{ $t(`tools.stage.${plant.stage}`) }} · {{ plant.growthScore }}/15
+                </span>
               </p>
-              <p class="text-xs text-muted-foreground">
-                <template v-if="badge.unlocked">
-                  {{ badgeStatus(badge) }}
-                </template>
-                <template v-else>{{ $t('tools.badges.locked') }}</template>
-              </p>
+              <p class="mt-0.5 hidden text-xs text-muted-foreground lg:block">{{ $t('tools.sceneHint') }}</p>
             </div>
+            <p class="hidden shrink-0 text-sm text-muted-foreground lg:block">
+              {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+            </p>
+          </div>
+        </div>
+
+        <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div class="tool-stat">
+            <span class="tool-stat-label">{{ $t('tools.todayFocus') }}</span>
+            <span class="tool-stat-value">{{ today.focusCount }}</span>
+          </div>
+          <div class="tool-stat">
+            <span class="tool-stat-label">{{ $t('tools.todayWater') }}</span>
+            <span class="tool-stat-value">{{ today.waterCount }}</span>
+          </div>
+          <div class="tool-stat">
+            <span class="tool-stat-label">{{ $t('tools.todaySun') }}</span>
+            <span class="tool-stat-value">{{ today.sunCount }}</span>
+          </div>
+          <div class="tool-stat">
+            <span class="tool-stat-label">{{ $t('tools.todayGrowth') }}</span>
+            <span class="tool-stat-value">{{ today.totalGrowth }}</span>
+          </div>
+        </section>
+
+        <p v-if="placementError" class="text-sm text-destructive" role="alert">{{ placementError }}</p>
+
+        <div class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+          <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.plant') }}</h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                  {{ plant ? plantSpeciesName : $t('tools.noPlantDescription') }}
+                </p>
+              </div>
+              <span v-if="plant" class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                {{ $t(`tools.stage.${plant.stage}`) }}
+              </span>
+            </div>
+
+            <div v-if="plant" class="mt-5">
+              <div class="flex items-end justify-between gap-3">
+                <p class="text-3xl font-semibold tabular-nums text-foreground">
+                  {{ plant.growthScore }}<span class="text-base font-normal text-muted-foreground">/15</span>
+                </p>
+                <p v-if="plantedAtLabel" class="text-xs text-muted-foreground">
+                  {{ $t('tools.plantedAt', { date: plantedAtLabel }) }}
+                </p>
+              </div>
+              <div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                <div class="h-full rounded-full bg-primary transition-all duration-700" :style="{ width: progressWidth }" />
+              </div>
+              <p class="mt-2 text-xs leading-5 text-muted-foreground">{{ nextStageHint }}</p>
+            </div>
+
+            <div v-else class="mt-5 flex flex-col gap-3">
+              <p class="text-sm text-muted-foreground">{{ $t('tools.noPlant') }}</p>
+              <div v-if="seeds.length > 0" class="flex flex-wrap gap-2">
+                <Button
+                  v-for="seed in seeds"
+                  :key="seed.speciesId"
+                  size="sm"
+                  :loading="plantingSpecies === seed.speciesId"
+                  @click="plantSeed(seed.speciesId)"
+                >
+                  {{ $t('tools.plantSeed', { species: speciesName(seed.speciesId) }) }}
+                </Button>
+              </div>
+              <Button
+                v-else-if="garden.canClaimBasicSeed"
+                size="sm"
+                :loading="claimingSeed"
+                @click="claimBasicSeed"
+              >
+                {{ $t('tools.claimBasicSeed') }}
+              </Button>
+            </div>
+          </section>
+
+          <div class="flex flex-col gap-4">
+            <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.expansion') }}</h2>
+                <span class="text-sm text-muted-foreground">{{ $t('tools.capacity', { count: garden.capacity }) }}</span>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <span
+                  v-for="entry in expansions"
+                  :key="entry.level"
+                  class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
+                >
+                  Lv.{{ entry.level }}
+                </span>
+              </div>
+              <p v-if="garden.nextExpansion" class="mt-3 text-xs leading-5 text-muted-foreground">
+                {{ $t('tools.nextExpansion', {
+                  level: garden.nextExpansion.level,
+                  streak: garden.nextExpansion.streakDays,
+                  total: garden.nextExpansion.totalGrowthDays
+                }) }}
+              </p>
+              <p v-else class="mt-3 text-xs text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
+            </section>
+
+            <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.claims') }}</h2>
+                <span class="text-sm text-muted-foreground">{{ pendingClaims.length }}</span>
+              </div>
+              <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.claimHint') }}</p>
+
+              <div v-if="claimOptions" class="mt-4 flex flex-col gap-3">
+                <div v-if="claimOptions.fallbackItem" class="text-sm text-foreground">
+                  {{ $t('tools.fallback') }} · {{ claimOptions.fallbackItem.id }}
+                </div>
+                <div v-else-if="claimOptions.directItem" class="text-sm text-foreground">
+                  {{ $t('tools.lastItem') }} · {{ claimOptions.directItem.id }}
+                </div>
+                <div v-else class="flex flex-wrap gap-2">
+                  <Button
+                    v-for="candidate in claimOptions.candidates"
+                    :key="candidate.id"
+                    :variant="selectedItemId === candidate.id ? 'default' : 'outline'"
+                    size="sm"
+                    @click="selectedItemId = candidate.id"
+                  >
+                    {{ candidate.id }}
+                  </Button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <Button
+                    :loading="claiming"
+                    :disabled="!claimOptions.directItem && !claimOptions.fallbackItem && !selectedItemId"
+                    @click="claim"
+                  >
+                    {{ $t('tools.claim') }}
+                  </Button>
+                  <p v-if="claimError" class="text-sm text-destructive" role="alert">{{ claimError }}</p>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </section>
 
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.collection.title') }}</h2>
+      <section
+        v-else-if="activeTab === 'collection'"
+        id="garden-panel-collection"
+        role="tabpanel"
+        aria-labelledby="garden-tab-collection"
+        class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.collection.title') }}</h2>
+            <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.collection.description') }}</p>
+          </div>
           <span class="text-sm text-muted-foreground">
-            {{ $t('tools.collection.summary', {
-              owned: collection.filter((entry) => entry.owned || entry.unlocked).length,
-              total: collection.length
-            }) }}
+            {{ $t('tools.collection.summary', { owned: collectionOwnedCount, total: collection.length }) }}
           </span>
         </div>
-        <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+        <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           <div
             v-for="entry in collection"
             :key="entry.id"
@@ -231,160 +388,152 @@
             <p class="text-2xs text-muted-foreground">{{ collectionStatus(entry) }}</p>
           </div>
         </div>
+
+        <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div class="rounded-xl border border-border/50 bg-background/40 p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium text-foreground">{{ $t('tools.species') }}</h3>
+              <span class="text-xs text-muted-foreground">{{ species.length }}</span>
+            </div>
+            <p v-if="species.length === 0" class="mt-3 text-sm text-muted-foreground">
+              {{ $t('tools.noSpecies') }}
+            </p>
+            <ul v-else class="mt-3 flex flex-wrap gap-2">
+              <li
+                v-for="entry in species"
+                :key="entry.speciesId"
+                class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
+              >
+                {{ speciesName(entry.speciesId) }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-border/50 bg-background/40 p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium text-foreground">{{ $t('tools.seeds') }}</h3>
+              <span class="text-xs text-muted-foreground">{{ garden.seedCount }}</span>
+            </div>
+            <p v-if="seeds.length === 0" class="mt-3 text-sm text-muted-foreground">
+              {{ $t('tools.noSeeds') }}
+            </p>
+            <ul v-else class="mt-3 flex flex-col gap-2">
+              <li
+                v-for="seed in seeds"
+                :key="seed.speciesId"
+                class="flex items-center justify-between rounded-lg border border-border/40 px-3 py-2 text-sm"
+              >
+                <span class="text-foreground">{{ speciesName(seed.speciesId) }}</span>
+                <span class="text-muted-foreground">×{{ seed.quantity }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-border/50 bg-background/40 p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium text-foreground">{{ $t('tools.inventory') }}</h3>
+              <span class="text-xs text-muted-foreground">{{ inventory.length }}</span>
+            </div>
+            <p v-if="inventory.length === 0" class="mt-3 text-sm text-muted-foreground">
+              {{ $t('tools.noInventory') }}
+            </p>
+            <ul v-else class="mt-3 flex flex-wrap gap-2">
+              <li
+                v-for="item in inventory"
+                :key="item.id"
+                class="flex items-center gap-1.5 rounded-full border border-border/50 bg-background/60 px-2.5 py-1 text-xs text-foreground"
+              >
+                <div class="h-5 w-5 text-primary">
+                  <ItemArt :variant="collectionByCatalogId[item.catalogId]?.variant || 'box'" />
+                </div>
+                {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+                <span class="text-muted-foreground">×{{ item.quantity }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.plantHistory') }}</h2>
+      <section
+        v-else-if="activeTab === 'badges'"
+        id="garden-panel-badges"
+        role="tabpanel"
+        aria-labelledby="garden-tab-badges"
+        class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.badges.title') }}</h2>
+            <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.badges.description') }}</p>
+          </div>
+          <span class="text-sm text-muted-foreground">
+            {{ $t('tools.badges.summary', { unlocked: badges.unlocked, total: badges.total }) }}
+          </span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          <div
+            v-for="badge in badges.items"
+            :key="badge.id"
+            class="flex min-w-0 items-center gap-2 rounded-lg border border-border/50 bg-background/40 px-2.5 py-2"
+            :class="{ 'opacity-55': !badge.unlocked }"
+          >
+            <BadgeArt
+              :definition-id="badge.definitionId"
+              :kind="badge.kind"
+              :unlocked="badge.unlocked"
+              class="h-7 w-7 shrink-0"
+              :class="{ 'grayscale opacity-45': !badge.unlocked }"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs text-foreground" :title="$t(`tools.badgeNames.${badge.definitionId}`)">
+                {{ $t(`tools.badgeNames.${badge.definitionId}`) }}
+              </p>
+              <p class="truncate text-[10px] text-muted-foreground">
+                <template v-if="badge.unlocked">{{ badgeStatus(badge) }}</template>
+                <template v-else>{{ $t('tools.badges.locked') }}</template>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        v-else
+        id="garden-panel-history"
+        role="tabpanel"
+        aria-labelledby="garden-tab-history"
+        class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.plantHistory') }}</h2>
+            <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.plantHistoryDescription') }}</p>
+          </div>
           <span class="text-sm text-muted-foreground">{{ plantHistory.length }}</span>
         </div>
         <p v-if="plantHistory.length === 0" class="mt-4 text-sm text-muted-foreground">
           {{ $t('tools.noPlantHistory') }}
         </p>
-        <ul v-else class="mt-4 flex flex-col gap-2">
+        <ul v-else class="mt-4 divide-y divide-border/40">
           <li
             v-for="entry in plantHistory"
             :key="entry.id"
-            class="flex items-center justify-between rounded-lg border border-border/40 px-3 py-2 text-sm"
+            class="flex items-center gap-3 py-3"
           >
-            <span class="text-foreground">{{ entry.speciesId }} · {{ $t(`tools.stage.${entry.stage}`) }}</span>
-            <span class="text-muted-foreground">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 p-1 text-primary">
+              <PlantArt :stage="entry.stage" :species-id="entry.speciesId" class="h-8 w-8" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm text-foreground">
+                {{ speciesName(entry.speciesId) }} · {{ $t(`tools.stage.${entry.stage}`) }}
+              </p>
+              <p class="text-xs text-muted-foreground">{{ formatPlantDate(entry.plantedAt) }}</p>
+            </div>
+            <span class="shrink-0 text-xs text-muted-foreground">
               {{ $t(`tools.plantStatus.${entry.status}`) }} · {{ entry.growthScore }}/15
             </span>
           </li>
         </ul>
-      </section>
-
-      <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.expansion') }}</h2>
-          <span class="text-sm text-muted-foreground">
-            {{ $t('tools.capacity', { count: garden.capacity }) }}
-          </span>
-        </div>
-        <div class="mt-4 flex flex-wrap gap-2">
-          <span
-            v-for="entry in expansions"
-            :key="entry.level"
-            class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
-          >
-            Lv.{{ entry.level }}
-          </span>
-        </div>
-        <p class="mt-3 text-sm text-muted-foreground">
-          {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
-        </p>
-        <p v-if="garden.nextExpansion" class="mt-1 text-sm text-muted-foreground">
-          {{ $t('tools.nextExpansion', {
-            level: garden.nextExpansion.level,
-            streak: garden.nextExpansion.streakDays,
-            total: garden.nextExpansion.totalGrowthDays
-          }) }}
-        </p>
-        <p v-else class="mt-1 text-sm text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
-      </section>
-
-      <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.claims') }}</h2>
-          <span class="text-sm text-muted-foreground">{{ pendingClaims.length }}</span>
-        </div>
-        <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.claimHint') }}</p>
-
-        <div v-if="claimOptions" class="mt-4 flex flex-col gap-3">
-          <div v-if="claimOptions.fallbackItem" class="text-sm text-foreground">
-            {{ $t('tools.fallback') }} · {{ claimOptions.fallbackItem.id }}
-          </div>
-          <div v-else-if="claimOptions.directItem" class="text-sm text-foreground">
-            {{ $t('tools.lastItem') }} · {{ claimOptions.directItem.id }}
-          </div>
-          <div v-else class="flex flex-wrap gap-2">
-            <Button
-              v-for="candidate in claimOptions.candidates"
-              :key="candidate.id"
-              :variant="selectedItemId === candidate.id ? 'default' : 'outline'"
-              size="sm"
-              @click="selectedItemId = candidate.id"
-            >
-              {{ candidate.id }}
-            </Button>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <Button
-              :loading="claiming"
-              :disabled="!claimOptions.directItem && !claimOptions.fallbackItem && !selectedItemId"
-              @click="claim"
-            >
-              {{ $t('tools.claim') }}
-            </Button>
-            <p v-if="claimError" class="text-sm text-destructive" role="alert">{{ claimError }}</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.species') }}</h2>
-            <span class="text-sm text-muted-foreground">{{ species.length }}</span>
-          </div>
-          <p v-if="species.length === 0" class="mt-4 text-sm text-muted-foreground">
-            {{ $t('tools.noSpecies') }}
-          </p>
-          <ul v-else class="mt-4 flex flex-wrap gap-2">
-            <li
-              v-for="entry in species"
-              :key="entry.speciesId"
-              class="rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-foreground"
-            >
-              {{ entry.speciesId }}
-            </li>
-          </ul>
-        </div>
-
-        <div class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.seeds') }}</h2>
-            <span class="text-sm text-muted-foreground">{{ garden.seedCount }}</span>
-          </div>
-          <p v-if="seeds.length === 0" class="mt-4 text-sm text-muted-foreground">
-            {{ $t('tools.noSeeds') }}
-          </p>
-          <ul v-else class="mt-4 flex flex-col gap-2">
-            <li
-              v-for="seed in seeds"
-              :key="seed.speciesId"
-              class="flex items-center justify-between rounded-lg border border-border/40 px-3 py-2 text-sm"
-            >
-              <span class="text-foreground">{{ seed.speciesId }}</span>
-              <span class="text-muted-foreground">×{{ seed.quantity }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.inventory') }}</h2>
-            <span class="text-sm text-muted-foreground">{{ inventory.length }}</span>
-          </div>
-          <p v-if="inventory.length === 0" class="mt-4 text-sm text-muted-foreground">
-            {{ $t('tools.noInventory') }}
-          </p>
-          <ul v-else class="mt-4 flex flex-wrap gap-2">
-            <li
-              v-for="item in inventory"
-              :key="item.id"
-              class="flex items-center gap-1.5 rounded-full border border-border/50 bg-background/60 px-2.5 py-1 text-xs text-foreground"
-            >
-              <div class="h-5 w-5 text-primary">
-                <ItemArt :variant="collectionByCatalogId[item.catalogId]?.variant || 'box'" />
-              </div>
-              {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
-              <span class="text-muted-foreground">×{{ item.quantity }}</span>
-            </li>
-          </ul>
-        </div>
       </section>
 
       <Dialog
@@ -409,15 +558,17 @@
             {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
           </Button>
         </div>
+        <p v-if="placementError" class="mt-3 text-sm text-destructive" role="alert">{{ placementError }}</p>
       </Dialog>
     </div>
   </div>
 </template>
 
+
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, X } from '@lucide/vue'
+import { Award, BookOpen, History, Plus, Sprout, X } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
@@ -430,6 +581,7 @@ import GardenScene from './art/GardenScene.vue'
 
 const { t } = useI18n()
 const toolsStore = useToolsStore()
+const activeTab = ref('garden')
 const selectedItemId = ref(null)
 const claimOptions = ref(null)
 const claiming = ref(false)
@@ -469,6 +621,9 @@ const badges = computed(() => gardenView.value?.badges || {
   unlocked: 0,
   items: []
 })
+const collectionOwnedCount = computed(() => (
+  collection.value.filter((entry) => entry.owned || entry.unlocked).length
+))
 const inventory = computed(() => gardenView.value?.inventory || [])
 const expansions = computed(() => gardenView.value?.expansions || [])
 const placements = computed(() => gardenView.value?.placements || [])
@@ -494,9 +649,9 @@ const scenePetPlots = computed(() => (
       slotId,
       placement: petMap.value[slotId] || null,
       style: {
-        left: `${14 + index * 9}%`,
-        top: `${76 + index * 4}%`,
-        width: '6%',
+        left: `${12 + index * 7}%`,
+        top: `${84 + index * 2}%`,
+        width: '5.4%',
         zIndex: 24 + index
       }
     }
@@ -534,10 +689,10 @@ const scenePlots = computed(() => {
       slotId: `slot-${slot}`,
       placement: anchor?.placement || null,
       style: {
-        left: `${40 + column * 11 + row * 2}%`,
-        top: `${62 + row * 4.4}%`,
-        width: `${anchor ? 6 + size * 3 : 3.2}%`,
-        zIndex: 20 + row * 4 + column
+        left: `${48 + column * 10 + row * 0.2}%`,
+        top: `${68 + row * 3.6}%`,
+        width: `${anchor ? 6 + size * 3 : 2.1}%`,
+        zIndex: anchor ? 20 + row * 4 + column : 16 + row
       }
     })
   }
@@ -561,10 +716,98 @@ const today = computed(() => toolsStore.shellSnapshot?.today || {
   sunCount: 0,
   totalGrowth: 0
 })
+const tabs = computed(() => [
+  {
+    id: 'garden',
+    label: t('tools.gardenTab'),
+    icon: Sprout,
+    count: null
+  },
+  {
+    id: 'collection',
+    label: t('tools.collection.title'),
+    icon: BookOpen,
+    count: `${collectionOwnedCount.value}/${collection.value.length}`
+  },
+  {
+    id: 'badges',
+    label: t('tools.badges.title'),
+    icon: Award,
+    count: `${badges.value.unlocked}/${badges.value.total}`
+  },
+  {
+    id: 'history',
+    label: t('tools.plantHistory'),
+    icon: History,
+    count: plantHistory.value.length ? String(plantHistory.value.length) : null
+  }
+])
+const plantProgress = computed(() => (
+  plant.value ? Math.min(1, Math.max(0, plant.value.growthScore / 15)) : 0
+))
+const lastMaturedPlant = computed(() => (
+  plantHistory.value.find((entry) => entry.status === 'matured') || null
+))
+const plantScale = computed(() => (plant.value ? 0.84 + plantProgress.value * 0.16 : 1))
+const plantSceneStyle = {
+  left: '57%',
+  bottom: '35%',
+  width: '36%'
+}
+const maturedSceneStyle = {
+  left: '78%',
+  bottom: '37%',
+  width: '28%'
+}
+const plantSpeciesName = computed(() => (
+  plant.value ? speciesName(plant.value.speciesId) : ''
+))
+const plantedAtLabel = computed(() => formatPlantDate(plant.value?.plantedAt))
+const nextStageHint = computed(() => {
+  if (!plant.value) return ''
+  const score = plant.value.growthScore
+  if (score >= 15) return t('tools.growthComplete')
+  const nextStage = score < 5
+    ? { score: 5, stage: 'sprout' }
+    : score < 10
+      ? { score: 10, stage: 'sapling' }
+      : { score: 15, stage: 'mature' }
+  return t('tools.nextStage', {
+    points: nextStage.score - score,
+    stage: t(`tools.stage.${nextStage.stage}`)
+  })
+})
 const progressWidth = computed(() => {
   if (!plant.value) return '0%'
   return `${Math.min(100, Math.round((plant.value.growthScore / 15) * 100))}%`
 })
+
+function handleTabKeydown(event, index) {
+  const lastIndex = tabs.value.length - 1
+  let nextIndex = null
+  if (event.key === 'ArrowRight') nextIndex = index === lastIndex ? 0 : index + 1
+  if (event.key === 'ArrowLeft') nextIndex = index === 0 ? lastIndex : index - 1
+  if (event.key === 'Home') nextIndex = 0
+  if (event.key === 'End') nextIndex = lastIndex
+  if (nextIndex === null) return
+  event.preventDefault()
+  activeTab.value = tabs.value[nextIndex].id
+  event.currentTarget.parentElement
+    ?.querySelectorAll('[role="tab"]')
+    ?.[nextIndex]
+    ?.focus()
+}
+
+function speciesName(speciesId) {
+  return t(`tools.speciesNames.${speciesId}`)
+}
+
+function formatPlantDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
+}
 
 function parseSlotNumber(slotId) {
   return Number(String(slotId).split('-')[1])
@@ -725,5 +968,29 @@ watch(activeClaim, loadClaimOptions)
 
 .tool-stat-value {
   @apply text-2xl font-semibold text-foreground;
+}
+
+.plant-stage-enter-active {
+  transition: opacity 500ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plant-stage-leave-active {
+  transition: opacity 220ms ease;
+}
+
+.plant-stage-enter-from {
+  opacity: 0;
+  transform: translateY(8px) scale(0.72);
+}
+
+.plant-stage-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-stage-enter-active,
+  .plant-stage-leave-active {
+    transition: none;
+  }
 }
 </style>
