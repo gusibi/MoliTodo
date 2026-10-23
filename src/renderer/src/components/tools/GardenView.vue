@@ -69,46 +69,16 @@
         class="flex flex-col gap-5"
       >
         <div class="relative aspect-[800/520] max-h-[520px] w-full overflow-hidden rounded-2xl border border-border/60 shadow-sm">
-          <GardenScene :level="garden.level" class="absolute inset-0" />
-          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-background/10 to-transparent" />
-
-          <div class="pointer-events-none absolute inset-0 z-[5]">
-            <div
-              v-if="lastMaturedPlant"
-              class="absolute aspect-square -translate-x-1/2"
-              :style="maturedSceneStyle"
-              aria-hidden="true"
-            >
-              <PlantArt
-                :stage="lastMaturedPlant.stage"
-                :species-id="lastMaturedPlant.speciesId"
-                class="h-full w-full text-emerald-700 drop-shadow-[0_14px_18px_rgba(42,84,34,0.16)]"
-              />
-            </div>
-            <div class="absolute aspect-square -translate-x-1/2" :style="plantSceneStyle">
-              <div class="absolute bottom-[2%] left-1/2 h-[9%] w-[34%] -translate-x-1/2 border-2 border-[#6d442c]/30 bg-[#98653f]/30 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
-              <div
-                class="relative h-full w-full origin-bottom transition-transform duration-700 ease-out"
-                :style="{ transform: `scale(${plantScale})` }"
-              >
-                <Transition name="plant-stage" mode="out-in">
-                  <PlantArt
-                    v-if="plant"
-                    :key="plant.stage"
-                    :stage="plant.stage"
-                    :species-id="plant.speciesId"
-                    class="h-full w-full text-emerald-600 drop-shadow-[0_18px_20px_rgba(42,84,34,0.18)]"
-                  />
-                  <PlantArt
-                    v-else
-                    key="ghost"
-                    stage="mature"
-                    class="h-full w-full opacity-15 grayscale"
-                  />
-                </Transition>
-              </div>
-            </div>
-          </div>
+          <GardenThreeScene
+            :level="garden.level"
+            :plant="plant"
+            :matured-plant="lastMaturedPlant"
+            :plots="scenePlots"
+            :pet-plots="scenePetPlots"
+            :layout-mode="layoutMode"
+            @open-plot="openPlacement"
+            @remove-placement="removePlacement"
+          />
 
           <div class="absolute right-3 top-3 z-30 flex max-w-[72%] flex-wrap items-center justify-end gap-2 rounded-lg border border-border/40 bg-background/75 p-1.5 backdrop-blur">
             <span class="hidden text-xs text-muted-foreground sm:inline">{{ $t('tools.autoPlace') }}</span>
@@ -120,83 +90,6 @@
             <Button size="sm" variant="outline" @click="toggleLayout">
               {{ layoutMode ? $t('tools.layoutDone') : $t('tools.layoutEdit') }}
             </Button>
-          </div>
-
-          <div class="absolute inset-0">
-            <button
-              v-for="plot in scenePlots"
-              :key="plot.key"
-              type="button"
-              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-              :class="plot.placement
-                ? 'pointer-events-none border-transparent'
-                : layoutMode
-                  ? 'border-[#6d442c]/70 bg-[#b98a55]/70 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:bg-[#c99b63]'
-                  : 'border-[#6d442c]/40 bg-[#8a5a3b]/35 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:border-[#6d442c]/70 hover:bg-[#b98a55]/65'"
-              :style="plot.style"
-              :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.placementEmpty')"
-              @click="openPlacement(plot.slotId, 'garden')"
-            >
-              <template v-if="plot.placement">
-                <div class="group relative h-full w-full">
-                  <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
-                  <IconButton
-                    v-if="layoutMode"
-                    size="icon-sm"
-                    class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
-                    :label="$t('tools.placementRemove')"
-                    @click.stop="removePlacement(plot.placement.inventoryId)"
-                  >
-                    <X class="h-3 w-3" />
-                  </IconButton>
-                </div>
-              </template>
-              <span v-else class="flex h-full w-full items-center justify-center text-[#f7f2dd]">
-                <Plus
-                  class="h-3 w-3 transition-opacity"
-                  :class="layoutMode ? 'opacity-100' : 'opacity-50 group-hover:opacity-100 group-focus:opacity-100'"
-                  aria-hidden="true"
-                />
-              </span>
-            </button>
-
-            <button
-              v-for="plot in scenePetPlots"
-              v-show="plot.placement || layoutMode"
-              :key="plot.key"
-              type="button"
-              class="group absolute aspect-square -translate-x-1/2 -translate-y-1/2 border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-              :class="plot.placement
-                ? 'pointer-events-none border-transparent'
-                : layoutMode
-                  ? 'border-[#4f8f3f]/80 bg-[#7fbd56]/85 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:bg-[#8fce62]'
-                  : 'border-[#4f8f3f]/50 bg-[#7fbd56]/55 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] hover:border-[#4f8f3f]/80 hover:bg-[#8fce62]'"
-              :style="plot.style"
-              :aria-label="plot.placement ? itemName(placementEntry(plot.placement.inventoryId)) : $t('tools.petSlotEmpty')"
-              @click="openPlacement(plot.slotId, 'pet')"
-            >
-              <template v-if="plot.placement">
-                <div class="group relative h-full w-full">
-                  <ItemArt :variant="placementEntry(plot.placement.inventoryId)?.variant || 'box'" />
-                  <IconButton
-                    v-if="layoutMode"
-                    size="icon-sm"
-                    class="pointer-events-auto absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background/90 shadow"
-                    :label="$t('tools.placementRemove')"
-                    @click.stop="removePlacement(plot.placement.inventoryId)"
-                  >
-                    <X class="h-3 w-3" />
-                  </IconButton>
-                </div>
-              </template>
-              <span v-else class="flex h-full w-full items-center justify-center text-[#2f5f2a]">
-                <Plus
-                  class="h-3 w-3 transition-opacity"
-                  :class="layoutMode ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-focus:opacity-100'"
-                  aria-hidden="true"
-                />
-              </span>
-            </button>
           </div>
 
           <div class="pointer-events-none absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
@@ -567,18 +460,17 @@
 
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Award, BookOpen, History, Plus, Sprout, X } from '@lucide/vue'
+import { Award, BookOpen, History, Sprout } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
-import IconButton from '@/components/ui/button/IconButton.vue'
 import Switch from '@/components/ui/switch/Switch.vue'
 import Dialog from '@/components/ui/dialog/Dialog.vue'
 import PlantArt from './art/PlantArt.vue'
 import BadgeArt from './art/BadgeArt.vue'
 import ItemArt from './art/ItemArt.vue'
-import GardenScene from './art/GardenScene.vue'
+const GardenThreeScene = defineAsyncComponent(() => import('./art/GardenThreeScene.vue'))
 
 const { t } = useI18n()
 const toolsStore = useToolsStore()
@@ -645,16 +537,17 @@ const layoutMode = ref(false)
 const scenePetPlots = computed(() => (
   Array.from({ length: garden.value.petCapacity || 0 }, (_, index) => {
     const slotId = `pet-${index + 1}`
+    const placement = petMap.value[slotId] || null
+    const entry = placement ? placementEntry(placement.inventoryId) : null
     return {
       key: `pet-${index + 1}`,
       slotId,
-      placement: petMap.value[slotId] || null,
-      style: {
-        left: `${84 + index * 5.5}%`,
-        top: `${74 + index * 3}%`,
-        width: '5.4%',
-        zIndex: 24 + index
-      }
+      slotNumber: index + 1,
+      region: 'pet',
+      placement,
+      size: 1,
+      variant: entry?.variant || 'box',
+      label: placement ? itemName(entry) : ''
     }
   })
 ))
@@ -679,25 +572,20 @@ const scenePlots = computed(() => {
   }
 
   const cells = []
-  const dense = capacity > 16
-  const emptySize = dense ? 2.2 : 3
-  const rowGap = dense ? 3.5 : 4.4
   for (let slot = 1; slot <= capacity; slot += 1) {
     if (occupied.has(slot) && !anchors.has(slot)) continue
     const anchor = anchors.get(slot)
-    const row = Math.floor((slot - 1) / columns)
-    const column = (slot - 1) % columns
+    const entry = anchor ? placementEntry(anchor.placement.inventoryId) : null
     const size = anchor?.size || 1
     cells.push({
       key: anchor ? `placed-${slot}` : `empty-${slot}`,
       slotId: `slot-${slot}`,
+      slotNumber: slot,
+      region: 'garden',
       placement: anchor?.placement || null,
-      style: {
-        left: `${48 + column * 10 + row * 0.2}%`,
-        top: `${68 + row * rowGap}%`,
-        width: `${anchor ? 6 + size * 3 : emptySize}%`,
-        zIndex: anchor ? 20 + row * 4 + column : 16 + row
-      }
+      size,
+      variant: entry?.variant || 'box',
+      label: anchor ? itemName(entry) : ''
     })
   }
   return cells
@@ -746,23 +634,9 @@ const tabs = computed(() => [
     count: plantHistory.value.length ? String(plantHistory.value.length) : null
   }
 ])
-const plantProgress = computed(() => (
-  plant.value ? Math.min(1, Math.max(0, plant.value.growthScore / 15)) : 0
-))
 const lastMaturedPlant = computed(() => (
   plantHistory.value.find((entry) => entry.status === 'matured') || null
 ))
-const plantScale = computed(() => (plant.value ? 0.84 + plantProgress.value * 0.16 : 1))
-const plantSceneStyle = {
-  left: '57%',
-  bottom: '35%',
-  width: '36%'
-}
-const maturedSceneStyle = {
-  left: '78%',
-  bottom: '37%',
-  width: '28%'
-}
 const plantSpeciesName = computed(() => (
   plant.value ? speciesName(plant.value.speciesId) : ''
 ))
