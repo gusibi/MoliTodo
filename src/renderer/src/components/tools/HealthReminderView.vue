@@ -19,7 +19,7 @@
         </Button>
       </header>
 
-      <section class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+      <section class="grid items-start gap-4 lg:grid-cols-[1.45fr_1fr]">
         <div class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm">
           <div class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/[0.07] blur-3xl" />
           <div class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-info/[0.06] blur-3xl" />
@@ -100,58 +100,106 @@
           </div>
         </div>
 
-        <div class="relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.12] via-card to-card p-5 shadow-sm">
-          <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border border-primary/10" />
-          <div class="pointer-events-none absolute -right-3 -top-3 h-28 w-28 rounded-full border border-primary/10" />
-          <div class="relative flex items-center justify-between">
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              <Bell class="h-3.5 w-3.5" aria-hidden="true" />
-              {{ $t('tools.reminder.nextTitle') }}
-            </span>
-            <Sparkles class="h-4 w-4 text-primary/60" aria-hidden="true" />
+        <div class="flex min-h-0 flex-col gap-3">
+          <div class="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.12] via-card to-card p-4 shadow-sm">
+            <div class="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full border border-primary/10" />
+            <div class="relative flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                <Bell class="h-3.5 w-3.5" aria-hidden="true" />
+                {{ $t('tools.reminder.nextTitle') }}
+              </span>
+              <Sparkles class="h-3.5 w-3.5 text-primary/60" aria-hidden="true" />
+            </div>
+
+            <template v-if="nextReminder">
+              <div class="relative mt-3 flex items-end justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">{{ typeLabel(nextReminder.type) }}</p>
+                  <p class="mt-0.5 text-3xl font-semibold tracking-tight text-foreground">{{ nextReminder.time }}</p>
+                  <p class="mt-0.5 text-xs font-medium text-primary">{{ nextReminder.relative }}</p>
+                </div>
+                <div class="shrink-0 text-right text-[10px] leading-4 text-muted-foreground">
+                  <p>{{ $t('tools.reminder.nextInterval', { minutes: nextReminder.intervalMinutes }) }}</p>
+                  <p>{{ $t('tools.reminder.nextWindow', { start: nextReminder.windowStart, end: nextReminder.windowEnd }) }}</p>
+                </div>
+              </div>
+              <div v-if="upcomingReminders.length > 1" class="relative mt-3 flex items-center gap-2 border-t border-border/50 pt-2 text-[10px] text-muted-foreground">
+                <span class="shrink-0 uppercase tracking-[0.12em]">{{ $t('tools.reminder.upcomingTitle') }}</span>
+                <span
+                  v-for="item in upcomingReminders.slice(1, 3)"
+                  :key="item.ruleId"
+                  class="inline-flex min-w-0 items-center gap-1"
+                >
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="item.dotClass" />
+                  <span class="truncate">{{ typeLabel(item.type) }}</span>
+                  <span class="shrink-0 tabular-nums text-foreground">{{ item.time }}</span>
+                </span>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="relative mt-3 flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                  <Bell class="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-foreground">
+                    {{ hasEnabledRules ? $t('tools.reminder.nextNoneWindow') : $t('tools.reminder.nextNone') }}
+                  </p>
+                  <p class="mt-0.5 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
+                    {{ hasEnabledRules ? $t('tools.reminder.nextNoneWindowHint') : $t('tools.reminder.nextNoneHint') }}
+                  </p>
+                </div>
+                <Button v-if="!hasEnabledRules" size="sm" variant="outline" @click="openCreate">
+                  <Plus class="h-3.5 w-3.5" aria-hidden="true" />
+                  {{ $t('tools.reminder.newRule') }}
+                </Button>
+              </div>
+            </template>
           </div>
 
-          <template v-if="nextReminder">
-            <div class="relative mt-5">
-              <p class="text-sm text-muted-foreground">{{ typeLabel(nextReminder.type) }}</p>
-              <p class="mt-1 text-4xl font-semibold tracking-tight text-foreground">{{ nextReminder.time }}</p>
-              <p class="mt-1 text-sm font-medium text-primary">{{ nextReminder.relative }}</p>
-            </div>
-            <div v-if="upcomingReminders.length > 1" class="relative mt-5 border-t border-border/50 pt-3">
-              <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{{ $t('tools.reminder.upcomingTitle') }}</p>
-              <ul class="mt-2 flex flex-col gap-1.5">
-                <li v-for="item in upcomingReminders.slice(1, 4)" :key="item.ruleId" class="flex items-center gap-2 text-xs">
-                  <span class="h-1.5 w-1.5 rounded-full" :class="item.dotClass" />
-                  <span class="min-w-0 flex-1 truncate text-muted-foreground">{{ typeLabel(item.type) }}</span>
-                  <span class="tabular-nums text-foreground">{{ item.time }}</span>
-                </li>
-              </ul>
-            </div>
-            <div class="relative mt-auto flex flex-col gap-2 pt-5 text-xs text-muted-foreground">
-              <span class="flex items-center gap-1.5">
-                <Repeat class="h-3.5 w-3.5" aria-hidden="true" />
-                {{ $t('tools.reminder.nextInterval', { minutes: nextReminder.intervalMinutes }) }}
-              </span>
-              <span class="flex items-center gap-1.5">
-                <Clock class="h-3.5 w-3.5" aria-hidden="true" />
-                {{ $t('tools.reminder.nextWindow', { start: nextReminder.windowStart, end: nextReminder.windowEnd }) }}
-              </span>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="relative mt-6 flex flex-1 flex-col">
-              <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
-                <Bell class="h-5 w-5" aria-hidden="true" />
+          <div class="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm">
+            <div class="flex items-end justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="text-sm font-semibold tracking-tight text-foreground">{{ $t('tools.reminder.recentTitle') }}</h2>
               </div>
-              <p class="mt-4 font-medium text-foreground">{{ $t('tools.reminder.nextNone') }}</p>
-              <p class="mt-1 text-sm leading-6 text-muted-foreground">{{ $t('tools.reminder.nextNoneHint') }}</p>
-              <Button class="mt-auto w-fit" variant="outline" @click="openCreate">
-                <Plus class="h-icon-sm w-icon-sm" aria-hidden="true" />
-                {{ $t('tools.reminder.newRule') }}
-              </Button>
+              <CheckCircle2 class="h-3.5 w-3.5 shrink-0 text-success/70" aria-hidden="true" />
             </div>
-          </template>
+
+            <p v-if="recentOccurrences.length === 0" class="mt-2 rounded-lg border border-dashed border-border/60 bg-background/40 px-3 py-3 text-center text-[11px] text-muted-foreground">
+              {{ $t('tools.reminder.recentEmpty') }}
+            </p>
+            <ul v-else class="mt-2 flex flex-col divide-y divide-border/40">
+              <li
+                v-for="occurrence in recentOccurrences.slice(0, 3)"
+                :key="occurrence.id"
+                class="flex items-center gap-2.5 py-1.5"
+              >
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" :class="typeMeta(occurrence.ruleType).softClass">
+                  <component :is="typeMeta(occurrence.ruleType).icon" class="h-3 w-3" aria-hidden="true" />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs text-foreground">{{ typeLabel(occurrence.ruleType) }}</p>
+                  <p class="text-[10px] text-muted-foreground">{{ formatOccurrenceTime(occurrence) }}</p>
+                </div>
+                <span class="rounded-full px-1.5 py-0.5 text-[10px]" :class="occurrenceStatusClass(occurrence.status)">
+                  {{ occurrenceStatusLabel(occurrence.status) }}
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-3.5 shadow-sm">
+            <div class="pointer-events-none absolute -bottom-16 -right-12 h-40 w-40 rounded-full bg-success/10 blur-3xl" />
+            <div class="relative">
+              <div class="flex items-center gap-2 text-xs font-medium text-foreground">
+                <Sparkles class="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                {{ $t('tools.reminder.tipTitle') }}
+              </div>
+              <p class="mt-2 text-sm font-semibold leading-5 tracking-tight text-foreground">{{ $t('tools.reminder.tipQuote') }}</p>
+              <p class="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">{{ $t('tools.reminder.tipBody') }}</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -178,50 +226,49 @@
           </Button>
         </div>
 
-        <div v-else class="mt-3 grid gap-3 md:grid-cols-2">
+        <div v-else class="mt-3 flex flex-col gap-2">
           <article
             v-for="rule in rules"
             :key="rule.id"
-            class="group flex flex-col gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm transition-colors hover:border-border"
+            class="group flex flex-col gap-2 rounded-xl border border-border/60 bg-card/70 px-3 py-2.5 shadow-sm transition-colors hover:border-border sm:flex-row sm:items-center"
             :class="rule.enabled !== 1 ? 'opacity-70' : ''"
           >
-            <div class="flex items-start gap-3">
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" :class="typeMeta(rule.type).softClass">
-                <component :is="typeMeta(rule.type).icon" class="h-5 w-5" aria-hidden="true" />
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" :class="typeMeta(rule.type).softClass" :title="typeMeta(rule.type).hint">
+                <component :is="typeMeta(rule.type).icon" class="h-4 w-4" aria-hidden="true" />
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <h3 class="font-medium text-foreground">{{ typeLabel(rule.type) }}</h3>
+                  <h3 class="text-sm font-medium text-foreground">{{ typeLabel(rule.type) }}</h3>
                   <span class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
                     {{ $t('tools.reminder.intervalValue', { minutes: rule.intervalMinutes }) }}
                   </span>
                 </div>
-                <p class="mt-1 text-xs text-muted-foreground">{{ typeMeta(rule.type).hint }}</p>
+                <div class="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-muted-foreground">
+                  <span class="inline-flex items-center gap-1">
+                    <Clock class="h-3 w-3 shrink-0" aria-hidden="true" />
+                    {{ $t('tools.reminder.windowValue', { start: rule.windowStart, end: rule.windowEnd }) }}
+                    <span class="text-border">·</span>
+                    {{ weekdaySummary(rule.weekdays) }}
+                  </span>
+                  <span class="text-border">·</span>
+                  <span class="inline-flex min-w-0 items-center gap-1">
+                    <CalendarDays class="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span class="truncate">{{ ruleNextLabel(rule) }}</span>
+                  </span>
+                </div>
               </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 sm:justify-end">
+              <span class="text-[10px] text-muted-foreground md:hidden">
+                {{ rule.enabled === 1 ? $t('tools.reminder.enabledHint') : $t('tools.reminder.disabledHint') }}
+              </span>
               <Switch
                 :model-value="rule.enabled === 1"
                 :label="$t('tools.reminder.enabled')"
                 @update:model-value="toggleRule(rule, $event)"
               />
-            </div>
-
-            <div class="grid gap-2 rounded-xl border border-border/50 bg-background/45 p-3 text-xs text-muted-foreground">
-              <span class="flex items-center gap-1.5">
-                <Clock class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {{ $t('tools.reminder.windowValue', { start: rule.windowStart, end: rule.windowEnd }) }}
-                <span class="text-border">·</span>
-                {{ weekdaySummary(rule.weekdays) }}
-              </span>
-              <span class="flex items-center gap-1.5">
-                <CalendarDays class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {{ ruleNextLabel(rule) }}
-              </span>
-            </div>
-
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] text-muted-foreground">
-                {{ rule.enabled === 1 ? $t('tools.reminder.enabledHint') : $t('tools.reminder.disabledHint') }}
-              </span>
               <div class="flex items-center gap-1">
                 <IconButton size="icon-sm" :label="$t('tools.reminder.edit')" @click="openEdit(rule)">
                   <Pencil class="h-icon-sm w-icon-sm" />
@@ -235,58 +282,7 @@
         </div>
       </section>
 
-      <section class="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
-        <div class="rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm">
-          <div class="flex items-end justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-semibold tracking-tight text-foreground">{{ $t('tools.reminder.recentTitle') }}</h2>
-              <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.reminder.recentDescription') }}</p>
-            </div>
-            <CheckCircle2 class="h-4 w-4 text-success/70" aria-hidden="true" />
-          </div>
 
-          <p v-if="recentOccurrences.length === 0" class="mt-6 rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-6 text-center text-sm text-muted-foreground">
-            {{ $t('tools.reminder.recentEmpty') }}
-          </p>
-          <ul v-else class="mt-4 flex flex-col gap-2">
-            <li
-              v-for="occurrence in recentOccurrences"
-              :key="occurrence.id"
-              class="flex items-center gap-3 rounded-xl border border-border/40 bg-background/40 px-3 py-2.5"
-            >
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" :class="typeMeta(occurrence.ruleType).softClass">
-                <component :is="typeMeta(occurrence.ruleType).icon" class="h-3.5 w-3.5" aria-hidden="true" />
-              </span>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm text-foreground">{{ typeLabel(occurrence.ruleType) }}</p>
-                <p class="text-[11px] text-muted-foreground">{{ formatOccurrenceTime(occurrence) }}</p>
-              </div>
-              <span class="rounded-full px-2 py-0.5 text-[11px]" :class="occurrenceStatusClass(occurrence.status)">
-                {{ occurrenceStatusLabel(occurrence.status) }}
-              </span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm">
-          <div class="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full bg-success/10 blur-3xl" />
-          <div class="relative">
-            <div class="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles class="h-4 w-4 text-primary" aria-hidden="true" />
-              {{ $t('tools.reminder.tipTitle') }}
-            </div>
-            <p class="mt-3 text-2xl font-medium leading-snug tracking-tight text-foreground">
-              {{ $t('tools.reminder.tipQuote') }}
-            </p>
-            <p class="mt-3 text-sm leading-6 text-muted-foreground">{{ $t('tools.reminder.tipBody') }}</p>
-            <div class="mt-5 flex flex-wrap gap-2">
-              <span v-for="tag in tips" :key="tag" class="rounded-full border border-border/60 bg-background/50 px-2.5 py-1 text-[11px] text-muted-foreground">
-                {{ tag }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <Dialog
@@ -422,7 +418,6 @@ import {
   Pencil,
   PersonStanding,
   Plus,
-  Repeat,
   Sparkles,
   Timer as TimerIcon,
   Trash2
@@ -469,6 +464,7 @@ const today = computed(() => health.value?.today || {
 })
 const careCount = computed(() => today.value.waterCount + today.value.sunCount)
 const recentOccurrences = computed(() => health.value?.recentOccurrences || [])
+const hasEnabledRules = computed(() => rules.value.some((rule) => rule.enabled === 1))
 
 const weekdays = computed(() => {
   const formatter = new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'zh-CN', { weekday: 'short' })
@@ -594,12 +590,6 @@ const nextReminder = computed(() => {
     relative: formatRelative(date)
   }
 })
-
-const tips = computed(() => [
-  t('tools.reminder.tipTagWater'),
-  t('tools.reminder.tipTagMove'),
-  t('tools.reminder.tipTagEyes')
-])
 
 function typeMeta(type) {
   return typeOptions.value.find((entry) => entry.value === type) || typeOptions.value[0]
