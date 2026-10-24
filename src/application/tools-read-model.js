@@ -8,6 +8,7 @@ const {
   getPetCapacity
 } = require('../domain/services/garden-layout');
 const { getFocusSummary } = require('../domain/services/focus-policy');
+const { addDays } = require('../domain/services/reminder-schedule');
 const { DEFAULT_CATALOG } = require('../domain/services/growth-policy');
 const {
   ITEM_CATALOG,
@@ -26,6 +27,7 @@ class ToolsReadModel {
     activityRepository,
     gardenRepository,
     focusRepository = null,
+    reminderRepository = null,
     catalog = DEFAULT_CATALOG,
     getAutoPlace = () => true
   }) {
@@ -33,6 +35,7 @@ class ToolsReadModel {
     this.activityRepository = activityRepository;
     this.gardenRepository = gardenRepository;
     this.focusRepository = focusRepository;
+    this.reminderRepository = reminderRepository;
     this.catalog = catalog;
     this.getAutoPlace = getAutoPlace;
   }
@@ -81,6 +84,68 @@ class ToolsReadModel {
         seedCount,
         autoPlant: gardenState ? gardenState.autoPlant === 1 : true
       }
+    };
+  }
+
+  async getHealthView(now = this.clock.now()) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+
+    const localDate = this.clock.localDate(instant);
+    const [daily, summaries, rules, occurrences] = await Promise.all([
+      this.activityRepository.getDailySummary(localDate),
+      this.activityRepository.listRecentDailySummaries(14),
+      this.reminderRepository ? this.reminderRepository.listRules() : [],
+      this.reminderRepository ? this.reminderRepository.listRecentOccurrences(12) : []
+    ]);
+    const summaryByDate = new Map(summaries.map((entry) => [entry.localDate, entry]));
+    const days = [];
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const date = addDays(localDate, -offset);
+      const summary = summaryByDate.get(date);
+      days.push({
+        localDate: date,
+        focusCount: summary ? summary.focusCount : 0,
+        waterCount: summary ? summary.waterCount : 0,
+        sunCount: summary ? summary.sunCount : 0,
+        totalGrowth: summary ? summary.totalGrowth : 0
+      });
+    }
+
+    const rulesById = new Map(rules.map((rule) => [rule.id, rule]));
+    const enabledRules = rules.filter((rule) => rule.enabled === 1);
+    const upcoming = enabledRules
+      .filter((rule) => rule.nextRunAt)
+      .sort((a, b) => new Date(a.nextRunAt).getTime() - new Date(b.nextRunAt).getTime());
+    const nextRule = upcoming[0] || null;
+
+    return {
+      generatedAt: instant.toISOString(),
+      localDate,
+      today: {
+        focusCount: daily ? daily.focusCount : 0,
+        waterCount: daily ? daily.waterCount : 0,
+        sunCount: daily ? daily.sunCount : 0,
+        totalGrowth: daily ? daily.totalGrowth : 0
+      },
+      days,
+      rules,
+      nextReminder: nextRule
+        ? {
+            ruleId: nextRule.id,
+            type: nextRule.type,
+            nextRunAt: nextRule.nextRunAt,
+            windowStart: nextRule.windowStart,
+            windowEnd: nextRule.windowEnd,
+            intervalMinutes: nextRule.intervalMinutes
+          }
+        : null,
+      recentOccurrences: occurrences.map((occurrence) => ({
+        ...occurrence,
+        ruleType: rulesById.get(occurrence.ruleId)?.type || null
+      }))
     };
   }
 

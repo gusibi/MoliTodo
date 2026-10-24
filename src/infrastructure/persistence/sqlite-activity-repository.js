@@ -66,6 +66,16 @@ class SqliteActivityRepository {
     return row ? this.rowToDailySummary(row) : null;
   }
 
+  async listRecentDailySummaries(limit = 7) {
+    const rows = await this.db.all(
+      `SELECT * FROM activity_daily_summary
+       ORDER BY local_date DESC
+       LIMIT ?`,
+      [limit]
+    );
+    return rows.reverse().map((row) => this.rowToDailySummary(row));
+  }
+
   async saveDailySummary({
     localDate,
     focusCount,

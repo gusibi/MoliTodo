@@ -32,7 +32,7 @@ class FocusUseCases {
     const instant = toDate(now);
     const [active, recent] = await Promise.all([
       this.focusRepository.findActiveSession(),
-      this.focusRepository.listRecentSessions(5)
+      this.focusRepository.listRecentSessions(12)
     ]);
     return {
       active: getFocusSummary(active, instant),

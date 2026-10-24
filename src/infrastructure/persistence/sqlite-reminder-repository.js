@@ -202,6 +202,17 @@ class SqliteReminderRepository {
     return rows.map((row) => this.rowToOccurrence(row));
   }
 
+  async listRecentOccurrences(limit = 12) {
+    const rows = await this.db.all(
+      `SELECT * FROM reminder_occurrences
+       WHERE status <> 'pending'
+       ORDER BY COALESCE(responded_at, scheduled_at) DESC, id DESC
+       LIMIT ?`,
+      [limit]
+    );
+    return rows.map((row) => this.rowToOccurrence(row));
+  }
+
   async listPendingSince(cutoffIso) {
     const rows = await this.db.all(
       `SELECT * FROM reminder_occurrences

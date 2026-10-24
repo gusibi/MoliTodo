@@ -5,6 +5,7 @@ export const useToolsStore = defineStore('tools', () => {
   const shellSnapshot = ref(null)
   const gardenView = ref(null)
   const reminderRules = ref([])
+  const healthView = ref(null)
   const focusState = ref(null)
   const loading = ref(false)
   const error = ref('')
@@ -28,6 +29,17 @@ export const useToolsStore = defineStore('tools', () => {
     try {
       gardenView.value = await window.electronAPI.tools.getGardenView()
       return gardenView.value
+    } catch (err) {
+      error.value = err.message
+      return null
+    }
+  }
+
+  const loadHealthView = async () => {
+    if (!available.value) return null
+    try {
+      healthView.value = await window.electronAPI.tools.getHealthView()
+      return healthView.value
     } catch (err) {
       error.value = err.message
       return null
@@ -126,8 +138,7 @@ export const useToolsStore = defineStore('tools', () => {
     error.value = ''
     try {
       const rule = await window.electronAPI.tools.createReminderRule(input)
-      await loadReminderRules()
-      await loadShellSnapshot()
+      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
       return rule
     } catch (err) {
       error.value = err.message
@@ -142,8 +153,7 @@ export const useToolsStore = defineStore('tools', () => {
     error.value = ''
     try {
       const rule = await window.electronAPI.tools.updateReminderRule(ruleId, updates)
-      await loadReminderRules()
-      await loadShellSnapshot()
+      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
       return rule
     } catch (err) {
       error.value = err.message
@@ -156,8 +166,7 @@ export const useToolsStore = defineStore('tools', () => {
     error.value = ''
     try {
       const result = await window.electronAPI.tools.deleteReminderRule(ruleId)
-      await loadReminderRules()
-      await loadShellSnapshot()
+      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
       return result
     } catch (err) {
       error.value = err.message
@@ -271,6 +280,7 @@ export const useToolsStore = defineStore('tools', () => {
     shellSnapshot,
     gardenView,
     reminderRules,
+    healthView,
     focusState,
     loading,
     error,
@@ -278,6 +288,7 @@ export const useToolsStore = defineStore('tools', () => {
     pendingRewards,
     loadShellSnapshot,
     loadGardenView,
+    loadHealthView,
     loadReminderRules,
     loadFocusState,
     createReminderRule,

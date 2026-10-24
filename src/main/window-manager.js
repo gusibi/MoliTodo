@@ -9,9 +9,9 @@ const MENUBAR_PANEL_INITIAL_HEIGHT = 460;
 const MENUBAR_PANEL_MIN_HEIGHT = 240;
 const MENUBAR_PANEL_MAX_HEIGHT = 720;
 
-const REMINDER_POPUP_WIDTH = 420;
-const REMINDER_POPUP_BASE_HEIGHT = 96;
-const REMINDER_POPUP_MAX_HEIGHT = 140;
+const REMINDER_POPUP_WIDTH = 460;
+const REMINDER_POPUP_BASE_HEIGHT = 212;
+const REMINDER_POPUP_MAX_HEIGHT = 500;
 
 class WindowManager {
   constructor(appInstance = null) {
@@ -572,7 +572,7 @@ class WindowManager {
     const count = Math.max(1, intents.length);
     const height = Math.min(
       REMINDER_POPUP_MAX_HEIGHT,
-      REMINDER_POPUP_BASE_HEIGHT + (count - 1) * 22
+      REMINDER_POPUP_BASE_HEIGHT + (count - 1) * 168
     );
     const bounds = this.computeReminderPopupBounds(height);
 

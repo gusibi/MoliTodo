@@ -68,6 +68,7 @@ class ToolsRuntime {
       activityRepository: this.activityRepository,
       gardenRepository: this.gardenRepository,
       focusRepository: this.focusRepository,
+      reminderRepository: this.reminderRepository,
       getAutoPlace: () => this.autoPlace
     });
     this.popupPresenter = new ReminderPopupPresenter({
@@ -274,6 +275,10 @@ class ToolsRuntime {
 
   async getGardenView(now = this.clock.now()) {
     return this.readModel.getGardenView(now);
+  }
+
+  async getHealthView(now = this.clock.now()) {
+    return this.readModel.getHealthView(now);
   }
 
   async getClaimOptions(claimId) {

@@ -5,13 +5,23 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
 
   // 创建一条覆盖全天的喝水提醒
   await sidebar.getByRole('button', { name: '健康提醒' }).click();
-  await expect(page.getByRole('heading', { name: '创建提醒' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '把照顾自己，放进今天' })).toBeVisible();
 
-  await page.locator('#reminder-interval').selectOption('10');
-  await page.locator('#reminder-start').fill('00:00');
-  await page.locator('#reminder-end').fill('23:59');
-  await page.getByRole('button', { name: '创建提醒' }).click();
+  await page.getByRole('button', { name: '新建提醒', exact: true }).first().click();
+  const editor = page.getByRole('dialog');
+  await expect(editor.getByRole('heading', { name: '新建提醒' })).toBeVisible();
+  await editor.getByRole('button', { name: '10 分钟', exact: true }).click();
+  await editor.locator('#reminder-start').fill('00:00');
+  await editor.locator('#reminder-end').fill('23:59');
+  await editor.getByRole('button', { name: '创建提醒', exact: true }).click();
   await expect(page.getByText('下次提醒：')).toBeVisible();
+
+  // 规则可以再次编辑，修改后立即按新节奏运行
+  await page.getByRole('button', { name: '编辑提醒', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: '编辑提醒' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: '20 分钟', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '保存修改', exact: true }).click();
+  await expect(page.getByText('每 20 分钟', { exact: true })).toBeVisible();
 
   // 把下一次触发时间推到当前时刻并手动执行一次 tick，避免真实等待 10 分钟
   const popupPromise = app.electronApp.waitForEvent('window', {
@@ -107,6 +117,7 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
 
   // 专注：开始、暂停、继续、放弃
   await sidebar.getByRole('button', { name: '番茄专注' }).click();
+  await page.getByRole('button', { name: /^15/ }).click();
   await page.getByRole('button', { name: '开始 15 分钟', exact: true }).click();
   await expect(page.getByText('专注中')).toBeVisible();
   await page.getByRole('button', { name: '暂停', exact: true }).click();

@@ -1630,6 +1630,7 @@ class IpcHandlers {
 
     ipcMain.handle('tools:get-shell-snapshot', () => runtime().getShellSnapshot());
     ipcMain.handle('tools:get-garden-view', () => runtime().getGardenView());
+    ipcMain.handle('tools:get-health-view', () => runtime().getHealthView());
     ipcMain.handle('tools:list-reminder-rules', () => runtime().listReminderRules());
     ipcMain.handle('tools:create-reminder-rule', (event, input) => runtime().createReminderRule(input));
     ipcMain.handle('tools:update-reminder-rule', (event, ruleId, updates) => (

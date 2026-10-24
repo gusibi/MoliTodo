@@ -7,6 +7,7 @@ const SqliteTaskRepository = require('../src/infrastructure/persistence/sqlite-t
 const SqliteActivityRepository = require('../src/infrastructure/persistence/sqlite-activity-repository');
 const SqliteGardenRepository = require('../src/infrastructure/persistence/sqlite-garden-repository');
 const SqliteFocusRepository = require('../src/infrastructure/persistence/sqlite-focus-repository');
+const SqliteReminderRepository = require('../src/infrastructure/persistence/sqlite-reminder-repository');
 const ToolsUseCases = require('../src/application/tools-use-cases');
 const ToolsReadModel = require('../src/application/tools-read-model');
 const GardenUseCases = require('../src/application/garden-use-cases');
@@ -51,13 +52,14 @@ async function setup(t, { withPlant = false, growthScore = 0 } = {}) {
   const activityRepository = new SqliteActivityRepository(repo.db);
   const gardenRepository = new SqliteGardenRepository(repo.db);
   const focusRepository = new SqliteFocusRepository(repo.db);
+  const reminderRepository = new SqliteReminderRepository(repo.db);
   const toolsUseCases = new ToolsUseCases({
     db: repo.db,
     clock,
     activityRepository,
     gardenRepository
   });
-  const readModel = new ToolsReadModel({ clock, activityRepository, gardenRepository, focusRepository });
+  const readModel = new ToolsReadModel({ clock, activityRepository, gardenRepository, focusRepository, reminderRepository });
   const gardenUseCases = new GardenUseCases({ db: repo.db, clock, gardenRepository });
   const rewardUseCases = new RewardUseCases({ db: repo.db, clock, gardenRepository });
 
@@ -81,7 +83,7 @@ async function setup(t, { withPlant = false, growthScore = 0 } = {}) {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  return { db: repo.db, clock, activityRepository, gardenRepository, focusRepository, toolsUseCases, readModel, gardenUseCases, rewardUseCases };
+  return { db: repo.db, clock, activityRepository, gardenRepository, focusRepository, reminderRepository, toolsUseCases, readModel, gardenUseCases, rewardUseCases };
 }
 
 test('an empty garden returns zero resources and does not create state', async (t) => {
@@ -186,6 +188,63 @@ test('the shell snapshot includes an active focus summary', async (t) => {
   assert.equal(snapshot.focus.status, 'running');
   assert.equal(snapshot.focus.elapsedSeconds, 300);
   assert.equal(snapshot.focus.remainingSeconds, 600);
+});
+
+test('the health view summarizes today, seven days, rules and recent reminders', async (t) => {
+  const { reminderRepository, toolsUseCases, readModel } = await setup(t);
+
+  await toolsUseCases.recordActivity({
+    type: 'water',
+    dedupeKey: 'health:health-view-water',
+    occurredAt: '2026-10-21T01:00:00.000Z'
+  });
+  await toolsUseCases.recordActivity({
+    type: 'sun',
+    dedupeKey: 'health:health-view-sun',
+    occurredAt: '2026-10-20T01:00:00.000Z'
+  });
+  const rule = await reminderRepository.insertRule({
+    type: 'water',
+    intervalMinutes: 30,
+    anchorMode: 'hour',
+    anchorMinutes: 540,
+    weekdays: [1, 2, 3, 4, 5],
+    windowStart: '09:00',
+    windowEnd: '18:00',
+    enabled: 1,
+    nextRunAt: '2026-10-21T03:00:00.000Z',
+    createdAt: '2026-10-21T01:00:00.000Z',
+    updatedAt: '2026-10-21T01:00:00.000Z'
+  });
+  await reminderRepository.insertOccurrence({
+    ruleId: rule.id,
+    scheduledAt: '2026-10-20T02:00:00.000Z',
+    status: 'confirmed',
+    respondedAt: '2026-10-20T02:05:00.000Z',
+    localDate: '2026-10-20',
+    createdAt: '2026-10-20T02:00:00.000Z'
+  });
+
+  const view = await readModel.getHealthView(new Date('2026-10-21T02:00:00.000Z'));
+
+  assert.equal(view.localDate, '2026-10-21');
+  assert.deepEqual(view.today, {
+    focusCount: 0,
+    waterCount: 1,
+    sunCount: 0,
+    totalGrowth: 2
+  });
+  assert.equal(view.days.length, 7);
+  assert.equal(view.days[0].localDate, '2026-10-15');
+  assert.equal(view.days[6].localDate, '2026-10-21');
+  assert.equal(view.days[5].sunCount, 1);
+  assert.equal(view.days[6].waterCount, 1);
+  assert.equal(view.rules.length, 1);
+  assert.equal(view.nextReminder.ruleId, rule.id);
+  assert.equal(view.nextReminder.type, 'water');
+  assert.equal(view.recentOccurrences.length, 1);
+  assert.equal(view.recentOccurrences[0].status, 'confirmed');
+  assert.equal(view.recentOccurrences[0].ruleType, 'water');
 });
 
 test('an empty garden view returns defaults without writing state', async (t) => {

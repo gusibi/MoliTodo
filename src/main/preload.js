@@ -116,6 +116,7 @@ const electronAPI = {
   tools: {
     getShellSnapshot: () => ipcRenderer.invoke('tools:get-shell-snapshot'),
     getGardenView: () => ipcRenderer.invoke('tools:get-garden-view'),
+    getHealthView: () => ipcRenderer.invoke('tools:get-health-view'),
     listReminderRules: () => ipcRenderer.invoke('tools:list-reminder-rules'),
     createReminderRule: (input) => ipcRenderer.invoke('tools:create-reminder-rule', input),
     updateReminderRule: (ruleId, updates) => ipcRenderer.invoke('tools:update-reminder-rule', ruleId, updates),
