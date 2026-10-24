@@ -950,6 +950,11 @@
   },
   "focusWidget": {
     "brand": "Moli Focus",
+    "remaining": "Remaining",
+    "breakRemaining": "Break time",
+    "label": "Focus",
+    "ready": "Ready",
+    "durationLabel": "{minutes} min",
     "openFocus": "Open focus page",
     "hide": "Hide focus widget",
     "quickStart": "Quick start",

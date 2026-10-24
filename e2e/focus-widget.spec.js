@@ -11,7 +11,7 @@ test('桌面专注小组件可以从主页面显示、快速开始、暂停并�
   await page.getByRole('button', { name: '显示桌面小组件', exact: true }).click();
   const widget = await widgetPromise;
   await widget.waitForLoadState('domcontentloaded');
-  await expect(widget.getByText('Moli 专注')).toBeVisible();
+  await expect(widget.getByText('MOLI')).toBeVisible();
   await expect(widget.getByRole('button', { name: '开始 25 分钟', exact: true })).toBeVisible();
   await widget.getByRole('button', { name: '开始 25 分钟', exact: true }).click();
   await expect(widget.getByText('专注中', { exact: true })).toBeVisible();

@@ -950,6 +950,11 @@
   },
   "focusWidget": {
     "brand": "Moli 专注",
+    "remaining": "剩余时间",
+    "breakRemaining": "休息时间",
+    "label": "专注",
+    "ready": "准备开始",
+    "durationLabel": "{minutes} 分钟",
     "openFocus": "打开专注页",
     "hide": "隐藏专注小组件",
     "quickStart": "快速开始",
