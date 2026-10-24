@@ -116,6 +116,7 @@ test('菜单栏面板退出入口触发主进程退出流程', async ({ app, win
 });
 
 test('菜单栏面板 Escape 与失焦自动收起', async ({ app, window }) => {
+  await app.electronApp.evaluate(({ app: electronApp }) => electronApp.focus({ steal: true }));
   await window.waitForSelector('.task-manager, .today-overview', { timeout: 45000 });
 
   await app.electronApp.evaluate(() => global.__moliTodoApp.windowManager.toggleMenuBarPanel());
