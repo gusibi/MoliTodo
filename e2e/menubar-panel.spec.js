@@ -140,9 +140,9 @@ test('菜单栏面板 Escape 与失焦自动收起', async ({ app, window }) => 
     const wm = global.__moliTodoApp.windowManager;
     if (wm.taskManagerWindow && !wm.taskManagerWindow.isDestroyed()) {
       wm.taskManagerWindow.focus();
-    } else {
-      wm.menuBarPanelWindow.blur();
     }
+    // 某些无头/失焦环境下 BrowserWindow.focus() 不一定产生 blur，显式触发一次以验证收起契约。
+    wm.menuBarPanelWindow.emit('blur');
   });
   await expect.poll(() => isPanelVisible(app)).toBe(false);
 });

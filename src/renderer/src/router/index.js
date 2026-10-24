@@ -10,6 +10,7 @@ import TaskPanel from '../components/float_view/TaskPanel.vue'
 import FloatingTask from '../components/float_view/FloatingTask.vue'
 import MenuBarPanel from '../components/float_view/MenuBarPanel.vue'
 import ReminderPopup from '../components/float_view/ReminderPopup.vue'
+import FocusWidget from '../components/float_view/FocusWidget.vue'
 
 const routes = [
   {
@@ -67,6 +68,14 @@ const routes = [
     component: ReminderPopup,
     meta: {
       title: '健康提醒'
+    }
+  },
+  {
+    path: '/focus-widget',
+    name: 'FocusWidget',
+    component: FocusWidget,
+    meta: {
+      title: '专注小组件'
     }
   }
 ]

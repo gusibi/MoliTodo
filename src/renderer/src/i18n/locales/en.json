@@ -69,6 +69,11 @@
     "dataClearTitle": "Clear all data",
     "dataClearConfirm": "This permanently deletes all tasks, lists, health reminders, focus sessions, plants, seeds, collection, badges and placements. It cannot be undone. The app will restart afterwards.",
     "dataClearAction": "Clear all data",
+    "focusWidgetGroup": "Focus widget",
+    "focusWidgetShow": "Show focus widget",
+    "focusWidgetDescription": "Keep a quick-start focus timer on your desktop",
+    "focusWidgetShown": "Focus widget shown",
+    "focusWidgetHidden": "Focus widget hidden",
     "floatingIconShow": "Show floating icon",
     "reminders": "Reminders",
     "aiTitle": "AI Configuration",
@@ -809,6 +814,8 @@
       "heroTitle": "Give your attention to one thing",
       "heroDescription": "Choose a comfortable rhythm and a task worth moving forward. Moli keeps the timer, pauses and breaks; you only need to focus.",
       "description": "Timing lives in the main process and pauses during sleep; completing focus never changes task state.",
+      "widgetShow": "Show desktop widget",
+      "widgetHide": "Hide desktop widget",
       "minimum": "Minimum 15 minutes",
       "prepareTitle": "Ready to begin",
       "prepareDescription": "Pick a duration and, if you like, link the task you want to move forward.",
@@ -941,6 +948,16 @@
       "empty": "No reminder rules yet"
     }
   },
+  "focusWidget": {
+    "brand": "Moli Focus",
+    "openFocus": "Open focus page",
+    "hide": "Hide focus widget",
+    "quickStart": "Quick start",
+    "freeFocus": "Free focus",
+    "minutesUnit": "min",
+    "start": "Start {minutes} min",
+    "hint": "The timer stays on your desktop. Pause whenever you need."
+  },
   "reminderPopup": {
     "title": "Health reminder",
     "todayHint": "A little care for the person tending the garden",
@@ -963,6 +980,8 @@
   "menuBar": {
     "showFloatingIcon": "Show Floating Icon",
     "hideFloatingIcon": "Hide Floating Icon",
+    "showFocusWidget": "Show focus widget",
+    "hideFocusWidget": "Hide focus widget",
     "taskManager": "Task Manager",
     "settings": "Settings",
     "quit": "Quit MoliTodo"

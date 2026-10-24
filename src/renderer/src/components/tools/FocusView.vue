@@ -13,11 +13,18 @@
             {{ $t('tools.focusView.heroDescription') }}
           </p>
         </div>
-        <div class="flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-1.5 text-xs text-muted-foreground">
-          <Timer class="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-          {{ $t('tools.focusView.minimum') }}
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <Button variant="outline" size="sm" @click="toggleFocusWidget">
+            <Monitor class="h-3.5 w-3.5" aria-hidden="true" />
+            {{ focusWidgetVisible ? $t('tools.focusView.widgetHide') : $t('tools.focusView.widgetShow') }}
+          </Button>
+          <div class="flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-1.5 text-xs text-muted-foreground">
+            <Timer class="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            {{ $t('tools.focusView.minimum') }}
+          </div>
         </div>
       </header>
+      <p v-if="widgetError" class="text-sm text-destructive" role="alert">{{ widgetError }}</p>
 
       <section class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
         <div class="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm sm:p-6">
@@ -308,6 +315,7 @@ import {
   CircleSlash,
   Coffee,
   ListTodo,
+  Monitor,
   Pause,
   Play,
   SkipForward,
@@ -332,6 +340,8 @@ const linkedTaskId = ref('')
 const selectedMinutes = ref(25)
 const customOpen = ref(false)
 const customMinutes = ref(30)
+const focusWidgetVisible = ref(false)
+const widgetError = ref('')
 let timer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
@@ -546,19 +556,45 @@ function sessionProgress(session) {
   return Math.min(100, Math.round((actual / planned) * 100))
 }
 
+async function loadWidgetVisibility() {
+  try {
+    const config = await window.electronAPI.config.get()
+    focusWidgetVisible.value = config?.focusWidget?.visible === true
+  } catch (err) {
+    widgetError.value = err.message
+  }
+}
+
+async function toggleFocusWidget() {
+  widgetError.value = ''
+  try {
+    const next = !focusWidgetVisible.value
+    await window.electronAPI.config.set('focusWidget.visible', next)
+    focusWidgetVisible.value = next
+  } catch (err) {
+    widgetError.value = err.message
+  }
+}
+
 function handleToolsUpdated() {
   toolsStore.loadFocusState()
   toolsStore.loadShellSnapshot()
 }
 
+function handleFocusWidgetVisibility(event, visible) {
+  focusWidgetVisible.value = Boolean(visible)
+}
+
 onMounted(async () => {
-  await Promise.all([toolsStore.loadFocusState(), toolsStore.loadShellSnapshot()])
+  await Promise.all([toolsStore.loadFocusState(), toolsStore.loadShellSnapshot(), loadWidgetVisibility()])
   timer = setInterval(tickDown, 1000)
   window.electronAPI?.events?.on('tools-updated', handleToolsUpdated)
+  window.electronAPI?.events?.on('focus-widget-visibility', handleFocusWidgetVisibility)
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
+  window.electronAPI?.events?.off('focus-widget-visibility', handleFocusWidgetVisibility)
 })
 </script>

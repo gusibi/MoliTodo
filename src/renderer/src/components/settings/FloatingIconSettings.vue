@@ -59,11 +59,32 @@
       </div>
     </div>
   </div>
+
+  <div class="setting-group">
+    <h3 class="setting-group-title">{{ $t('settings.focusWidgetGroup') }}</h3>
+
+    <div class="setting-item">
+      <div class="setting-item-info">
+        <div class="setting-item-label">{{ $t('settings.focusWidgetShow') }}</div>
+        <div class="setting-item-description">{{ $t('settings.focusWidgetDescription') }}</div>
+      </div>
+      <div class="setting-item-control">
+        <Switch
+          :model-value="focusWidgetVisible"
+          :label="$t('settings.focusWidgetShow')"
+          @update:model-value="toggleFocusWidget"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { reactive, defineEmits } from 'vue'
+import { computed, reactive, defineEmits } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Switch from '../ui/switch/Switch.vue'
+
+const { t: $t } = useI18n()
 
 // 定义 props
 const props = defineProps({
@@ -78,6 +99,7 @@ const emit = defineEmits(['update-config', 'show-message'])
 
 // 响应式数据 - 直接使用 props 中的 floatingIcon 配置
 const floatingIconConfig = reactive(props.config.floatingIcon)
+const focusWidgetVisible = computed(() => props.config.focusWidget?.visible === true)
 
 // 方法
 const toggleFloatingIcon = async (value) => {
@@ -97,6 +119,16 @@ const updateFloatingIconSize = async () => {
     await updateConfig('floatingIcon.size', parseInt(floatingIconConfig.size))
   } catch (error) {
     console.error('更新图标大小失败:', error)
+    emit('show-message', '设置失败', 'error')
+  }
+}
+
+const toggleFocusWidget = async (value) => {
+  try {
+    await updateConfig('focusWidget.visible', value)
+    emit('show-message', value ? $t('settings.focusWidgetShown') : $t('settings.focusWidgetHidden'), 'success')
+  } catch (error) {
+    console.error('切换专注小组件失败:', error)
     emit('show-message', '设置失败', 'error')
   }
 }

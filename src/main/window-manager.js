@@ -9,6 +9,9 @@ const MENUBAR_PANEL_INITIAL_HEIGHT = 460;
 const MENUBAR_PANEL_MIN_HEIGHT = 240;
 const MENUBAR_PANEL_MAX_HEIGHT = 720;
 
+const FOCUS_WIDGET_WIDTH = 284;
+const FOCUS_WIDGET_HEIGHT = 208;
+
 const REMINDER_POPUP_WIDTH = 460;
 const REMINDER_POPUP_BASE_HEIGHT = 212;
 const REMINDER_POPUP_MAX_HEIGHT = 500;
@@ -22,6 +25,7 @@ class WindowManager {
     this.settingsWindow = null;
     this.floatingTaskWindows = new Map(); // 存储悬浮任务窗口
     this.reminderPopupWindow = null;
+    this.focusWidgetWindow = null;
     this.tray = null;
     this.trayContextMenu = null; // 右键弹出的原生菜单引用
     this.appInstance = appInstance;
@@ -43,6 +47,11 @@ class WindowManager {
           size: 50,
           opacity: 100,
           visible: true
+        },
+        focusWidget: {
+          visible: false,
+          x: null,
+          y: null
         },
         autoStart: false,
         showNotifications: true,
@@ -113,6 +122,9 @@ class WindowManager {
     }
 
     this.createFloatingWindow();
+    if (this.configStore.get('focusWidget.visible')) {
+      this.createFocusWidgetWindow();
+    }
     this.createTray();
 
     // 延迟更新托盘菜单，确保taskService已经完全初始化
@@ -190,6 +202,99 @@ class WindowManager {
     this.floatingWindow.on('closed', () => {
       this.floatingWindow = null;
     });
+  }
+
+  createFocusWidgetWindow() {
+    const config = this.configStore.get('focusWidget') || {};
+    if (this.focusWidgetWindow && !this.focusWidgetWindow.isDestroyed()) {
+      if (config.visible) this.focusWidgetWindow.showInactive();
+      return this.focusWidgetWindow;
+    }
+
+    const { screen } = require('electron');
+    const { workArea } = screen.getPrimaryDisplay();
+    const defaultX = workArea.x + workArea.width - FOCUS_WIDGET_WIDTH - 24;
+    const defaultY = workArea.y + 72;
+    const x = Number.isFinite(Number(config.x))
+      ? Math.min(Math.max(Number(config.x), workArea.x), workArea.x + workArea.width - FOCUS_WIDGET_WIDTH)
+      : defaultX;
+    const y = Number.isFinite(Number(config.y))
+      ? Math.min(Math.max(Number(config.y), workArea.y), workArea.y + workArea.height - FOCUS_WIDGET_HEIGHT)
+      : defaultY;
+
+    this.focusWidgetWindow = new BrowserWindow({
+      width: FOCUS_WIDGET_WIDTH,
+      height: FOCUS_WIDGET_HEIGHT,
+      x,
+      y,
+      frame: false,
+      transparent: true,
+      backgroundColor: '#00000000',
+      hasShadow: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      resizable: false,
+      movable: true,
+      minimizable: false,
+      maximizable: false,
+      closable: false,
+      focusable: true,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      this.focusWidgetWindow.loadURL(`${this.devBaseUrl}/#/focus-widget`);
+    } else {
+      this.focusWidgetWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'), {
+        hash: 'focus-widget'
+      });
+    }
+
+    this.focusWidgetWindow.once('ready-to-show', () => {
+      if (this.configStore.get('focusWidget.visible')) {
+        this.focusWidgetWindow.showInactive();
+      }
+    });
+
+    this.focusWidgetWindow.on('moved', () => {
+      if (!this.focusWidgetWindow || this.focusWidgetWindow.isDestroyed()) return;
+      const [nextX, nextY] = this.focusWidgetWindow.getPosition();
+      this.configStore.set('focusWidget.x', nextX);
+      this.configStore.set('focusWidget.y', nextY);
+    });
+
+    this.focusWidgetWindow.on('closed', () => {
+      this.focusWidgetWindow = null;
+    });
+
+    return this.focusWidgetWindow;
+  }
+
+  applyFocusWidgetConfig() {
+    const config = this.configStore.get('focusWidget') || {};
+    if (!config.visible) {
+      if (this.focusWidgetWindow && !this.focusWidgetWindow.isDestroyed()) {
+        this.focusWidgetWindow.hide();
+      }
+      this.broadcastFocusWidgetVisibility(false);
+      return;
+    }
+    this.createFocusWidgetWindow();
+    this.broadcastFocusWidgetVisibility(true);
+  }
+
+  broadcastFocusWidgetVisibility(visible) {
+    [this.taskManagerWindow, this.settingsWindow, this.menuBarPanelWindow]
+      .forEach((window) => {
+        if (window && !window.isDestroyed()) {
+          window.webContents.send('focus-widget-visibility', Boolean(visible));
+        }
+      });
   }
 
   createTaskManagerWindow() {
@@ -648,7 +753,8 @@ class WindowManager {
       this.taskManagerWindow,
       this.settingsWindow,
       this.taskPanelWindow,
-      this.menuBarPanelWindow
+      this.menuBarPanelWindow,
+      this.focusWidgetWindow
     ];
     windows.forEach((window) => {
       if (window && !window.isDestroyed()) {
@@ -772,6 +878,7 @@ class WindowManager {
 
   async updateTrayMenu() {
     const floatingIconVisible = this.configStore.get('floatingIcon.visible', true);
+    const focusWidgetVisible = this.configStore.get('focusWidget.visible', false);
 
     // 获取今日任务数量
     let todayTaskCount = 0;
@@ -800,6 +907,15 @@ class WindowManager {
           const newVisible = !floatingIconVisible;
           this.configStore.set('floatingIcon.visible', newVisible);
           this.applyFloatingIconConfig();
+          this.updateTrayMenu().catch(console.error);
+        }
+      },
+      {
+        label: focusWidgetVisible ? '隐藏专注小组件' : '显示专注小组件',
+        click: () => {
+          const newVisible = !focusWidgetVisible;
+          this.configStore.set('focusWidget.visible', newVisible);
+          this.applyFocusWidgetConfig();
           this.updateTrayMenu().catch(console.error);
         }
       },
@@ -949,7 +1065,7 @@ class WindowManager {
   }
 
   hasWindows() {
-    return !!(this.floatingWindow || this.taskManagerWindow || this.settingsWindow);
+    return !!(this.floatingWindow || this.taskManagerWindow || this.settingsWindow || this.focusWidgetWindow);
   }
 
   getConfig() {
@@ -967,6 +1083,10 @@ class WindowManager {
 
     if (key.startsWith('floatingIcon.')) {
       this.applyFloatingIconConfig();
+    }
+
+    if (key === 'focusWidget' || key.startsWith('focusWidget.')) {
+      this.applyFocusWidgetConfig();
     }
 
     return this.configStore.get(key);
@@ -1116,6 +1236,7 @@ class WindowManager {
       this.settingsWindow,
       this.taskPanelWindow,
       this.menuBarPanelWindow,
+      this.focusWidgetWindow,
       ...this.floatingTaskWindows.values()
     ];
 
@@ -1270,6 +1391,10 @@ class WindowManager {
     if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
       this.reminderPopupWindow.close();
     }
+    if (this.focusWidgetWindow && !this.focusWidgetWindow.isDestroyed()) {
+      this.focusWidgetWindow.setClosable(true);
+      this.focusWidgetWindow.close();
+    }
 
     // Close all floating task windows
     this.floatingTaskWindows.forEach((window, taskId) => {
@@ -1315,6 +1440,10 @@ class WindowManager {
     }
     if (this.reminderPopupWindow && !this.reminderPopupWindow.isDestroyed()) {
       this.reminderPopupWindow.close();
+    }
+    if (this.focusWidgetWindow && !this.focusWidgetWindow.isDestroyed()) {
+      this.focusWidgetWindow.setClosable(true);
+      this.focusWidgetWindow.close();
     }
 
     // Close all floating task windows

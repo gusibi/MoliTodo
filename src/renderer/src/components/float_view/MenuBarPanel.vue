@@ -14,6 +14,11 @@
         </span>
       </button>
 
+      <button type="button" class="menubar-panel-menu-item" @click="toggleFocusWidget">
+        <Timer class="h-icon-sm w-icon-sm" aria-hidden="true" />
+        <span>{{ focusWidgetVisible ? $t('menuBar.hideFocusWidget') : $t('menuBar.showFocusWidget') }}</span>
+      </button>
+
       <button type="button" class="menubar-panel-menu-item" @click="toggleFloatingIcon">
         <EyeOff v-if="floatingIconVisible" class="h-icon-sm w-icon-sm" aria-hidden="true" />
         <Eye v-else class="h-icon-sm w-icon-sm" aria-hidden="true" />
@@ -46,7 +51,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Eye, EyeOff, ListTodo, LogOut, Settings, Sprout } from '@lucide/vue'
+import { Eye, EyeOff, ListTodo, LogOut, Settings, Sprout, Timer } from '@lucide/vue'
 import Calendar from '@/components/ui/calendar/Calendar.vue'
 import { localeCode } from '@/utils/locale-format.js'
 import { isTaskToday } from '@/utils/task-time-rules.js'
@@ -61,6 +66,7 @@ const calendarLocale = computed(() => localeCode(locale.value))
 const containerRef = ref(null)
 const selectedDate = ref(todayString())
 const floatingIconVisible = ref(true)
+const focusWidgetVisible = ref(false)
 const todayTaskCount = ref(0)
 const pendingRewards = ref(0)
 let resizeObserver = null
@@ -76,6 +82,7 @@ async function refreshState() {
   try {
     const config = await window.electronAPI.config.get()
     floatingIconVisible.value = config?.floatingIcon?.visible !== false
+    focusWidgetVisible.value = config?.focusWidget?.visible === true
   } catch (error) {
     console.warn('读取悬浮图标配置失败:', error)
   }
@@ -101,6 +108,11 @@ async function refreshState() {
 function toggleFloatingIcon() {
   floatingIconVisible.value = !floatingIconVisible.value
   window.electronAPI.config.set('floatingIcon.visible', floatingIconVisible.value)
+}
+
+function toggleFocusWidget() {
+  focusWidgetVisible.value = !focusWidgetVisible.value
+  window.electronAPI.config.set('focusWidget.visible', focusWidgetVisible.value)
 }
 
 async function openTaskManager() {
@@ -132,6 +144,10 @@ function handleKeydown(event) {
   }
 }
 
+function handleFocusWidgetVisibility(event, visible) {
+  focusWidgetVisible.value = Boolean(visible)
+}
+
 function handlePanelShown() {
   refreshState()
   // 窗口高度已按上次内容固定，重新展开时再确认一次（月份行数可能已变化）
@@ -150,6 +166,7 @@ onMounted(() => {
   window.electronAPI.events.on('menubar-panel-shown', handlePanelShown)
   window.electronAPI.events.on('tasks-updated', handlePanelShown)
   window.electronAPI.events.on('tools-updated', refreshState)
+  window.electronAPI.events.on('focus-widget-visibility', handleFocusWidgetVisibility)
 
   resizeObserver = new ResizeObserver(reportContentHeight)
   resizeObserver.observe(containerRef.value)
@@ -160,6 +177,7 @@ onUnmounted(() => {
   window.electronAPI.events.off('menubar-panel-shown', handlePanelShown)
   window.electronAPI.events.off('tasks-updated', handlePanelShown)
   window.electronAPI.events.off('tools-updated', refreshState)
+  window.electronAPI.events.off('focus-widget-visibility', handleFocusWidgetVisibility)
 
   if (resizeObserver) {
     resizeObserver.disconnect()

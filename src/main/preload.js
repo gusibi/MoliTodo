@@ -138,7 +138,8 @@ const electronAPI = {
     removePlacement: (inventoryId) => ipcRenderer.invoke('tools:remove-placement', inventoryId),
     setAutoPlace: (enabled) => ipcRenderer.invoke('tools:set-auto-place', enabled),
     openGarden: () => ipcRenderer.invoke('tools:open-garden'),
-    openHealth: () => ipcRenderer.invoke('tools:open-health')
+    openHealth: () => ipcRenderer.invoke('tools:open-health'),
+    openFocus: () => ipcRenderer.invoke('tools:open-focus')
   },
 
   // 应用相关 API
@@ -173,7 +174,8 @@ const electronAPI = {
         'menubar-panel-shown',
         'tools-updated',
         'tools-open-view',
-        'reminder-popup-intents'
+        'reminder-popup-intents',
+        'focus-widget-visibility'
       ];
 
       if (validChannels.includes(channel)) {

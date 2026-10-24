@@ -148,6 +148,11 @@ const config = reactive({
     size: 60,
     opacity: 80
   },
+  focusWidget: {
+    visible: false,
+    x: null,
+    y: null
+  },
   
   customReminders: [
     { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },

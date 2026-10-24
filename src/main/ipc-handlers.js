@@ -832,7 +832,7 @@ class IpcHandlers {
         });
       }
       // 悬浮图标可见性影响托盘右键菜单标签，同步刷新
-      if (key === 'floatingIcon.visible') {
+      if (key === 'floatingIcon.visible' || key === 'focusWidget.visible') {
         this.windowManager.updateTrayMenu().catch((error) => {
           console.error('刷新托盘菜单失败:', error);
         });
@@ -855,6 +855,11 @@ class IpcHandlers {
           size: 60,
           opacity: 100,
           visible: true
+        },
+        focusWidget: {
+          visible: false,
+          x: null,
+          y: null
         },
         autoStart: false,
         showNotifications: true,
@@ -1673,6 +1678,10 @@ class IpcHandlers {
     });
     ipcMain.handle('tools:open-health', () => {
       this.windowManager.openToolView('health');
+      return { success: true };
+    });
+    ipcMain.handle('tools:open-focus', () => {
+      this.windowManager.openToolView('focus');
       return { success: true };
     });
   }

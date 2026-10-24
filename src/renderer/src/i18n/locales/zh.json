@@ -84,6 +84,11 @@
     "dataClearTitle": "清除所有数据",
     "dataClearConfirm": "将永久删除全部任务、清单、健康提醒、专注记录、植物、种子、收藏、徽章与摆放数据，且无法恢复；完成后应用会自动重启。",
     "dataClearAction": "清除所有数据",
+    "focusWidgetGroup": "专注小组件",
+    "focusWidgetShow": "显示专注小组件",
+    "focusWidgetDescription": "在桌面显示番茄专注的快速开始和计时小组件",
+    "focusWidgetShown": "已显示专注小组件",
+    "focusWidgetHidden": "已隐藏专注小组件",
     "floatingIconShow": "显示悬浮图标",
     "reminders": "提醒设置",
     "aiTitle": "AI 配置",
@@ -809,6 +814,8 @@
       "heroTitle": "把注意力，留给一件事",
       "heroDescription": "选一个舒服的节奏，和一件想推进的事。计时、暂停和休息交给 Moli，你只需要专注。",
       "description": "计时由主进程持有，休眠自动暂停；完成专注不会改变任务状态。",
+      "widgetShow": "显示桌面小组件",
+      "widgetHide": "隐藏桌面小组件",
       "minimum": "最短 15 分钟",
       "prepareTitle": "准备开始",
       "prepareDescription": "选一个时长，需要的话再关联今天想推进的任务。",
@@ -941,6 +948,16 @@
       "empty": "还没有提醒规则"
     }
   },
+  "focusWidget": {
+    "brand": "Moli 专注",
+    "openFocus": "打开专注页",
+    "hide": "隐藏专注小组件",
+    "quickStart": "快速开始",
+    "freeFocus": "自由专注",
+    "minutesUnit": "分钟",
+    "start": "开始 {minutes} 分钟",
+    "hint": "计时会留在桌面，随时可以暂停。"
+  },
   "reminderPopup": {
     "title": "健康提醒",
     "todayHint": "给小院里的自己一点照顾",
@@ -963,6 +980,8 @@
   "menuBar": {
     "showFloatingIcon": "显示悬浮图标",
     "hideFloatingIcon": "隐藏悬浮图标",
+    "showFocusWidget": "显示专注小组件",
+    "hideFocusWidget": "隐藏专注小组件",
     "taskManager": "任务管理",
     "settings": "设置",
     "quit": "退出 MoliTodo"
