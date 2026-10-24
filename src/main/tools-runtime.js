@@ -84,7 +84,10 @@ class ToolsRuntime {
   }
 
   async initialize() {
-    await this.gardenUseCases.initializeGarden(this.clock.now());
+    const garden = await this.gardenUseCases.initializeGarden(this.clock.now());
+    if (garden.initialized) {
+      await this.placementUseCases.autoPlace({ now: this.clock.now() });
+    }
     await this.focusUseCases.interruptActive(this.clock.now());
     await this.tick();
     const pending = await this.reminderUseCases.resumePending(this.clock.now());
@@ -288,8 +291,14 @@ class ToolsRuntime {
     return result;
   }
 
-  async placeItem(inventoryId, slotId) {
-    const placement = await this.placementUseCases.placeItem({ inventoryId, slotId });
+  async placeItem(inventoryId, position = null) {
+    const placement = await this.placementUseCases.placeItem({ inventoryId, position });
+    this.broadcastToolsUpdated();
+    return placement;
+  }
+
+  async moveItem(inventoryId, position) {
+    const placement = await this.placementUseCases.moveItem({ inventoryId, position });
     this.broadcastToolsUpdated();
     return placement;
   }

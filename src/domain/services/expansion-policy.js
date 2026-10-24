@@ -7,7 +7,7 @@ const EXPANSION_LEVELS = Object.freeze([
   {
     level: 1,
     regionId: 'initial-garden',
-    capacity: 6,
+    capacity: 4,
     streakDays: 0,
     totalGrowthDays: 0
   },

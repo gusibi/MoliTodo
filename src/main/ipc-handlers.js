@@ -1654,8 +1654,11 @@ class IpcHandlers {
     ipcMain.handle('tools:resume-focus', () => runtime().resumeFocus());
     ipcMain.handle('tools:cancel-focus', () => runtime().cancelFocus());
     ipcMain.handle('tools:skip-focus-break', () => runtime().skipFocusBreak());
-    ipcMain.handle('tools:place-item', (event, inventoryId, slotId) => (
-      runtime().placeItem(inventoryId, slotId)
+    ipcMain.handle('tools:place-item', (event, inventoryId, position) => (
+      runtime().placeItem(inventoryId, position)
+    ));
+    ipcMain.handle('tools:move-item', (event, inventoryId, position) => (
+      runtime().moveItem(inventoryId, position)
     ));
     ipcMain.handle('tools:remove-placement', (event, inventoryId) => (
       runtime().removePlacement(inventoryId)

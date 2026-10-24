@@ -30,6 +30,13 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   await popup.waitForLoadState('domcontentloaded');
   await expect(popup.getByText('健康提醒')).toBeVisible();
   await popup.getByRole('button', { name: '已喝水' }).click();
+  await expect.poll(async () => {
+    const current = await app.electronApp.evaluate(async () => {
+      const moliApp = global.__moliTodoApp;
+      return moliApp.toolsRuntime.getShellSnapshot();
+    });
+    return current.today.waterCount;
+  }).toBe(1);
 
   const snapshot = await app.electronApp.evaluate(async () => {
     const moliApp = global.__moliTodoApp;
@@ -56,16 +63,9 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   expect(await page.getByText('未解锁', { exact: true }).count()).toBeGreaterThan(0);
 
   await page.getByRole('tab', { name: /小院/ }).click();
-  await page.getByRole('button', { name: '布置小院', exact: true }).click();
-  const firstEmptySlot = page.getByRole('button', { name: '空地' }).first();
-  await firstEmptySlot.click();
-  await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: /^椅子/ }).click();
-  await expect(page.getByRole('button', { name: /椅子/ }).first()).toBeVisible();
-  await page.getByRole('button', { name: /收起/ }).click();
-  await expect(page.getByRole('button', { name: '空地' }).first()).toBeVisible();
+  await expect(page.getByText('已摆放 2/4 件')).toBeVisible();
 
-  // 大件物品在边缘空地会被禁用，避免后端拒绝请求
+  // 新收藏会自动落到模板位置；也可以从托盘手动添加
   await app.electronApp.evaluate(async () => {
     const moliApp = global.__moliTodoApp;
     await moliApp.toolsRuntime.gardenRepository.addInventoryItem({
@@ -78,15 +78,32 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
     });
     moliApp.toolsRuntime.broadcastToolsUpdated();
   });
-  await page.getByRole('button', { name: '空地' }).nth(3).click();
-  await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('button', { name: /^小桌/ })).toBeDisabled();
-  await expect(page.getByRole('dialog').getByRole('button', { name: /^椅子/ })).toBeEnabled();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('heading', { name: '选择要摆放的物品' })).toHaveCount(0);
-  await page.getByRole('button', { name: '空地' }).first().click();
-  await expect(page.getByRole('dialog').getByRole('button', { name: /^小桌/ })).toBeEnabled();
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '添加物品', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '添加物品' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: /^小桌/ }).click();
+  await expect(page.getByText('已摆放 3/4 件')).toBeVisible();
+
+  await page.getByRole('button', { name: '整理小院', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^拖动椅子/ })).toBeVisible();
+  const chairHandle = page.getByRole('button', { name: /^拖动椅子/ });
+  const handleBox = await chairHandle.boundingBox();
+  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox.x + handleBox.width / 2 - 90, handleBox.y + handleBox.height / 2 - 30, { steps: 10 });
+  await page.mouse.up();
+  const movedChair = await app.electronApp.evaluate(async () => {
+    const moliApp = global.__moliTodoApp;
+    const inventory = await moliApp.toolsRuntime.gardenRepository.listInventoryItems();
+    const chair = inventory.find((item) => item.catalogId === 'furniture-1');
+    const placements = await moliApp.toolsRuntime.gardenRepository.listPlacements();
+    return placements.find((placement) => placement.inventoryId === chair.id);
+  });
+  expect(movedChair.x).not.toBe(-2);
+  expect(movedChair.z).not.toBe(2);
+
+  await page.getByRole('button', { name: /小桌 · 收起/ }).click();
+  await expect(page.getByText('已摆放 2/4 件')).toBeVisible();
+  await page.getByRole('button', { name: '完成整理', exact: true }).click();
 
   // 专注：开始、暂停、继续、放弃
   await sidebar.getByRole('button', { name: '番茄专注' }).click();

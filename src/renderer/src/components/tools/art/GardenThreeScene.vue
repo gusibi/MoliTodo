@@ -40,20 +40,28 @@
     </div>
 
     <template v-if="!failed">
-      <button
-        v-for="marker in markers"
-        :key="marker.key"
-        v-show="marker.visible && markerShown(marker)"
-        type="button"
-        class="absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-xs outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring"
-        :class="markerClass(marker)"
-        :style="{ left: `${marker.x}px`, top: `${marker.y}px` }"
-        :aria-label="markerLabel(marker)"
-        @click.stop="activateMarker(marker)"
-      >
-        <X v-if="!marker.empty" class="h-3.5 w-3.5" aria-hidden="true" />
-        <Plus v-else class="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
+      <template v-for="marker in markers" :key="marker.key">
+        <button
+          v-show="marker.visible && props.layoutMode && !dragging"
+          type="button"
+          class="absolute z-20 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-background/85 text-foreground shadow-md outline-none backdrop-blur transition-colors hover:bg-background focus-visible:ring-2 focus-visible:ring-ring"
+          :style="{ left: `${marker.x}px`, top: `${marker.y}px` }"
+          :aria-label="$t('tools.dragItem', { name: marker.label })"
+          @pointerdown.stop.prevent="startMarkerDrag(marker, $event)"
+        >
+          <GripVertical class="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <button
+          v-show="marker.visible && props.layoutMode && !dragging"
+          type="button"
+          class="absolute z-20 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-rose-200/80 bg-rose-500 text-white shadow-md outline-none transition-colors hover:bg-rose-600 focus-visible:ring-2 focus-visible:ring-ring"
+          :style="{ left: `${marker.x + 18}px`, top: `${marker.y - 18}px` }"
+          :aria-label="`${marker.label} · ${$t('tools.placementRemove')}`"
+          @click.stop="emit('remove-placement', marker.inventoryId)"
+        >
+          <X class="h-3 w-3" aria-hidden="true" />
+        </button>
+      </template>
     </template>
   </div>
 </template>
@@ -64,7 +72,7 @@ import { useI18n } from 'vue-i18n'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { Plus, RotateCcw, X } from '@lucide/vue'
+import { GripVertical, RotateCcw, X } from '@lucide/vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
 import GardenScene from './GardenScene.vue'
 
@@ -72,12 +80,11 @@ const props = defineProps({
   level: { type: Number, default: 1 },
   plant: { type: Object, default: null },
   maturedPlant: { type: Object, default: null },
-  plots: { type: Array, default: () => [] },
-  petPlots: { type: Array, default: () => [] },
+  placements: { type: Array, default: () => [] },
   layoutMode: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['open-plot', 'remove-placement'])
+const emit = defineEmits(['remove-placement', 'move-placement'])
 const { t } = useI18n()
 
 const host = ref(null)
@@ -85,6 +92,7 @@ const canvas = ref(null)
 const failed = ref(false)
 const markers = ref([])
 const plantLabel = ref({ visible: false, x: 0, y: 0 })
+const dragging = ref(false)
 
 let renderer = null
 let scene = null
@@ -101,6 +109,12 @@ let plotGroup = null
 let levelGroup = null
 let progressRing = null
 let animatedItems = []
+let itemRoots = []
+let dragState = null
+const raycaster = new THREE.Raycaster()
+const pointer = new THREE.Vector2()
+const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_Y)
+const ITEM_BOUNDS = 4.5
 let intro = null
 let plantGrow = null
 let reducedMotion = false
@@ -108,13 +122,8 @@ let reducedMotion = false
 const GROUND_Y = 0.29
 const ISLAND_WIDTH = 9.6
 const ISLAND_DEPTH = 8.6
-const GRID_COLUMNS = 4
-const GRID_X = -1.55
-const GRID_Z = -0.18
-const GRID_GAP_X = 1.06
-const GRID_GAP_Z = 0.64
-const PLANT_POSITION = new THREE.Vector3(0.68, GROUND_Y, -1.46)
-const MATURED_POSITION = new THREE.Vector3(3.05, GROUND_Y, -2.45)
+const PLANT_POSITION = new THREE.Vector3(0, GROUND_Y, -0.9)
+const MATURED_POSITION = new THREE.Vector3(3.9, GROUND_Y, -3.9)
 
 const palette = {
   grass: 0x7fbd56,
@@ -234,56 +243,21 @@ function clearGroup(group) {
   }
 }
 
-function slotWorld(slotNumber) {
-  const index = Math.max(0, Number(slotNumber) - 1)
-  const column = index % GRID_COLUMNS
-  const row = Math.floor(index / GRID_COLUMNS)
-  return new THREE.Vector3(
-    GRID_X + column * GRID_GAP_X,
-    GROUND_Y,
-    GRID_Z + row * GRID_GAP_Z
-  )
-}
-
-function petWorld(index) {
-  return new THREE.Vector3(2.75, GROUND_Y, -1.55 + index * 0.78)
-}
-
-function markerClass(marker) {
-  if (!marker.empty) {
-    return 'border-rose-200/80 bg-rose-500/90 text-white shadow-md hover:bg-rose-600'
+function startMarkerDrag(marker, event) {
+  const root = itemRoots.find((item) => item.userData.inventoryId === marker.inventoryId)
+  if (!root) return
+  dragging.value = true
+  dragState = {
+    root,
+    inventoryId: root.userData.inventoryId,
+    size: root.userData.size || 1,
+    moved: false
   }
-  if (marker.region === 'pet') {
-    return props.layoutMode
-      ? 'border-emerald-200 bg-emerald-300/95 text-emerald-950 shadow-[0_0_0_4px_rgba(127,189,86,.25)] hover:bg-emerald-200'
-      : 'border-white/80 bg-white/55 text-emerald-800 backdrop-blur-sm hover:bg-white/85'
-  }
-  return props.layoutMode
-    ? 'border-amber-200 bg-amber-300/95 text-amber-950 shadow-[0_0_0_4px_rgba(255,216,122,.25)] hover:bg-amber-200'
-    : 'border-white/80 bg-white/55 text-stone-700 backdrop-blur-sm hover:bg-white/85'
-}
-
-function markerShown(marker) {
-  if (!marker.empty) return props.layoutMode
-  if (marker.region === 'pet') return props.layoutMode
-  return true
-}
-
-function markerLabel(marker) {
-  if (!marker.empty) {
-    return marker.label
-      ? `${marker.label} · ${t('tools.placementRemove')}`
-      : t('tools.placementRemove')
-  }
-  return marker.region === 'pet' ? t('tools.petSlotEmpty') : t('tools.placementEmpty')
-}
-
-function activateMarker(marker) {
-  if (marker.empty) {
-    emit('open-plot', marker.slotId, marker.region)
-  } else {
-    emit('remove-placement', marker.inventoryId)
-  }
+  controls.enabled = false
+  renderer.domElement.style.cursor = 'grabbing'
+  setPointer(event)
+  event.preventDefault()
+  event.stopPropagation()
 }
 
 function buildPlantBed() {
@@ -338,129 +312,10 @@ function buildIsland() {
   scene.add(island)
 }
 
-function buildHouse() {
-  const house = new THREE.Group()
-  house.position.set(-2.45, GROUND_Y, -1.78)
-  scene.add(house)
-
-  addRoundedBox(house, 3.0, 0.22, 2.5, 0.08, palette.stone, 0, 0.12, 0)
-  addRoundedBox(house, 2.7, 1.55, 2.15, 0.1, palette.cream, 0, 0.92, 0)
-  addBox(house, 2.74, 0.1, 2.19, palette.creamDark, 0, 1.66, 0)
-  addBox(house, 2.72, 0.12, 2.17, palette.woodDark, 0, 0.34, 0)
-
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(2.35, 1.18, 4),
-    material(palette.roof, { flatShading: true })
-  )
-  roof.position.set(0, 2.12, 0)
-  roof.rotation.y = Math.PI / 4
-  roof.castShadow = true
-  roof.receiveShadow = true
-  house.add(roof)
-
-  addBox(house, 0.3, 0.74, 0.3, 0x8a4a34, 0.82, 2.25, -0.5)
-  addBox(house, 0.36, 0.08, 0.36, 0x5f3626, 0.82, 2.64, -0.5)
-
-  addBox(house, 0.54, 0.88, 0.06, 0x6b4226, -0.52, 0.58, 1.1)
-  addBox(house, 0.08, 0.08, 0.04, 0xf2c14e, -0.34, 0.68, 1.14)
-
-  const windowMat = material(0x9fd4e8, { emissive: 0x2b6f8a, emissiveIntensity: 0.22, roughness: 0.4 })
-  addBox(house, 0.58, 0.5, 0.06, palette.woodDark, 0.55, 1.17, 1.1)
-  const frontWindow = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.38, 0.02), windowMat)
-  frontWindow.position.set(0.55, 1.17, 1.14)
-  house.add(frontWindow)
-  addBox(house, 0.06, 0.4, 0.03, 0xdff3fb, 0.55, 1.17, 1.16)
-  addBox(house, 0.48, 0.05, 0.03, 0xdff3fb, 0.55, 1.17, 1.16)
-
-  addBox(house, 0.06, 0.5, 0.52, palette.woodDark, 1.37, 1.12, -0.45)
-  const sideWindow = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.38, 0.4), windowMat)
-  sideWindow.position.set(1.41, 1.12, -0.45)
-  house.add(sideWindow)
-  addBox(house, 0.03, 0.4, 0.05, 0xdff3fb, 1.43, 1.12, -0.45)
-  addBox(house, 0.03, 0.05, 0.42, 0xdff3fb, 1.43, 1.12, -0.45)
-
-  addRoundedBox(house, 0.72, 0.11, 0.22, 0.04, palette.woodDark, 0.55, 0.78, 1.2)
-  addFlower(house, 0.36, 0.84, 1.23, 0xf2a03d)
-  addFlower(house, 0.55, 0.84, 1.23, 0xef7f8f)
-
-  addRoundedBox(house, 0.92, 0.12, 0.3, 0.04, palette.stone, -0.3, 0.18, 1.25)
-  addBox(house, 0.5, 0.18, 0.06, palette.wood, -0.5, 0.32, 1.17)
-}
-
 function addFlower(parent, x, y, z, color) {
   addCylinder(parent, 0.014, 0.018, 0.2, 5, 0x4f8f3f, x, y + 0.1, z)
   addIco(parent, 0.065, color, x, y + 0.22, z)
   addIco(parent, 0.045, 0xf7f2dd, x + 0.06, y + 0.2, z + 0.025)
-}
-
-function buildFence() {
-  const fence = new THREE.Group()
-  scene.add(fence)
-  const postGeo = new THREE.BoxGeometry(0.14, 0.82, 0.14)
-  const postMat = material(palette.wood)
-  const railMat = material(palette.woodDark)
-  for (let index = 0; index < 8; index += 1) {
-    const z = -2.85 + index * 0.72
-    const post = new THREE.Mesh(postGeo, postMat)
-    post.position.set(3.55, GROUND_Y + 0.41, z)
-    post.castShadow = true
-    post.receiveShadow = true
-    fence.add(post)
-    if (index < 7) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.72), railMat)
-      rail.position.set(3.55, GROUND_Y + 0.36, z + 0.36)
-      rail.castShadow = true
-      fence.add(rail)
-      const rail2 = rail.clone()
-      rail2.position.y = GROUND_Y + 0.62
-      fence.add(rail2)
-    }
-    addIco(fence, 0.07, index % 3 === 0 ? 0xef7f8f : 0xf2c14e, 3.55, GROUND_Y + 0.88, z)
-  }
-}
-
-function buildLantern() {
-  const lantern = new THREE.Group()
-  lantern.position.set(2.98, GROUND_Y, -2.45)
-  scene.add(lantern)
-  addCylinder(lantern, 0.06, 0.08, 1.5, 6, palette.woodDark, 0, 0.75, 0)
-  addBox(lantern, 0.32, 0.38, 0.32, 0x3f3932, 0, 1.56, 0)
-  addBox(lantern, 0.22, 0.22, 0.22, palette.glow, 0, 1.56, 0, {
-    emissive: 0xffc85c,
-    emissiveIntensity: 1.2,
-    roughness: 0.4
-  })
-  addBox(lantern, 0.42, 0.06, 0.42, 0x2b2620, 0, 1.78, 0)
-  const light = new THREE.PointLight(0xffc86b, 0.9, 4.5, 2)
-  light.position.set(0, 1.55, 0)
-  lantern.add(light)
-}
-
-function buildPath() {
-  const path = new THREE.Group()
-  const points = [
-    [-2.02, -0.05],
-    [-1.55, 0.42],
-    [-1.04, 0.88],
-    [-0.55, 1.34],
-    [-0.05, 1.78]
-  ]
-  for (const [x, z] of points) {
-    const stone = addCylinder(
-      path,
-      0.26,
-      0.29,
-      0.055,
-      7,
-      palette.stone,
-      x,
-      GROUND_Y + 0.02,
-      z,
-      { rotation: [0, Math.random() * 0.4, 0] }
-    )
-    stone.castShadow = false
-  }
-  scene.add(path)
 }
 
 function buildFlowersAndBushes() {
@@ -517,17 +372,6 @@ function buildLevelDetails() {
     addRoundedBox(levelGroup, 1.4, 0.1, 0.7, 0.08, palette.dirt, -3.72, GROUND_Y + 0.06, 2.65)
     for (let index = 0; index < 5; index += 1) {
       addFlower(levelGroup, -4.15 + index * 0.24, GROUND_Y + 0.06, 2.65, index % 2 ? 0xef7f8f : 0xf2c14e)
-    }
-  }
-
-  if (props.level >= 3) {
-    levelGroup.add(createTree(0.92, -4.15, -2.95))
-    levelGroup.add(createTree(0.75, 4.0, -3.0))
-  }
-
-  if (props.level >= 4) {
-    for (let index = 0; index < 5; index += 1) {
-      addBox(levelGroup, 0.42, 0.28, 0.28, palette.stone, -4.35 + index * 0.45, GROUND_Y + 0.14, -0.35)
     }
   }
 
@@ -625,7 +469,7 @@ function syncMaturedPlant() {
     maturedGroup = null
   }
   if (!props.maturedPlant) return
-  maturedGroup = makePlantModel('mature', props.maturedPlant.speciesId, 0.82)
+  maturedGroup = makePlantModel('mature', props.maturedPlant.speciesId, 0.62)
   maturedGroup.position.copy(MATURED_POSITION)
   scene.add(maturedGroup)
 }
@@ -875,66 +719,29 @@ function makeItemModel(variant) {
   }
 }
 
-function addPlotTile(plot) {
-  const group = new THREE.Group()
-  const world = slotWorld(plot.slotNumber)
-  group.position.copy(world)
-  addRoundedBox(group, 0.82, 0.04, 0.82, 0.03, palette.woodDark, 0, 0.02, 0)
-  addRoundedBox(group, 0.68, 0.045, 0.68, 0.03, palette.dirt, 0, 0.05, 0)
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(0.7, 0.04, 0.7)),
-    new THREE.LineBasicMaterial({ color: 0xf4d68d, transparent: true, opacity: 0.45 })
-  )
-  edges.position.y = 0.06
-  edges.visible = props.layoutMode
-  group.add(edges)
-  group.userData.outline = edges
-  plotGroup.add(group)
-}
-
-function syncPlots() {
+function syncPlacements() {
   if (!scene || !plotGroup) return
   clearGroup(plotGroup)
   animatedItems = []
+  itemRoots = []
 
-  for (const plot of props.plots) {
-    const world = slotWorld(plot.slotNumber)
-    if (!plot.placement) {
-      addPlotTile(plot)
-      continue
-    }
-    const model = makeItemModel(plot.variant)
-    model.position.copy(world)
-    const sizeScale = 1.15 + (Math.max(1, plot.size || 1) - 1) * 0.6
+  for (const placement of props.placements) {
+    const model = makeItemModel(placement.variant)
+    const x = Number(placement.x) || 0
+    const z = Number(placement.z) || 0
+    const size = Math.max(1, placement.size || 1)
+    const sizeScale = 1.15 + (size - 1) * 0.6
+    model.position.set(x, GROUND_Y, z)
     model.scale.setScalar(sizeScale)
-    model.userData.baseY = world.y
+    model.userData.baseY = GROUND_Y
     model.userData.phase = Math.random() * Math.PI * 2
-    if (['cat', 'dog', 'bird', 'rabbit'].includes(plot.variant)) {
+    model.userData.inventoryId = placement.inventoryId
+    model.userData.size = size
+    if (['cat', 'dog', 'bird', 'rabbit'].includes(placement.variant)) {
       animatedItems.push(model)
     }
     plotGroup.add(model)
-  }
-
-  for (const plot of props.petPlots) {
-    const world = petWorld(Math.max(0, (plot.slotNumber || 1) - 1))
-    if (!plot.placement) {
-      const pad = new THREE.Group()
-      pad.position.copy(world)
-      addCylinder(pad, 0.34, 0.36, 0.05, 10, palette.grassDark, 0, 0.03, 0)
-      const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.37, 0.37, 0.06, 10)),
-        new THREE.LineBasicMaterial({ color: 0xa7e08a, transparent: true, opacity: 0.4 })
-      )
-      edges.visible = props.layoutMode
-      pad.add(edges)
-      pad.userData.outline = edges
-      plotGroup.add(pad)
-      continue
-    }
-    const model = makeItemModel(plot.variant)
-    model.position.copy(world)
-    model.scale.setScalar(0.95)
-    plotGroup.add(model)
+    itemRoots.push(model)
   }
 
   rebuildMarkers()
@@ -942,31 +749,17 @@ function syncPlots() {
 
 function rebuildMarkers() {
   const next = []
-  for (const plot of props.plots) {
-    const world = slotWorld(plot.slotNumber)
+  for (const placement of props.placements) {
+    const size = Math.max(1, placement.size || 1)
     next.push({
-      key: `garden-${plot.slotId}`,
-      slotId: plot.slotId,
-      region: 'garden',
-      inventoryId: plot.placement?.inventoryId || null,
-      empty: !plot.placement,
-      label: plot.label,
-      world: world.clone().setY(GROUND_Y + (plot.placement ? 1.15 : 0.08)),
-      x: 0,
-      y: 0,
-      visible: true
-    })
-  }
-  for (const plot of props.petPlots) {
-    const world = petWorld(Math.max(0, (plot.slotNumber || 1) - 1))
-    next.push({
-      key: `pet-${plot.slotId}`,
-      slotId: plot.slotId,
-      region: 'pet',
-      inventoryId: plot.placement?.inventoryId || null,
-      empty: !plot.placement,
-      label: plot.label,
-      world: world.clone().setY(GROUND_Y + (plot.placement ? 0.7 : 0.06)),
+      key: `placement-${placement.inventoryId}`,
+      inventoryId: placement.inventoryId,
+      label: placement.label,
+      world: new THREE.Vector3(
+        Number(placement.x) || 0,
+        GROUND_Y + 0.55 + size * 0.32,
+        Number(placement.z) || 0
+      ),
       x: 0,
       y: 0,
       visible: true
@@ -974,6 +767,72 @@ function rebuildMarkers() {
   }
   markers.value = next
   updateMarkerPositions()
+}
+
+function setPointer(event) {
+  const rect = renderer.domElement.getBoundingClientRect()
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+}
+
+function findItemRoot(object) {
+  let current = object
+  while (current && !current.userData.inventoryId) current = current.parent
+  return current || null
+}
+
+function onPointerDown(event) {
+  if (!props.layoutMode || event.button !== 0) return
+  setPointer(event)
+  raycaster.setFromCamera(pointer, camera)
+  const hits = raycaster.intersectObjects(itemRoots, true)
+  const root = hits.length ? findItemRoot(hits[0].object) : null
+  if (!root) return
+  dragging.value = true
+  dragState = {
+    root,
+    inventoryId: root.userData.inventoryId,
+    size: root.userData.size || 1,
+    moved: false
+  }
+  controls.enabled = false
+  renderer.domElement.style.cursor = 'grabbing'
+  renderer.domElement.setPointerCapture?.(event.pointerId)
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+function onPointerMove(event) {
+  if (!dragState) return
+  setPointer(event)
+  raycaster.setFromCamera(pointer, camera)
+  const point = new THREE.Vector3()
+  if (!raycaster.ray.intersectPlane(dragPlane, point)) return
+  const half = Math.max(0.5, dragState.size) / 2
+  const x = Math.min(ITEM_BOUNDS - half, Math.max(-ITEM_BOUNDS + half, point.x))
+  const z = Math.min(ITEM_BOUNDS - half, Math.max(-ITEM_BOUNDS + half, point.z))
+  dragState.root.position.x = x
+  dragState.root.position.z = z
+  dragState.moved = true
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+function onPointerUp(event) {
+  if (!dragState) return
+  const { root, inventoryId, moved } = dragState
+  const x = root.position.x
+  const z = root.position.z
+  dragState = null
+  dragging.value = false
+  controls.enabled = true
+  renderer.domElement.style.cursor = 'grab'
+  renderer.domElement.releasePointerCapture?.(event.pointerId)
+  if (moved) {
+    emit('move-placement', { inventoryId, x, z })
+  }
+  event.preventDefault()
+  event.stopPropagation()
 }
 
 function updateMarkerPositions() {
@@ -1004,13 +863,6 @@ function updateMarkerPositions() {
     }
   } else {
     plantLabel.value.visible = false
-  }
-}
-
-function applyLayoutMode() {
-  if (!plotGroup) return
-  for (const child of plotGroup.children) {
-    if (child.userData.outline) child.userData.outline.visible = props.layoutMode
   }
 }
 
@@ -1068,6 +920,12 @@ function initScene() {
   controls.enabled = reducedMotion
   controls.update()
 
+  const canvasElement = renderer.domElement
+  canvasElement.addEventListener('pointerdown', onPointerDown, true)
+  window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', onPointerUp)
+  window.addEventListener('pointercancel', onPointerUp)
+
   scene.add(new THREE.HemisphereLight(0xd9efff, 0x6b5236, 1.6))
   const sun = new THREE.DirectionalLight(0xfff1cf, 2.4)
   sun.position.set(7, 11, 8)
@@ -1088,10 +946,6 @@ function initScene() {
 
   buildIsland()
   buildPlantBed()
-  buildHouse()
-  buildFence()
-  buildLantern()
-  buildPath()
   buildFlowersAndBushes()
   buildLevelDetails()
 
@@ -1099,8 +953,7 @@ function initScene() {
   scene.add(plotGroup)
   syncPlant()
   syncMaturedPlant()
-  syncPlots()
-  applyLayoutMode()
+  syncPlacements()
 
   resizeObserver = new ResizeObserver(onResize)
   resizeObserver.observe(element)
@@ -1200,6 +1053,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (frame) cancelAnimationFrame(frame)
   resizeObserver?.disconnect()
+  if (renderer?.domElement) {
+    renderer.domElement.removeEventListener('pointerdown', onPointerDown, true)
+    window.removeEventListener('pointermove', onPointerMove)
+    window.removeEventListener('pointerup', onPointerUp)
+    window.removeEventListener('pointercancel', onPointerUp)
+  }
   controls?.dispose()
   if (scene) {
     scene.traverse((object) => {
@@ -1220,9 +1079,7 @@ onBeforeUnmount(() => {
 watch(() => props.level, buildLevelDetails)
 watch(() => props.plant, syncPlant, { deep: true })
 watch(() => props.maturedPlant, syncMaturedPlant, { deep: true })
-watch(() => props.plots, syncPlots, { deep: true })
-watch(() => props.petPlots, syncPlots, { deep: true })
-watch(() => props.layoutMode, applyLayoutMode)
+watch(() => props.placements, syncPlacements, { deep: true })
 </script>
 
 <style scoped>

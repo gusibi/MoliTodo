@@ -1,32 +1,34 @@
 <template>
   <div class="h-full overflow-auto px-6 py-6">
     <div class="mx-auto flex max-w-5xl flex-col gap-5">
-      <header class="flex flex-wrap items-end justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-xs font-medium uppercase tracking-[0.22em] text-primary/80">
-            {{ $t('tools.gardenEyebrow') }}
-          </p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-            {{ $t('tools.gardenHeroTitle') }}
-          </h1>
-          <p class="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {{ $t('tools.gardenHeroDescription') }}
-          </p>
+      <header class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xs font-medium uppercase tracking-[0.22em] text-primary/80">
+              {{ $t('tools.gardenEyebrow') }}
+            </p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+              {{ $t('tools.gardenHeroTitle') }}
+            </h1>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium text-foreground">
+              {{ $t('tools.gardenLevel', { level: garden.level }) }}
+            </span>
+            <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
+              {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
+            </span>
+            <span
+              v-if="pendingRewardCount"
+              class="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+            >
+              {{ $t('tools.pendingRewards') }} {{ pendingRewardCount }}
+            </span>
+          </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium text-foreground">
-            {{ $t('tools.gardenLevel', { level: garden.level }) }}
-          </span>
-          <span class="rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
-            {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
-          </span>
-          <span
-            v-if="pendingRewardCount"
-            class="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-          >
-            {{ $t('tools.pendingRewards') }} {{ pendingRewardCount }}
-          </span>
-        </div>
+        <p class="max-w-2xl text-sm leading-6 text-muted-foreground">
+          {{ $t('tools.gardenHeroDescription') }}
+        </p>
       </header>
 
       <nav
@@ -73,14 +75,24 @@
             :level="garden.level"
             :plant="plant"
             :matured-plant="lastMaturedPlant"
-            :plots="scenePlots"
-            :pet-plots="scenePetPlots"
+            :placements="scenePlacements"
             :layout-mode="layoutMode"
-            @open-plot="openPlacement"
             @remove-placement="removePlacement"
+            @move-placement="movePlacement"
           />
 
-          <div class="absolute right-3 top-3 z-30 flex max-w-[72%] flex-wrap items-center justify-end gap-2 rounded-lg border border-border/40 bg-background/75 p-1.5 backdrop-blur">
+          <div v-if="scenePlacements.length === 0" class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2">
+            <p class="text-sm text-muted-foreground">{{ $t('tools.emptyGardenHint') }}</p>
+            <Button class="pointer-events-auto shadow-md" @click="openPlacementTray">
+              <Plus class="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+              {{ $t('tools.addFirstItem') }}
+            </Button>
+          </div>
+
+          <div class="absolute right-3 top-3 z-30 flex max-w-[80%] flex-wrap items-center justify-end gap-2 rounded-lg border border-border/40 bg-background/80 p-1.5 shadow-sm backdrop-blur">
+            <span class="hidden text-xs text-muted-foreground lg:inline">
+              {{ $t('tools.placedCount', { placed: gardenPlacedCount, capacity: garden.capacity }) }}
+            </span>
             <span class="hidden text-xs text-muted-foreground sm:inline">{{ $t('tools.autoPlace') }}</span>
             <Switch
               :model-value="garden.autoPlace"
@@ -89,6 +101,10 @@
             />
             <Button size="sm" variant="outline" @click="toggleLayout">
               {{ layoutMode ? $t('tools.layoutDone') : $t('tools.layoutEdit') }}
+            </Button>
+            <Button size="sm" @click="openPlacementTray">
+              <Plus class="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+              {{ $t('tools.addItem') }}
             </Button>
           </div>
 
@@ -103,7 +119,7 @@
                   {{ $t(`tools.stage.${plant.stage}`) }} · {{ plant.growthScore }}/15
                 </span>
               </p>
-              <p class="mt-0.5 hidden text-xs text-muted-foreground lg:block">{{ $t('tools.sceneHint') }}</p>
+              <p class="mt-0.5 hidden text-xs text-muted-foreground lg:block">{{ layoutMode ? $t('tools.arrangeHint') : $t('tools.sceneHint') }}</p>
             </div>
             <p class="hidden shrink-0 text-sm text-muted-foreground lg:block">
               {{ $t('tools.streakSummary', { streak: garden.currentStreak, total: garden.totalGrowthDays }) }}
@@ -432,13 +448,13 @@
 
       <Dialog
         :open="placementDialogOpen"
-        :title="$t('tools.placementChoose')"
-        :description="$t('tools.placementHint')"
+        :title="$t('tools.addItem')"
+        :description="$t('tools.placementTrayDescription')"
         content-class="w-[min(94vw,28rem)]"
         @update:open="(value) => { placementDialogOpen = value }"
       >
         <p v-if="placementOptions.length === 0" class="text-sm text-muted-foreground">
-          {{ $t('tools.placementNoItems') }}
+          {{ placementFull ? $t('tools.placementFull') : $t('tools.placementNoItems') }}
         </p>
         <div v-else class="flex flex-col gap-2">
           <Button
@@ -446,23 +462,21 @@
             :key="item.id"
             variant="outline"
             class="justify-start"
-            :disabled="!item.fits"
             :loading="placingItemId === item.id"
             @click="placeItem(item.id)"
           >
-            <span class="min-w-0 flex-1 truncate text-left">
-              {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+            <span class="min-w-0 flex-1 truncate text-left">{{ item.label }}</span>
+            <span
+              v-if="item.isPet"
+              class="shrink-0 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-normal text-emerald-700 dark:text-emerald-300"
+            >
+              {{ $t('tools.petSlotShort') }}
             </span>
             <span class="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
               {{ item.size }}×{{ item.size }}
             </span>
-            <span v-if="!item.fits" class="shrink-0 text-[10px] text-destructive">
-              {{ $t('tools.placementNoFit') }}
-            </span>
           </Button>
-          <p v-if="fittingPlacementCount === 0" class="text-xs text-muted-foreground">
-            {{ $t('tools.placementNoFitHint') }}
-          </p>
+          <p class="text-xs text-muted-foreground">{{ $t('tools.placementTrayHint') }}</p>
         </div>
         <p v-if="placementError" class="mt-3 text-sm text-destructive" role="alert">{{ placementError }}</p>
       </Dialog>
@@ -474,7 +488,7 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Award, BookOpen, History, Sprout } from '@lucide/vue'
+import { Award, BookOpen, History, Plus, Sprout } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import Switch from '@/components/ui/switch/Switch.vue'
@@ -492,7 +506,6 @@ const claimOptions = ref(null)
 const claiming = ref(false)
 const claimError = ref('')
 const placementDialogOpen = ref(false)
-const selectedSlotId = ref(null)
 const placingItemId = ref(null)
 const placementError = ref('')
 const plantingSpecies = ref(null)
@@ -544,95 +557,45 @@ const petMap = computed(() => {
   for (const placement of petPlacements.value) map[placement.slotId] = placement
   return map
 })
-const placementRegion = ref('garden')
 const layoutMode = ref(false)
-const scenePetPlots = computed(() => (
-  Array.from({ length: garden.value.petCapacity || 0 }, (_, index) => {
-    const slotId = `pet-${index + 1}`
-    const placement = petMap.value[slotId] || null
-    const entry = placement ? placementEntry(placement.inventoryId) : null
-    return {
-      key: `pet-${index + 1}`,
-      slotId,
-      slotNumber: index + 1,
-      region: 'pet',
-      placement,
-      size: 1,
-      variant: entry?.variant || 'box',
-      label: placement ? itemName(entry) : ''
-    }
-  })
-))
-const scenePlots = computed(() => {
-  const capacity = garden.value.capacity || 0
-  const columns = garden.value.columns || 4
-  const anchors = new Map()
-  const occupied = new Set()
-
-  for (const placement of gardenPlacements.value) {
-    const entry = placementEntry(placement.inventoryId)
-    const size = entry?.size || 1
-    const anchor = parseSlotNumber(placement.slotId)
-    const row = Math.floor((anchor - 1) / columns)
-    const column = (anchor - 1) % columns
-    anchors.set(anchor, { placement, size, row, column })
-    for (let rowOffset = 0; rowOffset < size; rowOffset += 1) {
-      for (let columnOffset = 0; columnOffset < size; columnOffset += 1) {
-        occupied.add((row + rowOffset) * columns + column + columnOffset + 1)
-      }
-    }
-  }
-
-  const cells = []
-  for (let slot = 1; slot <= capacity; slot += 1) {
-    if (occupied.has(slot) && !anchors.has(slot)) continue
-    const anchor = anchors.get(slot)
-    const entry = anchor ? placementEntry(anchor.placement.inventoryId) : null
-    const size = anchor?.size || 1
-    cells.push({
-      key: anchor ? `placed-${slot}` : `empty-${slot}`,
-      slotId: `slot-${slot}`,
-      slotNumber: slot,
-      region: 'garden',
-      placement: anchor?.placement || null,
-      size,
-      variant: entry?.variant || 'box',
-      label: anchor ? itemName(entry) : ''
-    })
-  }
-  return cells
-})
-const unplacedInventory = computed(() => {
-  const placedIds = new Set(placements.value.map((placement) => placement.inventoryId))
-  return inventory.value.filter((item) => {
-    if (placedIds.has(item.id)) return false
-    return placementRegion.value === 'pet' ? item.kind === 'pet' : item.kind !== 'pet'
-  })
-})
 function itemSize(item) {
   const entry = collectionByCatalogId.value[item.catalogId]
   if (item.kind === 'tree' || entry?.category === 'species') return 1
   return entry?.size || 1
 }
-function itemFitsSlot(item, slotId, region) {
-  if (region === 'pet' || !slotId) return true
-  const size = itemSize(item)
-  const columns = garden.value.columns || 4
-  const capacity = garden.value.capacity || 0
-  const anchor = parseSlotNumber(slotId)
-  const column = (anchor - 1) % columns
-  const row = Math.floor((anchor - 1) / columns)
-  if (column + size > columns) return false
-  const lastCell = (row + size - 1) * columns + column + size
-  return lastCell <= capacity
-}
-const placementOptions = computed(() => unplacedInventory.value.map((item) => ({
-  ...item,
-  size: itemSize(item),
-  fits: itemFitsSlot(item, selectedSlotId.value, placementRegion.value)
-})))
-const fittingPlacementCount = computed(() => (
-  placementOptions.value.filter((item) => item.fits).length
+const gardenPlacedCount = computed(() => gardenPlacements.value.length)
+const petPlacedCount = computed(() => petPlacements.value.length)
+const scenePlacements = computed(() => placements.value.map((placement) => {
+  const item = inventoryById.value[placement.inventoryId]
+  const entry = item ? collectionByCatalogId.value[item.catalogId] : null
+  return {
+    ...placement,
+    variant: entry?.variant || 'box',
+    size: item ? itemSize(item) : 1,
+    label: item ? itemName(entry) : '',
+    isPet: placement.regionId === 'pet'
+  }
+}))
+const placementOptions = computed(() => {
+  const placedIds = new Set(placements.value.map((placement) => placement.inventoryId))
+  const gardenFull = gardenPlacedCount.value >= (garden.value.capacity || 0)
+  const petFull = petPlacedCount.value >= (garden.value.petCapacity || 0)
+  return inventory.value
+    .filter((item) => item.quantity > 0 && !placedIds.has(item.id))
+    .filter((item) => (item.kind === 'pet' ? !petFull : !gardenFull))
+    .map((item) => {
+      const entry = collectionByCatalogId.value[item.catalogId]
+      return {
+        ...item,
+        size: itemSize(item),
+        isPet: item.kind === 'pet',
+        label: itemName(entry) || item.catalogId
+      }
+    })
+})
+const placementFull = computed(() => (
+  gardenPlacedCount.value >= (garden.value.capacity || 0)
+  && petPlacedCount.value >= (garden.value.petCapacity || 0)
 ))
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []
@@ -724,29 +687,31 @@ function formatPlantDate(value) {
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
 }
 
-function parseSlotNumber(slotId) {
-  return Number(String(slotId).split('-')[1])
-}
-
-function openPlacement(slotId, region = 'garden') {
-  placementRegion.value = region
-  selectedSlotId.value = slotId
+function openPlacementTray() {
   placementError.value = ''
   placementDialogOpen.value = true
 }
 
 async function placeItem(inventoryId) {
-  if (!selectedSlotId.value) return
   placingItemId.value = inventoryId
   placementError.value = ''
   try {
-    await toolsStore.placeItem(inventoryId, selectedSlotId.value)
+    await toolsStore.placeItem(inventoryId)
     placementDialogOpen.value = false
-    selectedSlotId.value = null
   } catch (err) {
     placementError.value = err.message
   } finally {
     placingItemId.value = null
+  }
+}
+
+async function movePlacement({ inventoryId, x, z }) {
+  placementError.value = ''
+  try {
+    await toolsStore.moveItem(inventoryId, { x, z })
+  } catch (err) {
+    placementError.value = err.message
+    await toolsStore.loadGardenView()
   }
 }
 

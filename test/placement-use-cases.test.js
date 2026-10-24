@@ -75,11 +75,24 @@ async function setup(t) {
   return { db: repo.db, gardenRepository, placementUseCases, itemA, itemB };
 }
 
-test('placing and removing an item keeps ownership', async (t) => {
+async function addItem(gardenRepository, catalogId, kind, originId) {
+  return gardenRepository.addInventoryItem({
+    catalogId,
+    kind,
+    quantity: 1,
+    originType: 'test',
+    originId,
+    acquiredAt: '2026-10-21T01:00:00.000Z'
+  });
+}
+
+test('placing and removing an item keeps ownership and a free position', async (t) => {
   const { db, gardenRepository, placementUseCases, itemA } = await setup(t);
 
-  const placement = await placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-1' });
-  assert.equal(placement.slotId, 'slot-1');
+  const placement = await placementUseCases.placeItem({ inventoryId: itemA });
+  assert.match(placement.slotId, /^@-?\d+\.\d{2},-?\d+\.\d{2}$/);
+  assert.equal(placement.x, -2);
+  assert.equal(placement.z, 2);
 
   const placements = await gardenRepository.listPlacements();
   assert.equal(placements.length, 1);
@@ -91,147 +104,120 @@ test('placing and removing an item keeps ownership', async (t) => {
   assert.equal((await db.get('SELECT COUNT(*) AS count FROM inventory_items')).count, 2);
 });
 
-test('a slot and an inventory item cannot be placed twice', async (t) => {
+test('an occupied area and an inventory item cannot be placed twice', async (t) => {
   const { placementUseCases, itemA, itemB } = await setup(t);
 
-  await placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-1' });
+  await placementUseCases.placeItem({ inventoryId: itemA, position: { x: 0, z: 0 } });
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemB, slotId: 'slot-1' }),
-    /槽位已被占用/
+    placementUseCases.placeItem({ inventoryId: itemB, position: { x: 0.2, z: 0.2 } }),
+    /占用/
   );
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-2' }),
+    placementUseCases.placeItem({ inventoryId: itemA, position: { x: 2, z: 2 } }),
     /已经摆放/
   );
 });
 
-test('capacity follows the current expansion level', async (t) => {
-  const { db, placementUseCases, itemA } = await setup(t);
+test('capacity follows the current expansion level and is a count of items', async (t) => {
+  const { db, gardenRepository, placementUseCases } = await setup(t);
+  for (let index = 0; index < 5; index += 1) {
+    await addItem(gardenRepository, 'furniture-6', 'furniture', `stool-${index}`);
+  }
 
-  await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-7' }),
-    /6 个槽位/
-  );
+  const first = await placementUseCases.autoPlace();
+  assert.equal(first.length, 4);
+  assert.equal((await gardenRepository.listPlacements()).length, 4);
 
   await db.run('UPDATE garden_state SET level = 2 WHERE id = 1');
-  const placement = await placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-10' });
-  assert.equal(placement.slotId, 'slot-10');
-
-  await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-11' }),
-    /10 个槽位|已经摆放/
-  );
+  const second = await placementUseCases.autoPlace();
+  assert.equal(second.length, 3);
+  assert.equal((await gardenRepository.listPlacements()).length, 7);
 });
 
-test('multi-cell items reserve their footprint', async (t) => {
+test('multi-cell items reserve their footprint in the continuous plot', async (t) => {
   const { gardenRepository, placementUseCases, itemA } = await setup(t);
-  const table = await gardenRepository.addInventoryItem({
-    catalogId: 'furniture-2',
-    kind: 'furniture',
-    quantity: 1,
-    originType: 'test',
-    originId: 'table',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
+  const table = await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');
 
-  await placementUseCases.placeItem({ inventoryId: table, slotId: 'slot-1' });
+  await placementUseCases.placeItem({ inventoryId: table, position: { x: 0, z: 0 } });
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-2' }),
-    /槽位已被占用/
+    placementUseCases.placeItem({ inventoryId: itemA, position: { x: 0.8, z: 0 } }),
+    /占用/
   );
-  await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-5' }),
-    /槽位已被占用/
-  );
-  const placed = await placementUseCases.placeItem({ inventoryId: itemA, slotId: 'slot-3' });
-  assert.equal(placed.slotId, 'slot-3');
+  const placed = await placementUseCases.placeItem({
+    inventoryId: itemA,
+    position: { x: 2.2, z: 2.2 }
+  });
+  assert.equal(placed.x, 2.2);
+  assert.equal(placed.z, 2.2);
 });
 
-test('pets use independent slots and respect the level capacity', async (t) => {
-  const { db, gardenRepository, placementUseCases, itemA } = await setup(t);
-  const pet1 = await gardenRepository.addInventoryItem({
-    catalogId: 'pet-1',
-    kind: 'pet',
-    quantity: 1,
-    originType: 'test',
-    originId: 'pet-1',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
-  const pet2 = await gardenRepository.addInventoryItem({
-    catalogId: 'pet-2',
-    kind: 'pet',
-    quantity: 1,
-    originType: 'test',
-    originId: 'pet-2',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
-  const pet3 = await gardenRepository.addInventoryItem({
-    catalogId: 'pet-3',
-    kind: 'pet',
-    quantity: 1,
-    originType: 'test',
-    originId: 'pet-3',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
+test('items can be moved freely and still respect collision and bounds', async (t) => {
+  const { placementUseCases, itemA, itemB } = await setup(t);
 
-  await placementUseCases.placeItem({ inventoryId: pet1, slotId: 'pet-1' });
-  await placementUseCases.placeItem({ inventoryId: pet2, slotId: 'pet-2' });
+  await placementUseCases.placeItem({ inventoryId: itemA, position: { x: 0, z: 0 } });
+  await placementUseCases.placeItem({ inventoryId: itemB, position: { x: 2, z: 2 } });
+
+  const moved = await placementUseCases.moveItem({
+    inventoryId: itemA,
+    position: { x: -1.5, z: 1.25 }
+  });
+  assert.equal(moved.x, -1.5);
+  assert.equal(moved.z, 1.25);
+
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: pet3, slotId: 'pet-3' }),
-    /宠物位/
+    placementUseCases.moveItem({ inventoryId: itemA, position: { x: 2, z: 2 } }),
+    /占用/
   );
+
+  const clamped = await placementUseCases.moveItem({
+    inventoryId: itemA,
+    position: { x: 99, z: -99 }
+  });
+  assert.equal(clamped.x, 4);
+  assert.equal(clamped.z, -4);
+});
+
+test('pets use independent capacity and are placed at their template spots', async (t) => {
+  const { db, gardenRepository, placementUseCases } = await setup(t);
+  const pet1 = await addItem(gardenRepository, 'pet-1', 'pet', 'pet-1');
+  const pet2 = await addItem(gardenRepository, 'pet-2', 'pet', 'pet-2');
+  const pet3 = await addItem(gardenRepository, 'pet-3', 'pet', 'pet-3');
+
+  const first = await placementUseCases.placeItem({ inventoryId: pet1 });
+  const second = await placementUseCases.placeItem({ inventoryId: pet2 });
+  assert.equal(first.regionId, 'pet');
+  assert.equal(second.regionId, 'pet');
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: pet3, slotId: 'slot-1' }),
-    /槽位格式/
-  );
-  await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'pet-1' }),
-    /槽位格式|已经摆放/
+    placementUseCases.placeItem({ inventoryId: pet3 }),
+    /宠物位已经放满/
   );
 
   await db.run('UPDATE garden_state SET level = 4 WHERE id = 1');
-  const third = await placementUseCases.placeItem({ inventoryId: pet3, slotId: 'pet-3' });
+  const third = await placementUseCases.placeItem({ inventoryId: pet3 });
   assert.equal(third.regionId, 'pet');
+  assert.equal((await gardenRepository.listPlacements()).filter((entry) => entry.regionId === 'pet').length, 3);
 });
 
-test('autoPlace fills empty slots, prioritizes larger items and keeps pets separate', async (t) => {
+test('autoPlace fills the template, prioritizes larger items and keeps pets separate', async (t) => {
   const { gardenRepository, placementUseCases } = await setup(t);
-  await gardenRepository.addInventoryItem({
-    catalogId: 'furniture-2',
-    kind: 'furniture',
-    quantity: 1,
-    originType: 'test',
-    originId: 'table',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
-  await gardenRepository.addInventoryItem({
-    catalogId: 'pet-1',
-    kind: 'pet',
-    quantity: 1,
-    originType: 'test',
-    originId: 'pet',
-    acquiredAt: '2026-10-21T01:00:00.000Z'
-  });
+  await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');
+  await addItem(gardenRepository, 'pet-1', 'pet', 'pet');
 
   const placements = await placementUseCases.autoPlace();
 
   assert.equal(placements.length, 4);
-  const table = placements.find((placement) => placement.regionId === 'garden' && placement.slotId === 'slot-1');
-  assert.ok(table, '2x2 物品应优先占用左上角');
+  const table = placements.find((placement) => placement.regionId === 'garden' && placement.slotId.startsWith('@'));
+  assert.ok(table, '家具应使用模板位置');
   const pet = placements.find((placement) => placement.regionId === 'pet');
-  assert.equal(pet.slotId, 'pet-1');
+  assert.ok(pet);
   assert.equal((await gardenRepository.listPlacements()).length, 4);
 });
 
-test('invalid slots and missing inventory are rejected', async (t) => {
+test('missing inventory is rejected and removing an unplaced item fails', async (t) => {
   const { placementUseCases, itemA } = await setup(t);
 
   await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: itemA, slotId: 'garden-1' }),
-    /槽位格式/
-  );
-  await assert.rejects(
-    placementUseCases.placeItem({ inventoryId: 9999, slotId: 'slot-1' }),
+    placementUseCases.placeItem({ inventoryId: 9999 }),
     /物品不存在/
   );
   await assert.rejects(

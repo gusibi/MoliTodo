@@ -1,3 +1,5 @@
+const { positionForPlacement } = require('../../domain/services/garden-template');
+
 /**
  * 植物、种子、小院状态与里程碑资格仓储。
  * inventory_items 是成熟树等物品的唯一所有权记录。
@@ -306,18 +308,29 @@ class SqliteGardenRepository {
       : null;
   }
 
-  async listPlacements() {
-    const rows = await this.db.all(
-      'SELECT * FROM garden_placements ORDER BY region_id ASC, slot_id ASC'
-    );
-    return rows.map((row) => ({
+  rowToPlacement(row) {
+    if (!row) return null;
+    const position = positionForPlacement({
+      slotId: row.slot_id,
+      regionId: row.region_id
+    });
+    return {
       id: row.id,
       inventoryId: row.inventory_id,
       regionId: row.region_id,
       slotId: row.slot_id,
+      x: position.x,
+      z: position.z,
       visible: row.visible === 1,
       placedAt: row.placed_at
-    }));
+    };
+  }
+
+  async listPlacements() {
+    const rows = await this.db.all(
+      'SELECT * FROM garden_placements ORDER BY region_id ASC, slot_id ASC'
+    );
+    return rows.map((row) => this.rowToPlacement(row));
   }
 
   async findPlacementByInventoryId(inventoryId) {
@@ -325,16 +338,7 @@ class SqliteGardenRepository {
       'SELECT * FROM garden_placements WHERE inventory_id = ?',
       [inventoryId]
     );
-    return row
-      ? {
-          id: row.id,
-          inventoryId: row.inventory_id,
-          regionId: row.region_id,
-          slotId: row.slot_id,
-          visible: row.visible === 1,
-          placedAt: row.placed_at
-        }
-      : null;
+    return this.rowToPlacement(row);
   }
 
   async findPlacementBySlot(regionId, slotId) {
@@ -342,16 +346,7 @@ class SqliteGardenRepository {
       'SELECT * FROM garden_placements WHERE region_id = ? AND slot_id = ?',
       [regionId, slotId]
     );
-    return row
-      ? {
-          id: row.id,
-          inventoryId: row.inventory_id,
-          regionId: row.region_id,
-          slotId: row.slot_id,
-          visible: row.visible === 1,
-          placedAt: row.placed_at
-        }
-      : null;
+    return this.rowToPlacement(row);
   }
 
   async addPlacement({ inventoryId, regionId, slotId, visible = 1, placedAt }) {
@@ -365,14 +360,15 @@ class SqliteGardenRepository {
       'SELECT * FROM garden_placements WHERE id = ?',
       [result.lastID]
     );
-    return {
-      id: row.id,
-      inventoryId: row.inventory_id,
-      regionId: row.region_id,
-      slotId: row.slot_id,
-      visible: row.visible === 1,
-      placedAt: row.placed_at
-    };
+    return this.rowToPlacement(row);
+  }
+
+  async updatePlacementSlot({ inventoryId, slotId }) {
+    await this.db.run(
+      'UPDATE garden_placements SET slot_id = ? WHERE inventory_id = ?',
+      [slotId, inventoryId]
+    );
+    return this.findPlacementByInventoryId(inventoryId);
   }
 
   async removePlacement(inventoryId) {

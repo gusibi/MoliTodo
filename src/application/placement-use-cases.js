@@ -3,11 +3,17 @@ const {
   PET_REGION,
   getGardenCapacity,
   getPetCapacity,
-  getItemSize,
-  parseSlotNumber,
-  slotIdFor,
-  slotFootprint
+  getItemSize
 } = require('../domain/services/garden-layout');
+const {
+  GARDEN_BOUNDS,
+  positionForPlacement,
+  positionToken,
+  normalizePosition,
+  clampToBounds,
+  findFreePosition,
+  rectsOverlap
+} = require('../domain/services/garden-template');
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
 function regionForItem(item) {
@@ -18,18 +24,37 @@ function capacityForRegion(level, region) {
   return region === PET_REGION ? getPetCapacity(level) : getGardenCapacity(level);
 }
 
-function footprintFor(item, region, anchor, capacity) {
-  if (region === PET_REGION) {
-    if (anchor > capacity) throw new Error(`当前小院只有 ${capacity} 个宠物位`);
-    return [anchor];
+function sizeForItem(item) {
+  return Math.max(1, getItemSize(item));
+}
+
+function occupiedFromPlacements(placements, inventoryById) {
+  const occupied = [];
+  for (const placement of placements) {
+    const item = inventoryById.get(placement.inventoryId);
+    if (!item) continue;
+    const position = positionForPlacement(placement);
+    occupied.push({
+      x: position.x,
+      z: position.z,
+      size: sizeForItem(item),
+      inventoryId: placement.inventoryId,
+      regionId: placement.regionId
+    });
   }
-  const size = getItemSize(item);
-  return slotFootprint(anchor, size, capacity);
+  return occupied;
+}
+
+function overlapsOthers(position, size, occupied, excludeInventoryId = null) {
+  return occupied.some((entry) => {
+    if (excludeInventoryId && entry.inventoryId === excludeInventoryId) return false;
+    return rectsOverlap(position, size, entry, entry.size);
+  });
 }
 
 /**
- * 小院摆放：校验所有权、尺寸、槽位与容量，不删除库存记录。
- * 宠物使用独立区域，不占普通格位。
+ * 小院自由摆放：容量按件数计算，尺寸用于边界与碰撞。
+ * slot_id 保存为 @x,z，兼容旧的 slot-N 数据。
  */
 class PlacementUseCases {
   constructor({ db, clock, gardenRepository, regionId = GARDEN_REGION }) {
@@ -39,7 +64,7 @@ class PlacementUseCases {
     this.regionId = regionId;
   }
 
-  async placeItem({ inventoryId, slotId, now = this.clock.now() } = {}) {
+  async placeItem({ inventoryId, slotId = null, position = null, now = this.clock.now() } = {}) {
     const instant = now instanceof Date ? now : new Date(now);
     if (Number.isNaN(instant.getTime())) {
       throw new TypeError('now 不是有效时间');
@@ -56,41 +81,76 @@ class PlacementUseCases {
       const state = await this.gardenRepository.getState();
       const level = state ? state.level : 1;
       const capacity = capacityForRegion(level, region);
-      const anchor = parseSlotNumber(slotId, region);
-
-      const existingInventoryPlacement = await this.gardenRepository.findPlacementByInventoryId(inventoryId);
-      if (existingInventoryPlacement) {
-        throw new Error('该物品已经摆放');
+      const placements = await this.gardenRepository.listPlacements();
+      const regionPlacements = placements.filter((placement) => placement.regionId === region);
+      if (regionPlacements.length >= capacity) {
+        throw new Error(region === PET_REGION ? '宠物位已经放满' : '小院已经放满');
       }
 
-      const cells = footprintFor(inventory, region, anchor, capacity);
-      const placements = (await this.gardenRepository.listPlacements())
-        .filter((placement) => placement.regionId === region);
-      const inventoryIds = new Set(placements.map((placement) => placement.inventoryId));
+      const existing = await this.gardenRepository.findPlacementByInventoryId(inventoryId);
+      if (existing) throw new Error('该物品已经摆放');
+
       const inventoryRows = await this.gardenRepository.listInventoryItems();
       const inventoryById = new Map(inventoryRows.map((item) => [item.id, item]));
-      const occupied = new Set();
-      for (const placement of placements) {
-        const placedItem = inventoryById.get(placement.inventoryId);
-        if (!placedItem) continue;
-        const placedAnchor = parseSlotNumber(placement.slotId, region);
-        const placedCells = footprintFor(placedItem, region, placedAnchor, capacity);
-        placedCells.forEach((cell) => occupied.add(cell));
-      }
+      const occupied = occupiedFromPlacements(placements, inventoryById);
+      const size = sizeForItem(inventory);
 
-      if (cells.some((cell) => occupied.has(cell))) {
-        throw new Error('该槽位已被占用');
+      let nextPosition = normalizePosition(position);
+      if (!nextPosition && slotId) {
+        nextPosition = positionForPlacement({ slotId, regionId: region });
       }
-      if (inventoryIds.has(inventoryId)) {
-        throw new Error('该物品已经摆放');
+      if (!nextPosition) {
+        nextPosition = findFreePosition({
+          catalogId: inventory.catalogId,
+          size,
+          occupied,
+          bounds: GARDEN_BOUNDS
+        });
+      }
+      if (!nextPosition) throw new Error('没有足够的空地摆放这件物品');
+
+      const clamped = clampToBounds(nextPosition, size, GARDEN_BOUNDS);
+      if (overlapsOthers(clamped, size, occupied)) {
+        throw new Error('这个位置已经被其他物品占用');
       }
 
       return this.gardenRepository.addPlacement({
         inventoryId,
         regionId: region,
-        slotId,
+        slotId: positionToken(clamped.x, clamped.z),
         visible: 1,
         placedAt: nowIso
+      });
+    });
+  }
+
+  async moveItem({ inventoryId, position, now = this.clock.now() } = {}) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+
+    return withTransaction(this.db, async () => {
+      const placement = await this.gardenRepository.findPlacementByInventoryId(inventoryId);
+      if (!placement) throw new Error('该物品没有摆放');
+      const inventory = await this.gardenRepository.findInventoryItemById(inventoryId);
+      if (!inventory) throw new Error('物品不存在或数量不足');
+      const next = normalizePosition(position);
+      if (!next) throw new Error('摆放位置无效');
+      const size = sizeForItem(inventory);
+      const clamped = clampToBounds(next, size, GARDEN_BOUNDS);
+
+      const placements = await this.gardenRepository.listPlacements();
+      const inventoryRows = await this.gardenRepository.listInventoryItems();
+      const inventoryById = new Map(inventoryRows.map((item) => [item.id, item]));
+      const occupied = occupiedFromPlacements(placements, inventoryById);
+      if (overlapsOthers(clamped, size, occupied, inventoryId)) {
+        throw new Error('这个位置已经被其他物品占用');
+      }
+
+      return this.gardenRepository.updatePlacementSlot({
+        inventoryId,
+        slotId: positionToken(clamped.x, clamped.z)
       });
     });
   }
@@ -107,8 +167,8 @@ class PlacementUseCases {
   }
 
   /**
-   * 自动填槽：大件优先，只填空位，不覆盖已有物品。
-   * 没有足够空间时留在收藏中。
+   * 自动摆放：优先使用模板位置；位置被占用时寻找最近的空位。
+   * 容量按件数计算，放不下时留在收藏中。
    */
   async autoPlace({ now = this.clock.now(), inventoryIds = null } = {}) {
     const instant = now instanceof Date ? now : new Date(now);
@@ -116,31 +176,31 @@ class PlacementUseCases {
     const inventory = await this.gardenRepository.listInventoryItems();
     const placements = await this.gardenRepository.listPlacements();
     const placedIds = new Set(placements.map((placement) => placement.inventoryId));
-    const candidates = inventory
-      .filter((item) => item.quantity > 0 && !placedIds.has(item.id))
-      .filter((item) => !allowedIds || allowedIds.has(item.id))
-      .sort((a, b) => (getItemSize(b) - getItemSize(a)) || (a.id - b.id));
-
     const state = await this.gardenRepository.getState();
     const level = state ? state.level : 1;
     const placedNow = [];
 
+    const candidates = inventory
+      .filter((item) => item.quantity > 0 && !placedIds.has(item.id))
+      .filter((item) => !allowedIds || allowedIds.has(item.id))
+      .sort((a, b) => (sizeForItem(b) - sizeForItem(a)) || (a.id - b.id));
+
     for (const item of candidates) {
       const region = regionForItem(item);
       const capacity = capacityForRegion(level, region);
-      for (let slot = 1; slot <= capacity; slot += 1) {
-        try {
-          const placement = await this.placeItem({
-            inventoryId: item.id,
-            slotId: slotIdFor(slot, region),
-            now: instant
-          });
-          placedNow.push(placement);
-          break;
-        } catch (error) {
-          if (!/槽位|宠物位|宽度|已经摆放/.test(error.message)) {
-            throw error;
-          }
+      const current = await this.gardenRepository.listPlacements();
+      if (current.filter((placement) => placement.regionId === region).length >= capacity) {
+        continue;
+      }
+      try {
+        const placement = await this.placeItem({
+          inventoryId: item.id,
+          now: instant
+        });
+        placedNow.push(placement);
+      } catch (error) {
+        if (!/空地|占用|放满|已经摆放/.test(error.message)) {
+          throw error;
         }
       }
     }

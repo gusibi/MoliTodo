@@ -89,9 +89,11 @@ test('runtime auto-places a newly claimed item when auto place is enabled', asyn
   assert.equal(result.claimed, true);
 
   const placements = await runtime.gardenRepository.listPlacements();
-  assert.equal(placements.length, 1);
-  assert.equal(placements[0].regionId, 'garden');
-  assert.equal(placements[0].slotId, 'slot-1');
+  assert.equal(placements.length, 3);
+  const bench = placements.find((placement) => placement.inventoryId === result.inventoryItemId);
+  assert.ok(bench);
+  assert.equal(bench.regionId, 'garden');
+  assert.match(bench.slotId, /^@/);
 
   await runtime.setAutoPlace(false);
   const secondUnlock = await runtime.gardenRepository.unlockMilestone({
@@ -105,7 +107,7 @@ test('runtime auto-places a newly claimed item when auto place is enabled', asyn
     createdAt: '2026-10-21T01:00:00.000Z'
   });
   await runtime.claimReward(secondClaim.id, 'furniture-4');
-  assert.equal((await runtime.gardenRepository.listPlacements()).length, 1);
+  assert.equal((await runtime.gardenRepository.listPlacements()).length, 3);
 });
 
 test('the runtime initializes the garden, ticks a rule and records a confirmation', async (t) => {

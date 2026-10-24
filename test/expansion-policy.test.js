@@ -12,7 +12,7 @@ test('expansion levels expose the five documented capacities', () => {
   assert.deepEqual(
     EXPANSION_LEVELS.map((entry) => [entry.level, entry.capacity, entry.streakDays, entry.totalGrowthDays]),
     [
-      [1, 6, 0, 0],
+      [1, 4, 0, 0],
       [2, 10, 10, 15],
       [3, 16, 30, 45],
       [4, 24, 90, 120],
