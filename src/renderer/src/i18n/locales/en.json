@@ -682,6 +682,17 @@
     "todayWater": "Water today",
     "todaySun": "Sunlight today",
     "todayGrowth": "Growth today",
+    "growthRules": {
+      "title": "How growth points work",
+      "description": "Focus, water, and movement all add growth points. Each plant matures at {score} points and yields one seed of the same species.",
+      "focus": "Focus session",
+      "focusHint": "One valid focus session, up to {limit} times a day",
+      "water": "Water",
+      "waterHint": "One water confirmation, up to {limit} times a day",
+      "sun": "Movement",
+      "sunHint": "One movement confirmation, up to {limit} times a day",
+      "growthDay": "Growth day: finish {focus} focus session or {health} health confirmations (water + movement) in a day. Growth days drive streaks, badges, and expansions, but do not add extra growth points."
+    },
     "plant": "Current plant",
     "noPlant": "No plant is growing yet",
     "noPlantDescription": "This is where a seed grows from a sprout into a full tree.",
@@ -706,12 +717,18 @@
     "growthScore": "Growth {score}/15",
     "badges": {
       "title": "Badges",
-      "description": "Unlocked badges light up; locked ones stay as gray outlines.",
+      "description": "Unlocked badges light up; hover or click any badge to see its requirement.",
       "summary": "{unlocked}/{total} unlocked",
       "locked": "Locked",
       "pending": "Reward pending",
       "claimed": "Claimed",
-      "earned": "Earned"
+      "earned": "Earned",
+      "conditions": {
+        "focus": "{count} total focus sessions",
+        "health": "{count} total health confirmations",
+        "growthDay": "{count} total growth days",
+        "expansion": "A {streak}-day streak or {total} total growth days (capacity {capacity})"
+      }
     },
     "badgeNames": {
       "first-sprout": "First sprout",
@@ -959,7 +976,9 @@
     "freeFocus": "Free focus",
     "minutesUnit": "min",
     "start": "Start {minutes} min",
-    "hint": "The timer stays on your desktop. Pause whenever you need."
+    "hint": "The timer stays on your desktop. Pause whenever you need.",
+    "completedTitle": "Focus complete",
+    "completedHint": "Take a 5-minute break and stretch"
   },
   "reminderPopup": {
     "title": "Health reminder",

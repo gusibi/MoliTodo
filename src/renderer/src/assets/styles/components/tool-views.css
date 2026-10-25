@@ -1,0 +1,22 @@
+/* 工具页（健康提醒 / 番茄专注 / Moli 小院）的滚动区域：细滚动条，避免默认样式过于抢眼 */
+
+.tool-view-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+
+.tool-view-scroll::-webkit-scrollbar {
+  @apply w-1.5;
+}
+
+.tool-view-scroll::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.tool-view-scroll::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-muted-foreground/20;
+}
+
+.tool-view-scroll::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/35;
+}

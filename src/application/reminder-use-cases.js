@@ -256,6 +256,27 @@ class ReminderUseCases {
     });
   }
 
+  /**
+   * 修复历史版本遗留的“已启用但没有下一次触发时间”的规则。
+   * 旧算法在锚点落在窗口结束之后时会算出 null，这里在启动时重新排程。
+   */
+  async rescheduleMissing(now = this.clock.now()) {
+    const instant = toDate(now, 'now');
+    const nowIso = instant.toISOString();
+    const rules = await this.reminderRepository.listRules();
+    let repaired = 0;
+
+    for (const rule of rules) {
+      if (rule.enabled !== 1 || rule.nextRunAt) continue;
+      const next = computeNextRunAt(rule, instant, this.clock);
+      if (!next) continue;
+      await this.reminderRepository.updateNextRunAt(rule.id, next.toISOString(), nowIso);
+      repaired += 1;
+    }
+
+    return repaired;
+  }
+
   async expireOccurrence(occurrenceId, now = this.clock.now()) {
     const instant = toDate(now, 'now');
     const nowIso = instant.toISOString();

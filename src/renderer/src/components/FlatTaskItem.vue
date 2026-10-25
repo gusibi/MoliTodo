@@ -50,9 +50,15 @@
 
           <!-- 时间信息 -->
           <div class="flat-task-time-info">
-            <!-- 重复任务图标（模板或实例） -->
-            <div v-if="task.recurrence || task.seriesId" class="flat-task-recurring-icon">
-              <Repeat class="h-icon-sm w-icon-sm" />
+            <!-- 重复任务（模板或实例）：显示重复规则摘要 -->
+            <div
+              v-if="task.recurrence || task.seriesId"
+              class="flat-task-recurring-icon gap-1"
+              :title="recurrenceSummary || $t('today.recurrenceLabel')"
+            >
+              <Repeat class="h-icon-sm w-icon-sm" aria-hidden="true" />
+              <span v-if="recurrenceSummary">{{ recurrenceSummary }}</span>
+              <span v-else class="sr-only">{{ $t('today.recurrenceLabel') }}</span>
             </div>
 
             <!-- 安排 / 截止时间 -->
@@ -63,6 +69,18 @@
             >
               <Calendar class="h-icon-sm w-icon-sm" />
               <span>{{ formatTaskTimeInfo(task) }}</span>
+            </div>
+
+            <!-- 提醒时间 -->
+            <div
+              v-if="task.reminderTime && task.status !== 'done'"
+              class="flat-task-time flat-task-time-reminder"
+              :class="{ 'flat-task-time-overdue': isReminderOverdue(task.reminderTime) }"
+              :title="$t('tasks.reminderTime')"
+            >
+              <AlarmClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
+              <span class="sr-only">{{ $t('tasks.reminderTime') }}</span>
+              <span>{{ formatTaskReminderTime(task.reminderTime) }}</span>
             </div>
 
             <!-- 附加徽标（分组原因 / 重复任务等） -->
@@ -151,12 +169,13 @@
 </template>
 
 <script setup>
-import { Calendar, Check, Clock, Pause, Play, Repeat, RotateCcw, Trash2 } from '@lucide/vue'
-import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration } from '../utils/task-utils'
+import { AlarmClock, Calendar, Check, Clock, Pause, Play, Repeat, RotateCcw, Trash2 } from '@lucide/vue'
+import { isTaskOvertime, formatDuration, formatReminderTime, getCurrentDuration, isReminderOverdue } from '../utils/task-utils'
 import { useTaskStore } from '@/store/taskStore'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isVirtualInstance } from '../utils/today-agenda.js'
+import { formatRecurrenceSummary } from '../utils/recurrence-summary.js'
 import { localeCode } from '../utils/locale-format.js'
 import Checkbox from './ui/checkbox/Checkbox.vue'
 import IconButton from './ui/button/IconButton.vue'
@@ -201,6 +220,9 @@ const isTaskTimeOverdue = (task) => {
   }
   return new Date() >= boundary
 }
+
+// 提醒时间与 Today 行保持一致：今天 / 明天 / 具体日期 + 时刻
+const formatTaskReminderTime = (value) => taskStore.formatTimeDisplay(value, 'reminder')
 
 // 定义 props
 const props = defineProps({
@@ -255,6 +277,13 @@ const emit = defineEmits([
 
 // 使用 taskStore
 const taskStore = useTaskStore()
+
+// 重复规则摘要：与 Inspector 的重复设置展示保持一致
+const recurrenceSummary = computed(() => (
+  props.task.recurrence
+    ? formatRecurrenceSummary(props.task.recurrence, t, locale.value)
+    : ''
+))
 
 // 虚拟重复实例：操作需路由到重复实例接口（先物化再执行状态机）
 const isVirtual = computed(() => isVirtualInstance(props.task))

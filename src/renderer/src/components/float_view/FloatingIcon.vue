@@ -4,7 +4,8 @@
       'floating-icon p-0',
       isAlert ? 'floating-icon--alert' : 'floating-icon--normal',
       isDragging ? 'floating-icon--dragging' : '',
-      isPending ? 'floating-icon--pending' : ''
+      isPending ? 'floating-icon--pending' : '',
+      isShaking ? 'floating-icon--shake' : ''
     ]" @mousedown="handleMouseDown" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave"
       @click="handleButtonClick" :title="isAlert ? $t('floatView.reminderState') : taskCount > 0 ? $t('floatView.pendingState', { count: taskCount }) : $t('floatView.clearedState')" :aria-label="$t('app.title')" :disabled="isPending">
       <div class="floating-icon-content">
@@ -51,6 +52,8 @@ let calendarDateTimer = null
 
 const isDragging = ref(false)
 const isPending = ref(false)
+const isShaking = ref(false)
+let shakeTimer = null
 const dragStartPos = ref({ x: 0, y: 0 })
 const floatingIconRef = ref(null)
 
@@ -390,6 +393,19 @@ const handleTaskReminder = () => {
   updateTaskCount()
 }
 
+// 专注结束且专注小组件不可见时，抖一下悬浮图标作为视觉提醒。
+function handleFocusCompleted() {
+  if (shakeTimer) clearTimeout(shakeTimer)
+  isShaking.value = false
+  requestAnimationFrame(() => {
+    isShaking.value = true
+    shakeTimer = setTimeout(() => {
+      isShaking.value = false
+      shakeTimer = null
+    }, 1200)
+  })
+}
+
 // 让图标边长跟随设置里的图标大小，并占满整个窗口。
 // macOS 26+ 会给透明窗口垫一层圆角白色衬底，只有内容完全铺满窗口才能把它
 // 盖住（用户反馈的"白底外框"），因此不再给 badge/hover 留缩放边距。
@@ -446,6 +462,7 @@ onMounted(async () => {
   // 监听事件
   window.electronAPI.events.on('tasks-updated', updateTaskCount)
   window.electronAPI.events.on('task-reminder', handleTaskReminder)
+  window.electronAPI.events.on('focus-completed', handleFocusCompleted)
   window.electronAPI.events.on('config-updated', handleConfigUpdate)
 
   // 监听面板鼠标事件
@@ -482,10 +499,15 @@ onUnmounted(() => {
     clearTimeout(hideTimeout)
     hideTimeout = null
   }
+  if (shakeTimer) {
+    clearTimeout(shakeTimer)
+    shakeTimer = null
+  }
 
   // 清理事件监听器
   window.electronAPI.events.removeAllListeners('tasks-updated')
   window.electronAPI.events.removeAllListeners('task-reminder')
+  window.electronAPI.events.removeAllListeners('focus-completed')
   window.electronAPI.events.removeAllListeners('config-updated')
   window.electronAPI.events.removeAllListeners('panel-mouse-enter')
   window.electronAPI.events.removeAllListeners('panel-mouse-leave')

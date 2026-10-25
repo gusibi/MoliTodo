@@ -276,6 +276,23 @@ test('an empty garden view returns defaults without writing state', async (t) =>
   assert.equal(view.badges.total, 20);
   assert.equal(view.badges.unlocked, 0);
   assert.equal(view.badges.items.length, 20);
+  assert.deepEqual(view.growth, {
+    maturityScore: 15,
+    events: {
+      focus: { points: 1, dailyLimit: 10 },
+      water: { points: 2, dailyLimit: 3 },
+      sun: { points: 2, dailyLimit: 3 }
+    },
+    growthDay: { focusCount: 1, healthConfirmations: 2 }
+  });
+  assert.deepEqual(
+    view.badges.items.find((item) => item.definitionId === 'first-sprout').condition,
+    { metric: 'focusCount', threshold: 1 }
+  );
+  assert.deepEqual(
+    view.badges.items.find((item) => item.definitionId === 'expansion-lv2').condition,
+    { streakDays: 10, totalGrowthDays: 15, capacity: 10 }
+  );
   assert.equal(view.plantHistory.length, 0);
   assert.equal(view.collection.length, 24);
   assert.equal(view.collection.filter((entry) => entry.owned || entry.unlocked).length, 0);

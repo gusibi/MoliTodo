@@ -136,3 +136,29 @@ test('a slot exactly at window start is allowed, but the anchor itself is not a 
   const next = computeNextRunAt(windowRule, new Date('2026-10-21T00:00:00.000Z'), clock);
   assert.equal(next.toISOString(), '2026-10-21T01:00:00.000Z');
 });
+
+test('anchor after the window still schedules from the window start next day', () => {
+  const clock = makeClock();
+  const lateRule = rule({
+    anchorMinutes: 20 * 60 + 22,
+    intervalMinutes: 45,
+    windowStart: '09:00',
+    windowEnd: '18:00'
+  });
+
+  const next = computeNextRunAt(lateRule, new Date('2026-10-21T12:22:00.000Z'), clock);
+  assert.equal(next.toISOString(), '2026-10-22T01:00:00.000Z');
+});
+
+test('anchor near the window end keeps the anchor time on later days', () => {
+  const clock = makeClock();
+  const lateRule = rule({
+    anchorMinutes: 17 * 60 + 30,
+    intervalMinutes: 45,
+    windowStart: '09:00',
+    windowEnd: '18:00'
+  });
+
+  const next = computeNextRunAt(lateRule, new Date('2026-10-21T09:30:00.000Z'), clock);
+  assert.equal(next.toISOString(), '2026-10-22T09:30:00.000Z');
+});

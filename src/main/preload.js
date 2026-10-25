@@ -175,7 +175,8 @@ const electronAPI = {
         'tools-updated',
         'tools-open-view',
         'reminder-popup-intents',
-        'focus-widget-visibility'
+        'focus-widget-visibility',
+        'focus-completed'
       ];
 
       if (validChannels.includes(channel)) {

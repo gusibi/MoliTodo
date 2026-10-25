@@ -69,6 +69,7 @@ class ToolsRuntime {
       gardenRepository: this.gardenRepository,
       focusRepository: this.focusRepository,
       reminderRepository: this.reminderRepository,
+      growthPolicy: this.toolsUseCases.growthPolicy,
       getAutoPlace: () => this.autoPlace
     });
     this.popupPresenter = new ReminderPopupPresenter({
@@ -90,6 +91,7 @@ class ToolsRuntime {
       await this.placementUseCases.autoPlace({ now: this.clock.now() });
     }
     await this.focusUseCases.interruptActive(this.clock.now());
+    await this.reminderUseCases.rescheduleMissing(this.clock.now());
     await this.tick();
     const pending = await this.reminderUseCases.resumePending(this.clock.now());
     await this.popupPresenter.present(pending);
@@ -154,6 +156,7 @@ class ToolsRuntime {
       const result = await this.focusUseCases.tick(now);
       if (result.completed || result.breakCompleted) {
         if (result.completed) {
+          this.windowManager?.notifyFocusCompleted?.(result.state);
           await this.autoPlaceNewItem(result.activity?.inventoryItemId);
         }
         this.broadcastToolsUpdated();

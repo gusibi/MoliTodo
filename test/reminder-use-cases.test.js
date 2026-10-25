@@ -361,3 +361,35 @@ test('tick cleans occurrences older than 30 days', async (t) => {
   assert.equal(recent[0].scheduled_at, '2026-10-21T01:40:00.000Z');
   assert.equal(clock.localDate(new Date('2026-10-21T01:40:00.000Z')), '2026-10-21');
 });
+
+test('rescheduleMissing repairs enabled rules whose next run was never scheduled', async (t) => {
+  const { reminderUseCases, reminderRepository } = await setup(t);
+  const rule = await reminderRepository.insertRule({
+    type: 'stand',
+    intervalMinutes: 45,
+    anchorMode: 'created',
+    anchorMinutes: 20 * 60 + 22,
+    weekdays: [],
+    windowStart: '09:00',
+    windowEnd: '18:00',
+    enabled: 1,
+    pauseUntil: null,
+    nextRunAt: null,
+    createdAt: '2026-10-21T12:22:00.000Z',
+    updatedAt: '2026-10-21T12:22:00.000Z'
+  });
+
+  const repaired = await reminderUseCases.rescheduleMissing(new Date('2026-10-21T12:22:00.000Z'));
+  assert.equal(repaired, 1);
+  const updated = await reminderRepository.findRuleById(rule.id);
+  assert.equal(updated.nextRunAt, '2026-10-22T01:00:00.000Z');
+});
+
+test('createRule after the window schedules the next window start', async (t) => {
+  const { clock, reminderUseCases } = await setup(t);
+  clock.setNow('2026-10-21T12:22:00.000Z');
+
+  const rule = await reminderUseCases.createRule(ruleInput({ type: 'stand', intervalMinutes: 45 }));
+  assert.equal(rule.anchorMinutes, 20 * 60 + 22);
+  assert.equal(rule.nextRunAt, '2026-10-22T01:00:00.000Z');
+});

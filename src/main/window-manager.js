@@ -13,7 +13,7 @@ const FOCUS_WIDGET_WIDTH = 324;
 const FOCUS_WIDGET_HEIGHT = 192;
 
 const REMINDER_POPUP_WIDTH = 460;
-const REMINDER_POPUP_BASE_HEIGHT = 212;
+const REMINDER_POPUP_BASE_HEIGHT = 196;
 const REMINDER_POPUP_MAX_HEIGHT = 500;
 
 class WindowManager {
@@ -677,7 +677,7 @@ class WindowManager {
     const count = Math.max(1, intents.length);
     const height = Math.min(
       REMINDER_POPUP_MAX_HEIGHT,
-      REMINDER_POPUP_BASE_HEIGHT + (count - 1) * 168
+      REMINDER_POPUP_BASE_HEIGHT + (count - 1) * 112
     );
     const bounds = this.computeReminderPopupBounds(height);
 
@@ -693,12 +693,14 @@ class WindowManager {
     this.reminderPopupWindow = new BrowserWindow({
       ...bounds,
       frame: false,
+      transparent: true,
+      backgroundColor: '#00000000',
       resizable: false,
       movable: true,
       alwaysOnTop: true,
       skipTaskbar: true,
       show: false,
-      hasShadow: true,
+      hasShadow: false,
       fullscreenable: false,
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
@@ -775,6 +777,25 @@ class WindowManager {
         window.webContents.send('play-notification-sound');
       }
     });
+  }
+
+  /**
+   * 专注结束提醒：播放提示音，并让当前可见的小组件抖动。
+   * 专注小组件可见时优先抖动它；否则用悬浮图标兜底。
+   */
+  notifyFocusCompleted(state = null) {
+    const payload = {
+      completedAt: new Date().toISOString(),
+      phase: state?.active?.phase || 'break'
+    };
+    const focusWidget = this.focusWidgetWindow;
+    const target = focusWidget && !focusWidget.isDestroyed() && focusWidget.isVisible()
+      ? focusWidget
+      : this.floatingWindow;
+    if (target && !target.isDestroyed()) {
+      target.webContents.send('focus-completed', payload);
+    }
+    this.playNotificationSound();
   }
 
   openToolView(tool) {

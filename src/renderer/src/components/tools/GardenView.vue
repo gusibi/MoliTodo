@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full overflow-auto px-6 py-6">
+  <div class="tool-view-scroll h-full overflow-auto px-6 py-6">
     <div class="mx-auto flex max-w-5xl flex-col gap-5">
       <header class="flex flex-col gap-3">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -146,9 +146,35 @@
           </div>
         </section>
 
+        <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.growthRules.title') }}</h2>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ $t('tools.growthRules.description', { score: growth.maturityScore }) }}
+          </p>
+          <ul class="mt-4 grid gap-2 sm:grid-cols-3">
+            <li
+              v-for="rule in growthRuleItems"
+              :key="rule.id"
+              class="rounded-lg border border-border/50 bg-background/40 p-3"
+            >
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="text-sm font-medium text-foreground">{{ rule.label }}</span>
+                <span class="text-sm font-semibold tabular-nums text-primary">+{{ rule.points }}</span>
+              </div>
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">{{ rule.hint }}</p>
+            </li>
+          </ul>
+          <p class="mt-3 text-xs leading-5 text-muted-foreground">
+            {{ $t('tools.growthRules.growthDay', {
+              focus: growth.growthDay.focusCount,
+              health: growth.growthDay.healthConfirmations
+            }) }}
+          </p>
+        </section>
+
         <p v-if="placementError" class="text-sm text-destructive" role="alert">{{ placementError }}</p>
 
-        <div class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+        <div class="grid items-stretch gap-4 lg:grid-cols-[1.45fr_1fr]">
           <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
@@ -201,8 +227,8 @@
             </div>
           </section>
 
-          <div class="flex flex-col gap-4">
-            <section class="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
+          <div class="flex h-full flex-col gap-4">
+            <section class="flex flex-1 flex-col rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
               <div class="flex items-center justify-between gap-3">
                 <h2 class="text-lg font-semibold text-foreground">{{ $t('tools.expansion') }}</h2>
                 <span class="text-sm text-muted-foreground">{{ $t('tools.capacity', { count: garden.capacity }) }}</span>
@@ -216,14 +242,14 @@
                   Lv.{{ entry.level }}
                 </span>
               </div>
-              <p v-if="garden.nextExpansion" class="mt-3 text-xs leading-5 text-muted-foreground">
+              <p v-if="garden.nextExpansion" class="mt-auto pt-3 text-xs leading-5 text-muted-foreground">
                 {{ $t('tools.nextExpansion', {
                   level: garden.nextExpansion.level,
                   streak: garden.nextExpansion.streakDays,
                   total: garden.nextExpansion.totalGrowthDays
                 }) }}
               </p>
-              <p v-else class="mt-3 text-xs text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
+              <p v-else class="mt-auto pt-3 text-xs text-muted-foreground">{{ $t('tools.allExpansions') }}</p>
             </section>
 
             <section v-if="activeClaim" class="rounded-xl border border-primary/30 bg-primary/5 p-5">
@@ -381,29 +407,40 @@
           </span>
         </div>
         <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          <div
+          <Tooltip
             v-for="badge in badges.items"
             :key="badge.id"
-            class="flex min-w-0 items-center gap-2 rounded-lg border border-border/50 bg-background/40 px-2.5 py-2"
-            :class="{ 'opacity-55': !badge.unlocked }"
+            side="bottom"
+            content-class="max-w-[16rem] leading-5"
           >
-            <BadgeArt
-              :definition-id="badge.definitionId"
-              :kind="badge.kind"
-              :unlocked="badge.unlocked"
-              class="h-7 w-7 shrink-0"
-              :class="{ 'grayscale opacity-45': !badge.unlocked }"
-            />
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-xs text-foreground" :title="$t(`tools.badgeNames.${badge.definitionId}`)">
-                {{ $t(`tools.badgeNames.${badge.definitionId}`) }}
-              </p>
-              <p class="truncate text-[10px] text-muted-foreground">
-                <template v-if="badge.unlocked">{{ badgeStatus(badge) }}</template>
-                <template v-else>{{ $t('tools.badges.locked') }}</template>
-              </p>
-            </div>
-          </div>
+            <template #trigger>
+              <button
+                type="button"
+                class="flex min-w-0 items-center gap-2 rounded-lg border border-border/50 bg-background/40 px-2.5 py-2 text-left outline-none transition-colors hover:bg-background/70 focus-visible:ring-2 focus-visible:ring-ring"
+                :class="{ 'opacity-55': !badge.unlocked }"
+                :aria-label="`${$t(`tools.badgeNames.${badge.definitionId}`)}：${badgeCondition(badge)}`"
+                @click="selectedBadgeId = badge.id"
+              >
+                <BadgeArt
+                  :definition-id="badge.definitionId"
+                  :kind="badge.kind"
+                  :unlocked="badge.unlocked"
+                  class="h-7 w-7 shrink-0"
+                  :class="{ 'grayscale opacity-45': !badge.unlocked }"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs text-foreground">
+                    {{ $t(`tools.badgeNames.${badge.definitionId}`) }}
+                  </p>
+                  <p class="truncate text-[10px] text-muted-foreground">
+                    <template v-if="badge.unlocked">{{ badgeStatus(badge) }}</template>
+                    <template v-else>{{ $t('tools.badges.locked') }}</template>
+                  </p>
+                </div>
+              </button>
+            </template>
+            {{ badgeCondition(badge) }}
+          </Tooltip>
         </div>
       </section>
 
@@ -445,6 +482,27 @@
           </li>
         </ul>
       </section>
+
+      <Dialog
+        :open="Boolean(selectedBadge)"
+        :title="selectedBadge ? $t(`tools.badgeNames.${selectedBadge.definitionId}`) : ''"
+        content-class="w-[min(92vw,22rem)]"
+        @update:open="(value) => { if (!value) selectedBadgeId = null }"
+      >
+        <div v-if="selectedBadge" class="flex flex-col items-center gap-3 pb-1 text-center">
+          <BadgeArt
+            :definition-id="selectedBadge.definitionId"
+            :kind="selectedBadge.kind"
+            :unlocked="selectedBadge.unlocked"
+            class="h-24 w-24"
+            :class="{ 'grayscale opacity-45': !selectedBadge.unlocked }"
+          />
+          <p class="text-sm text-foreground">{{ badgeCondition(selectedBadge) }}</p>
+          <p class="text-xs text-muted-foreground">
+            {{ selectedBadge.unlocked ? badgeStatus(selectedBadge) : $t('tools.badges.locked') }}
+          </p>
+        </div>
+      </Dialog>
 
       <Dialog
         :open="placementDialogOpen"
@@ -493,6 +551,7 @@ import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import Switch from '@/components/ui/switch/Switch.vue'
 import Dialog from '@/components/ui/dialog/Dialog.vue'
+import Tooltip from '@/components/ui/tooltip/Tooltip.vue'
 import PlantArt from './art/PlantArt.vue'
 import BadgeArt from './art/BadgeArt.vue'
 import ItemArt from './art/ItemArt.vue'
@@ -501,6 +560,7 @@ const GardenThreeScene = defineAsyncComponent(() => import('./art/GardenThreeSce
 const { t } = useI18n()
 const toolsStore = useToolsStore()
 const activeTab = ref('garden')
+const selectedBadgeId = ref(null)
 const selectedItemId = ref(null)
 const claimOptions = ref(null)
 const claiming = ref(false)
@@ -538,6 +598,41 @@ const badges = computed(() => gardenView.value?.badges || {
   total: 0,
   unlocked: 0,
   items: []
+})
+const selectedBadge = computed(() => (
+  badges.value.items.find((badge) => badge.id === selectedBadgeId.value) || null
+))
+const growth = computed(() => gardenView.value?.growth || {
+  maturityScore: 15,
+  events: {
+    focus: { points: 1, dailyLimit: 10 },
+    water: { points: 2, dailyLimit: 3 },
+    sun: { points: 2, dailyLimit: 3 }
+  },
+  growthDay: { focusCount: 1, healthConfirmations: 2 }
+})
+const growthRuleItems = computed(() => {
+  const events = growth.value.events
+  return [
+    {
+      id: 'focus',
+      label: t('tools.growthRules.focus'),
+      points: events.focus.points,
+      hint: t('tools.growthRules.focusHint', { limit: events.focus.dailyLimit })
+    },
+    {
+      id: 'water',
+      label: t('tools.growthRules.water'),
+      points: events.water.points,
+      hint: t('tools.growthRules.waterHint', { limit: events.water.dailyLimit })
+    },
+    {
+      id: 'sun',
+      label: t('tools.growthRules.sun'),
+      points: events.sun.points,
+      hint: t('tools.growthRules.sunHint', { limit: events.sun.dailyLimit })
+    }
+  ]
 })
 const collectionOwnedCount = computed(() => (
   collection.value.filter((entry) => entry.owned || entry.unlocked).length
@@ -763,6 +858,24 @@ function badgeStatus(badge) {
   if (badge.claimStatus === 'claimed') return t('tools.badges.claimed')
   if (badge.claimStatus === 'pending') return t('tools.badges.pending')
   return t('tools.badges.earned')
+}
+
+function badgeCondition(badge) {
+  const condition = badge?.condition
+  if (!condition) return ''
+  if (badge.kind === 'expansion') {
+    return t('tools.badges.conditions.expansion', {
+      streak: condition.streakDays,
+      total: condition.totalGrowthDays,
+      capacity: condition.capacity
+    })
+  }
+  const metricKey = {
+    focusCount: 'focus',
+    healthCount: 'health',
+    growthDayCount: 'growthDay'
+  }[condition.metric] || 'growthDay'
+  return t(`tools.badges.conditions.${metricKey}`, { count: condition.threshold })
 }
 
 function itemName(entry) {

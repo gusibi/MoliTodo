@@ -118,6 +118,21 @@
   }
 }
 
+@keyframes floating-icon-wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-4deg) scale(0.97); }
+  40% { transform: rotate(4deg) scale(0.97); }
+  60% { transform: rotate(-3deg) scale(0.98); }
+  80% { transform: rotate(2deg) scale(0.99); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .floating-icon--shake .floating-icon-calendar {
+    transform-origin: center;
+    animation: floating-icon-wiggle 600ms ease-in-out 2;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .floating-icon,
   .floating-icon-content {

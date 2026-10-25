@@ -1,6 +1,10 @@
 <template>
   <div class="focus-widget-shell">
-    <div class="focus-widget-card group" style="-webkit-app-region: drag">
+    <div
+      class="focus-widget-card group"
+      :class="{ 'focus-widget-card--shake': isShaking }"
+      style="-webkit-app-region: drag"
+    >
       <div class="focus-widget-glow focus-widget-glow--primary" />
       <div class="focus-widget-glow focus-widget-glow--warm" />
 
@@ -25,7 +29,17 @@
       </header>
 
       <Transition name="widget-swap" mode="out-in">
-        <div v-if="active" key="active" class="relative z-10 mt-1.5 flex min-h-0 flex-1 flex-col">
+        <div v-if="justCompleted" key="completed" class="relative z-10 mt-1.5 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
+          <span class="flex h-11 w-11 items-center justify-center rounded-full bg-success/10 text-success ring-1 ring-inset ring-success/20">
+            <Check class="h-5 w-5" :stroke-width="2.5" aria-hidden="true" />
+          </span>
+          <p class="mt-2 text-base font-semibold text-foreground">{{ $t('focusWidget.completedTitle') }}</p>
+          <p class="mt-0.5 text-[10px] text-muted-foreground">
+            {{ $t('focusWidget.completedHint') }}
+          </p>
+        </div>
+
+        <div v-else-if="active" key="active" class="relative z-10 mt-1.5 flex min-h-0 flex-1 flex-col">
           <div class="flex flex-1 items-center justify-between gap-2">
             <div class="min-w-0">
               <p class="text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -163,9 +177,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowUpRight, Pause, Play, Timer, X } from '@lucide/vue'
+import { ArrowUpRight, Check, Pause, Play, Timer, X } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
@@ -178,7 +192,11 @@ const starting = ref(false)
 const error = ref('')
 const remaining = ref(0)
 const tasks = ref([])
+const isShaking = ref(false)
+const justCompleted = ref(false)
 let timer = null
+let shakeTimer = null
+let completionTimer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
 const isBreak = computed(() => active.value?.phase === 'break')
@@ -295,15 +313,39 @@ function handleToolsUpdated() {
   loadTasks()
 }
 
+// 专注结束：主进程发送事件后抖动小组件，并短暂展示「专注完成」状态。
+function handleFocusCompleted() {
+  if (shakeTimer) clearTimeout(shakeTimer)
+  isShaking.value = false
+  nextTick(() => {
+    isShaking.value = true
+    shakeTimer = setTimeout(() => {
+      isShaking.value = false
+      shakeTimer = null
+    }, 1400)
+  })
+
+  if (completionTimer) clearTimeout(completionTimer)
+  justCompleted.value = true
+  completionTimer = setTimeout(() => {
+    justCompleted.value = false
+    completionTimer = null
+  }, 6000)
+}
+
 onMounted(async () => {
   await Promise.all([toolsStore.loadFocusState(), loadTasks()])
   timer = setInterval(tickDown, 1000)
   window.electronAPI?.events?.on('tools-updated', handleToolsUpdated)
+  window.electronAPI?.events?.on('focus-completed', handleFocusCompleted)
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  if (shakeTimer) clearTimeout(shakeTimer)
+  if (completionTimer) clearTimeout(completionTimer)
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
+  window.electronAPI?.events?.off('focus-completed', handleFocusCompleted)
 })
 </script>
 
@@ -354,6 +396,21 @@ onUnmounted(() => {
   transition: opacity 160ms ease, transform 160ms ease;
 }
 
+@keyframes focus-widget-shake {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12% { transform: translate3d(-4px, 0, 0) rotate(-0.6deg); }
+  24% { transform: translate3d(4px, 0, 0) rotate(0.6deg); }
+  36% { transform: translate3d(-3px, 0, 0) rotate(-0.45deg); }
+  48% { transform: translate3d(3px, 0, 0) rotate(0.45deg); }
+  60% { transform: translate3d(-2px, 0, 0) rotate(-0.3deg); }
+  72% { transform: translate3d(2px, 0, 0) rotate(0.3deg); }
+  84% { transform: translate3d(-1px, 0, 0) rotate(-0.15deg); }
+}
+
+.focus-widget-card--shake {
+  animation: focus-widget-shake 700ms ease-in-out 2;
+}
+
 .widget-swap-enter-from {
   opacity: 0;
   transform: translateY(4px) scale(0.985);
@@ -368,6 +425,10 @@ onUnmounted(() => {
   .widget-swap-enter-active,
   .widget-swap-leave-active {
     transition: none;
+  }
+
+  .focus-widget-card--shake {
+    animation: none;
   }
 }
 </style>

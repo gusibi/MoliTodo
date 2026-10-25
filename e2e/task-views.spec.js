@@ -197,3 +197,30 @@ test('侧栏标题默认两行、最多六行并可滚动，编辑区无状态�
   await title.press('Tab');
   await expect(window.locator('.flat-task-item', { hasText: '缩短后的标题' })).toBeVisible();
 });
+
+test('计划中重复任务行显示重复规则与提醒时间', async ({ app, window }) => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 22, 5);
+  const reminder = new Date(start.getTime() - 30 * 60 * 1000);
+  const [id] = await seedTasks(app.electronApp, [{
+    content: '计划重复任务提醒',
+    scheduledStartAt: start.toISOString(),
+    recurrence: { type: 'weekly', interval: 1, daysOfWeek: [start.getDay()] }
+  }]);
+  await app.electronApp.evaluate(async ({}, payload) => {
+    await global.__moliTodoApp.taskRepository.db.run(
+      'UPDATE tasks SET reminder_time = ? WHERE id = ?',
+      [payload.reminder, payload.id]
+    );
+  }, { reminder: reminder.toISOString(), id });
+  await window.reload();
+  await waitForApp(window);
+
+  await window.getByRole('navigation').getByRole('button', { name: /计划中/ }).click();
+  const row = window.locator('.flat-task-item', { hasText: '计划重复任务提醒' }).first();
+  await expect(row).toBeVisible();
+  const weekday = ['日', '一', '二', '三', '四', '五', '六'][start.getDay()];
+  await expect(row.locator('.flat-task-recurring-icon')).toContainText(`每周（${weekday}）`);
+  await expect(row.locator('.flat-task-time-reminder')).toContainText('21:35');
+  await expect(row.getByText('提醒时间')).toHaveCount(1);
+});

@@ -682,6 +682,17 @@
     "todayWater": "今日水滴",
     "todaySun": "今日阳光",
     "todayGrowth": "今日成长",
+    "growthRules": {
+      "title": "成长点怎么来",
+      "description": "专注、喝水与起身都会带来成长点；每株植物攒满 {score} 点成长值就会成熟，并产出 1 枚同物种种子。",
+      "focus": "有效专注",
+      "focusHint": "完成一次有效专注，每天最多计入 {limit} 次",
+      "water": "喝水",
+      "waterHint": "确认一次喝水，每天最多计入 {limit} 次",
+      "sun": "起身",
+      "sunHint": "确认一次起身，每天最多计入 {limit} 次",
+      "growthDay": "成长日：当天完成 {focus} 次专注，或 {health} 次健康确认（喝水 + 起身），记 1 个成长日。成长日用于连续天数、徽章和扩建，本身不额外增加成长点。"
+    },
     "plant": "当前植物",
     "noPlant": "还没有生长中的植物",
     "noPlantDescription": "这里会记录一粒种子从破土到长成大树的过程。",
@@ -706,12 +717,18 @@
     "growthScore": "成长值 {score}/15",
     "badges": {
       "title": "徽章",
-      "description": "解锁后点亮；未解锁保持灰色轮廓。",
+      "description": "解锁后点亮；悬浮或点击任一徽章可查看获取条件。",
       "summary": "已解锁 {unlocked}/{total}",
       "locked": "未解锁",
       "pending": "待领取奖励",
       "claimed": "已领取",
-      "earned": "已获得"
+      "earned": "已获得",
+      "conditions": {
+        "focus": "累计完成 {count} 次有效专注",
+        "health": "累计完成 {count} 次健康确认",
+        "growthDay": "累计 {count} 个成长日",
+        "expansion": "连续 {streak} 天或累计 {total} 个成长日（容量 {capacity} 件）"
+      }
     },
     "badgeNames": {
       "first-sprout": "初次萌芽",
@@ -959,7 +976,9 @@
     "freeFocus": "自由专注",
     "minutesUnit": "分钟",
     "start": "开始 {minutes} 分钟",
-    "hint": "计时会留在桌面，随时可以暂停。"
+    "hint": "计时会留在桌面，随时可以暂停。",
+    "completedTitle": "专注完成",
+    "completedHint": "休息 5 分钟，起身活动一下"
   },
   "reminderPopup": {
     "title": "健康提醒",

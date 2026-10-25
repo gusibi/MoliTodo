@@ -1,71 +1,93 @@
 <template>
-  <div class="reminder-popup">
-    <div class="reminder-popup-header" style="-webkit-app-region: drag">
-      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Bell class="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      <span class="min-w-0 flex-1">
-        <span class="block text-sm font-semibold text-foreground">{{ $t('reminderPopup.title') }}</span>
-        <span class="block text-[11px] text-muted-foreground">{{ $t('reminderPopup.todayHint') }}</span>
-      </span>
-      <span v-if="intents.length > 0" class="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-        {{ intents.length }}
-      </span>
-    </div>
+  <div class="reminder-popup-shell">
+    <div class="reminder-popup-card">
+      <div class="reminder-popup-glow reminder-popup-glow--primary" />
+      <div class="reminder-popup-glow reminder-popup-glow--warm" />
 
-    <div v-if="intents.length === 0" class="reminder-popup-empty">
-      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-        <Bell class="h-5 w-5" aria-hidden="true" />
-      </span>
-      <p class="mt-3 text-sm font-medium text-foreground">{{ $t('reminderPopup.empty') }}</p>
-      <p class="mt-1 text-xs text-muted-foreground">{{ $t('reminderPopup.emptyHint') }}</p>
-    </div>
+      <header class="relative z-10 flex shrink-0 items-center gap-1.5" style="-webkit-app-region: drag">
+        <span class="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+          <Bell class="h-3 w-3" aria-hidden="true" />
+        </span>
+        <span class="text-[10px] font-semibold tracking-[0.14em] text-foreground/80">MOLI</span>
+        <span class="text-[9px] tracking-[0.08em] text-muted-foreground/70">{{ $t('reminderPopup.title') }}</span>
+        <span
+          v-if="intents.length > 0"
+          class="ml-auto rounded-full bg-foreground/[0.06] px-1.5 py-0.5 text-[9px] tabular-nums text-muted-foreground"
+        >
+          {{ intents.length }}
+        </span>
+      </header>
 
-    <ul v-else class="reminder-popup-list" style="-webkit-app-region: no-drag">
-      <li v-for="intent in intents" :key="intent.occurrenceId" class="reminder-popup-card">
-        <div class="flex items-start gap-3">
-          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" :class="tone(intent.ruleType).soft">
-            <component :is="tone(intent.ruleType).icon" class="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-foreground">{{ leadLabel(intent.ruleType) }}</p>
-            <p class="mt-0.5 text-xs leading-5 text-muted-foreground">{{ bodyLabel(intent.ruleType) }}</p>
-            <p class="mt-1 text-[11px] text-muted-foreground/80">
-              {{ $t('reminderPopup.scheduledAt', { time: formatScheduled(intent.scheduledAt) }) }}
-              <template v-if="intent.snoozeCount > 0">
-                · {{ $t('reminderPopup.snoozedCount', { count: intent.snoozeCount }) }}
-              </template>
-            </p>
+      <div v-if="intents.length === 0" class="relative z-10 flex flex-1 flex-col items-center justify-center pb-1 text-center">
+        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+          <Bell class="h-5 w-5" aria-hidden="true" />
+        </span>
+        <p class="mt-2 text-sm font-medium text-foreground">{{ $t('reminderPopup.empty') }}</p>
+        <p class="mt-0.5 text-[11px] text-muted-foreground">{{ $t('reminderPopup.emptyHint') }}</p>
+      </div>
+
+      <ul v-else class="reminder-popup-list" style="-webkit-app-region: no-drag">
+        <li v-for="intent in intents" :key="intent.occurrenceId" class="reminder-popup-item">
+          <div class="reminder-popup-item-main">
+            <span
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-current/10"
+              :class="tone(intent.ruleType).soft"
+            >
+              <component :is="tone(intent.ruleType).icon" class="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-baseline justify-between gap-2">
+                <p class="truncate text-[15px] font-semibold leading-5 text-foreground">
+                  {{ leadLabel(intent.ruleType) }}
+                </p>
+                <span class="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                  {{ formatScheduled(intent.scheduledAt) }}
+                </span>
+              </div>
+              <p class="mt-0.5 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
+                {{ bodyLabel(intent.ruleType) }}
+              </p>
+              <p v-if="intent.snoozeCount > 0" class="mt-1 text-[10px] text-muted-foreground/80">
+                {{ $t('reminderPopup.snoozedCount', { count: intent.snoozeCount }) }}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div class="mt-3 flex flex-wrap items-center justify-end gap-1.5">
-          <Button size="sm" :disabled="busyId === intent.occurrenceId" @click="respond(intent, 'confirm')">
-            <Check class="h-3.5 w-3.5" aria-hidden="true" />
-            {{ confirmLabel(intent.ruleType) }}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            :disabled="busyId === intent.occurrenceId || intent.snoozeCount >= 2"
-            @click="respond(intent, 'snooze')"
-          >
-            <AlarmClock class="h-3.5 w-3.5" aria-hidden="true" />
-            {{ $t('reminderPopup.snooze') }}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            :disabled="busyId === intent.occurrenceId"
-            @click="respond(intent, 'skip')"
-          >
-            {{ $t('reminderPopup.skip') }}
-          </Button>
-        </div>
-      </li>
-    </ul>
+          <div class="reminder-popup-actions">
+            <Button
+              size="sm"
+              class="h-7 rounded-full px-2.5 text-[11px]"
+              :disabled="busyId === intent.occurrenceId"
+              @click="respond(intent, 'confirm')"
+            >
+              <Check class="h-3 w-3" aria-hidden="true" />
+              {{ confirmLabel(intent.ruleType) }}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              class="h-7 rounded-full px-2.5 text-[11px]"
+              :disabled="busyId === intent.occurrenceId || intent.snoozeCount >= 2"
+              @click="respond(intent, 'snooze')"
+            >
+              <AlarmClock class="h-3 w-3" aria-hidden="true" />
+              {{ $t('reminderPopup.snooze') }}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              class="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground hover:text-foreground"
+              :disabled="busyId === intent.occurrenceId"
+              @click="respond(intent, 'skip')"
+            >
+              {{ $t('reminderPopup.skip') }}
+            </Button>
+          </div>
+        </li>
+      </ul>
 
-    <p v-if="error" class="reminder-popup-error" role="alert">{{ error }}</p>
+      <p v-if="error" class="relative z-10 shrink-0 text-[11px] text-destructive" role="alert">{{ error }}</p>
+    </div>
   </div>
 </template>
 
@@ -154,29 +176,93 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.reminder-popup {
-  @apply flex h-screen w-screen flex-col gap-2.5 rounded-xl border border-border/60 bg-background/95 px-4 py-3 shadow-2xl backdrop-blur;
+.reminder-popup-shell {
+  @apply h-screen w-screen p-1.5;
   box-sizing: border-box;
-  overflow: hidden;
-}
-
-.reminder-popup-header {
-  @apply flex shrink-0 items-center gap-2.5;
-}
-
-.reminder-popup-empty {
-  @apply flex flex-1 flex-col items-center justify-center pb-2 text-center;
-}
-
-.reminder-popup-list {
-  @apply flex min-h-0 flex-1 flex-col gap-2 overflow-auto pr-0.5;
 }
 
 .reminder-popup-card {
-  @apply rounded-xl border border-border/60 bg-card/80 p-3 shadow-sm;
+  @apply relative flex h-full w-full flex-col gap-2 overflow-hidden rounded-[26px] border border-foreground/[0.07] p-3.5 text-foreground;
+  background:
+    linear-gradient(145deg, hsl(var(--card) / 0.96), hsl(var(--card) / 0.88)),
+    radial-gradient(120% 100% at 15% 0%, hsl(var(--primary) / 0.10), transparent 52%);
+  box-shadow:
+    0 18px 40px -24px rgba(0, 0, 0, 0.55),
+    0 2px 10px -2px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 hsl(var(--card) / 0.7);
+  animation: reminder-popup-in 180ms ease-out;
 }
 
-.reminder-popup-error {
-  @apply shrink-0 text-xs text-destructive;
+@keyframes reminder-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reminder-popup-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+}
+
+.reminder-popup-glow {
+  @apply pointer-events-none absolute rounded-full blur-2xl;
+}
+
+.reminder-popup-glow--primary {
+  @apply -right-10 -top-14 h-36 w-36 bg-primary/[0.10];
+}
+
+.reminder-popup-glow--warm {
+  @apply -bottom-16 left-6 h-32 w-32 bg-warning/[0.06];
+}
+
+.reminder-popup-list {
+  @apply relative z-10 flex min-h-0 flex-1 flex-col gap-1.5 overflow-auto pr-0.5;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+
+.reminder-popup-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.reminder-popup-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reminder-popup-list::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 2px;
+}
+
+.reminder-popup-item {
+  @apply rounded-2xl border border-foreground/[0.06] bg-foreground/[0.035] p-2.5;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.reminder-popup-item-main {
+  @apply flex flex-1 items-center gap-2.5;
+}
+
+.reminder-popup-actions {
+  @apply flex shrink-0 items-center justify-end gap-1 pt-2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reminder-popup-card {
+    animation: none;
+  }
 }
 </style>

@@ -9,7 +9,7 @@ const {
 } = require('../domain/services/garden-layout');
 const { getFocusSummary } = require('../domain/services/focus-policy');
 const { addDays } = require('../domain/services/reminder-schedule');
-const { DEFAULT_CATALOG } = require('../domain/services/growth-policy');
+const { DEFAULT_CATALOG, DEFAULT_GROWTH_POLICY } = require('../domain/services/growth-policy');
 const {
   ITEM_CATALOG,
   SPECIES_IDS,
@@ -29,6 +29,7 @@ class ToolsReadModel {
     focusRepository = null,
     reminderRepository = null,
     catalog = DEFAULT_CATALOG,
+    growthPolicy = DEFAULT_GROWTH_POLICY,
     getAutoPlace = () => true
   }) {
     this.clock = clock;
@@ -37,6 +38,7 @@ class ToolsReadModel {
     this.focusRepository = focusRepository;
     this.reminderRepository = reminderRepository;
     this.catalog = catalog;
+    this.growthPolicy = growthPolicy;
     this.getAutoPlace = getAutoPlace;
   }
 
@@ -191,6 +193,7 @@ class ToolsReadModel {
       generatedAt: instant.toISOString(),
       localDate,
       badges: this.buildBadges(milestones, expansions, pendingRewards),
+      growth: this.buildGrowthRules(),
       garden: {
         level,
         capacity: currentExpansion.capacity,
@@ -288,6 +291,23 @@ class ToolsReadModel {
     return [...items, ...trees, fallback];
   }
 
+  buildGrowthRules() {
+    const { events, growthDay, maturityScore } = this.growthPolicy;
+    const pick = (rule) => ({ points: rule.growthPoints, dailyLimit: rule.dailyLimit });
+    return {
+      maturityScore,
+      events: {
+        focus: pick(events.focus),
+        water: pick(events.water),
+        sun: pick(events.sun)
+      },
+      growthDay: {
+        focusCount: growthDay.focusCount,
+        healthConfirmations: growthDay.healthConfirmations
+      }
+    };
+  }
+
   buildBadges(milestones, expansions, pendingRewards) {
     const milestoneById = new Map(milestones.map((entry) => [entry.definitionId, entry]));
     const expansionLevels = new Set(expansions.map((entry) => entry.level));
@@ -301,7 +321,11 @@ class ToolsReadModel {
         definitionId: definition.id,
         unlocked: Boolean(unlocked),
         unlockedAt: unlocked ? unlocked.unlockedAt : null,
-        claimStatus: unlocked ? unlocked.claimStatus : null
+        claimStatus: unlocked ? unlocked.claimStatus : null,
+        condition: {
+          metric: definition.metric,
+          threshold: definition.threshold
+        }
       });
     }
 
@@ -314,7 +338,12 @@ class ToolsReadModel {
         definitionId,
         unlocked: expansionLevels.has(expansion.level) || Boolean(unlocked),
         unlockedAt: unlocked ? unlocked.unlockedAt : null,
-        claimStatus: unlocked ? unlocked.claimStatus : null
+        claimStatus: unlocked ? unlocked.claimStatus : null,
+        condition: {
+          streakDays: expansion.streakDays,
+          totalGrowthDays: expansion.totalGrowthDays,
+          capacity: expansion.capacity
+        }
       });
     }
 

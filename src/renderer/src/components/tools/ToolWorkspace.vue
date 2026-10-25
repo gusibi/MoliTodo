@@ -58,3 +58,7 @@ onUnmounted(() => {
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
 })
 </script>
+
+<style>
+@import '@/assets/styles/components/tool-views.css';
+</style>

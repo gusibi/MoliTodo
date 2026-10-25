@@ -125,11 +125,13 @@ function computeNextRunAt(rule, after, clock) {
       continue;
     }
 
-    const distance = windowStart - anchorMinutes;
-    let slotIndex = distance <= 0 ? 1 : Math.ceil(distance / interval);
-    if (slotIndex < 1) slotIndex = 1;
+    // 锚点落在窗口结束之后（例如傍晚才创建 09:00–18:00 的规则）时，
+    // 若继续从锚点向后排槽，每天都会排到窗口之外，导致 nextRunAt 永远为空。
+    // 这种情况下把槽位重排到窗口起点；其余情况从锚点本身开始，
+    // 保证跨天后锚点时刻也能再次触发。
+    const slotBase = anchorMinutes < windowEnd ? anchorMinutes : windowStart;
 
-    for (let minute = anchorMinutes + slotIndex * interval; minute < windowEnd; minute += interval) {
+    for (let minute = slotBase; minute < windowEnd; minute += interval) {
       if (minute < windowStart) continue;
       const instant = localInstant(localDate, minute, clock);
       if (instant.getTime() > afterMs) {

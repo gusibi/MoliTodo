@@ -59,13 +59,15 @@
           <TaskWhenBubble v-if="status !== 'done'" :task="task" />
           <TaskReminderBubble v-if="status !== 'done'" :task="task" />
 
-          <!-- 循环任务图标（模板或实例，纯标识） -->
+          <!-- 循环任务（模板或实例）：显示重复规则摘要 -->
           <span
             v-if="task.recurrence || task.seriesId"
-            class="today-task-meta-item"
-            :title="$t('today.badge.recurring')"
+            class="today-task-meta-item gap-1"
+            :title="recurrenceSummary || $t('today.badge.recurring')"
           >
             <Repeat class="h-2.5 w-2.5" aria-hidden="true" />
+            <span v-if="recurrenceSummary">{{ recurrenceSummary }}</span>
+            <span v-else class="sr-only">{{ $t('today.badge.recurring') }}</span>
           </span>
 
           <!-- 附加徽标（分组原因 / 重复任务等） -->
@@ -140,6 +142,7 @@ import ContextMenuItem from '../ui/context-menu/ContextMenuItem.vue'
 import TodayTaskExpanded from './TodayTaskExpanded.vue'
 import TaskRowActions from './TaskRowActions.vue'
 import { todayTaskIdentity } from '../../utils/today-agenda.js'
+import { formatRecurrenceSummary } from '../../utils/recurrence-summary.js'
 
 /**
  * Today 页专用任务行（Things 式就地交互）：
@@ -174,12 +177,18 @@ const props = defineProps({
 
 const emit = defineEmits(['detail', 'delete-request', 'collapse-request'])
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const taskStore = useTaskStore()
 const editorCoordinator = inject('todayTaskEditorCoordinator', null)
 
 // 行状态简写
 const status = computed(() => props.task.status || (props.task.completed ? 'done' : 'todo'))
+// 重复规则摘要：与 Inspector 的重复设置展示保持一致
+const recurrenceSummary = computed(() => (
+  props.task.recurrence
+    ? formatRecurrenceSummary(props.task.recurrence, $t, locale.value)
+    : ''
+))
 
 // 展开区域 id：收起态触发器与展开态收起控件都指向它，便于辅助技术关联
 const regionId = computed(() => `today-task-expanded-${todayTaskIdentity(props.task).replace(/[^a-zA-Z0-9_-]/g, '-')}`)
