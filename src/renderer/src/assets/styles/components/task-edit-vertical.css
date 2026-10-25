@@ -557,6 +557,8 @@
 .task-edit-vertical-container.is-inline {
   height: auto;
   flex: none;
+  /* 与标题列对齐：28px 状态控件 + 10px 间距 */
+  --today-content-indent: 2.375rem;
 }
 
 .task-edit-vertical-container.is-inline .task-edit-vertical {
@@ -568,24 +570,107 @@
 }
 
 .task-edit-vertical-container.is-inline .task-header {
-  @apply mb-2;
+  @apply mb-1.5;
 }
 
 .task-edit-vertical-container.is-inline .task-header-title-wrapper {
-  @apply items-start border-0 px-0;
+  @apply items-start gap-2.5 border-0 px-0;
 }
 
 /* 内联编辑的标题与收起态保持同一基线、同一字号，展开时文字不移动 */
 .task-edit-vertical-container.is-inline .task-title-input {
-  @apply block py-0 leading-normal;
+  @apply block rounded-md py-0 leading-normal transition-colors duration-150;
+  letter-spacing: -0.006em;
+}
+
+.task-edit-vertical-container.is-inline .task-title-input:hover {
+  @apply bg-accent/20;
+}
+
+.task-edit-vertical-container.is-inline .task-title-input:focus {
+  @apply bg-accent/20 outline-none;
+  box-shadow: inset 0 -1px 0 hsl(var(--primary) / 0.25);
+}
+
+.task-edit-vertical-container.is-inline .task-note {
+  @apply mb-1.5;
+}
+
+.task-edit-vertical-container.is-inline .task-note-editor {
+  @apply border-t border-border/40;
+}
+
+.task-edit-vertical-container.is-inline .task-note-textarea {
+  @apply rounded-md border-0 bg-transparent px-2 py-1.5 text-xs leading-relaxed text-foreground/85;
+  @apply transition-colors duration-150;
+}
+
+.task-edit-vertical-container.is-inline .task-note-textarea::placeholder {
+  @apply text-muted-foreground/55;
+}
+
+.task-edit-vertical-container.is-inline .task-note-textarea:hover {
+  @apply bg-accent/20;
+}
+
+.task-edit-vertical-container.is-inline .task-note-textarea:focus {
+  @apply bg-accent/25 outline-none ring-1 ring-inset ring-border/50;
+}
+
+.task-edit-vertical-container.is-inline .task-note-counter {
+  display: none;
+}
+
+.task-edit-vertical-container.is-inline .task-steps {
+  @apply mb-2;
+}
+
+.task-edit-vertical-container.is-inline .steps-list {
+  @apply gap-0.5;
+}
+
+.task-edit-vertical-container.is-inline .step-item {
+  @apply -mx-1 gap-2 rounded-md px-1 py-1 transition-colors duration-150;
+}
+
+.task-edit-vertical-container.is-inline .step-item:hover {
+  @apply bg-accent/20;
+}
+
+.task-edit-vertical-container.is-inline .step-content {
+  @apply min-h-6 text-xs leading-snug;
+}
+
+.task-edit-vertical-container.is-inline .step-content.completed {
+  @apply text-muted-foreground/70;
+}
+
+.task-edit-vertical-container.is-inline .step-content-input {
+  @apply text-xs;
+}
+
+.task-edit-vertical-container.is-inline .step-add {
+  @apply -mx-1 mt-0.5 mb-0 gap-1.5 rounded-md px-1 transition-colors duration-150;
+}
+
+.task-edit-vertical-container.is-inline .step-add:hover {
+  @apply bg-accent/20;
+}
+
+.task-edit-vertical-container.is-inline .step-add-btn {
+  @apply h-6 w-6 text-muted-foreground/70;
+}
+
+.task-edit-vertical-container.is-inline .step-add-input {
+  @apply py-1.5 text-xs;
 }
 
 .task-edit-vertical-container.is-inline .task-options {
-  @apply grid grid-cols-1 gap-1 sm:grid-cols-2;
+  @apply mt-1 grid grid-cols-1 gap-0.5 border-t border-border/40 pt-1.5 sm:grid-cols-2;
 }
 
 .task-edit-vertical-container.is-inline .task-option-time-row {
-  @apply col-span-1 grid min-w-0 grid-cols-1 gap-1 sm:col-span-2 sm:grid-cols-2;
+  @apply col-span-1 grid min-w-0 grid-cols-1 gap-0.5 sm:col-span-2 sm:grid-cols-2;
 }
 
 .task-edit-vertical-container.is-inline .task-option-time-row .task-option-section,
@@ -594,8 +679,84 @@
   @apply min-w-0;
 }
 
+.task-edit-vertical-container.is-inline .task-option-section {
+  @apply mb-0;
+}
+
+.task-edit-vertical-container.is-inline .task-option-section-list {
+  @apply mb-0 border-0;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item {
+  @apply rounded-md border-0 bg-transparent transition-colors duration-150;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item:hover {
+  @apply bg-accent/25;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item.active {
+  @apply border-0 bg-transparent;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item.active .task-option-icon {
+  @apply text-primary/80;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item.active .task-option-title {
+  @apply text-foreground;
+}
+
+.task-edit-vertical-container.is-inline .task-option-item:not(.active) .task-option-title {
+  @apply text-muted-foreground/75;
+}
+
+.task-edit-vertical-container.is-inline .task-option-btn {
+  @apply gap-2 px-1.5 py-1.5;
+}
+
+.task-edit-vertical-container.is-inline .task-option-icon {
+  @apply h-4 w-4;
+}
+
+.task-edit-vertical-container.is-inline .task-option-title {
+  @apply text-xs leading-snug;
+}
+
+.task-edit-vertical-container.is-inline .task-option-delete {
+  @apply mr-1 h-5 w-5;
+}
+
+.task-edit-vertical-container.is-inline .task-option-subitem {
+  @apply ml-0;
+}
+
+.task-edit-vertical-container.is-inline .task-option-span-2 {
+  @apply sm:col-span-2;
+}
+
+.task-edit-vertical-container.is-inline .task-option-switch {
+  @apply mr-1;
+}
+
 .task-edit-vertical-container.is-inline .task-actions {
-  @apply mt-2 border-t border-border/50 pt-2;
+  @apply mt-1.5 min-h-8 border-t border-border/40 pb-0.5 pt-2;
+  overflow: hidden;
+  animation: task-footer-reveal 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.task-edit-vertical-container.is-inline .task-action-close,
+.task-edit-vertical-container.is-inline .task-action-delete {
+  @apply h-7 w-7 rounded-md text-muted-foreground/70 transition-colors duration-150;
+}
+
+.task-edit-vertical-container.is-inline .task-action-close:hover,
+.task-edit-vertical-container.is-inline .task-action-delete:hover {
+  @apply bg-accent/40 text-foreground;
+}
+
+.task-edit-vertical-container.is-inline .task-created-date {
+  @apply text-[11px] text-muted-foreground/60;
 }
 
 /* 展开态下拉：标题行即时呈现，备注 / 步骤 / 属性从 0 高度平滑展开 */
@@ -607,6 +768,7 @@
 
 .task-edit-vertical-container.is-inline .task-body-inner {
   min-height: 0;
+  padding-left: var(--today-content-indent);
 }
 
 /* 仅在展开/收起过程中裁剪溢出，稳定后允许属性弹层溢出显示 */
@@ -623,6 +785,14 @@
   transition: grid-template-rows 180ms ease-in, opacity 140ms ease;
 }
 
+.task-body-expand-enter-active .task-body-inner {
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.task-body-expand-leave-active .task-body-inner {
+  transition: transform 180ms ease-in;
+}
+
 .task-edit-vertical-container.is-inline .task-body.task-body-expand-enter-from,
 .task-edit-vertical-container.is-inline .task-body.task-body-expand-leave-to {
   grid-template-rows: 0fr;
@@ -635,52 +805,17 @@
   opacity: 1;
 }
 
-.task-edit-vertical-container.is-inline .task-actions {
-  overflow: hidden;
-  animation: task-footer-reveal 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.task-body-expand-enter-from .task-body-inner {
+  transform: translateY(-4px);
+}
+
+.task-body-expand-leave-to .task-body-inner {
+  transform: translateY(-2px);
 }
 
 @keyframes task-footer-reveal {
   from { opacity: 0; max-height: 0; }
   to { opacity: 1; max-height: 6rem; }
-}
-
-.task-edit-vertical-container.is-inline .task-steps,
-.task-edit-vertical-container.is-inline .task-options,
-.task-edit-vertical-container.is-inline .task-note {
-  @apply mb-2;
-}
-
-.task-edit-vertical-container.is-inline .task-option-section {
-  @apply mb-0;
-}
-
-.task-edit-vertical-container.is-inline .task-option-section-list {
-  @apply mb-0 border-0;
-}
-
-.task-edit-vertical-container.is-inline .task-option-btn {
-  @apply gap-2 p-2;
-}
-
-.task-edit-vertical-container.is-inline .task-option-item:hover {
-  @apply bg-accent/60;
-}
-
-.task-edit-vertical-container.is-inline .task-option-item.active {
-  @apply border-0 bg-accent/60;
-}
-
-.task-edit-vertical-container.is-inline .task-option-subitem {
-  @apply ml-0;
-}
-
-.task-edit-vertical-container.is-inline .task-note-textarea {
-  @apply rounded-md border border-border/60 bg-transparent px-2 py-1.5;
-}
-
-.task-edit-vertical-container.is-inline .task-actions {
-  @apply min-h-8;
 }
 
 .task-field-error {
@@ -702,6 +837,16 @@
   .task-body-expand-enter-active,
   .task-body-expand-leave-active {
     transition: none;
+  }
+
+  .task-body-expand-enter-active .task-body-inner,
+  .task-body-expand-leave-active .task-body-inner {
+    transition: none;
+  }
+
+  .task-body-expand-enter-from .task-body-inner,
+  .task-body-expand-leave-to .task-body-inner {
+    transform: none;
   }
 
   .task-edit-vertical-container.is-inline .task-actions {

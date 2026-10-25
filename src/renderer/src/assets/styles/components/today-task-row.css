@@ -16,7 +16,8 @@
 }
 
 .today-task-row.is-expanded {
-  @apply bg-accent/30;
+  @apply bg-accent/20 ring-1 ring-inset ring-border/50;
+  box-shadow: 0 10px 30px -24px hsl(0 0% 0% / 0.4);
 }
 
 .today-task-row.is-expanded .today-task-main {
@@ -50,6 +51,7 @@
 
 .today-task-title {
   @apply block w-full min-h-7 border-0 bg-transparent p-0 text-left text-sm font-medium leading-normal text-foreground;
+  letter-spacing: -0.006em;
   cursor: pointer;
 }
 
@@ -62,7 +64,7 @@
 }
 
 .today-task-note {
-  @apply text-xs leading-relaxed text-muted-foreground mt-0.5;
+  @apply text-xs leading-relaxed text-muted-foreground mt-0.5 line-clamp-2;
 }
 
 /* 展开区域：标题行由编辑器即时呈现，备注 / 步骤 / 属性在编辑器内平滑下拉 */
@@ -81,13 +83,17 @@
   @apply opacity-0 transition-opacity duration-150;
 }
 
+.today-task-expanded-actions {
+  @apply flex items-center gap-1.5 flex-shrink-0;
+}
+
 .today-task-row:hover .today-task-actions,
 .today-task-row:focus-within .today-task-actions {
   @apply opacity-100;
 }
 
 .today-task-action-btn {
-  @apply text-muted-foreground;
+  @apply text-muted-foreground transition-transform duration-150 active:scale-95;
 }
 
 /* ===== 元信息行（与标题左缘对齐：16px 圆圈 + 8px 间距） ===== */

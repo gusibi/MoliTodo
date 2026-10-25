@@ -267,6 +267,8 @@
     "low": "Low",
     "today": "Today",
     "tomorrow": "Tomorrow",
+    "nextWeek": "Next week",
+    "quickSchedule": "Quick schedule",
     "thisWeek": "This Week",
     "overdue": "Overdue",
     "noTasks": "No tasks",

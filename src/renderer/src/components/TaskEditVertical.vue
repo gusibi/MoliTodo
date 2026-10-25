@@ -48,8 +48,10 @@
             <div class="task-note-input-wrapper">
               <textarea ref="noteInput" v-model="taskNote" :aria-label="t('today.taskNoteLabel')"
                 :aria-invalid="!!noteError" :aria-describedby="noteError ? 'today-task-note-error' : undefined"
-                :placeholder="t('today.addNote')" class="task-note-textarea" maxlength="1000" :rows="inline ? 2 : 5"
-                :style="{ minHeight: '3rem', maxHeight: '15rem' }" @input="autoResizeNote"
+                :placeholder="t('today.addNote')" class="task-note-textarea" maxlength="1000"
+                :rows="inline ? 1 : 5"
+                :style="{ minHeight: inline ? '1.75rem' : '3rem', maxHeight: '15rem' }"
+                @input="autoResizeNote"
                 @blur="handleNoteBlur" @keydown="handleNoteKeydown"></textarea>
               <div v-if="noteError" id="today-task-note-error" class="task-field-error" role="alert">
                 <span>{{ noteError }}</span>
@@ -58,7 +60,7 @@
                   {{ t('common.retry') }}
                 </Button>
               </div>
-              <div class="task-note-counter">{{ taskNote.length }}/1000</div>
+              <div v-if="!inline" class="task-note-counter">{{ taskNote.length }}/1000</div>
             </div>
           </div>
         </div>
@@ -200,7 +202,7 @@
 
           <!-- 安排时间（一级入口：计划开始 / 结束） -->
           <div class="task-option-time-row">
-            <div class="task-option-section">
+            <div class="task-option-section" :class="{ 'task-option-span-2': !scheduleStart }">
               <div class="task-option-item" :class="{ 'active': scheduleStart }">
                 <Button variant="ghost" class="task-option-btn" ref="scheduleStartBtn"
                   @click="openPickerFor('scheduleStart', scheduleStartBtn)">
@@ -242,7 +244,7 @@
             <!-- 截止日期（一级入口） -->
             <div class="task-option-section" ref="datePickerSection">
               <div class="task-option-item" :class="{ 'active': selectedDate }">
-                <Button variant="ghost" class="task-option-btn" ref="datePickerBtn" @click="openPickerFor('deadline', datePickerBtn)">
+                <Button variant="ghost" class="task-option-btn" ref="datePickerBtn" @click="openDeadlinePicker(false)">
                   <div class="task-option-icon">
                     <CalendarClock class="h-icon-sm w-icon-sm" aria-hidden="true" />
                   </div>
@@ -256,7 +258,7 @@
                   :title="t('tasks.clearDeadlineTime')">
                   仅日期
                 </Button>
-                <Button variant="ghost" v-if="selectedDate && !selectedTime && !selectedRecurrence" class="task-option-mini" @click="openPickerFor('deadline', datePickerBtn)"
+                <Button variant="ghost" v-if="selectedDate && !selectedTime && !selectedRecurrence" class="task-option-mini" @click="openDeadlinePicker(true)"
                   :title="t('tasks.addDeadlineTime')">
                   加时间
                 </Button>
@@ -358,10 +360,10 @@
                     class="v-calendar"
                   ></v-date-picker>
                 </template>
-                <!-- 截止：沿用日期+时间联动 -->
+                <!-- 截止：已有时刻时沿用日期+时间联动；仅日期时只改日期，不伪造 00:00 -->
                 <v-date-picker v-else
                   v-model="dateTimeValue"
-                  mode="dateTime"
+                  :mode="deadlinePickerMode"
                   is24hr
                   :minute-increment="5"
                   :is-dark="isDark"
@@ -575,6 +577,7 @@ async function updateCurrentTask(updates, { reportTimeError = true } = {}) {
     if (canChangeLocation === false) {
       selectedDate.value = task.dueDate || ''
       selectedTime.value = task.dueTime || ''
+      deadlinePickerIncludesTime.value = Boolean(task.dueTime)
       dateTimeValue.value = task.dueDate && task.dueTime
         ? new Date(`${task.dueDate}T${task.dueTime}:00`)
         : null
@@ -710,6 +713,11 @@ const dateTimeValue = ref(null)
 const showDatePicker = ref(false)
 // 日期选择器用途：截止 / 安排开始 / 安排结束 / 自定义绝对提醒
 const datePickerMode = ref('deadline')
+// 截止选择器是否包含时刻：仅日期截止改日期时不写入 00:00
+const deadlinePickerIncludesTime = ref(false)
+const deadlinePickerMode = computed(() => (
+  datePickerMode.value === 'deadline' && !deadlinePickerIncludesTime.value ? 'date' : 'dateTime'
+))
 const schedulePickerDirty = ref(false)
 // 安排选择器：日期与时间分开编辑，各自独立
 const schedulePickerView = ref('date')
@@ -762,6 +770,11 @@ const datePickerStyle = computed(() => {
 })
 
 // 切换日期选择器并计算位置（按用途初始化选择器当前值）
+const openDeadlinePicker = (withTime) => {
+  deadlinePickerIncludesTime.value = withTime || Boolean(selectedTime.value)
+  openPickerFor('deadline', datePickerBtn)
+}
+
 const openPickerFor = async (mode, btnEl) => {
   if (showDatePicker.value && datePickerMode.value === mode) {
     await closeDatePicker()
@@ -771,8 +784,8 @@ const openPickerFor = async (mode, btnEl) => {
 
   datePickerMode.value = mode
   if (mode === 'deadline') {
-    dateTimeValue.value = selectedDate.value && selectedTime.value
-      ? new Date(`${selectedDate.value}T${selectedTime.value}:00`)
+    dateTimeValue.value = selectedDate.value
+      ? new Date(`${selectedDate.value}T${selectedTime.value || '09:00'}:00`)
       : null
   } else if (mode === 'scheduleStart' || mode === 'scheduleEnd') {
     if (selectedRecurrence.value) {
@@ -1152,6 +1165,7 @@ const resetAllStates = () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  deadlinePickerIncludesTime.value = false
   schedulePickerDirty.value = false
   schedulePickerView.value = 'date'
   schedulePickerDate.value = null
@@ -1322,15 +1336,24 @@ const confirmRemoveStep = async () => {
     stepDeleteOpen.value = false
     stepDeleteIndex.value = -1
     stepError.value = ''
-    nextTick(() => {
-      if (stepDeleteTrigger && document.contains(stepDeleteTrigger)) stepDeleteTrigger.focus()
-    })
+    focusAfterStepRemoval(index)
   } catch (error) {
     console.error('删除步骤失败:', error)
     stepDeleteError.value = t('tasks.deleteFailed', { error: error?.message || '' })
   } finally {
     stepDeleteLoading.value = false
   }
+}
+
+// 删除成功后触发按钮已随步骤移除，焦点交给相邻步骤或末尾的添加输入位
+function focusAfterStepRemoval(index) {
+  nextTick(() => {
+    const items = taskEditContainer.value?.querySelectorAll('.step-item') || []
+    const target = items[index] || items[index - 1]
+    const focusTarget = target?.querySelector('.step-content')
+      || target?.querySelector('.step-content-input')
+    ;(focusTarget || newStepInput.value)?.focus?.()
+  })
 }
 
 const cancelRemoveStep = () => {
@@ -1592,6 +1615,7 @@ const clearDateTime = async () => {
   selectedDate.value = ''
   selectedTime.value = ''
   dateTimeValue.value = null
+  deadlinePickerIncludesTime.value = false
   schedulePickerDirty.value = false
   showDatePicker.value = false
   if (props.isEditing && props.task) {
@@ -1766,10 +1790,15 @@ const handleDateTimeChange = async (newValue) => {
   // 截止时间
   if (newValue) {
     const date = newValue instanceof Date ? newValue : new Date(newValue)
+    const dateOnly = deadlinePickerMode.value === 'date' && !isRecurringTimePicker.value
     selectedDate.value = getLocalDateString(date)
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    selectedTime.value = `${hours}:${minutes}`
+    if (dateOnly) {
+      selectedTime.value = ''
+    } else {
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      selectedTime.value = `${hours}:${minutes}`
+    }
 
     // 选择后不自动关闭日期选择器，方便用户调整时间
     // showDatePicker.value = false
@@ -1779,7 +1808,7 @@ const handleDateTimeChange = async (newValue) => {
       try {
         const result = await updateCurrentTask( {
           dueDate: selectedDate.value,
-          dueTime: selectedTime.value
+          dueTime: dateOnly ? null : selectedTime.value
         })
         applyTimeWarning(result)
         console.log('截止时间已自动保存:', selectedDate.value, selectedTime.value)
@@ -1807,6 +1836,7 @@ const handleDateTimeChange = async (newValue) => {
 const makeDeadlineDateOnly = async () => {
   if (!selectedDate.value) return
   selectedTime.value = ''
+  deadlinePickerIncludesTime.value = false
   if (props.isEditing && props.task) {
     try {
       await updateCurrentTask( {
@@ -2146,21 +2176,17 @@ const handleSaveTaskContent = () => {
 }
 
 // 自动调整备注区域textarea高度
-const autoResizeNote = (event) => {
-  const textarea = event.target
+const resizeNoteTextarea = (textarea) => {
   if (!textarea) return
-
-  // 重置高度以获取正确的scrollHeight
   textarea.style.height = 'auto'
-
-  // 计算新高度，限制在最小和最大值之间
-  const minHeight = 48 // 3rem = 48px (2行最小高度)
-  const maxHeight = 240 // 15rem = 240px
+  const minHeight = props.inline ? 28 : 48
+  const maxHeight = 240
   const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
-
   textarea.style.height = newHeight + 'px'
+}
 
-  // 如果是编辑模式，启动防抖自动保存
+const autoResizeNote = (event) => {
+  resizeNoteTextarea(event.target)
   if (props.isEditing && props.task) {
     debounceSaveNote()
   }
@@ -2243,7 +2269,10 @@ const handleNoteKeydown = async (event) => {
   if (hasUncommittedNote) {
     taskNote.value = committedNote
     noteError.value = ''
-    nextTick(() => noteInput.value?.focus())
+    nextTick(() => {
+      noteInput.value?.focus()
+      resizeNoteTextarea(noteInput.value)
+    })
     return
   }
 
@@ -2330,6 +2359,7 @@ const loadTaskData = () => {
   // 截止与提醒分别展示，不再用一个入口填充另一个
   selectedDate.value = task.dueDate || ''
   selectedTime.value = task.dueTime || ''
+  deadlinePickerIncludesTime.value = Boolean(task.dueTime)
   if (task.dueDate && task.dueTime) {
     dateTimeValue.value = new Date(`${task.dueDate}T${task.dueTime}:00`)
   } else {
@@ -2394,6 +2424,7 @@ const loadTaskData = () => {
       addTaskInput.value.setSelectionRange(length, length)
       autoResize()
     }
+    if (props.inline) resizeNoteTextarea(noteInput.value)
   })
 }
 

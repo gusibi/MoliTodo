@@ -1,5 +1,5 @@
 <template>
-  <Popover :open="open" :align="align" content-class="p-1" @update:open="handleOpenChange">
+  <Popover :open="open" :align="align" content-class="p-1.5" @update:open="handleOpenChange">
     <template #trigger>
       <span class="when-chip-anchor">
         <Tooltip :content-class="whenInfo.variant === 'overdue' ? 'text-destructive' : ''">
@@ -14,12 +14,26 @@
       </span>
     </template>
     <div class="when-popover">
-      <ScheduleRangePicker v-model="pickerRange" :min-date="pickerMinDate"
-        @update:model-value="pickerDirty = true" />
+      <div v-if="quickActions" class="when-quick-row" role="group" :aria-label="$t('tasks.quickSchedule')">
+        <Button variant="ghost" size="sm" class="when-quick-btn" :disabled="saving" @click.stop="setWhenQuick('today')">
+          <span>{{ $t('tasks.today') }}</span>
+        </Button>
+        <Button variant="ghost" size="sm" class="when-quick-btn" :disabled="saving" @click.stop="setWhenQuick('tomorrow')">
+          <span>{{ $t('tasks.tomorrow') }}</span>
+        </Button>
+        <Button variant="ghost" size="sm" class="when-quick-btn" :disabled="saving" @click.stop="setWhenQuick('nextWeek')">
+          <span>{{ $t('tasks.nextWeek') }}</span>
+        </Button>
+      </div>
+      <div class="when-range" :class="{ 'has-quick': quickActions }">
+        <ScheduleRangePicker v-model="pickerRange" :min-date="pickerMinDate"
+          @update:model-value="pickerDirty = true" />
+      </div>
       <div v-if="hasSchedule(task)" class="when-option when-option-clear when-picker-clear" @click.stop="clearWhen">
         <X class="h-3.5 w-3.5 when-option-icon" aria-hidden="true" />
         <span>{{ $t('tasks.clearSchedule') }}</span>
       </div>
+      <p v-if="saveError" class="when-save-error" role="alert">{{ saveError }}</p>
     </div>
   </Popover>
 </template>
@@ -40,11 +54,13 @@ import { materializeVirtualInstance } from '@/utils/today-agenda'
 import { dayLabel, formatTimeHM } from '@/utils/when-labels'
 import Popover from '../ui/popover/Popover.vue'
 import Tooltip from '../ui/tooltip/Tooltip.vue'
+import Button from '../ui/button/Button.vue'
 import ScheduleRangePicker from './ScheduleRangePicker.vue'
 
 /**
  * 行上 When chip + When 气泡（悬浮窗与 Today 行共用的就地改期入口）。
- * 点击 chip 直接展示范围选择器（预填当前安排），底部提供清除安排；
+ * 点击 chip 展示范围选择器（预填当前安排），底部提供清除安排；
+ * Today 行通过 quickActions 额外启用今天 / 明天 / 下周快捷项。
  * 安排优先、截止其次（逾期红）、未安排 ghost；虚拟重复实例先物化再执行。
  */
 const props = defineProps({
@@ -55,6 +71,10 @@ const props = defineProps({
   align: {
     type: String,
     default: 'start'
+  },
+  quickActions: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -66,6 +86,8 @@ const taskStore = useTaskStore()
 const open = ref(false)
 const pickerRange = ref({ start: null, end: null })
 const pickerDirty = ref(false)
+const saveError = ref('')
+const saving = ref(false)
 
 const pickerMinDate = computed(() => {
   const start = new Date()
@@ -128,6 +150,7 @@ function handleOpenChange(value) {
       end: toDateValue(props.task.scheduledEndAt)
     }
     pickerDirty.value = false
+    saveError.value = ''
     open.value = true
     emit('open-change', true)
     return
@@ -135,10 +158,7 @@ function handleOpenChange(value) {
   const pendingStart = toDateValue(pickerRange.value.start)
   if (pickerDirty.value && pendingStart) {
     const pendingEnd = toDateValue(pickerRange.value.end)
-    pickerDirty.value = false
-    pickerRange.value = { start: null, end: null }
-    open.value = false
-    emit('open-change', false)
+    // 先提交，成功后才关闭；失败时保留弹层与已选范围，显示错误并可重试。
     void applyRange(pendingStart, pendingEnd)
     return
   }
@@ -146,42 +166,106 @@ function handleOpenChange(value) {
   emit('open-change', false)
 }
 
+// 区间快捷按钮：今天 / 明天 / 下周。已有安排时保留开始时刻与有效时长。
+async function setWhenQuick(kind) {
+  const oldStart = toDateValue(props.task.scheduledStartAt)
+  const oldEnd = toDateValue(props.task.scheduledEndAt)
+  const nextStart = new Date()
+  nextStart.setHours(0, 0, 0, 0)
+  if (kind === 'tomorrow') {
+    nextStart.setDate(nextStart.getDate() + 1)
+  } else if (kind === 'nextWeek') {
+    // 下周：取下周一（与「下周X」口语的锚点一致）
+    const diff = (1 - nextStart.getDay() + 7) % 7 || 7
+    nextStart.setDate(nextStart.getDate() + diff)
+  }
+  if (oldStart && (oldStart.getHours() || oldStart.getMinutes())) {
+    nextStart.setHours(oldStart.getHours(), oldStart.getMinutes(), 0, 0)
+  }
+
+  let nextEnd = null
+  if (oldEnd && oldStart && oldEnd.getTime() > oldStart.getTime()) {
+    nextEnd = new Date(nextStart.getTime() + (oldEnd.getTime() - oldStart.getTime()))
+  }
+  await applyRange(nextStart, nextEnd)
+}
+
 // 一次提交开始与结束；相对提醒由应用层自动重算
 async function applyRange(nextStart, nextEnd) {
-  const target = await materializeVirtualInstance(taskStore, props.task)
-  if (!target) return
+  if (saving.value) return
+  saving.value = true
   try {
-    await taskStore.updateTask(target.id, {
+    const target = await materializeVirtualInstance(taskStore, props.task)
+    if (!target) {
+      saveError.value = $t('today.saveFailed', { error: '' })
+      return
+    }
+    const result = await taskStore.updateTask(target.id, {
       scheduledStartAt: nextStart.toISOString(),
       scheduledEndAt: nextEnd ? nextEnd.toISOString() : null
     })
+    if (!result?.success) throw new Error(result?.error || '')
+    saveError.value = ''
     pickerDirty.value = false
     pickerRange.value = { start: null, end: null }
     open.value = false
+    emit('open-change', false)
     emit('updated', target)
   } catch (error) {
-    console.error('更新安排失败:', error)
+    saveError.value = $t('today.saveFailed', { error: error?.message || '' })
+  } finally {
+    saving.value = false
   }
 }
 
 async function clearWhen() {
-  const target = await materializeVirtualInstance(taskStore, props.task)
-  if (!target) return
+  if (saving.value) return
+  saving.value = true
   try {
-    await taskStore.updateTask(target.id, { scheduledStartAt: null, scheduledEndAt: null })
+    const target = await materializeVirtualInstance(taskStore, props.task)
+    if (!target) {
+      saveError.value = $t('today.saveFailed', { error: '' })
+      return
+    }
+    const result = await taskStore.updateTask(target.id, { scheduledStartAt: null, scheduledEndAt: null })
+    if (!result?.success) throw new Error(result?.error || '')
+    saveError.value = ''
     pickerDirty.value = false
     pickerRange.value = { start: null, end: null }
     open.value = false
+    emit('open-change', false)
     emit('updated', target)
   } catch (error) {
-    console.error('清除安排失败:', error)
+    saveError.value = $t('today.saveFailed', { error: error?.message || '' })
+  } finally {
+    saving.value = false
   }
 }
 </script>
 
 <style scoped>
 .when-popover {
-  @apply flex flex-col;
+  @apply flex flex-col gap-1;
+}
+
+.when-quick-row {
+  @apply grid grid-cols-3 gap-0.5 rounded-lg bg-accent/40 p-0.5;
+}
+
+.when-quick-btn {
+  @apply justify-center rounded-md text-muted-foreground;
+}
+
+.when-quick-btn:hover {
+  @apply bg-background text-foreground shadow-sm;
+}
+
+.when-range.has-quick {
+  @apply mt-1 border-t border-border/50 pt-2;
+}
+
+.when-save-error {
+  @apply px-1 pt-1 text-xs text-destructive;
 }
 
 .when-option {

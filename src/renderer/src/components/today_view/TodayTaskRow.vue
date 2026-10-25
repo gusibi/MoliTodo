@@ -56,7 +56,7 @@
 
         <!-- 元信息行：When chip + 提醒 pill + 循环图标 + 分组徽标 + 计时 -->
         <div v-if="!expanded" class="today-task-meta">
-          <TaskWhenBubble v-if="status !== 'done'" :task="task" />
+          <TaskWhenBubble v-if="status !== 'done'" :task="task" quick-actions />
           <TaskReminderBubble v-if="status !== 'done'" :task="task" />
 
           <!-- 循环任务（模板或实例）：显示重复规则摘要 -->
@@ -81,22 +81,7 @@
           </span>
 
           <!-- 进行 / 暂停 / 完成耗时 -->
-          <span v-if="status === 'doing' && !isOvertime" class="today-task-time today-task-time-doing">
-            <Play class="h-2.5 w-2.5" aria-hidden="true" />
-            <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
-          </span>
-          <span v-else-if="status === 'doing' && isOvertime" class="today-task-time today-task-time-overtime">
-            <Clock class="h-2.5 w-2.5" aria-hidden="true" />
-            <span>{{ formatDuration(getCurrentDurationWithTrigger(task)) }}</span>
-          </span>
-          <span v-else-if="status === 'paused'" class="today-task-time today-task-time-paused">
-            <Pause class="h-2.5 w-2.5" aria-hidden="true" />
-            <span>{{ formatDuration(task.totalDuration || 0) }}</span>
-          </span>
-          <span v-else-if="status === 'done' && task.totalDuration" class="today-task-time today-task-time-completed">
-            <Check class="h-2.5 w-2.5" aria-hidden="true" />
-            <span>{{ formatDuration(task.totalDuration) }}</span>
-          </span>
+          <TaskDurationBadge :task="task" :time-update-trigger="timeUpdateTrigger" />
         </div>
 
         <TodayTaskExpanded
@@ -107,13 +92,16 @@
           @delete-task="handleEditorDelete"
         >
           <template #actions>
-            <TaskRowActions
-              :status="status"
-              @start="handleStart"
-              @pause="handlePause"
-              @complete="handleComplete"
-              @redo="handleRedo"
-            />
+            <div class="today-task-expanded-actions">
+              <TaskDurationBadge :task="task" :time-update-trigger="timeUpdateTrigger" />
+              <TaskRowActions
+                :status="status"
+                @start="handleStart"
+                @pause="handlePause"
+                @complete="handleComplete"
+                @redo="handleRedo"
+              />
+            </div>
           </template>
         </TodayTaskExpanded>
       </div>
@@ -127,14 +115,14 @@
 
 <script setup>
 import { ref, computed, nextTick, inject } from 'vue'
-import { Check, Clock, Pause, Play, Repeat, Trash2 } from '@lucide/vue'
+import { Repeat, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/store/taskStore'
-import { isTaskOvertime, formatDuration, getCurrentDuration } from '@/utils/task-utils'
 import { isVirtualInstance, materializeVirtualInstance } from '@/utils/today-agenda'
 import TaskStatusCircle from '../task/TaskStatusCircle.vue'
 import TaskWhenBubble from '../task/TaskWhenBubble.vue'
 import TaskReminderBubble from '../task/TaskReminderBubble.vue'
+import TaskDurationBadge from '../task/TaskDurationBadge.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
 import ContextMenu from '../ui/context-menu/ContextMenu.vue'
@@ -212,16 +200,6 @@ const handleDragStart = (event) => {
 
 const handleDragEnd = () => {
   isDragging.value = false
-}
-
-// ---------- 计时显示 ----------
-
-const isOvertime = computed(() => isTaskOvertime(props.task))
-
-// 读取触发器以保证进行中时长随秒刷新
-const getCurrentDurationWithTrigger = (task) => {
-  props.timeUpdateTrigger
-  return getCurrentDuration(task)
 }
 
 // ---------- 搜索高亮 ----------

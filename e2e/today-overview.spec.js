@@ -935,11 +935,14 @@ test('When 气泡点击直接打开范围选择器：未安排任务选日期并
   const row = window.locator('.today-task-row', { hasText: '要改期的任务' });
   await expect(row).toBeVisible();
 
-  // ghost chip → 点击直接展示范围选择器，不再有快捷菜单
+  // ghost chip → 点击展示快捷按钮与范围选择器
   await row.locator('.task-when-chip').click();
   const picker = window.locator('.when-popover');
   await expect(picker).toBeVisible();
-  await expect(window.locator('.when-option')).toHaveCount(0);
+  const quick = picker.getByRole('group', { name: '快捷改期' });
+  await expect(quick.getByRole('button', { name: '今天' })).toBeVisible();
+  await expect(quick.getByRole('button', { name: '明天' })).toBeVisible();
+  await expect(quick.getByRole('button', { name: '下周' })).toBeVisible();
 
   // 选今天并把开始时间设为 09:30（结束留空）
   const today = new Date();
@@ -1015,6 +1018,110 @@ test('When 气泡改期：选新日期后开始与结束时刻保持不变', asy
       end: new Date(task.scheduledEndAt).toISOString()
     };
   }, { timeout: 15000 }).toEqual({ start: expectedStart.toISOString(), end: expectedEnd.toISOString() });
+});
+
+test('When 快捷项：明天 / 下周保留既有开始时刻与时长', async ({ app, window }) => {
+  const start = new Date();
+  start.setHours(10, 0, 0, 0);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  await seedTasks(app.electronApp, [{
+    content: '快捷改期任务',
+    scheduledStartAt: start.toISOString(),
+    scheduledEndAt: end.toISOString()
+  }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '快捷改期任务' });
+  await row.locator('.task-when-chip').click();
+  const picker = window.locator('.when-popover');
+  await expect(picker).toBeVisible();
+  const quick = picker.getByRole('group', { name: '快捷改期' });
+  await expect(quick.getByRole('button', { name: '今天' })).toBeVisible();
+  await expect(quick.getByRole('button', { name: '明天' })).toBeVisible();
+  await expect(quick.getByRole('button', { name: '下周' })).toBeVisible();
+  await picker.getByRole('button', { name: '明天' }).click();
+
+  const expectedStart = new Date(start);
+  expectedStart.setDate(expectedStart.getDate() + 1);
+  const expectedEnd = new Date(expectedStart.getTime() + 60 * 60 * 1000);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '快捷改期任务');
+    if (!task || !task.scheduledStartAt || !task.scheduledEndAt) return null;
+    return {
+      start: new Date(task.scheduledStartAt).toISOString(),
+      end: new Date(task.scheduledEndAt).toISOString()
+    };
+  }, { timeout: 15000 }).toEqual({ start: expectedStart.toISOString(), end: expectedEnd.toISOString() });
+
+  // 再次打开快捷项，验证「下周」也保留时刻与时长
+  await row.locator('.task-when-chip').click();
+  await expect(picker).toBeVisible();
+  await picker.getByRole('button', { name: '下周' }).click();
+
+  const weeklyStart = new Date(start);
+  weeklyStart.setDate(weeklyStart.getDate() + ((1 - weeklyStart.getDay() + 7) % 7 || 7));
+  const weeklyEnd = new Date(weeklyStart.getTime() + 60 * 60 * 1000);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '快捷改期任务');
+    if (!task || !task.scheduledStartAt || !task.scheduledEndAt) return null;
+    return {
+      start: new Date(task.scheduledStartAt).toISOString(),
+      end: new Date(task.scheduledEndAt).toISOString()
+    };
+  }, { timeout: 15000 }).toEqual({ start: weeklyStart.toISOString(), end: weeklyEnd.toISOString() });
+});
+
+test('When 快捷项保存失败时保留弹层并可重试', async ({ app, window }) => {
+  const start = new Date();
+  start.setHours(10, 0, 0, 0);
+  await seedTasks(app.electronApp, [{
+    content: '快捷改期失败任务',
+    scheduledStartAt: start.toISOString()
+  }]);
+  await window.reload();
+  await waitForToday(window);
+
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const original = service.updateTask.bind(service);
+    let failed = false;
+    service.updateTask = async (...args) => {
+      if (!failed) {
+        failed = true;
+        throw new Error('quick write failed once');
+      }
+      return original(...args);
+    };
+  });
+
+  const row = window.locator('.today-task-row', { hasText: '快捷改期失败任务' });
+  await row.locator('.task-when-chip').click();
+  const picker = window.locator('.when-popover');
+  const quick = picker.getByRole('group', { name: '快捷改期' });
+  await quick.getByRole('button', { name: '明天' }).click();
+
+  await expect(picker.getByRole('alert')).toContainText('quick write failed once');
+  await expect(picker).toBeVisible();
+
+  await quick.getByRole('button', { name: '明天' }).click();
+  await expect(picker).toBeHidden();
+
+  const tomorrow = new Date(start);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () =>
+      global.__moliTodoApp.taskService.getAllTasks()
+    );
+    const task = tasks.find((t) => t.content === '快捷改期失败任务');
+    return task?.scheduledStartAt ? new Date(task.scheduledStartAt).toISOString() : null;
+  }, { timeout: 15000 }).toBe(tomorrow.toISOString());
 });
 
 test('When 气泡内嵌范围选择：一次设置开始与结束，关闭后持久化', async ({ app, window }) => {
@@ -1256,6 +1363,24 @@ test('备注与循环图标在行上展示', async ({ app, window }) => {
   await expect(row.locator('.today-task-meta-item')).toBeVisible();
 });
 
+test('展开态仍显示进行中耗时', async ({ app, window }) => {
+  await app.electronApp.evaluate(async () => {
+    const task = await global.__moliTodoApp.taskService.createTaskInList('展开计时任务', 0, null, {
+      dueDate: new Date().toISOString().slice(0, 10)
+    });
+    await global.__moliTodoApp.taskService.startTask(task.id);
+  });
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '展开计时任务' });
+  await row.locator('.today-task-title').dblclick();
+  const expandedRow = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+  await expect(expandedRow.getByText(/\d+分钟/)).toBeVisible();
+});
+
 test('展开单条任务后编辑内容留在 Agenda 原位且右侧日历保持可见', async ({ app, window }) => {
   await seedTasks(app.electronApp, [{
     content: '原位展开任务',
@@ -1360,6 +1485,7 @@ test('展开态备注与步骤可新增、编辑、删除且 metadata 字段互�
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: '删除', exact: true }).click();
   await expect(row.getByText('补充步骤')).toHaveCount(0);
+  await expect(row.getByRole('button', { name: '编辑第 1 个步骤' })).toBeFocused();
 
   await expect.poll(async () => {
     const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
@@ -1369,6 +1495,13 @@ test('展开态备注与步骤可新增、编辑、删除且 metadata 字段互�
     note: '更新后的备注',
     steps: [{ id: 'step-1', content: '第一步已调整', status: 'todo' }]
   });
+
+  // 删除最后一条步骤后，焦点回到末尾的添加入口
+  await row.locator('.step-item').first().getByRole('button', { name: '删除步骤' }).click();
+  const lastDialog = window.getByRole('alertdialog');
+  await expect(lastDialog).toBeVisible();
+  await lastDialog.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(row.getByRole('textbox', { name: '新步骤' })).toBeFocused();
 });
 
 test('展开态标题、备注和步骤保存失败后保留草稿并可重试', async ({ app, window }) => {
@@ -1545,6 +1678,43 @@ test('展开态清除截止保存失败后可重试并跟随任务移动', async
   await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
   await expect.poll(() => row.evaluate((element) => element.closest('[data-agenda-section="unplanned"]') !== null))
     .toBe(true);
+});
+
+test('展开态修改日期型截止不伪造 00:00 时间', async ({ app, window }) => {
+  const today = new Date();
+  await seedTasks(app.electronApp, [{ content: '仅日期截止任务', dueDate: localKey(today) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const collapsed = window.locator('.today-task-row', { hasText: '仅日期截止任务' });
+  await collapsed.locator('.today-task-title').dblclick();
+  const row = window.locator('.today-task-row').filter({
+    has: window.getByRole('region', { name: '任务详情' })
+  });
+
+  await row.getByRole('button', { name: /^今天/ }).click();
+  const picker = window.locator('.date-picker-popup-fixed');
+  await expect(picker).toBeVisible();
+
+  const target = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const targetKey = localKey(target);
+  if (target.getMonth() !== today.getMonth()) {
+    await picker.locator('.vc-arrow.vc-next').first().click();
+  }
+  await picker.locator('.vc-day:not(.is-not-in-month) .vc-day-content', {
+    hasText: new RegExp(`^${target.getDate()}$`)
+  }).first().click();
+  await expect.poll(async () => {
+    const tasks = await app.electronApp.evaluate(async () => global.__moliTodoApp.taskService.getAllTasks());
+    const task = tasks.find((item) => item.content === '仅日期截止任务');
+    return { dueDate: task?.dueDate ?? null, dueTime: task?.dueTime ?? null };
+  }).toEqual({ dueDate: targetKey, dueTime: null });
+  await expect(row.getByRole('button', { name: '加时间' })).toBeVisible();
+  await row.getByRole('button', { name: '加时间' }).click();
+  await expect(window.locator('.date-picker-popup-fixed')).toBeVisible();
+  await window.keyboard.press('Escape');
+  await expect(window.locator('.date-picker-popup-fixed')).toHaveCount(0);
+  await expect(row.getByRole('region', { name: '任务详情' })).toBeVisible();
 });
 
 // ===== issue #16 收尾：验收场景 2/3/9/10 的补充断言 =====

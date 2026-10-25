@@ -2,14 +2,16 @@
   <div class="schedule-range">
     <div class="schedule-range-fields">
       <button type="button" class="schedule-range-field" :class="{ 'is-active': activeField === 'startDate' }"
-        :aria-pressed="activeField === 'startDate'" @click="activeField = 'startDate'">
+        :aria-pressed="activeField === 'startDate'" :aria-label="`${t('tasks.scheduleStartLabel')} ${startDateLabel}`"
+        @click="activeField = 'startDate'">
         {{ startDateLabel }}
       </button>
       <input v-if="activeField === 'startTime'" v-model="timeDraft" type="time" class="schedule-range-time-input"
         :aria-label="t('tasks.scheduleStartLabel')" @change="commitTimeDraft" @blur="activeField = null"
         @keydown.enter.prevent="$event.target.blur()" />
       <button v-else type="button" class="schedule-range-field" :class="{ 'is-active': activeField === 'startTime' }"
-        :aria-pressed="activeField === 'startTime'" @click="activateTimeField('startTime')">
+        :aria-pressed="activeField === 'startTime'" :aria-label="`${t('tasks.scheduleStartLabel')} ${startTimeLabel}`"
+        @click="activateTimeField('startTime')">
         {{ startTimeLabel }}
       </button>
       <span class="schedule-range-sep" aria-hidden="true">–</span>
@@ -17,11 +19,13 @@
         :aria-label="t('tasks.scheduleEndLabel')" @change="commitTimeDraft" @blur="activeField = null"
         @keydown.enter.prevent="$event.target.blur()" />
       <button v-else type="button" class="schedule-range-field" :class="{ 'is-active': activeField === 'endTime' }"
-        :aria-pressed="activeField === 'endTime'" @click="activateTimeField('endTime')">
+        :aria-pressed="activeField === 'endTime'" :aria-label="`${t('tasks.scheduleEndLabel')} ${endTimeLabel}`"
+        @click="activateTimeField('endTime')">
         {{ endTimeLabel }}
       </button>
       <button type="button" class="schedule-range-field" :class="{ 'is-active': activeField === 'endDate' }"
-        :aria-pressed="activeField === 'endDate'" @click="activeField = 'endDate'">
+        :aria-pressed="activeField === 'endDate'" :aria-label="`${t('tasks.scheduleEndLabel')} ${endDateLabel}`"
+        @click="activeField = 'endDate'">
         {{ endDateLabel }}
       </button>
     </div>
@@ -206,29 +210,28 @@ const endTimeLabel = computed(() => timeLabel(end.value))
 }
 
 .schedule-range-fields {
-  @apply flex items-center gap-1 px-1 pb-2;
+  @apply mb-1.5 flex items-center gap-0.5 rounded-lg bg-accent/35 p-0.5;
 }
 
 .schedule-range-field {
-  @apply flex-1 min-w-0 truncate rounded-md border border-border px-1.5 py-1 text-[11px] leading-none;
-  @apply text-foreground bg-transparent transition-colors;
+  @apply flex-1 min-w-0 truncate rounded-md px-1.5 py-1 text-[11px] leading-none;
+  @apply text-muted-foreground bg-transparent transition-colors duration-150;
 }
 
 .schedule-range-field:hover {
-  @apply bg-accent;
+  @apply bg-background text-foreground;
 }
 
 .schedule-range-field.is-active {
-  @apply border-primary text-primary bg-primary/10;
+  @apply bg-background text-primary shadow-sm ring-1 ring-inset ring-border/60;
 }
 
 /* 就地编辑的时间输入框：与日期/时间块同尺寸，点时间块原位出现；
    原生时间输入有最小内容宽度，压窄会裁掉小时段 */
 .schedule-range-time-input {
-  @apply min-w-[4.25rem] flex-1 rounded-md border border-primary bg-primary/10 px-1.5 py-1 text-[11px] leading-none;
-  @apply text-primary text-center outline-none transition-colors;
-  @apply focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30;
-  @apply dark:[color-scheme:dark];
+  @apply min-w-[4.25rem] flex-1 rounded-md px-1.5 py-1 text-[11px] leading-none;
+  @apply bg-background text-primary text-center shadow-sm ring-1 ring-inset ring-border/60 outline-none transition-colors;
+  @apply focus-visible:ring-ring/50 dark:[color-scheme:dark];
 }
 
 .schedule-range-sep {
