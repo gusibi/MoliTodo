@@ -142,6 +142,7 @@ test('健康提醒、专注与小院工具切片可完成真实交互闭环', as
   }, new Date(Date.now() - 16 * 60 * 1000).toISOString());
 
   await expect(toolMain.getByText('休息中', { exact: true })).toBeVisible();
+  await expect(toolMain.getByText('一轮专注完成', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '跳过休息', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '跳过休息', exact: true }).click();
   await expect(page.getByRole('button', { name: '开始 15 分钟', exact: true })).toBeVisible();

@@ -1,165 +1,211 @@
 <template>
-  <div class="tool-view-scroll h-full overflow-auto px-6 py-6">
-    <div class="mx-auto flex max-w-5xl flex-col gap-5">
-      <header class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-xs font-medium uppercase tracking-[0.22em] text-primary/80">
-            {{ $t('tools.focusView.eyebrow') }}
-          </p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-            {{ $t('tools.focusView.heroTitle') }}
-          </h1>
-          <p class="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {{ $t('tools.focusView.heroDescription') }}
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center justify-end gap-2">
+  <div class="tool-view-scroll h-full overflow-auto">
+    <div class="tool-page">
+      <ToolPageHeader
+        :eyebrow="$t('tools.focusView.eyebrow')"
+        :title="$t('tools.focusView.heroTitle')"
+        :description="$t('tools.focusView.heroDescription')"
+        :icon="Timer"
+        tone="primary"
+      >
+        <template #actions>
           <Button variant="outline" size="sm" @click="toggleFocusWidget">
             <Monitor class="h-3.5 w-3.5" aria-hidden="true" />
             {{ focusWidgetVisible ? $t('tools.focusView.widgetHide') : $t('tools.focusView.widgetShow') }}
           </Button>
-          <div class="flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-1.5 text-xs text-muted-foreground">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-[11px] text-muted-foreground">
             <Timer class="h-3.5 w-3.5 text-primary" aria-hidden="true" />
             {{ $t('tools.focusView.minimum') }}
-          </div>
-        </div>
-      </header>
+          </span>
+        </template>
+      </ToolPageHeader>
       <p v-if="widgetError" class="text-sm text-destructive" role="alert">{{ widgetError }}</p>
 
-      <section class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
-        <div class="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm sm:p-6">
-          <div class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/[0.07] blur-3xl" />
-          <div class="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-success/[0.05] blur-3xl" />
+      <section class="grid gap-4 lg:grid-cols-[1.55fr_1fr] lg:items-stretch">
+        <!-- 进行中：以计时器为唯一主角 -->
+        <div v-if="active" class="tool-surface tool-reveal relative flex min-h-[460px] flex-col overflow-hidden p-6 sm:p-8">
+          <div
+            class="pointer-events-none absolute inset-x-0 top-0 h-[360px]"
+            :class="[
+              isBreak ? 'tool-halo-success' : 'tool-halo',
+              active.status === 'running' ? 'focus-halo-live' : ''
+            ]"
+          />
+          <div class="relative flex items-start justify-between gap-3">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium"
+              :class="isBreak ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'"
+            >
+              <component :is="isBreak ? Coffee : Timer" class="h-3.5 w-3.5" aria-hidden="true" />
+              {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.focusBadge') }}
+            </span>
+          </div>
 
-          <template v-if="active">
-            <div class="relative flex items-center justify-between gap-3">
-              <span
-                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
-                :class="isBreak ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'"
-              >
-                <component :is="isBreak ? Coffee : Timer" class="h-3.5 w-3.5" aria-hidden="true" />
-                {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.focusBadge') }}
+          <Transition name="tool-toast">
+            <div
+              v-if="completedNotice"
+              class="absolute right-5 top-5 z-20 flex max-w-[16rem] items-center gap-2.5 rounded-xl border border-success/30 bg-card/95 px-3 py-2.5 shadow-lg backdrop-blur"
+              role="status"
+            >
+              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
+                <CheckCircle2 class="h-4 w-4" aria-hidden="true" />
               </span>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-foreground">{{ $t('tools.focusView.completedTitle') }}</p>
+                <p class="mt-0.5 text-[10px] text-muted-foreground">{{ $t('tools.focusView.completedHint', { minutes: breakMinutes }) }}</p>
+              </div>
             </div>
+          </Transition>
 
-            <div class="relative mt-6 flex flex-col items-center">
-              <div class="relative flex h-64 w-64 items-center justify-center sm:h-72 sm:w-72">
-                <svg viewBox="0 0 220 220" class="h-full w-full -rotate-90" aria-hidden="true">
-                  <circle cx="110" cy="110" r="92" fill="none" stroke="currentColor" class="text-border/60" stroke-width="5" />
-                  <circle
-                    cx="110"
-                    cy="110"
-                    r="92"
-                    fill="none"
+          <div class="relative flex flex-1 flex-col items-center justify-center py-5">
+            <div class="relative flex h-[252px] w-[252px] items-center justify-center sm:h-[292px] sm:w-[292px]">
+              <svg viewBox="0 0 220 220" class="h-full w-full -rotate-90" aria-hidden="true">
+                <circle cx="110" cy="110" r="96" fill="none" stroke="currentColor" class="text-border/50" stroke-width="2" />
+                <g class="text-border/70">
+                  <line
+                    v-for="tick in 12"
+                    :key="tick"
+                    x1="110"
+                    y1="6"
+                    x2="110"
+                    y2="11"
                     stroke="currentColor"
-                    :class="ringClass"
-                    stroke-width="6"
+                    stroke-width="1.5"
                     stroke-linecap="round"
-                    :stroke-dasharray="circumference"
-                    :stroke-dashoffset="dashOffset"
-                    class="transition-[stroke-dashoffset] duration-700 ease-linear"
+                    :transform="`rotate(${tick * 30} 110 110)`"
                   />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
-                  <p class="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                    {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.focusBadge') }}
-                  </p>
-                  <p class="mt-1 text-6xl font-semibold tabular-nums tracking-tight text-foreground sm:text-7xl" aria-live="polite">
-                    {{ displayTime }}
-                  </p>
-                  <p class="mt-1 text-sm text-muted-foreground">{{ statusLabel }}</p>
-                </div>
+                </g>
+                <circle
+                  cx="110"
+                  cy="110"
+                  r="96"
+                  fill="none"
+                  stroke="currentColor"
+                  :class="ringClass"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  :stroke-dasharray="circumference"
+                  :stroke-dashoffset="dashOffset"
+                  class="focus-ring-progress transition-[stroke-dashoffset] duration-1000 ease-linear"
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                  {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.focusBadge') }}
+                </p>
+                <p class="tool-metric mt-1.5 text-[4.4rem] font-semibold leading-none text-foreground sm:text-[5rem]" role="timer">
+                  {{ displayTime }}
+                </p>
+                <p class="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="active.status === 'running' ? 'animate-pulse bg-primary' : 'bg-muted-foreground/60'" />
+                  {{ statusLabel }}
+                </p>
               </div>
-
-              <div class="mt-5 w-full max-w-md rounded-2xl border border-border/50 bg-background/45 p-3">
-                <div class="flex items-center gap-2.5">
-                  <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <ListTodo class="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-[11px] text-muted-foreground">{{ activeTask ? $t('tools.focusView.linkedTask') : $t('tools.focusView.sessionLabel') }}</p>
-                    <p class="truncate text-sm font-medium text-foreground">{{ activeTask?.content || $t('tools.focusView.freeFocus') }}</p>
-                  </div>
-                  <span class="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                    {{ Math.round(active.plannedSeconds / 60) }} {{ $t('tools.focusView.minutesUnit') }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="mt-5 flex flex-wrap justify-center gap-2">
-                <Button v-if="active.status === 'running'" variant="outline" @click="pause">
-                  <Pause class="h-4 w-4" aria-hidden="true" />
-                  {{ $t('tools.focusView.pause') }}
-                </Button>
-                <Button v-else @click="resume">
-                  <Play class="h-4 w-4" aria-hidden="true" />
-                  {{ $t('tools.focusView.resume') }}
-                </Button>
-                <Button v-if="isBreak" variant="outline" @click="skipBreak">
-                  <SkipForward class="h-4 w-4" aria-hidden="true" />
-                  {{ $t('tools.focusView.skipBreak') }}
-                </Button>
-                <Button v-else variant="destructive" @click="cancel">
-                  {{ $t('tools.focusView.cancel') }}
-                </Button>
-              </div>
-              <p v-if="isBreak" class="mt-3 text-center text-xs text-muted-foreground">
-                {{ $t('tools.focusView.breakHint', { minutes: breakMinutes }) }}
-              </p>
             </div>
-          </template>
 
-          <template v-else>
-            <div class="relative">
-              <div>
-                <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ $t('tools.focusView.prepareTitle') }}</h2>
-                <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.focusView.prepareDescription') }}</p>
-              </div>
-
-              <div class="mt-5">
-                <p class="text-sm font-medium text-foreground">{{ $t('tools.focusView.durationLabel') }}</p>
-                <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <button
-                    v-for="minutes in durations"
-                    :key="minutes"
-                    type="button"
-                    class="group flex flex-col items-start rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-                    :class="!customOpen && selectedMinutes === minutes ? 'border-primary/40 bg-primary/[0.07]' : 'border-border/60 bg-background/45 hover:bg-accent/40'"
-                    :aria-pressed="!customOpen && selectedMinutes === minutes"
-                    @click="chooseDuration(minutes)"
-                  >
-                    <span class="text-2xl font-semibold tabular-nums text-foreground">{{ minutes }}</span>
-                    <span class="text-xs text-muted-foreground">{{ $t('tools.focusView.minutesUnit') }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="flex flex-col items-start rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-                    :class="customOpen ? 'border-primary/40 bg-primary/[0.07]' : 'border-border/60 bg-background/45 hover:bg-accent/40'"
-                    :aria-pressed="customOpen"
-                    @click="openCustom"
-                  >
-                    <span class="text-sm font-medium text-foreground">{{ $t('tools.focusView.customDuration') }}</span>
-                    <span class="mt-1 text-2xl font-semibold tabular-nums text-foreground">{{ customOpen ? customMinutes : '—' }}</span>
-                  </button>
+            <div class="mt-6 w-full max-w-md rounded-xl border border-border/45 bg-background/45 px-3.5 py-3">
+              <div class="flex items-center gap-2.5">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <ListTodo class="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {{ isBreak ? $t('tools.focusView.lastRound') : activeTask ? $t('tools.focusView.linkedTask') : $t('tools.focusView.sessionLabel') }}
+                  </p>
+                  <p class="truncate text-sm font-medium text-foreground">{{ activeTask?.content || $t('tools.focusView.freeFocus') }}</p>
                 </div>
-                <div v-if="customOpen" class="mt-2 flex items-center gap-2">
-                  <Input
-                    id="focus-custom-minutes"
-                    v-model.number="customMinutes"
-                    type="number"
-                    min="15"
-                    max="240"
-                    class="w-28"
-                    :aria-label="$t('tools.focusView.customMinutes')"
+                <span v-if="!isBreak" class="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                  {{ elapsedLabel }}
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Button v-if="active.status === 'running'" variant="outline" size="lg" class="h-11 px-5" @click="pause">
+                <Pause class="h-4 w-4" aria-hidden="true" />
+                {{ $t('tools.focusView.pause') }}
+              </Button>
+              <Button v-else size="lg" class="h-11 px-5" @click="resume">
+                <Play class="h-4 w-4" aria-hidden="true" />
+                {{ $t('tools.focusView.resume') }}
+              </Button>
+              <Button v-if="isBreak" variant="outline" class="h-11" @click="skipBreak">
+                <SkipForward class="h-4 w-4" aria-hidden="true" />
+                {{ $t('tools.focusView.skipBreak') }}
+              </Button>
+              <Button v-else variant="ghost" class="h-11 text-muted-foreground hover:text-destructive" @click="cancel">
+                <X class="h-4 w-4" aria-hidden="true" />
+                {{ $t('tools.focusView.cancel') }}
+              </Button>
+            </div>
+            <p class="mt-3 text-center text-[10px] text-muted-foreground/70" aria-hidden="true">
+              <kbd class="rounded border border-border/70 px-1 py-0.5 font-sans text-[9px]">Space</kbd>
+              {{ $t('tools.focusView.spaceHint') }}
+            </p>
+            <p v-if="isBreak" class="mt-2 text-center text-xs text-muted-foreground">
+              {{ $t('tools.focusView.breakHint', { minutes: breakMinutes }) }}
+            </p>
+            <p class="mt-auto pt-8 text-center text-[11px] text-muted-foreground/75">
+              {{ isBreak ? $t('tools.focusView.breakFooter') : $t('tools.focusView.focusFooter') }}
+            </p>
+          </div>
+        </div>
+
+        <!-- 准备中：在同一个表面里完成选择与开始 -->
+        <div v-else class="tool-surface tool-reveal relative flex flex-col overflow-hidden p-6 sm:p-7">
+          <div class="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/[0.06] blur-3xl" />
+          <div class="relative grid flex-1 gap-7 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div class="focus-composer-column min-w-0">
+              <p class="tool-label">{{ $t('tools.focusView.durationLabel') }}</p>
+              <div class="focus-durations mt-3">
+                <button
+                  v-for="minutes in durations"
+                  :key="minutes"
+                  type="button"
+                  class="group relative flex min-w-0 flex-col items-start rounded-xl border px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                  :class="!customOpen && selectedMinutes === minutes
+                    ? 'border-primary/40 bg-primary/[0.08]'
+                    : 'border-border/60 bg-background/45 hover:border-border hover:bg-accent/30'"
+                  :aria-pressed="!customOpen && selectedMinutes === minutes"
+                  @click="chooseDuration(minutes)"
+                >
+                  <span class="tool-metric text-[1.65rem] font-semibold leading-none text-foreground">{{ minutes }}</span>
+                  <span class="mt-1.5 whitespace-nowrap text-[10px] text-muted-foreground">{{ $t('tools.focusView.minutesUnit') }}</span>
+                  <span
+                    v-if="!customOpen && selectedMinutes === minutes"
+                    class="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-primary"
                   />
-                  <span class="text-xs text-muted-foreground">{{ $t('tools.focusView.minutesUnit') }}</span>
-                </div>
+                </button>
               </div>
 
-              <div class="mt-5">
-                <p class="text-sm font-medium text-foreground">{{ $t('tools.focusView.taskLabel') }}</p>
-                <p class="mt-1 text-xs text-muted-foreground">{{ $t('tools.focusView.taskHint') }}</p>
-                <DropdownMenu content-class="w-[min(90vw,30rem)]">
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-[11px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                :class="customOpen ? 'text-primary' : ''"
+                :aria-pressed="customOpen"
+                @click="openCustom"
+              >
+                <SlidersHorizontal class="h-3.5 w-3.5" aria-hidden="true" />
+                {{ $t('tools.focusView.customDuration') }}
+                <span v-if="customOpen" class="tool-tick font-medium text-foreground">{{ customMinutes }}</span>
+              </button>
+              <div v-if="customOpen" class="mt-1.5 flex items-center gap-2">
+                <Input
+                  id="focus-custom-minutes"
+                  v-model.number="customMinutes"
+                  type="number"
+                  min="15"
+                  max="240"
+                  class="w-24"
+                  :aria-label="$t('tools.focusView.customMinutes')"
+                />
+                <span class="text-xs text-muted-foreground">{{ $t('tools.focusView.minutesUnit') }}</span>
+              </div>
+
+              <div class="mt-6">
+                <p class="text-xs font-medium text-foreground">{{ $t('tools.focusView.taskLabel') }}</p>
+                <p class="mt-1 text-[11px] text-muted-foreground">{{ $t('tools.focusView.taskHint') }}</p>
+                <DropdownMenu content-class="w-[min(90vw,28rem)]">
                   <template #trigger>
                     <Button variant="outline" class="mt-2 w-full justify-between">
                       <span class="flex min-w-0 items-center gap-2">
@@ -185,114 +231,187 @@
                 </DropdownMenu>
               </div>
 
-              <Button class="mt-5 w-full sm:w-auto" size="lg" :loading="starting" @click="start">
+              <Button class="mt-5 h-11 w-full" size="lg" :loading="starting" @click="start">
                 <Play class="h-4 w-4" aria-hidden="true" />
                 {{ $t('tools.focusView.start', { minutes: effectiveMinutes }) }}
               </Button>
-              <p v-if="error" class="mt-3 text-sm text-destructive" role="alert">{{ error }}</p>
+              <p v-if="error" class="mt-2 text-sm text-destructive" role="alert">{{ error }}</p>
             </div>
-          </template>
+
+            <div class="relative hidden h-[228px] w-[228px] items-center justify-center md:flex">
+              <svg viewBox="0 0 220 220" class="h-full w-full -rotate-90" aria-hidden="true">
+                <circle cx="110" cy="110" r="96" fill="none" stroke="currentColor" class="text-border/50" stroke-width="2" />
+                <g class="text-border/70">
+                  <line
+                    v-for="tick in 12"
+                    :key="tick"
+                    x1="110"
+                    y1="6"
+                    x2="110"
+                    y2="11"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    :transform="`rotate(${tick * 30} 110 110)`"
+                  />
+                </g>
+                <circle
+                  cx="110"
+                  cy="110"
+                  r="96"
+                  fill="none"
+                  stroke="currentColor"
+                  class="text-primary/45 transition-[stroke-dasharray] duration-500 ease-out"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  :stroke-dasharray="previewDash"
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <p class="tool-metric text-5xl font-semibold leading-none text-foreground">{{ previewTime }}</p>
+                <p class="mt-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{{ $t('tools.focusView.readyHint') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-border/45 pt-4 text-[11px] text-muted-foreground">
+            <span class="inline-flex items-center gap-1.5">
+              <Sprout class="h-3.5 w-3.5 text-success" aria-hidden="true" />
+              {{ $t('tools.focusView.footerRecord') }}
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <Coffee class="h-3.5 w-3.5 text-primary/70" aria-hidden="true" />
+              {{ $t('tools.focusView.footerBreak') }}
+            </span>
+          </div>
         </div>
 
         <aside class="flex flex-col gap-4">
-          <div class="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h2 class="text-base font-semibold text-foreground">{{ $t('tools.focusView.todayTitle') }}</h2>
+          <section v-if="active" class="tool-surface p-5">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-sm font-semibold tracking-tight text-foreground">
+                {{ isBreak ? $t('tools.focusView.breakBadge') : $t('tools.focusView.sessionLabel') }}
+              </h2>
+              <span class="h-1.5 w-1.5 rounded-full" :class="isBreak ? 'bg-success' : 'bg-primary'" />
+            </div>
+            <dl class="mt-3 space-y-2 text-xs">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-muted-foreground">
+                  {{ isBreak ? $t('tools.focusView.breakDurationLabel') : $t('tools.focusView.durationLabel') }}
+                </dt>
+                <dd class="tool-tick font-medium text-foreground">{{ Math.round(active.plannedSeconds / 60) }} {{ $t('tools.focusView.minutesUnit') }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="text-muted-foreground">{{ $t('tools.focusView.remainingLabel') }}</dt>
+                <dd class="tool-tick font-medium text-foreground">{{ displayTime }}</dd>
+              </div>
+              <div v-if="!isBreak" class="flex items-center justify-between gap-3">
+                <dt class="text-muted-foreground">{{ $t('tools.focusView.taskLabel') }}</dt>
+                <dd class="max-w-[12rem] truncate text-right text-foreground">{{ activeTask?.content || $t('tools.focusView.freeFocus') }}</dd>
+              </div>
+            </dl>
+            <div class="mt-3 h-1 overflow-hidden rounded-full bg-muted">
+              <div class="h-full rounded-full bg-primary transition-[width] duration-1000" :style="{ width: `${Math.round((1 - remaining / Math.max(1, active.plannedSeconds)) * 100)}%` }" />
+            </div>
+          </section>
+
+          <section class="tool-surface p-5">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-sm font-semibold tracking-tight text-foreground">{{ $t('tools.focusView.todayTitle') }}</h2>
               <CalendarCheck class="h-4 w-4 text-primary/70" aria-hidden="true" />
             </div>
-            <div class="mt-4 grid grid-cols-3 gap-2">
-              <div class="rounded-xl bg-background/55 px-2.5 py-3">
-                <p class="text-[11px] text-muted-foreground">{{ $t('tools.focusView.todaySessions') }}</p>
-                <p class="mt-1 text-xl font-semibold tabular-nums text-foreground">{{ todaySessions }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.sessionsUnit') }}</p>
+            <div class="mt-3 grid grid-cols-3 divide-x divide-border/50">
+              <div class="pr-2.5">
+                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.todaySessions') }}</p>
+                <p class="tool-metric mt-1 text-2xl font-semibold leading-none text-foreground">{{ todaySessions }}</p>
               </div>
-              <div class="rounded-xl bg-background/55 px-2.5 py-3">
-                <p class="text-[11px] text-muted-foreground">{{ $t('tools.focusView.todayMinutes') }}</p>
-                <p class="mt-1 text-xl font-semibold tabular-nums text-foreground">{{ todayMinutes }}</p>
-                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.minutesUnit') }}</p>
+              <div class="px-2.5">
+                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.todayMinutes') }}</p>
+                <p class="tool-metric mt-1 text-2xl font-semibold leading-none text-foreground">{{ todayMinutes }}</p>
               </div>
-              <div class="rounded-xl bg-background/55 px-2.5 py-3">
-                <p class="text-[11px] text-muted-foreground">{{ $t('tools.focusView.todayDone') }}</p>
-                <p class="mt-1 text-xl font-semibold tabular-nums text-foreground">{{ completionRate }}%</p>
-                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.status.completed') }}</p>
+              <div class="pl-2.5">
+                <p class="text-[10px] text-muted-foreground">{{ $t('tools.focusView.todayDone') }}</p>
+                <p class="tool-metric mt-1 text-2xl font-semibold leading-none text-foreground">{{ completionRate }}<span class="ml-0.5 text-sm font-normal text-muted-foreground">%</span></p>
               </div>
             </div>
-          </div>
 
-          <div class="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm">
-            <div class="flex items-end justify-between gap-2">
-              <div>
-                <h2 class="text-base font-semibold text-foreground">{{ $t('tools.focusView.weekTitle') }}</h2>
-                <p class="mt-0.5 text-xs text-muted-foreground">{{ $t('tools.focusView.weekHint') }}</p>
-              </div>
-              <BarChart3 class="h-4 w-4 text-primary/70" aria-hidden="true" />
-            </div>
-            <div class="mt-4 flex h-28 items-end gap-1.5">
-              <div
-                v-for="day in weekDays"
-                :key="day.date"
-                class="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-                :title="`${day.date}: ${day.minutes} ${$t('tools.focusView.minutesUnit')}`"
-              >
-                <div class="flex w-full max-w-6 flex-1 items-end rounded-md bg-muted/50 p-[2px]">
-                  <div
-                    class="w-full rounded-sm bg-primary/70"
-                    :class="day.today ? 'bg-primary' : 'bg-primary/55'"
-                    :style="{ height: `${day.height}%` }"
-                  />
+            <div class="mt-5 border-t border-border/50 pt-4">
+              <div class="flex items-end justify-between gap-2">
+                <div>
+                  <p class="text-xs font-medium text-foreground">{{ $t('tools.focusView.weekTitle') }}</p>
+                  <p class="mt-0.5 text-[10px] text-muted-foreground">{{ $t('tools.focusView.weekHint') }}</p>
                 </div>
-                <span class="text-[10px]" :class="day.today ? 'font-semibold text-foreground' : 'text-muted-foreground'">{{ day.label }}</span>
+                <BarChart3 class="h-4 w-4 text-primary/70" aria-hidden="true" />
+              </div>
+              <div class="relative mt-4 flex h-[92px] items-end gap-1.5" aria-hidden="true">
+                <div
+                  v-for="day in weekDays"
+                  :key="day.date"
+                  class="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
+                  :title="`${day.date}: ${day.minutes} ${$t('tools.focusView.minutesUnit')}`"
+                >
+                  <div class="flex h-[68px] w-full max-w-[22px] items-end overflow-hidden rounded-[4px] bg-muted/45 p-[2px]">
+                    <div
+                      class="tool-bar-seg w-full rounded-[2px]"
+                      :class="day.minutes > 0
+                        ? (day.today ? 'bg-primary' : 'bg-primary/45')
+                        : 'bg-border/70'"
+                      :style="{ height: `${day.height}%` }"
+                    />
+                  </div>
+                  <span class="text-[9px]" :class="day.today ? 'font-semibold text-foreground' : 'text-muted-foreground'">{{ day.label }}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm">
-            <div class="pointer-events-none absolute -bottom-16 -right-12 h-40 w-40 rounded-full bg-primary/[0.07] blur-3xl" />
-            <div class="relative flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles class="h-4 w-4 text-primary" aria-hidden="true" />
+          <section class="relative overflow-hidden rounded-2xl border border-border/45 bg-background/35 p-5">
+            <div class="pointer-events-none absolute -bottom-14 -right-10 h-32 w-32 rounded-full bg-primary/[0.07] blur-2xl" />
+            <div class="relative flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <Sparkles class="h-3.5 w-3.5 text-primary" aria-hidden="true" />
               {{ $t('tools.focusView.tipTitle') }}
             </div>
-            <p class="relative mt-3 text-sm leading-6 text-muted-foreground">{{ $t('tools.focusView.tipBody') }}</p>
-            <p class="relative mt-3 text-xs leading-5 text-muted-foreground/80">{{ $t('tools.focusView.tipShortBreak') }}</p>
-          </div>
+            <p class="relative mt-2.5 text-[13px] leading-5 text-foreground/90">{{ $t('tools.focusView.tipBody') }}</p>
+            <p class="relative mt-1.5 text-[11px] leading-5 text-muted-foreground">{{ $t('tools.focusView.tipShortBreak') }}</p>
+          </section>
         </aside>
       </section>
 
-      <section class="rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm">
-        <div class="flex flex-wrap items-end justify-between gap-3">
+      <section class="tool-surface tool-reveal overflow-hidden">
+        <div class="flex flex-wrap items-end justify-between gap-3 px-5 pb-4 pt-5 sm:px-6">
           <div>
-            <h2 class="text-lg font-semibold tracking-tight text-foreground">{{ $t('tools.focusView.history') }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{{ $t('tools.focusView.historyDescription') }}</p>
+            <h2 class="text-base font-semibold tracking-tight text-foreground">{{ $t('tools.focusView.history') }}</h2>
+            <p class="mt-1 text-xs text-muted-foreground">{{ $t('tools.focusView.historyDescription') }}</p>
           </div>
-          <span class="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground">
+          <span class="rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground">
             {{ $t('tools.focusView.recentCount', { count: recent.length }) }}
           </span>
         </div>
 
-        <p v-if="recent.length === 0" class="mt-6 rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-8 text-center text-sm text-muted-foreground">
+        <p v-if="recent.length === 0" class="mx-5 mb-5 rounded-xl border border-dashed border-border/60 bg-background/35 px-4 py-7 text-center text-sm text-muted-foreground sm:mx-6">
           {{ $t('tools.focusView.empty') }}
         </p>
-        <ul v-else class="mt-4 grid gap-2 md:grid-cols-2">
+        <ul v-else class="grid gap-x-5 border-t border-border/45 px-5 sm:px-6 md:grid-cols-2">
           <li
             v-for="session in recent"
             :key="session.id"
-            class="flex items-start gap-3 rounded-xl border border-border/40 bg-background/40 p-3"
+            class="flex items-start gap-3 border-b border-border/40 py-3.5 md:border-b-0 md:py-4"
           >
-            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" :class="sessionTone(session.status).soft">
+            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="sessionTone(session.status).soft">
               <component :is="sessionTone(session.status).icon" class="h-4 w-4" aria-hidden="true" />
             </span>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <p class="truncate text-sm font-medium text-foreground">{{ sessionTask(session) }}</p>
+                <p class="truncate text-[13px] font-medium text-foreground">{{ sessionTask(session) }}</p>
                 <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px]" :class="sessionTone(session.status).badge">
                   {{ sessionStatusLabel(session.status) }}
                 </span>
               </div>
-              <p class="mt-0.5 text-[11px] text-muted-foreground">
+              <p class="mt-0.5 text-[10px] text-muted-foreground">
                 {{ formatSessionTime(session) }} · {{ $t('tools.focusView.planned', { minutes: Math.round(session.plannedSeconds / 60) }) }}
               </p>
-              <div class="mt-2 h-1 overflow-hidden rounded-full bg-muted">
-                <div class="h-full rounded-full bg-primary/70" :style="{ width: `${sessionProgress(session)}%` }" />
+              <div class="mt-2 h-0.5 overflow-hidden rounded-full bg-muted">
+                <div class="h-full rounded-full bg-primary/60" :style="{ width: `${sessionProgress(session)}%` }" />
               </div>
             </div>
           </li>
@@ -319,11 +438,15 @@ import {
   Pause,
   Play,
   SkipForward,
+  SlidersHorizontal,
   Sparkles,
-  Timer
+  Sprout,
+  Timer,
+  X
 } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import { useTaskStore } from '@/store/taskStore'
+import ToolPageHeader from './ToolPageHeader.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import DropdownMenu from '@/components/ui/dropdown-menu/DropdownMenu.vue'
@@ -342,7 +465,9 @@ const customOpen = ref(false)
 const customMinutes = ref(30)
 const focusWidgetVisible = ref(false)
 const widgetError = ref('')
+const completedNotice = ref(false)
 let timer = null
+let completedTimer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
 const recent = computed(() => toolsStore.focusState?.recent || [])
@@ -360,6 +485,7 @@ const effectiveMinutes = computed(() => {
   const value = Number(customMinutes.value)
   return Number.isFinite(value) && value >= 15 ? Math.round(value) : selectedMinutes.value
 })
+const previewTime = computed(() => `${String(effectiveMinutes.value).padStart(2, '0')}:00`)
 const todayDate = computed(() => shell.value?.localDate || new Date().toLocaleDateString('en-CA'))
 const todayRecentSessions = computed(() => (
   recent.value.filter((session) => localDateOf(session.startedAt) === todayDate.value)
@@ -391,7 +517,21 @@ const displayTime = computed(() => {
   const rest = seconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
 })
-const circumference = 2 * Math.PI * 92
+const elapsedMinutes = computed(() => {
+  if (!active.value) return 0
+  const elapsed = Math.max(0, (active.value.plannedSeconds || 0) - remaining.value)
+  return Math.max(0, Math.floor(elapsed / 60))
+})
+const elapsedLabel = computed(() => {
+  if (!active.value) return ''
+  if (elapsedMinutes.value < 1) return t('tools.focusView.elapsedJustNow')
+  return t('tools.focusView.elapsed', { minutes: elapsedMinutes.value })
+})
+const circumference = 2 * Math.PI * 96
+const previewDash = computed(() => {
+  const arc = Math.min(1, Math.max(0, effectiveMinutes.value / 60)) * circumference
+  return `${arc} ${circumference}`
+})
 const dashOffset = computed(() => {
   if (!active.value) return circumference
   const planned = Math.max(1, active.value.plannedSeconds || 1)
@@ -413,7 +553,7 @@ const weekDays = computed(() => {
     const key = date.toLocaleDateString('en-CA')
     const minutes = summaries
       .filter((session) => localDateOf(session.startedAt) === key)
-      .reduce((total, session) => total + Math.round((session.elapsedSeconds || session.plannedSeconds || 0) / 60), 0)
+      .reduce((total, session) => total + Math.round(session.elapsedSeconds || session.plannedSeconds || 0), 0)
     days.push({
       date: key,
       minutes,
@@ -424,13 +564,29 @@ const weekDays = computed(() => {
   const max = Math.max(1, ...days.map((day) => day.minutes))
   return days.map((day) => ({
     ...day,
-    height: day.minutes > 0 ? Math.max(8, Math.round((day.minutes / max) * 100)) : 0
+    height: day.minutes > 0 ? Math.max(6, Math.round((day.minutes / max) * 100)) : 2
   }))
 })
 
 watch(active, (session) => {
   remaining.value = session ? session.remainingSeconds : 0
 }, { immediate: true })
+
+watch(() => active.value?.phase, (phase, previous) => {
+  if (previous === 'focus' && phase === 'break') {
+    completedNotice.value = true
+    if (completedTimer) clearTimeout(completedTimer)
+    completedTimer = setTimeout(() => { completedNotice.value = false }, 4200)
+    return
+  }
+  if (phase !== 'break') {
+    completedNotice.value = false
+    if (completedTimer) {
+      clearTimeout(completedTimer)
+      completedTimer = null
+    }
+  }
+})
 
 function localDateOf(value) {
   if (!value) return ''
@@ -585,15 +741,32 @@ function handleFocusWidgetVisibility(event, visible) {
   focusWidgetVisible.value = Boolean(visible)
 }
 
+function handleKeydown(event) {
+  if (!active.value || event.code !== 'Space' || event.repeat) return
+  const target = event.target
+  if (target instanceof Element && target.closest('button, a, input, textarea, select, [role="menuitem"], [role="option"], [contenteditable="true"]')) {
+    return
+  }
+  event.preventDefault()
+  if (active.value.status === 'running') {
+    pause()
+  } else {
+    resume()
+  }
+}
+
 onMounted(async () => {
   await Promise.all([toolsStore.loadFocusState(), toolsStore.loadShellSnapshot(), loadWidgetVisibility()])
   timer = setInterval(tickDown, 1000)
   window.electronAPI?.events?.on('tools-updated', handleToolsUpdated)
   window.electronAPI?.events?.on('focus-widget-visibility', handleFocusWidgetVisibility)
+  window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  if (completedTimer) clearTimeout(completedTimer)
+  window.removeEventListener('keydown', handleKeydown)
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
   window.electronAPI?.events?.off('focus-widget-visibility', handleFocusWidgetVisibility)
 })

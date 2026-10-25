@@ -801,6 +801,10 @@
     "expansion": "Garden expansions",
     "capacity": "Capacity {count} slots",
     "streakSummary": "Streak {streak} days · {total} growth days total",
+    "sceneOrbitHint": "Drag to orbit · Scroll to zoom",
+    "growthGuide": "How growth works",
+    "growthGuideHint": "Focus, water and movement all leave growth behind.",
+    "growthProgress": "Growth",
     "nextExpansion": "Next Lv.{level}: {streak} day streak or {total} total days",
     "allExpansions": "All expansion levels unlocked",
     "placement": "Garden layout",
@@ -825,6 +829,13 @@
     "noClaims": "No pending rewards",
     "claim": "Claim",
     "claimHint": "Choose one item you do not own yet",
+    "claimAfterHint": "It joins your collection and can be placed in the garden.",
+    "reward": {
+      "title": "New in your collection",
+      "hint": "Added to your collection. Place it in the garden whenever you like.",
+      "fallback": "A garden memorial has been added to your collection.",
+      "done": "Done"
+    },
     "lastItem": "The last item will be granted directly",
     "fallback": "All items owned; you will receive a stackable garden memorial",
     "focusView": {
@@ -881,7 +892,20 @@
         "completed": "Completed",
         "cancelled": "Cancelled",
         "interrupted": "Interrupted"
-      }
+      },
+      "readyHint": "Ready",
+      "elapsed": "{minutes} min focused",
+      "remainingLabel": "Remaining",
+      "completedTitle": "Round complete",
+      "completedHint": "Stand up and move; come back in {minutes} min",
+      "spaceHint": "pause / resume",
+      "breakDurationLabel": "Break length",
+      "lastRound": "Last round",
+      "elapsedJustNow": "Just started",
+      "footerRecord": "Growth is recorded automatically",
+      "footerBreak": "5-minute break afterwards",
+      "focusFooter": "A 5-minute break starts after this round",
+      "breakFooter": "Start the next round when the break ends"
     },
     "reminder": {
       "eyebrow": "Daily rhythm",
@@ -946,6 +970,8 @@
       "windowInvalid": "End time must be after start time",
       "timesUnit": "times",
       "sessionsUnit": "rounds",
+      "timesUnitOne": "time",
+      "sessionsUnitOne": "round",
       "daySummary": "{date}: water {water}, stand {stand}, focus {focus}",
       "relativeSoon": "in less than a minute",
       "relativeMinutes": "in {minutes} min",
@@ -962,7 +988,12 @@
         "snoozed": "Snoozed",
         "expired": "Expired"
       },
-      "empty": "No reminder rules yet"
+      "empty": "No reminder rules yet",
+      "todayCareUnit": "care moments",
+      "todayFocusNote": "{count} focus rounds as well",
+      "todayFocusNoteOne": "1 focus round as well",
+      "weekCareTotal": "care moments",
+      "weekFocusTotal": "focus rounds"
     }
   },
   "focusWidget": {

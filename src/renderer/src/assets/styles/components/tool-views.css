@@ -1,4 +1,4 @@
-/* 工具页（健康提醒 / 番茄专注 / Moli 小院）的滚动区域：细滚动条，避免默认样式过于抢眼 */
+/* 工具页（健康提醒 / 番茄专注 / Moli 小院）共享版式与滚动区域 */
 
 .tool-view-scroll {
   scrollbar-width: thin;
@@ -19,4 +19,218 @@
 
 .tool-view-scroll::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/35;
+}
+
+/* 页面容器：编辑式留白，限制阅读宽度 */
+.tool-page {
+  @apply mx-auto flex w-full max-w-[1180px] flex-col gap-5 px-6 pb-14 pt-7 sm:px-8 sm:pt-8;
+}
+
+.tool-page-header {
+  @apply flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-1;
+}
+
+/* 小号说明标签：字距拉开，作为页面的节奏标记 */
+.tool-eyebrow {
+  @apply flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground;
+}
+
+.tool-eyebrow-mark {
+  @apply h-1.5 w-1.5 rounded-full bg-current;
+  box-shadow: 0 0 0 4px hsl(var(--foreground) / 0.04);
+}
+
+/* 页面主标题：大字号、紧行距，承担唯一的主视觉层级 */
+.tool-display {
+  font-size: clamp(1.9rem, 2.7vw, 2.65rem);
+  line-height: 1.04;
+  letter-spacing: -0.038em;
+  font-weight: 650;
+  color: hsl(var(--foreground));
+  text-wrap: balance;
+}
+
+.tool-lede {
+  @apply mt-2.5 max-w-[46rem] text-[13px] leading-6 text-muted-foreground;
+}
+
+.tool-label {
+  @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground;
+}
+
+.tool-metric {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.05em;
+}
+
+/* 主要表面：用极轻的层次和一条内高光替代厚重阴影 */
+.tool-surface {
+  @apply rounded-2xl border border-border/60 bg-card/55;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / 0.035),
+    0 18px 40px -34px hsl(var(--foreground) / 0.45);
+}
+
+.tool-surface-quiet {
+  @apply rounded-2xl border border-border/45 bg-card/35;
+}
+
+.tool-inset {
+  @apply rounded-xl border border-border/45 bg-background/45;
+}
+
+/* 细分割线，用于在同一表面内组织不同信息 */
+.tool-hairline {
+  background: hsl(var(--border) / 0.55);
+}
+
+/* 进入动效：轻微上浮，不改变布局 */
+@keyframes tool-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tool-reveal {
+  animation: tool-rise 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tool-reveal:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.tool-reveal:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+.tool-reveal:nth-child(4) {
+  animation-delay: 0.14s;
+}
+
+/* 柱状图：从基线生长 */
+@keyframes tool-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.tool-bar-seg {
+  transform-origin: bottom;
+  animation: tool-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tool-bar-seg:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.tool-bar-seg:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+/* 数字刻度：等宽数字避免计时与统计跳动 */
+.tool-tick {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 专注时长：按控件栏自身宽度排布，窄窗口自动回到 2×2，不挤压数字 */
+.focus-composer-column {
+  container-type: inline-size;
+}
+
+.focus-durations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@container (min-width: 20.5rem) {
+  .focus-durations {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* 喝水色：使用主题的图表色，并叠加细斜纹，避免单色主题下与专注色混淆 */
+.tool-water {
+  background-color: hsl(var(--chart-2, var(--info)));
+  background-image: repeating-linear-gradient(
+    135deg,
+    hsl(0 0% 100% / 0.28) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* 环形计时器的柔光 */
+.tool-halo {
+  background: radial-gradient(circle at center, hsl(var(--primary) / 0.1), transparent 68%);
+}
+
+.tool-halo-success {
+  background: radial-gradient(circle at center, hsl(var(--success) / 0.12), transparent 68%);
+}
+
+/* 运行中的专注背景以很慢的呼吸节奏提示“正在计时”，不产生明显位移 */
+@keyframes tool-breathe {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+}
+
+.focus-halo-live {
+  animation: tool-breathe 7s ease-in-out infinite;
+}
+
+/* 小院场景外的暗色展台，让三维场景成为主角 */
+.garden-stage {
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--foreground) / 0.06),
+    0 30px 60px -45px hsl(var(--foreground) / 0.6);
+}
+
+.garden-hud {
+  @apply rounded-full border border-white/40 bg-background/75 px-2.5 py-1 text-[10px] font-medium text-foreground backdrop-blur-md;
+  box-shadow: 0 2px 10px hsl(0 0% 0% / 0.08);
+}
+
+/* 轻量提示条：从顶部淡入，不推动布局 */
+.tool-toast-enter-active,
+.tool-toast-leave-active {
+  transition: opacity 0.24s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tool-toast-enter-from,
+.tool-toast-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-reveal,
+  .tool-bar-seg,
+  .animate-pulse {
+    animation: none;
+  }
+
+  .focus-ring-progress,
+  .tool-toast-enter-active,
+  .tool-toast-leave-active {
+    transition: none;
+  }
+
+  .focus-halo-live {
+    animation: none;
+  }
 }

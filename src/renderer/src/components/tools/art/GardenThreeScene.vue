@@ -19,7 +19,6 @@
       {{ $t('tools.sceneFallback') }}
     </p>
 
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-background/90 via-background/25 to-transparent" />
 
     <IconButton
       v-if="!failed"
@@ -32,7 +31,7 @@
     </IconButton>
 
     <div
-      v-if="plantLabel.visible && props.plant"
+      v-if="plantLabel.visible && props.plant && props.showPlantLabel"
       class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full border border-white/60 bg-background/80 px-2.5 py-1 text-[10px] font-medium text-foreground shadow-sm backdrop-blur"
       :style="{ left: `${plantLabel.x}px`, top: `${plantLabel.y}px` }"
     >
@@ -81,7 +80,8 @@ const props = defineProps({
   plant: { type: Object, default: null },
   maturedPlant: { type: Object, default: null },
   placements: { type: Array, default: () => [] },
-  layoutMode: { type: Boolean, default: false }
+  layoutMode: { type: Boolean, default: false },
+  showPlantLabel: { type: Boolean, default: true }
 })
 
 const emit = defineEmits(['remove-placement', 'move-placement'])

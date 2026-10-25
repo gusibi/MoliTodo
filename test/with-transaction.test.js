@@ -48,6 +48,30 @@ test('withTransaction rolls back every write and preserves the original error', 
   assert.deepEqual(rows, []);
 });
 
+test('withTransaction serializes concurrent transactions on the same connection', async (t) => {
+  const db = await setup(t);
+  const order = [];
+
+  const first = withTransaction(db, async () => {
+    order.push('first:start');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    await db.run("INSERT INTO items (name) VALUES ('first')");
+    order.push('first:end');
+  });
+
+  const second = withTransaction(db, async () => {
+    order.push('second:start');
+    await db.run("INSERT INTO items (name) VALUES ('second')");
+    order.push('second:end');
+  });
+
+  await Promise.all([first, second]);
+
+  assert.deepEqual(order, ['first:start', 'first:end', 'second:start', 'second:end']);
+  const rows = await db.all('SELECT name FROM items ORDER BY id');
+  assert.deepEqual(rows, [{ name: 'first' }, { name: 'second' }]);
+});
+
 test('withTransaction leaves the connection usable after a rollback', async (t) => {
   const db = await setup(t);
 

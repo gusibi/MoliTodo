@@ -801,6 +801,10 @@
     "expansion": "小院扩建",
     "capacity": "容量 {count} 格",
     "streakSummary": "连续 {streak} 天 · 累计 {total} 个成长日",
+    "sceneOrbitHint": "拖动旋转 · 滚轮缩放",
+    "growthGuide": "怎么成长",
+    "growthGuideHint": "专注、喝水与起身都会留下成长值。",
+    "growthProgress": "成长进度",
     "nextExpansion": "下一级 Lv.{level}：连续 {streak} 天或累计 {total} 天",
     "allExpansions": "已解锁全部扩建等级",
     "placement": "小院摆放",
@@ -825,6 +829,13 @@
     "noClaims": "暂无待领取奖励",
     "claim": "领取",
     "claimHint": "从当前未拥有的物品中选择一件",
+    "claimAfterHint": "领取后加入收藏，可随时摆进小院。",
+    "reward": {
+      "title": "新收藏",
+      "hint": "已加入收藏，可以随时摆进小院。",
+      "fallback": "园艺纪念 ×1 已加入收藏。",
+      "done": "收下"
+    },
     "lastItem": "最后一件物品将直接领取",
     "fallback": "全部物品已拥有，将获得可堆叠的园艺纪念",
     "focusView": {
@@ -881,7 +892,20 @@
         "completed": "已完成",
         "cancelled": "已放弃",
         "interrupted": "已中断"
-      }
+      },
+      "readyHint": "准备就绪",
+      "elapsed": "已专注 {minutes} 分钟",
+      "remainingLabel": "剩余",
+      "completedTitle": "一轮专注完成",
+      "completedHint": "起身活动一下，休息 {minutes} 分钟后回来",
+      "spaceHint": "暂停 / 继续",
+      "breakDurationLabel": "休息时长",
+      "lastRound": "上一轮专注",
+      "elapsedJustNow": "刚刚开始",
+      "footerRecord": "开始后自动记录成长",
+      "footerBreak": "完成后休息 5 分钟",
+      "focusFooter": "本轮结束后自动休息 5 分钟",
+      "breakFooter": "休息结束后可以开始下一轮"
     },
     "reminder": {
       "eyebrow": "健康节律",
@@ -946,6 +970,8 @@
       "windowInvalid": "结束时间需要晚于开始时间",
       "timesUnit": "次",
       "sessionsUnit": "轮",
+      "timesUnitOne": "次",
+      "sessionsUnitOne": "轮",
       "daySummary": "{date}：喝水 {water} 次，起身 {stand} 次，专注 {focus} 轮",
       "relativeSoon": "不到 1 分钟后",
       "relativeMinutes": "{minutes} 分钟后",
@@ -962,7 +988,12 @@
         "snoozed": "已推迟",
         "expired": "已过期"
       },
-      "empty": "还没有提醒规则"
+      "empty": "还没有提醒规则",
+      "todayCareUnit": "次照顾",
+      "todayFocusNote": "另有 {count} 轮专注",
+      "todayFocusNoteOne": "另有 1 轮专注",
+      "weekCareTotal": "次照顾",
+      "weekFocusTotal": "轮专注"
     }
   },
   "focusWidget": {
