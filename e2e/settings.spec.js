@@ -109,3 +109,21 @@ test('删除清单：统一确认、取消保留清单、确认删除', async ({
   await expect(window.getByRole('alertdialog')).toHaveCount(0);
   await expect(window.locator('.nav-item', { hasText: '旅行清单' })).toHaveCount(0);
 });
+
+test('关于页更新卡片：展示当前版本与检查入口（不触发网络请求）', async ({ app, window }) => {
+  const settings = await openSettings(app, window);
+
+  await settings.locator('.setting-nav-item', { hasText: '关于' }).click();
+
+  const version = require('../package.json').version;
+  const card = settings.locator('.about-update-card');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText(`v${version}`);
+  await expect(card.getByRole('button', { name: '立即检查' })).toBeVisible();
+  await expect(card.getByRole('button', { name: '发布页面' })).toBeVisible();
+  await expect(card).not.toContainText('发现新版本');
+
+  // 等宽窗口下按钮不应溢出卡片
+  const overflow = await card.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});

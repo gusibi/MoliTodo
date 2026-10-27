@@ -1,0 +1,73 @@
+/* 悬浮提醒卡片的持续跑马灯描边：确认前一直保持存在感。 */
+@property --moli-alert-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.moli-alert-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.moli-alert-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--moli-alert-angle),
+    transparent 0deg,
+    hsl(var(--primary) / 0.85) 28deg,
+    hsl(var(--warning) / 0.9) 52deg,
+    transparent 96deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: moli-alert-sweep 2.4s linear infinite;
+}
+
+.moli-alert-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 18px hsl(var(--primary) / 0.28);
+  animation: moli-alert-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes moli-alert-sweep {
+  to {
+    --moli-alert-angle: 360deg;
+  }
+}
+
+@keyframes moli-alert-breathe {
+  0%, 100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moli-alert-ring::before {
+    background: none;
+    border: 2px solid hsl(var(--primary) / 0.65);
+    animation: none;
+  }
+
+  .moli-alert-ring::after {
+    animation: none;
+    opacity: 0.55;
+  }
+}

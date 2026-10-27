@@ -1,6 +1,7 @@
 <template>
   <div class="reminder-popup-shell">
     <div class="reminder-popup-card">
+      <div v-if="intents.length > 0" class="moli-alert-ring" aria-hidden="true" />
       <div class="reminder-popup-glow reminder-popup-glow--primary" />
       <div class="reminder-popup-glow reminder-popup-glow--warm" />
 

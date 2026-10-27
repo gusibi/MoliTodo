@@ -132,6 +132,17 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  const dismissFocusNotice = async () => {
+    if (!available.value) return null
+    try {
+      focusState.value = await window.electronAPI.tools.dismissFocusNotice()
+      return focusState.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
   const createReminderRule = async (input) => {
     if (!available.value) return null
     loading.value = true
@@ -299,6 +310,7 @@ export const useToolsStore = defineStore('tools', () => {
     resumeFocus,
     cancelFocus,
     skipFocusBreak,
+    dismissFocusNotice,
     getClaimOptions,
     claimReward,
     plantSeed,

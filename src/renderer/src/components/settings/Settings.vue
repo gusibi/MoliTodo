@@ -8,6 +8,11 @@
           :class="{ 'setting-nav-item-active': activeCategory === category.id }" @click="activeCategory = category.id">
           <component :is="category.icon" class="setting-nav-icon" />
           {{ category.name }}
+          <span
+            v-if="category.id === 'about' && hasPendingUpdate"
+            class="ml-auto h-2 w-2 rounded-full bg-primary"
+            aria-hidden="true"
+          />
         </div>
       </nav>
     </div>
@@ -106,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { BarChart3, Bell, Bot, Database, Info, Palette, Plug, Settings as SettingsIcon } from '@lucide/vue'
 import AISettings from './AISettings.vue'
@@ -173,6 +178,13 @@ const message = reactive({
   text: '',
   type: 'info'
 })
+
+// 关于页的更新状态：有待安装的更新时在导航上给出提示
+const pendingUpdateStatus = ref('idle')
+let unsubscribeUpdateState = null
+const hasPendingUpdate = computed(() =>
+  ['available', 'downloading', 'ready'].includes(pendingUpdateStatus.value)
+)
 
 
 
@@ -347,6 +359,25 @@ onMounted(async () => {
   await loadConfig()
   await loadDatabaseStats()
   await loadTaskStats()
+
+  if (window.electronAPI && window.electronAPI.updates) {
+    unsubscribeUpdateState = window.electronAPI.updates.onStateChange((state) => {
+      pendingUpdateStatus.value = (state && state.status) || 'idle'
+    })
+    try {
+      const state = await window.electronAPI.updates.getState()
+      pendingUpdateStatus.value = (state && state.status) || 'idle'
+    } catch (error) {
+      console.error('Failed to load update state:', error)
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (unsubscribeUpdateState) {
+    unsubscribeUpdateState()
+    unsubscribeUpdateState = null
+  }
 })
 </script>
 

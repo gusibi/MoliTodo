@@ -4,7 +4,7 @@ const fsSync = require('fs');
 const path = require('path');
 
 class IpcHandlers {
-  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer, toolsRuntime = null }) {
+  constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer, toolsRuntime = null, updateService = null }) {
     this.taskService = taskService;
     this.listService = listService;
     this.notificationService = notificationService;
@@ -12,6 +12,7 @@ class IpcHandlers {
     this.taskStatusLogService = taskStatusLogService;
     this.localApiServer = localApiServer;
     this.toolsRuntime = toolsRuntime;
+    this.updateService = updateService;
 
     // 服务内部生成重复实例后，通过该钩子注册提醒
     if (typeof this.taskService.setNotificationScheduler === 'function') {
@@ -1262,8 +1263,8 @@ class IpcHandlers {
     // 应用图标更新
     ipcMain.handle('update-app-icon', async (event, iconPath) => {
       try {
-        // 解析图标路径：开发/测试相对项目根目录，生产相对安装资源目录；
-        // 另一侧目录作为回退，保证 E2E 等非打包环境也能解析到真实文件
+        // 原始 logo 只用于设置页预览，打包时不再带上；这里先定位逻辑路径，
+        // 再由 WindowManager 映射到当前平台的运行时图标。
         let fullIconPath;
 
         if (path.isAbsolute(iconPath)) {
@@ -1271,22 +1272,18 @@ class IpcHandlers {
         } else {
           const projectRootPath = path.join(__dirname, '../../', iconPath);
           const resourcesPath = path.join(process.resourcesPath, iconPath);
-
-          if (process.env.NODE_ENV === 'production') {
-            fullIconPath = fsSync.existsSync(resourcesPath) ? resourcesPath : projectRootPath;
-          } else {
-            fullIconPath = fsSync.existsSync(projectRootPath) ? projectRootPath : resourcesPath;
-          }
-        }
-
-        // 检查文件是否存在
-        try {
-          await fs.access(fullIconPath);
-        } catch (error) {
-          throw new Error(`图标文件不存在: ${fullIconPath}`);
+          fullIconPath = fsSync.existsSync(resourcesPath) ? resourcesPath : projectRootPath;
         }
 
         const runtimeIconPath = this.windowManager.resolveRuntimeAppIconPath(fullIconPath);
+
+        // 检查运行时图标是否存在（原始 logo 可能未随包发布）
+        try {
+          await fs.access(runtimeIconPath);
+        } catch (error) {
+          throw new Error(`图标文件不存在: ${runtimeIconPath}`);
+        }
+
         this.windowManager.applyAppIcon(runtimeIconPath);
 
         console.log(`应用图标已更新: ${runtimeIconPath}`);
@@ -1660,6 +1657,7 @@ class IpcHandlers {
     ipcMain.handle('tools:resume-focus', () => runtime().resumeFocus());
     ipcMain.handle('tools:cancel-focus', () => runtime().cancelFocus());
     ipcMain.handle('tools:skip-focus-break', () => runtime().skipFocusBreak());
+    ipcMain.handle('tools:dismiss-focus-notice', () => runtime().dismissFocusNotice());
     ipcMain.handle('tools:place-item', (event, inventoryId, position) => (
       runtime().placeItem(inventoryId, position)
     ));
@@ -1700,6 +1698,26 @@ class IpcHandlers {
     // 获取应用版本
     ipcMain.handle('app-get-version', () => {
       return app.getVersion();
+    });
+
+    // 应用内更新：状态查询 / 检查 / 下载 / 安装
+    ipcMain.handle('app-update-state', () => {
+      return this.updateService ? this.updateService.getState() : { status: 'unsupported' };
+    });
+
+    ipcMain.handle('app-update-check', async () => {
+      if (!this.updateService) return { status: 'unsupported' };
+      return this.updateService.check({ manual: true });
+    });
+
+    ipcMain.handle('app-update-download', async () => {
+      if (!this.updateService) return { status: 'unsupported' };
+      return this.updateService.download();
+    });
+
+    ipcMain.handle('app-update-install', async () => {
+      if (!this.updateService) return { status: 'unsupported' };
+      return this.updateService.install();
     });
 
     // 获取变更日志

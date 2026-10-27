@@ -102,8 +102,8 @@
   @apply flex items-center gap-2 mt-1 flex-wrap w-full pl-10;
 }
 
-.today-task-meta-item {
-  @apply inline-flex items-center text-muted-foreground;
+.today-task-meta .today-task-recurrence {
+  @apply text-[11px] px-1.5 py-0.5;
 }
 
 /* 行上徽标：沿用 Today 徽标语义，字号与行内元信息统一为 11px */

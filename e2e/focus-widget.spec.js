@@ -45,7 +45,7 @@ test('桌面专注小组件可以从主页面显示、快速开始、暂停并�
   });
 });
 
-test('专注完成时抖动桌面专注小组件并进入休息', async ({ app, window: page }) => {
+test('专注完成时进入持续通知模式，确认或开始下一轮后退出', async ({ app, window: page }) => {
   const sidebar = page.locator('.task-manager-sidebar');
   await sidebar.getByRole('button', { name: '番茄专注' }).click();
 
@@ -65,13 +65,34 @@ test('专注完成时抖动桌面专注小组件并进入休息', async ({ app, 
 
   await expect(widget.locator('.focus-widget-card')).toHaveClass(/focus-widget-card--shake/);
   await expect(widget.getByText('专注完成', { exact: true })).toBeVisible();
-  await expect(widget.getByText('休息 5 分钟，起身活动一下')).toBeVisible();
+  await expect(widget.getByText('本轮 25 分钟，已记入小院')).toBeVisible();
+  await expect(widget.locator('.moli-alert-ring')).toBeVisible();
   await expect(widget.locator('.focus-widget-card')).not.toHaveClass(/focus-widget-card--shake/, { timeout: 3000 });
-  await expect(widget.getByText('休息中', { exact: true })).toBeVisible({ timeout: 8000 });
 
+  // 通知保持显示，不再几秒后自动退回休息态
+  await widget.waitForTimeout(7000);
+  await expect(widget.getByText('专注完成', { exact: true })).toBeVisible();
+  await expect(widget.locator('.moli-alert-ring')).toBeVisible();
+
+  await widget.getByRole('button', { name: '进入休息', exact: true }).click();
+  await expect(widget.getByText('休息中', { exact: true })).toBeVisible();
+  await expect(widget.locator('.moli-alert-ring')).toHaveCount(0);
+
+  // 再来一轮：通知出现后点「下一轮」应直接开始新的专注
   await app.electronApp.evaluate(async () => {
     const moli = global.__moliTodoApp;
     await moli.toolsRuntime.skipFocusBreak();
+    await moli.toolsRuntime.startFocus({ plannedMinutes: 15 });
+    await moli.toolsRuntime.tickFocus(new Date(Date.now() + 16 * 60 * 1000));
+  });
+  await expect(widget.getByText('专注完成', { exact: true })).toBeVisible();
+  await widget.getByRole('button', { name: '下一轮', exact: true }).click();
+  await expect(widget.getByText('专注中', { exact: true })).toBeVisible();
+  await expect(widget.locator('.moli-alert-ring')).toHaveCount(0);
+
+  await app.electronApp.evaluate(async () => {
+    const moli = global.__moliTodoApp;
+    await moli.toolsRuntime.cancelFocus();
   });
 });
 

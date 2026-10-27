@@ -1,6 +1,6 @@
 {
   "name": "moli-todo",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "一款常驻在桌面边缘的悬浮式待办事项应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -33,48 +33,49 @@
   "author": "MoliTodo Team",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "@vitejs/plugin-vue": "^4.6.2",
-    "autoprefixer": "^10.4.21",
-    "concurrently": "^7.6.0",
-    "electron": "^28.3.3",
-    "electron-builder": "^24.9.1",
-    "electron-rebuild": "^3.2.9",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "vite": "^4.5.14",
-    "wait-on": "^7.0.1"
-  },
-  "dependencies": {
-    "@ai-sdk/anthropic": "^2.0.6",
-    "@ai-sdk/google": "^2.0.8",
-    "@ai-sdk/openai": "^2.0.19",
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/vue3": "^6.1.19",
     "@internationalized/date": "^3.12.4",
     "@lucide/vue": "^1.47.0",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@playwright/test": "^1.63.0",
+    "@vitejs/plugin-vue": "^4.6.2",
     "@vuepic/vue-datepicker": "^11.0.2",
-    "ai": "^5.0.22",
+    "autoprefixer": "^10.4.21",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "electron-store": "^8.1.0",
+    "concurrently": "^7.6.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9",
     "marked": "^16.2.1",
-    "node-schedule": "^2.1.1",
     "pinia": "^2.1.7",
+    "postcss": "^8.5.6",
     "reka-ui": "^2.10.4",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "tailwind-merge": "^2.6.1",
+    "tailwindcss": "^3.4.17",
     "three": "^0.180.0",
     "v-calendar": "^3.1.2",
+    "vite": "^4.5.14",
     "vue": "^3.3.8",
     "vue-chartjs": "^5.3.2",
     "vue-i18n": "^9.14.5",
     "vue-router": "^4.2.5",
+    "wait-on": "^7.0.1"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.6",
+    "@ai-sdk/google": "^2.0.8",
+    "@ai-sdk/openai": "^2.0.19",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ai": "^5.0.22",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.8.11",
+    "node-schedule": "^2.1.1",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "zod": "^4.1.1"
   },
   "build": {
@@ -89,14 +90,19 @@
       "src/infrastructure/**/*",
       "src/application/**/*",
       "src/renderer/dist/**/*",
-      "resources/**/*",
       "src/utils/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!node_modules/**/*.map",
+      "!node_modules/sqlite3/deps/**",
+      "!node_modules/sqlite3/src/**",
+      "!node_modules/sqlite3/build/Release/obj/**",
+      "!node_modules/sqlite3/build/deps/**"
     ],
-    "extraResources": [
+    "publish": [
       {
-        "from": "resources",
-        "to": "resources"
+        "provider": "github",
+        "owner": "gusibi",
+        "repo": "MoliTodo"
       }
     ],
     "mac": {
@@ -111,7 +117,22 @@
           "arch": "arm64"
         }
       ],
-      "icon": "resources/icon.icns"
+      "icon": "resources/icon.icns",
+      "extraResources": [
+        {
+          "from": "resources",
+          "to": "resources",
+          "filter": [
+            "**/*",
+            "!logos/*.png",
+            "!logos/windows/**",
+            "!icon.png",
+            "!icon.icns",
+            "!icon.ico",
+            "!**/.DS_Store"
+          ]
+        }
+      ]
     },
     "win": {
       "target": [
@@ -122,7 +143,22 @@
           ]
         }
       ],
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.ico",
+      "extraResources": [
+        {
+          "from": "resources",
+          "to": "resources",
+          "filter": [
+            "**/*",
+            "!logos/*.png",
+            "!logos/macos/**",
+            "!icon.png",
+            "!icon.icns",
+            "!icon.ico",
+            "!**/.DS_Store"
+          ]
+        }
+      ]
     }
   }
 }

@@ -190,6 +190,10 @@ class FocusUseCases {
         completed: true,
         breakStarted: true,
         breakCompleted: false,
+        completedSession: {
+          id: active.id,
+          plannedSeconds: active.plannedSeconds
+        },
         activity,
         state: await this.getState(instant)
       };

@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Generate platform-specific runtime icons for all selectable app logos.
+"""Generate platform-specific runtime icons and settings previews for app logos.
 
-The source images remain untouched for the settings preview. macOS assets use
-an inset, antialiased rounded-square footprint for the Dock. Windows keeps the
-source silhouette and gets a multi-size ICO so the shell can choose an exact
-size match.
+The source images in resources/logos remain untouched and are only used to derive:
+
+- resources/logos/macos: inset, antialiased rounded-square Dock icons
+- resources/logos/windows: multi-size ICO so the shell can pick an exact match
+- src/renderer/public/logos: small PNG previews for the settings logo picker
+- src/renderer/public/icon.png: small icon used in the title bar
+
+Keeping the full-resolution sources out of the shipped renderer assets saves
+about 13 MB per build.
 """
 
 from __future__ import annotations
@@ -25,6 +30,9 @@ CANVAS_SIZE = 1024
 MACOS_FOOTPRINT_SIZE = 824
 CORNER_RADIUS_RATIO = 0.225
 ANTIALIAS_SCALE = 4
+# 设置页预览最大 48px，256px 足够覆盖 2x/3x 屏幕，同时远小于 1024px 原图
+PREVIEW_SIZE = 256
+TITLEBAR_ICON_SIZE = 128
 
 
 def rounded_alpha_mask(size: int) -> Image.Image:
@@ -116,20 +124,68 @@ def generate(source_dir: Path, output_dir: Path) -> None:
         )
 
 
+def generate_previews(source_dir: Path, preview_dir: Path, titlebar_icon_path: Path) -> None:
+    preview_dir.mkdir(parents=True, exist_ok=True)
+
+    for name in (*LOGO_NAMES, *SHAPED_LOGO_NAMES):
+        source_path = source_dir / f"{name}.png"
+        if not source_path.is_file():
+            raise FileNotFoundError(f"Missing source logo: {source_path}")
+
+        prepare_source_image(source_path).resize(
+            (PREVIEW_SIZE, PREVIEW_SIZE),
+            Image.Resampling.LANCZOS,
+        ).save(
+            preview_dir / f"{name}.png",
+            format="PNG",
+            optimize=True,
+        )
+
+    icon_source = source_dir.parent / "icon.png"
+    if icon_source.is_file():
+        titlebar_icon_path.parent.mkdir(parents=True, exist_ok=True)
+        prepare_source_image(icon_source).resize(
+            (TITLEBAR_ICON_SIZE, TITLEBAR_ICON_SIZE),
+            Image.Resampling.LANCZOS,
+        ).save(
+            titlebar_icon_path,
+            format="PNG",
+            optimize=True,
+        )
+
+
 def main() -> None:
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--source-dir",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "resources" / "logos",
+        default=project_root / "resources" / "logos",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "resources" / "logos",
+        default=project_root / "resources" / "logos",
+    )
+    parser.add_argument(
+        "--preview-dir",
+        type=Path,
+        default=project_root / "src" / "renderer" / "public" / "logos",
+    )
+    parser.add_argument(
+        "--preview-icon",
+        type=Path,
+        default=project_root / "src" / "renderer" / "public" / "icon.png",
+    )
+    parser.add_argument(
+        "--skip-previews",
+        action="store_true",
+        help="Only regenerate platform runtime icons",
     )
     args = parser.parse_args()
     generate(args.source_dir, args.output_dir)
+    if not args.skip_previews:
+        generate_previews(args.source_dir, args.preview_dir, args.preview_icon)
 
 
 if __name__ == "__main__":

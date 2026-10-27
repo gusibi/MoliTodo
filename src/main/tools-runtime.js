@@ -27,6 +27,8 @@ class ToolsRuntime {
     this.tickInFlight = false;
     this.focusTickInFlight = false;
     this.focusPausedForSleep = false;
+    // 专注完成后的待确认通知：保留到用户点击「进入休息」或开始下一轮。
+    this.focusNotice = null;
     this.autoPlace = windowManager?.configStore?.get?.('tools.autoPlace', true) ?? true;
 
     this.activityRepository = new SqliteActivityRepository(db);
@@ -156,6 +158,15 @@ class ToolsRuntime {
       const result = await this.focusUseCases.tick(now);
       if (result.completed || result.breakCompleted) {
         if (result.completed) {
+          const completedAt = this.clock.now().toISOString();
+          this.focusNotice = {
+            sessionId: result.completedSession?.id ?? null,
+            completedAt,
+            minutes: Math.max(
+              1,
+              Math.round((result.completedSession?.plannedSeconds || 0) / 60)
+            )
+          };
           this.windowManager?.notifyFocusCompleted?.(result.state);
           await this.autoPlaceNewItem(result.activity?.inventoryItemId);
         }
@@ -185,11 +196,20 @@ class ToolsRuntime {
   }
 
   async getFocusState(now = this.clock.now()) {
-    return this.focusUseCases.getState(now);
+    const state = await this.focusUseCases.getState(now);
+    return { ...state, notice: this.focusNotice };
   }
 
   async startFocus(input = {}) {
     const state = await this.focusUseCases.start(input);
+    this.focusNotice = null;
+    this.broadcastToolsUpdated();
+    return state;
+  }
+
+  async dismissFocusNotice() {
+    this.focusNotice = null;
+    const state = await this.getFocusState();
     this.broadcastToolsUpdated();
     return state;
   }

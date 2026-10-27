@@ -40,7 +40,6 @@ function setup() {
     windowManager,
     reminderUseCases,
     clock,
-    expiryMs: 60 * 60 * 1000,
     onUpdated: () => { updated += 1; }
   });
   return { presenter, shown, calls, getUpdated: () => updated };
@@ -71,19 +70,6 @@ test('responding removes one row and keeps the rest visible', async () => {
     shown.at(-1).map((intent) => intent.occurrenceId),
     [1]
   );
-  assert.equal(getUpdated(), 1);
-
-  presenter.dispose();
-});
-
-test('expireAll expires every pending intent and closes the popup', async () => {
-  const { presenter, shown, calls, getUpdated } = setup();
-
-  await presenter.present([makeIntent(1), makeIntent(2)]);
-  await presenter.expireAll();
-
-  assert.deepEqual(calls, [['expire', 1], ['expire', 2]]);
-  assert.equal(shown.at(-1), 'closed');
   assert.equal(getUpdated(), 1);
 
   presenter.dispose();

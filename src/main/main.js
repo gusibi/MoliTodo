@@ -1,7 +1,8 @@
-const { app, powerMonitor } = require('electron');
+const { app, powerMonitor, BrowserWindow } = require('electron');
 const path = require('path');
 const WindowManager = require('./window-manager');
 const IpcHandlers = require('./ipc-handlers');
+const UpdateService = require('./update-service');
 const LocalApiServer = require('./local-api-server');
 const ToolsRuntime = require('./tools-runtime');
 const { createClock } = require('./clock');
@@ -34,6 +35,7 @@ class MoliTodoApp {
     this.notificationService = new NotificationService();
     this.localApiServer = null;
     this.toolsRuntime = null;
+    this.updateService = null;
     
     this.isQuitting = false;
   }
@@ -94,6 +96,17 @@ class MoliTodoApp {
       await this.localApiServer.initialize();
 
       // 初始化 IPC 处理器
+      this.updateService = new UpdateService({
+        broadcast: (channel, payload) => {
+          for (const window of BrowserWindow.getAllWindows()) {
+            if (!window.isDestroyed()) {
+              window.webContents.send(channel, payload);
+            }
+          }
+        },
+        quitApp: () => this.quit()
+      });
+
       this.ipcHandlers = new IpcHandlers({
         taskService: this.taskService,
         listService: this.listService,
@@ -101,7 +114,8 @@ class MoliTodoApp {
         windowManager: this.windowManager,
         taskStatusLogService: this.taskStatusLogService,
         localApiServer: this.localApiServer,
-        toolsRuntime: this.toolsRuntime
+        toolsRuntime: this.toolsRuntime,
+        updateService: this.updateService
       });
       this.ipcHandlers.initialize();
 
@@ -116,6 +130,15 @@ class MoliTodoApp {
 
       // 设置应用事件
       this.setupAppEvents();
+
+      // 启动后静默检查更新（仅打包版本；开发与 E2E 不访问网络）
+      if (app.isPackaged && !process.env.MOLI_E2E_USER_DATA) {
+        setTimeout(() => {
+          this.updateService.check({ manual: false }).catch((error) => {
+            console.warn('自动检查更新失败:', error);
+          });
+        }, 15000);
+      }
 
       console.log('MoliTodo Vue 应用已启动');
       

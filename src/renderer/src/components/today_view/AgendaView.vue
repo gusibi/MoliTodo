@@ -276,7 +276,7 @@ import FloatingAddButton from '../FloatingAddButton.vue'
 import TaskComposer from '../TaskComposer.vue'
 import Button from '../ui/button/Button.vue'
 import IconButton from '../ui/button/IconButton.vue'
-import { isLegacyRecurringDateInstance, localDateKey } from '../../utils/task-time-rules.js'
+import { localDateKey } from '../../utils/task-time-rules.js'
 import { addDaysToKey, todayTaskIdentity } from '../../utils/today-agenda.js'
 import { localeCode } from '../../utils/locale-format.js'
 
@@ -395,9 +395,6 @@ function friendlyDateLabel(key) {
 
 function cardBadges(task, group) {
   const badges = []
-  if (isLegacyRecurringDateInstance(task)) {
-    badges.push({ text: t('today.badge.recurring'), tone: 'muted' })
-  }
   // 日期型 Deadline 在日期 section 中显示"当天截止"，不伪造具体时刻
   if (group === 'date' && task.dueDate && !task.dueTime) {
     badges.push({ text: t('today.badge.dueDateOnly'), tone: 'warning' })
@@ -416,7 +413,8 @@ function cardBadges(task, group) {
     if (startKey !== props.todayKey) badges.push({ text: t('today.badge.scheduledElsewhere'), tone: 'muted' })
   }
   const list = taskStore.getListById(task.listId)
-  if (list) badges.push({ text: list.name, tone: 'list', color: list.color })
+  const redundantRecurringLabel = (task.recurrence || task.seriesId) && list?.name === t('today.badge.recurring')
+  if (list && !redundantRecurringLabel) badges.push({ text: list.name, tone: 'list', color: list.color })
   return badges
 }
 

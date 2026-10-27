@@ -2,9 +2,10 @@
   <div class="focus-widget-shell">
     <div
       class="focus-widget-card group"
-      :class="{ 'focus-widget-card--shake': isShaking }"
+      :class="{ 'focus-widget-card--shake': isShaking, 'focus-widget-card--notify': Boolean(notice) }"
       style="-webkit-app-region: drag"
     >
+      <div v-if="notice" class="moli-alert-ring" aria-hidden="true" />
       <div class="focus-widget-glow focus-widget-glow--primary" />
       <div class="focus-widget-glow focus-widget-glow--warm" />
 
@@ -29,14 +30,34 @@
       </header>
 
       <Transition name="widget-swap" mode="out-in">
-        <div v-if="justCompleted" key="completed" class="relative z-10 mt-1.5 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
-          <span class="flex h-11 w-11 items-center justify-center rounded-full bg-success/10 text-success ring-1 ring-inset ring-success/20">
-            <Check class="h-5 w-5" :stroke-width="2.5" aria-hidden="true" />
+        <div v-if="notice" key="notice" class="relative z-10 mt-1 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success/10 text-success ring-1 ring-inset ring-success/20">
+            <Check class="h-4 w-4" :stroke-width="2.5" aria-hidden="true" />
           </span>
-          <p class="mt-2 text-base font-semibold text-foreground">{{ $t('focusWidget.completedTitle') }}</p>
+          <p class="mt-1.5 text-sm font-semibold text-foreground">{{ $t('focusWidget.noticeTitle') }}</p>
           <p class="mt-0.5 text-[10px] text-muted-foreground">
-            {{ $t('focusWidget.completedHint') }}
+            {{ $t('focusWidget.noticeHint', { minutes: notice.minutes }) }}
           </p>
+          <div class="no-drag mt-2 flex items-center justify-center gap-1.5">
+            <Button
+              size="sm"
+              class="h-7 rounded-full px-2.5 text-[10px]"
+              :disabled="starting"
+              @click="nextRound"
+            >
+              <RotateCw class="h-3 w-3" aria-hidden="true" />
+              {{ $t('focusWidget.noticeNext') }}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              class="h-7 rounded-full px-2.5 text-[10px]"
+              :disabled="starting"
+              @click="dismissNotice"
+            >
+              {{ $t('focusWidget.noticeDismiss') }}
+            </Button>
+          </div>
         </div>
 
         <div v-else-if="active" key="active" class="relative z-10 mt-1.5 flex min-h-0 flex-1 flex-col">
@@ -179,7 +200,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowUpRight, Check, Pause, Play, Timer, X } from '@lucide/vue'
+import { ArrowUpRight, Check, Pause, Play, RotateCw, Timer, X } from '@lucide/vue'
 import { useToolsStore } from '@/store/toolsStore'
 import Button from '@/components/ui/button/Button.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
@@ -193,12 +214,11 @@ const error = ref('')
 const remaining = ref(0)
 const tasks = ref([])
 const isShaking = ref(false)
-const justCompleted = ref(false)
 let timer = null
 let shakeTimer = null
-let completionTimer = null
 
 const active = computed(() => toolsStore.focusState?.active || null)
+const notice = computed(() => toolsStore.focusState?.notice || null)
 const isBreak = computed(() => active.value?.phase === 'break')
 const activeTask = computed(() => {
   if (!active.value?.linkedTaskId) return null
@@ -292,6 +312,29 @@ async function skipBreak() {
   }
 }
 
+async function dismissNotice() {
+  error.value = ''
+  try {
+    await toolsStore.dismissFocusNotice()
+  } catch (err) {
+    error.value = err.message
+  }
+}
+
+async function nextRound() {
+  error.value = ''
+  const minutes = notice.value?.minutes || selectedMinutes.value
+  starting.value = true
+  try {
+    await toolsStore.dismissFocusNotice()
+    await toolsStore.startFocus({ plannedMinutes: minutes, linkedTaskId: null })
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    starting.value = false
+  }
+}
+
 async function openFocus() {
   try {
     await window.electronAPI.tools.openFocus()
@@ -313,7 +356,8 @@ function handleToolsUpdated() {
   loadTasks()
 }
 
-// 专注结束：主进程发送事件后抖动小组件，并短暂展示「专注完成」状态。
+// 专注结束：主进程发送事件后抖动小组件，并进入持续通知模式。
+// 通知由主进程 focusState.notice 持有，用户点「进入休息」或「下一轮」后才消失。
 function handleFocusCompleted() {
   if (shakeTimer) clearTimeout(shakeTimer)
   isShaking.value = false
@@ -325,12 +369,7 @@ function handleFocusCompleted() {
     }, 1400)
   })
 
-  if (completionTimer) clearTimeout(completionTimer)
-  justCompleted.value = true
-  completionTimer = setTimeout(() => {
-    justCompleted.value = false
-    completionTimer = null
-  }, 6000)
+  toolsStore.loadFocusState()
 }
 
 onMounted(async () => {
@@ -343,7 +382,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   if (shakeTimer) clearTimeout(shakeTimer)
-  if (completionTimer) clearTimeout(completionTimer)
   window.electronAPI?.events?.off('tools-updated', handleToolsUpdated)
   window.electronAPI?.events?.off('focus-completed', handleFocusCompleted)
 })
@@ -363,6 +401,10 @@ onUnmounted(() => {
     0 18px 40px -24px rgba(0, 0, 0, 0.55),
     0 2px 10px -2px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 hsl(var(--card) / 0.7);
+}
+
+.focus-widget-card--notify {
+  border-color: hsl(var(--primary) / 0.3);
 }
 
 .focus-widget-card::after {

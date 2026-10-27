@@ -202,7 +202,8 @@ test('旧日期型重复实例不伪造 00:00', async ({ app, window }) => {
   await expect(card).toBeVisible();
   // 不显示 00:00 的伪造开始时刻
   await expect(card).not.toContainText('00:00');
-  await expect(card.locator('.flat-task-badge', { hasText: '重复任务' })).toBeVisible();
+  await expect(card.getByText('每天', { exact: true })).toBeVisible();
+  await expect(card.getByText('重复任务', { exact: true })).toHaveCount(0);
 });
 
 test('窄窗口隐藏常驻日历并提供抽屉', async ({ app, window }) => {
@@ -1360,7 +1361,7 @@ test('备注与循环图标在行上展示', async ({ app, window }) => {
   // 备注以第二行灰色文字展示
   await expect(row.locator('.today-task-note')).toContainText('这是备注内容');
   // 循环任务保留重复图标并有悬浮说明
-  await expect(row.locator('.today-task-meta-item')).toBeVisible();
+  await expect(row.getByTitle('每天', { exact: true })).toBeVisible();
 });
 
 test('展开态仍显示进行中耗时', async ({ app, window }) => {

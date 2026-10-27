@@ -125,6 +125,7 @@ test('a completed focus starts a five-minute break without writing extra growth'
   const completed = await focusUseCases.tick();
 
   assert.equal(completed.breakStarted, true);
+  assert.equal(completed.completedSession.plannedSeconds, 15 * 60);
   assert.equal(completed.state.active.phase, 'break');
   assert.equal(completed.state.active.plannedSeconds, 300);
   assert.equal(completed.state.active.remainingSeconds, 300);

@@ -133,6 +133,7 @@ const electronAPI = {
     resumeFocus: () => ipcRenderer.invoke('tools:resume-focus'),
     cancelFocus: () => ipcRenderer.invoke('tools:cancel-focus'),
     skipFocusBreak: () => ipcRenderer.invoke('tools:skip-focus-break'),
+    dismissFocusNotice: () => ipcRenderer.invoke('tools:dismiss-focus-notice'),
     placeItem: (inventoryId, position) => ipcRenderer.invoke('tools:place-item', inventoryId, position),
     moveItem: (inventoryId, position) => ipcRenderer.invoke('tools:move-item', inventoryId, position),
     removePlacement: (inventoryId) => ipcRenderer.invoke('tools:remove-placement', inventoryId),
@@ -154,6 +155,19 @@ const electronAPI = {
     getInfo: () => ipcRenderer.invoke('app-get-info'),
     openExternal: (url) => ipcRenderer.invoke('app-open-external', url),
     setAutoStart: (enabled) => ipcRenderer.invoke('app-set-auto-start', enabled)
+  },
+
+  // 应用更新 API
+  updates: {
+    getState: () => ipcRenderer.invoke('app-update-state'),
+    check: () => ipcRenderer.invoke('app-update-check'),
+    download: () => ipcRenderer.invoke('app-update-download'),
+    install: () => ipcRenderer.invoke('app-update-install'),
+    onStateChange: (callback) => {
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('app-update-state', listener);
+      return () => ipcRenderer.removeListener('app-update-state', listener);
+    }
   },
 
   // 事件监听 API

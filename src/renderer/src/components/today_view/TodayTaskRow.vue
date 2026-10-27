@@ -62,10 +62,10 @@
           <!-- 循环任务（模板或实例）：显示重复规则摘要 -->
           <span
             v-if="task.recurrence || task.seriesId"
-            class="today-task-meta-item gap-1"
+            class="flat-task-recurring-icon today-task-recurrence gap-1"
             :title="recurrenceSummary || $t('today.badge.recurring')"
           >
-            <Repeat class="h-2.5 w-2.5" aria-hidden="true" />
+            <Repeat class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span v-if="recurrenceSummary">{{ recurrenceSummary }}</span>
             <span v-else class="sr-only">{{ $t('today.badge.recurring') }}</span>
           </span>

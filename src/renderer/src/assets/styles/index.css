@@ -4,6 +4,7 @@
 @import './components/ui.css';
 @import './settings.css';
 @import './components/floating-icon.css';
+@import './components/attention-ring.css';
 @import './components/task-panel.css';
 @import './components/task-manager.css';
 @import './components/task-list.css';

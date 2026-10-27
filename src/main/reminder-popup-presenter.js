@@ -1,6 +1,7 @@
 /**
  * 提醒弹窗适配器。
- * 维护最多 3 条 PopupIntent，45 秒无操作全部过期；真正的窗口由 WindowManager 创建。
+ * 维护最多 3 条 PopupIntent，弹窗保持显示直到用户确认、稍后或跳过；
+ * 真正的窗口由 WindowManager 创建。
  */
 class ReminderPopupPresenter {
   constructor({
@@ -8,7 +9,6 @@ class ReminderPopupPresenter {
     reminderUseCases,
     clock,
     maxQueue = 3,
-    expiryMs = 45 * 1000,
     onUpdated = () => {},
     onShown = () => {}
   }) {
@@ -16,11 +16,9 @@ class ReminderPopupPresenter {
     this.reminderUseCases = reminderUseCases;
     this.clock = clock;
     this.maxQueue = maxQueue;
-    this.expiryMs = expiryMs;
     this.onUpdated = onUpdated;
     this.onShown = onShown;
     this.queue = [];
-    this.expiryTimer = null;
   }
 
   has(occurrenceId) {
@@ -66,25 +64,7 @@ class ReminderPopupPresenter {
       return;
     }
     this.windowManager.showReminderPopup(this.queue.map((intent) => this.serialize(intent)));
-    this.startExpiry();
     this.onShown();
-  }
-
-  startExpiry() {
-    this.clearExpiry();
-    this.expiryTimer = setTimeout(() => {
-      this.expireAll().catch((error) => {
-        console.error('提醒弹窗自动过期失败:', error);
-      });
-    }, this.expiryMs);
-    if (this.expiryTimer.unref) this.expiryTimer.unref();
-  }
-
-  clearExpiry() {
-    if (this.expiryTimer) {
-      clearTimeout(this.expiryTimer);
-      this.expiryTimer = null;
-    }
   }
 
   async respond(occurrenceId, action) {
@@ -102,36 +82,16 @@ class ReminderPopupPresenter {
     return result;
   }
 
-  async expireAll() {
-    const pending = this.queue;
-    this.queue = [];
-    this.clearExpiry();
-
-    for (const intent of pending) {
-      try {
-        await this.reminderUseCases.expireOccurrence(intent.occurrence.id, this.clock.now());
-      } catch (error) {
-        console.error('提醒实例过期失败:', error);
-      }
-    }
-
-    this.windowManager.closeReminderPopup();
-    await this.onUpdated();
-  }
-
   close() {
-    this.clearExpiry();
     this.windowManager.closeReminderPopup();
   }
 
   reset() {
-    this.clearExpiry();
     this.queue = [];
     this.windowManager.closeReminderPopup();
   }
 
   dispose() {
-    this.clearExpiry();
     this.queue = [];
     this.windowManager.closeReminderPopup();
   }
