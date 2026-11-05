@@ -37,8 +37,32 @@ import '@/assets/styles/components/floating-icon.css'
 const { locale } = useI18n()
 const taskStore = useTaskStore()
 const taskCount = computed(() => taskStore.tasks.filter(task => task.status !== 'done' && task.status !== 'deleted' && taskStore.isTodayTask(task)).length)
-const { pendingReminders } = usePendingReminders()
+const { pendingReminders, dismissReminders } = usePendingReminders()
 const isAlert = computed(() => pendingReminders.value.length > 0)
+
+// 闹钟角标清除：悬停悬浮球 1 秒视为已知晓，把当前待处理提醒标记为已读。
+// 只清除悬停时刻已存在的提醒，悬停期间新到期的提醒仍会点亮闹钟。
+let alertHoverTimer = null
+const startAlertDismiss = () => {
+  if (!isAlert.value || alertHoverTimer) return
+  alertHoverTimer = setTimeout(() => {
+    alertHoverTimer = null
+    if (isHovering.value && !isDragging.value && pendingReminders.value.length) {
+      dismissReminders([...pendingReminders.value])
+    }
+  }, 1000)
+}
+const cancelAlertDismiss = () => {
+  if (alertHoverTimer) {
+    clearTimeout(alertHoverTimer)
+    alertHoverTimer = null
+  }
+}
+
+// 悬停期间提醒才到期时，同样启动清除计时
+watch(isAlert, (alert) => {
+  if (alert && isHovering.value) startAlertDismiss()
+})
 
 // 头带星期：跟随应用语言（zh=周五 / en=Fri），跨天自动刷新
 const calendarWeekday = ref('')
@@ -134,6 +158,8 @@ const handleClick = () => {
 const handleMouseEnter = () => {
   isHovering.value = true
 
+  startAlertDismiss()
+
   // 清除隐藏定时器
   if (hideTimeout) {
     clearTimeout(hideTimeout)
@@ -158,6 +184,7 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
   // console.log('鼠标离开悬浮图标')
   isHovering.value = false
+  cancelAlertDismiss()
 
   // 清除悬停定时器
   if (hoverTimeout) {
@@ -223,6 +250,7 @@ const handleMouseDown = (event) => {
 
   isDragging.value = true
   dragStartPos.value = { x: event.screenX, y: event.screenY }
+  cancelAlertDismiss()
 
   // 阻止显示面板的定时器
   if (hoverTimeout) {
@@ -503,6 +531,7 @@ onUnmounted(() => {
     clearTimeout(shakeTimer)
     shakeTimer = null
   }
+  cancelAlertDismiss()
 
   // 清理事件监听器
   window.electronAPI.events.removeAllListeners('tasks-updated')

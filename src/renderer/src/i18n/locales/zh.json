@@ -709,7 +709,7 @@
     "completed": "完成"
   },
   "floatView": {
-    "reminderState": "有待处理提醒",
+    "reminderState": "有待处理提醒，悬停片刻可清除",
     "pendingState": "今天剩余 {count} 个任务",
     "clearedState": "今天已清空",
     "pendingReminders": "{count} 个待处理提醒",

@@ -709,7 +709,7 @@
     "unknown": "Unknown Category"
   },
   "floatView": {
-    "reminderState": "Pending reminders",
+    "reminderState": "Pending reminders — hover to clear",
     "pendingState": "{count} tasks remaining today",
     "clearedState": "Today is clear",
     "pendingReminders": "{count} pending reminders",
