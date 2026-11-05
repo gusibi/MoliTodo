@@ -1,25 +1,31 @@
-# MCP Implementation Progress
+# Progress — 全面修复（2026-11-05）
 
-## 2026-07-30
+## 会话日志
+- [2026-11-05] 三路 review 完成（任务核心/主进程/渲染层）+ 仓库卫生检查，输出分级报告
+- [2026-11-05] 计划文件创建，Phase 0 开始
+- [2026-11-05] Phase 0 + Phase 1 完成：GROUND_Y TDZ、pause/paused 统一、墓碑过滤、循环任务事务 + v10 唯一索引迁移、迁移恢复句柄、updateStatus 支持暂停
+- [2026-11-05] Phase 2 完成：openExternal 协议白名单、API Bearer token + host 127.0.0.1 + 1MB body、统一 _createBrowserWindow、macOS 更新 sha512 校验
+- [2026-11-05] Phase 3 完成：save() 原子 upsert、_pendingStatusLog 局部化、override 批量查询、UTC→本地时区分桶、专注心跳按需、before-quit 幂等清理、preload 白名单、taskStore 补丁式更新
+- [2026-11-05] Phase 4 完成：死代码删除（task-edit-utils、unused/ 11 文件、仓储 12 方法、Task.getCategories、task-utils 3 函数、createTrayIconWithBadge）；纠正 2 个 review 误报（searchTasks、isToday 保留）
+- [2026-11-05] Phase 5 完成：FlatTaskList（tasks.flatList.*）、TaskEditVertical（tasks.editor.* + Intl.DateTimeFormat 日期）、ColorThemeSwitcher/ThemeSwitcher（settings.colorThemes.*）；npm test 265 通过 + build:renderer 通过
+- [2026-11-05] Phase 6 完成：default-config.js 共用默认配置（修复 size 60/50 漂移）、toolsStore callTools 封装 21 方法、taskStore matchesCategory 谓词 + 排序比较器合一
+- [2026-11-05] Phase 7 完成（含两项计划修正）：4 份过程文档移入 docs/archive/、exapmle→example；screenshots 保持跟踪（README 引用）、devDeps 归位跳过（打包风险）；.gitignore 追加撤销（规划文件已被有意跟踪）
+- [2026-11-05] Phase 8 完成：npm test 265 pass / 0 fail；build:renderer 通过。全部修复结束，未提交 git
 
-- Audited the existing Local API, task domain module, list module, notification integration, package metadata, and API documentation.
-- Confirmed the requested task capabilities largely exist.
-- Started runtime and MCP SDK compatibility audit.
-- Added the shared `TaskUseCases` module and initial unit tests.
-- Unified completion tracking/recurrence logic and added due date/time editing.
-- Added the stateless Streamable HTTP MCP adapter with nine task/project tools.
-- Refactored Local API task routes onto the shared use-case module and added single-task retrieval.
-- Added localhost Host-header validation, narrowed CORS, settings UI endpoint display, and MCP documentation.
-- Protocol integration test connects with the official MCP client, discovers all tools, and invokes `stop_task` successfully.
-- Expanded protocol verification to create, edit, start, stop, complete, and delete tool calls.
-- All 6 tests pass; the Vite production renderer build passes.
-- Confirmed the MCP SDK loads under Electron 28's bundled Node 18.18.2 runtime.
+## Errors Encountered
+| Error | Attempt | Resolution |
+|-------|---------|------------|
+| withTransaction is not a function（测试 stub 仓储） | 1 | TaskService._runInTransaction 检测降级 |
+| 迁移测试断言版本 9 | 1 | 断言更新为 10 |
+| 唯一索引未生效 | 2 | migration_003 已有同名非唯一索引，IF NOT EXISTS 跳过；v10 先 DROP 再建 |
+| v10 测试插入重复数据被索引拦截 / 降级后仍被拦截 | 2 | 测试先降级再插数据；downgrade 时 DROP 索引 |
 
-## 2026-10-13 重复任务与悬浮窗口修复
-- 新增回归检查先失败（当天实例、Today 分组、主窗到悬浮面板同步）；修复验证进行中。
-- 针对性 35 检查和悬浮同步 E2E 已通过；实际 UI 时刻保存检查通过，测试选择器已按真实分组/控件文案修正。
-- 60 项相关单元检查通过。全量 127 项：126 通过，1 项固定过期 AI 提醒测试失败（未修改模块）。
-- 4 项新增重复时间 Electron 场景通过；悬浮窗口原有 14 场景及重复选择器检查也通过。
-- 最后 11 项相关 Electron E2E 全部通过；最新输入样式构建通过并重跑 4 项重复时间检查通过。
-- 截图保存在 .scratch/recurring-task-fixes；详细结果见 doc/recurring-task-fixes-acceptance.md。
-- 后续日期弹窗问题：选择开始/结束先保存本地选择，关闭时提交。先复现失败后新场景通过，相关回归首次 7 通过、1 失败：重复开关保存正确但编辑器显示旧状态；修正同步后 8 项通过。
+## 测试记录
+| 时间 | 命令 | 结果 |
+|------|------|------|
+| 2026-11-05 | npm test（基线） | 263 pass / 0 fail |
+| 2026-11-05 | npm test（Phase 0+1 后） | 265 pass / 0 fail |
+| 2026-11-05 | npm test（Phase 5 后） | 265 pass / 0 fail |
+| 2026-11-05 | npm run build:renderer（Phase 5 后） | 通过（4.99s） |
+| 2026-11-05 | npm test（Phase 6/7 后） | 265 pass / 0 fail |
+| 2026-11-05 | npm test + build:renderer（Phase 8 终验） | 265 pass / 0 fail；构建通过 |
