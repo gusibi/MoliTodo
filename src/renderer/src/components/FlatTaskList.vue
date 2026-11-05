@@ -14,24 +14,24 @@
       <!-- 加载状态 -->
       <div v-if="loading" class="flat-task-list-loading-state">
         <LoaderCircle class="h-icon-lg w-icon-lg animate-spin" aria-hidden="true" />
-        <p>加载中...</p>
+        <p>{{ t('tasks.flatList.loading') }}</p>
       </div>
 
       <!-- 空状态 -->
       <div v-else-if="!tasks || tasks.length === 0" class="flat-task-list-empty-state">
         <div class="flat-task-list-empty-icon">📝</div>
-        <div class="flat-task-list-empty-text">暂无任务</div>
+        <div class="flat-task-list-empty-text">{{ t('tasks.flatList.emptyTitle') }}</div>
         <div class="flat-task-list-empty-suggestion">
-          <p>开始创建您的第一个任务吧！</p>
+          <p>{{ t('tasks.flatList.emptyIntro') }}</p>
           <ul>
-            <li>• 点击上方输入框添加任务</li>
-            <li>• 使用 <kbd>Ctrl + Enter</kbd> 创建任务</li>
-            <li>• 设置截止日期和提醒</li>
-            <li>• 开始高效管理您的时间</li>
+            <li>• {{ t('tasks.flatList.emptyTipInput') }}</li>
+            <li>• {{ t('tasks.flatList.emptyTipShortcut') }}</li>
+            <li>• {{ t('tasks.flatList.emptyTipDeadline') }}</li>
+            <li>• {{ t('tasks.flatList.emptyTipManage') }}</li>
           </ul>
         </div>
         <div class="flat-task-list-empty-hint">
-          💡 提示：您可以使用快捷键 {{ getShortcutText('add') }} 快速添加任务
+          {{ t('tasks.flatList.emptyHint', { shortcut: getShortcutText('add') }) }}
         </div>
       </div>
 
@@ -67,7 +67,7 @@
                   <Trash2 class="h-icon-sm w-icon-sm" />
                 </IconButton>
                 <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
-                  已选 {{ getGroupSelectedCount(group) }}
+                  {{ t('tasks.flatList.selectedCount', { count: getGroupSelectedCount(group) }) }}
                 </span>
                 <!-- 全选按钮固定在最右边 -->
                 <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
@@ -100,7 +100,7 @@
                   <Trash2 class="h-icon-sm w-icon-sm" />
                 </IconButton>
                 <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
-                  已选 {{ getGroupSelectedCount(group) }}
+                  {{ t('tasks.flatList.selectedCount', { count: getGroupSelectedCount(group) }) }}
                 </span>
                 <!-- 全选按钮固定在最右边 -->
                 <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
@@ -118,12 +118,12 @@
             <div class="flat-task-group-select-actions" @click.stop>
               <!-- 删除按钮和已选数量放在左边 -->
               <IconButton v-if="getGroupSelectedCount(group) > 0" size="icon-sm"
-                class="flat-task-group-delete-btn" :label="'删除选中任务'"
+                class="flat-task-group-delete-btn" :label="t('tasks.flatList.deleteSelected')"
                 @click="requestBatchDelete(group, $event)">
                 <Trash2 class="h-icon-sm w-icon-sm" />
               </IconButton>
               <span v-if="getGroupSelectedCount(group) > 0" class="flat-task-group-selected-info">
-                已选 {{ getGroupSelectedCount(group) }}
+                {{ t('tasks.flatList.selectedCount', { count: getGroupSelectedCount(group) }) }}
               </span>
               <!-- 全选按钮固定在最右边 -->
               <button class="flat-task-group-select-btn" :class="getGroupSelectState(group)"
@@ -154,7 +154,7 @@
         <!-- 主输入区域 -->
         <div class="flat-task-list-main-input">
           <div class="flat-task-list-input-wrapper">
-            <textarea v-model="newTaskContent" class="flat-task-list-textarea" placeholder="添加新任务..." rows="1"
+            <textarea v-model="newTaskContent" class="flat-task-list-textarea" :placeholder="t('tasks.flatList.inputPlaceholder')" rows="1"
               maxlength="200" @keypress.enter.prevent="addTask" ref="quickAddInput"></textarea>
 
             <!-- 输入框内部控制区域 -->
@@ -179,12 +179,12 @@
                 <!-- 任务拆分选项 -->
                 <button @click="shouldSplitTask = !shouldSplitTask"
                   :class="['flat-task-list-split-btn', { 'active': shouldSplitTask }]"
-                  :title="shouldSplitTask ? '关闭拆分任务：AI 生成的详细步骤会放在步骤中' : '打开拆分任务：AI 会将任务拆分生成多个任务'">
+                  :title="shouldSplitTask ? t('tasks.flatList.splitTitleOn') : t('tasks.flatList.splitTitleOff')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
-                  <span class="flat-task-list-split-text">拆分</span>
+                  <span class="flat-task-list-split-text">{{ t('tasks.flatList.split') }}</span>
                 </button>
               </div>
 
@@ -475,7 +475,7 @@ const handleTaskSelectionConfirm = async (selectionData) => {
           isStreamingReport.value = false
           console.log('[FlatTaskList] 最终报告长度:', result.report.length)
         } else {
-          reportError.value = result.error || '生成报告失败'
+          reportError.value = result.error || t('tasks.flatList.reportFailed')
           isStreamingReport.value = false
           console.error('[FlatTaskList] 报告生成失败:', result.error)
         }
@@ -483,7 +483,7 @@ const handleTaskSelectionConfirm = async (selectionData) => {
       // onError 回调
       (error) => {
         console.error('[FlatTaskList] 报告生成错误:', error)
-        reportError.value = error.error || '生成报告时发生未知错误'
+        reportError.value = error.error || t('tasks.flatList.reportUnknownError')
         isStreamingReport.value = false
       }
     )
@@ -492,7 +492,7 @@ const handleTaskSelectionConfirm = async (selectionData) => {
 
   } catch (error) {
     console.error('[FlatTaskList] 生成报告异常:', error)
-    reportError.value = error.message || '生成报告时发生未知错误'
+    reportError.value = error.message || t('tasks.flatList.reportUnknownError')
     isStreamingReport.value = false
   } finally {
     isGeneratingReport.value = false
@@ -561,7 +561,7 @@ const groupedTasks = computed(() => {
   allTasks.forEach(task => {
     const listId = task.listId || task.list_id || 0
     const list = taskStore.getListById(listId)
-    const listName = list ? list.name : '未知清单'
+    const listName = list ? list.name : t('tasks.flatList.unknownList')
     const listIcon = list ? list.icon : 'list'
     const listColor = list ? list.color : '#007AFF'
 
@@ -824,18 +824,18 @@ const getGroupSelectLabel = (group) => {
   const selectedCount = getGroupSelectedCount(group)
   const totalCount = group.tasks?.length || 0
 
-  if (mode === 'none') return '多选'
-  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return '全选'
-  return '多选'
+  if (mode === 'none') return t('tasks.flatList.multiSelect')
+  if (mode === 'all' || (selectedCount === totalCount && totalCount > 0)) return t('tasks.flatList.selectAll')
+  return t('tasks.flatList.multiSelect')
 }
 
 // 获取分组选择按钮的提示
 const getGroupSelectTooltip = (group) => {
   const mode = groupSelectModes.value.get(group.id) || 'none'
 
-  if (mode === 'none') return '点击进入多选模式'
-  if (mode === 'all') return '点击取消全选'
-  return '点击全选，再点击退出多选'
+  if (mode === 'none') return t('tasks.flatList.tooltipMulti')
+  if (mode === 'all') return t('tasks.flatList.tooltipAll')
+  return t('tasks.flatList.tooltipSelect')
 }
 
 // 循环切换分组选择状态：none -> select -> all -> none

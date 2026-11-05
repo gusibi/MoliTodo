@@ -237,21 +237,9 @@ class MoliTodoApp {
 
     // 处理应用即将退出事件（Cmd+Q, Alt+F4 等）
     app.on('before-quit', (event) => {
-      if (!this.isQuitting) {
-        this.isQuitting = true;
-        this.notificationService.clearAllSchedules();
-        if (this.toolsRuntime) {
-          this.toolsRuntime.dispose();
-        }
-        if (this.localApiServer) {
-          this.localApiServer.dispose().catch(console.error);
-        }
-        
-        // 清理所有窗口但不重复调用 app.quit()
-        if (this.windowManager) {
-          this.windowManager.cleanup();
-        }
-      }
+      // 无条件执行且幂等：无论从哪条路径退出（菜单/托盘/系统），
+      // 定时器、通知调度与本地服务都必须被清理一次且仅一次
+      this._performCleanup();
     });
 
     // 处理应用激活事件（macOS dock 点击等）
@@ -350,11 +338,25 @@ class MoliTodoApp {
   // 添加方法供 WindowManager 调用来退出应用
   quit() {
     this.isQuitting = true;
+    app.quit();
+  }
+
+  _performCleanup() {
+    if (this._cleanedUp) return;
+    this._cleanedUp = true;
+    this.isQuitting = true;
     this.notificationService.clearAllSchedules();
+    if (this.toolsRuntime) {
+      this.toolsRuntime.dispose();
+    }
     if (this.localApiServer) {
       this.localApiServer.dispose().catch(console.error);
     }
-    app.quit();
+
+    // 清理所有窗口但不重复调用 app.quit()
+    if (this.windowManager) {
+      this.windowManager.cleanup();
+    }
   }
 }
 

@@ -11,7 +11,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 9; // 树挪入林间层（不占院落容量）
+    this.targetVersion = 10; // 循环实例唯一索引（防重复物化）
   }
 
   /**
@@ -41,8 +41,12 @@ class DatabaseMigration {
           console.log('数据库迁移完成');
         } catch (error) {
           console.error('数据库迁移失败，尝试恢复备份:', error);
-          await this.restoreFromBackup(backupPath);
-          throw error;
+          const restored = await this.restoreFromBackup(backupPath);
+          if (!restored) {
+            throw error;
+          }
+          // 恢复成功：连接已重新打开，继续使用迁移前的数据，不中断应用启动
+          console.warn('已从备份恢复，应用将继续使用迁移前的数据版本');
         }
       } else {
         console.log('数据库版本已是最新，无需迁移');
@@ -51,6 +55,9 @@ class DatabaseMigration {
       console.error('数据库迁移检查失败:', error);
       throw error;
     }
+
+    // 返回当前连接：restoreFromBackup 重开过连接时，调用方需要采用新句柄
+    return this.db;
   }
 
   /**
@@ -141,6 +148,11 @@ class DatabaseMigration {
         version: 9,
         description: '树挪入林间层（不占院落容量）',
         migrate: () => this.migration_009_move_trees_to_orchard()
+      },
+      {
+        version: 10,
+        description: '循环任务实例唯一索引（防重复物化）',
+        migrate: () => this.migration_010_unique_series_occurrence()
       }
     ];
 
@@ -148,13 +160,11 @@ class DatabaseMigration {
     await this.db.exec('BEGIN TRANSACTION');
 
     try {
-      for (let i = fromVersion; i < this.targetVersion; i++) {
-        const migration = migrations[i];
-        if (migration) {
-          console.log(`执行迁移 ${migration.version}: ${migration.description}`);
-          await migration.migrate();
-          await this.updateVersion(migration.version, migration.description);
-        }
+      for (const migration of migrations) {
+        if (migration.version <= fromVersion) continue;
+        console.log(`执行迁移 ${migration.version}: ${migration.description}`);
+        await migration.migrate();
+        await this.updateVersion(migration.version, migration.description);
       }
 
       // 提交事务
@@ -611,6 +621,53 @@ class DatabaseMigration {
     console.log(`已把 ${count} 个树的摆放移入林间层`);
   }
 
+  /**
+   * 迁移 010: 为循环任务实例加 (series_id, occurrence_date) 唯一部分索引。
+   * 先清理历史上因中断重试产生的重复物化实例（每组保留最早创建的一行），
+   * 再建唯一索引，防止完成重试等竞态再次写入重复实例。
+   */
+  async migration_010_unique_series_occurrence() {
+    console.log('执行迁移: 循环任务实例唯一索引');
+
+    const dupRows = await this.db.all(
+      `SELECT series_id, occurrence_date, COUNT(*) AS count
+       FROM tasks
+       WHERE series_id IS NOT NULL AND occurrence_date IS NOT NULL
+       GROUP BY series_id, occurrence_date
+       HAVING COUNT(*) > 1`
+    );
+
+    if (dupRows.length > 0) {
+      const result = await this.db.run(
+        `DELETE FROM tasks
+         WHERE series_id IS NOT NULL AND occurrence_date IS NOT NULL
+           AND id NOT IN (
+             SELECT id FROM (
+               SELECT id,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY series_id, occurrence_date
+                        ORDER BY created_at ASC, id ASC
+                      ) AS rn
+               FROM tasks
+               WHERE series_id IS NOT NULL AND occurrence_date IS NOT NULL
+             )
+             WHERE rn = 1
+           )`
+      );
+      console.log(`已清理 ${result.changes} 个重复的循环实例`);
+    }
+
+    // migration_003 已创建过同名非唯一索引，必须先删除才能换成唯一索引
+    await this.db.exec('DROP INDEX IF EXISTS idx_tasks_series_occurrence');
+
+    await this.db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_series_occurrence
+       ON tasks(series_id, occurrence_date)
+       WHERE series_id IS NOT NULL AND occurrence_date IS NOT NULL`
+    );
+
+    console.log('循环任务实例唯一索引迁移完成');
+  }
 
   /**
    * 备份数据库

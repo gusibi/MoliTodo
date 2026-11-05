@@ -151,6 +151,39 @@ export const useTaskStore = defineStore('task', () => {
     return statusMap[status] || status
   }
 
+  // 单任务分类匹配（getTasksByFilter 与 filterTasksByCategory 共用一套谓词）
+  const matchesCategory = (task, category) => {
+    switch (category) {
+      case 'inbox':
+        return isTaskInbox(task)
+      case 'today':
+        // 今天视图：安排/截止在今天、已逾期、过去安排未完成，或正在进行中
+        return isTodayTask(task)
+      case 'onlyToday':
+        // 主日期是今天的任务
+        return isOnlyTodayTask(task) && task.status !== 'done'
+      case 'doing':
+        return task.status === 'doing'
+      case 'paused':
+        return task.status === 'paused'
+      case 'planned':
+        return isTaskPlanned(task)
+      case 'unscheduled':
+        return isTaskUnscheduled(task)
+      case 'overdue':
+        return isOverdueTask(task)
+      case 'tomorrow':
+        return isTomorrowTask(task) && task.status !== 'done'
+      case 'thisWeek':
+        return isThisWeekTask(task) && task.status !== 'done'
+      case 'completed':
+        return task.status === 'done'
+      case 'all':
+      default:
+        return true
+    }
+  }
+
   // 统一的任务过滤方法
   const getTasksByFilter = (category, listId = null, includeCompleted = null) => {
     let filteredTasks = tasks.value
@@ -161,52 +194,16 @@ export const useTaskStore = defineStore('task', () => {
     }
 
     // 根据分类过滤
-    switch (category) {
-      case 'inbox':
-        filteredTasks = filteredTasks.filter(task => isTaskInbox(task))
-        break
-      case 'today':
-        filteredTasks = filteredTasks.filter(task => isTodayTask(task))
-        // 根据设置决定是否包含已完成任务
-        if (includeCompleted === false || (includeCompleted === null && !showCompletedInToday.value)) {
-          filteredTasks = filteredTasks.filter(task => task.status !== 'done')
-        }
-        break
-      case 'onlyToday':
-        filteredTasks = filteredTasks.filter(task => isOnlyTodayTask(task) && task.status !== 'done')
-        break
-      case 'doing':
-        filteredTasks = filteredTasks.filter(task => task.status === 'doing')
-        break
-      case 'paused':
-        filteredTasks = filteredTasks.filter(task => task.status === 'paused')
-        break
-      case 'planned':
-        filteredTasks = filteredTasks.filter(task => isTaskPlanned(task))
-        break
-      case 'unscheduled':
-        filteredTasks = filteredTasks.filter(task => isTaskUnscheduled(task))
-        break
-      case 'overdue':
-        filteredTasks = filteredTasks.filter(task => isOverdueTask(task))
-        break
-      case 'tomorrow':
-        filteredTasks = filteredTasks.filter(task => isTomorrowTask(task) && task.status !== 'done')
-        break
-      case 'thisWeek':
-        filteredTasks = filteredTasks.filter(task => isThisWeekTask(task) && task.status !== 'done')
-        break
-      case 'all':
-        // 根据设置决定是否包含已完成任务
-        if (includeCompleted === false || (includeCompleted === null && !showCompletedInAll.value)) {
-          filteredTasks = filteredTasks.filter(task => task.status !== 'done')
-        }
-        break
-      case 'completed':
-        filteredTasks = filteredTasks.filter(task => task.status === 'done')
-        break
-      default:
-        break
+    filteredTasks = filteredTasks.filter(task => matchesCategory(task, category))
+
+    // today/all 视图根据设置决定是否包含已完成任务
+    if (category === 'today' || category === 'all') {
+      const showCompleted = includeCompleted !== null
+        ? includeCompleted
+        : (category === 'today' ? showCompletedInToday.value : showCompletedInAll.value)
+      if (!showCompleted) {
+        filteredTasks = filteredTasks.filter(task => task.status !== 'done')
+      }
     }
 
     return filteredTasks
@@ -249,77 +246,43 @@ export const useTaskStore = defineStore('task', () => {
     })
   }
 
+  // 已完成视图排序：按完成时间倒序（最新完成的在前面，缺失时回退更新时间）
+  const compareCompletedTasks = (a, b) => {
+    if (a.completedAt && b.completedAt) {
+      return new Date(b.completedAt) - new Date(a.completedAt)
+    }
+    return new Date(b.updatedAt) - new Date(a.updatedAt)
+  }
+
+  // 未完成视图通用排序：已完成垫底 → 进行中优先 → 安排/截止时间 → 创建时间倒序
+  const compareActiveTasks = (a, b) => {
+    // 已完成的任务排在最后，并按完成时间排序
+    if (a.status === 'done' && b.status !== 'done') return 1
+    if (a.status !== 'done' && b.status === 'done') return -1
+    if (a.status === 'done' && b.status === 'done') {
+      return compareCompletedTasks(a, b)
+    }
+
+    // 正在进行的任务优先级最高（在未完成任务中）
+    if (a.status === 'doing' && b.status !== 'doing') return -1
+    if (a.status !== 'doing' && b.status === 'doing') return 1
+
+    // 按安排开始 / 截止时间排序
+    const timeOrder = compareTasksForDate(a, b)
+    if (timeOrder !== 0) return timeOrder
+
+    // 都没有时间信息时，按创建时间排序（最新的在上方）
+    return new Date(b.createdAt) - new Date(a.createdAt)
+  }
+
   // 获取排序后的任务列表
   const getSortedTasks = (category, listId = null, includeCompleted = null) => {
     let filteredTasks = getTasksByFilter(category, listId, includeCompleted)
-    
+
     // 应用搜索过滤
     filteredTasks = searchTasksLocally(filteredTasks, searchQuery.value, searchOptions.value)
 
-    // 排序逻辑
-    if (category === 'completed') {
-      // 已完成任务视图：按完成时间倒序排列（最新完成的在前面）
-      filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 都是已完成任务，按完成时间排序
-        if (a.completedAt && b.completedAt) {
-          return new Date(b.completedAt) - new Date(a.completedAt)
-        }
-        // 如果没有完成时间，按更新时间排序
-        return new Date(b.updatedAt) - new Date(a.updatedAt)
-      })
-    } else if (category === 'today') {
-      // 今天视图的特殊排序
-      filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 已完成的任务排在最后，并按完成时间排序
-        if (a.status === 'done' && b.status !== 'done') return 1
-        if (a.status !== 'done' && b.status === 'done') return -1
-        if (a.status === 'done' && b.status === 'done') {
-          // 都是已完成任务，按完成时间排序
-          if (a.completedAt && b.completedAt) {
-            return new Date(b.completedAt) - new Date(a.completedAt)
-          }
-          return new Date(b.updatedAt) - new Date(a.updatedAt)
-        }
-
-        // 正在进行的任务优先级最高（在未完成任务中）
-        if (a.status === 'doing' && b.status !== 'doing') return -1
-        if (a.status !== 'doing' && b.status === 'doing') return 1
-
-        // 按安排开始 / 截止时间排序
-        const timeOrder = compareTasksForDate(a, b)
-        if (timeOrder !== 0) return timeOrder
-
-        // 都没有提醒时间，按创建时间排序（最新的在上方）
-        return new Date(b.createdAt) - new Date(a.createdAt)
-      })
-    } else {
-      // 其他视图的默认排序
-      filteredTasks = [...filteredTasks].sort((a, b) => {
-        // 已完成的任务排在最后，并按完成时间排序
-        if (a.status === 'done' && b.status !== 'done') return 1
-        if (a.status !== 'done' && b.status === 'done') return -1
-        if (a.status === 'done' && b.status === 'done') {
-          // 都是已完成任务，按完成时间排序
-          if (a.completedAt && b.completedAt) {
-            return new Date(b.completedAt) - new Date(a.completedAt)
-          }
-          return new Date(b.updatedAt) - new Date(a.updatedAt)
-        }
-
-        // 正在进行的任务优先级最高（在未完成任务中）
-        if (a.status === 'doing' && b.status !== 'doing') return -1
-        if (a.status !== 'doing' && b.status === 'doing') return 1
-
-        // 按安排开始 / 截止时间排序
-        const timeOrder = compareTasksForDate(a, b)
-        if (timeOrder !== 0) return timeOrder
-
-        // 按创建时间排序（最新的在上方）
-        return new Date(b.createdAt) - new Date(a.createdAt)
-      })
-    }
-
-    return filteredTasks
+    return [...filteredTasks].sort(category === 'completed' ? compareCompletedTasks : compareActiveTasks)
   }
 
   // 辅助函数：格式化时间显示
@@ -361,49 +324,17 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  // 计算属性：根据分类过滤任务
+  // 计算属性：根据分类过滤任务（谓词与 getTasksByFilter 共用）
   const filterTasksByCategory = (taskList, category) => {
-    if (category === 'all') {
-      // 在"所有任务"分类中，根据设置决定是否显示已完成任务
-      return showCompletedInAll.value ? taskList : taskList.filter(task => task.status !== 'done')
-    }
+    const filteredTasks = taskList.filter(task => matchesCategory(task, category))
 
-    let filteredTasks = taskList.filter(task => {
-      switch (category) {
-        case 'inbox':
-          return isTaskInbox(task)
-        case 'today':
-          // 今天视图：安排/截止在今天、已逾期、过去安排未完成，或正在进行中
-          return isTodayTask(task)
-        case 'onlyToday':
-          // 主日期是今天的任务
-          return isOnlyTodayTask(task) && task.status !== 'done'
-        case 'doing':
-          return task.status === 'doing'
-        case 'paused':
-          return task.status === 'paused'
-        case 'planned':
-          return isTaskPlanned(task)
-        case 'unscheduled':
-          return isTaskUnscheduled(task)
-        case 'overdue':
-          return isOverdueTask(task)
-        case 'tomorrow':
-          return isTomorrowTask(task) && task.status !== 'done'
-        case 'thisWeek':
-          return isThisWeekTask(task) && task.status !== 'done'
-        case 'completed':
-          return task.status === 'done'
-        default:
-          return true
-      }
-    })
-
-    // 对于今天视图，根据设置决定是否显示已完成任务
+    // today/all 视图根据设置决定是否显示已完成任务
     if (category === 'today' && !showCompletedInToday.value) {
-      filteredTasks = filteredTasks.filter(task => task.status !== 'done')
+      return filteredTasks.filter(task => task.status !== 'done')
     }
-
+    if (category === 'all' && !showCompletedInAll.value) {
+      return filteredTasks.filter(task => task.status !== 'done')
+    }
     return filteredTasks
   }
 
@@ -428,70 +359,8 @@ export const useTaskStore = defineStore('task', () => {
     // 根据搜索条件过滤
     result = searchTasksLocally(result, searchQuery.value, searchOptions.value)
 
-    // 排序逻辑
-    if (currentCategory.value === 'completed') {
-      // 已完成任务视图：按完成时间倒序排列（最新完成的在前面）
-      result = [...result].sort((a, b) => {
-        // 都是已完成任务，按完成时间排序
-        if (a.completedAt && b.completedAt) {
-          return new Date(b.completedAt) - new Date(a.completedAt)
-        }
-        // 如果没有完成时间，按更新时间排序
-        return new Date(b.updatedAt) - new Date(a.updatedAt)
-      })
-    } else if (currentCategory.value === 'today') {
-      // 今天视图的特殊排序：有提醒时间的在前，没有提醒时间的按创建时间排序（最新的在上方）
-      result = [...result].sort((a, b) => {
-        // 已完成的任务排在最后，并按完成时间排序
-        if (a.status === 'done' && b.status !== 'done') return 1
-        if (a.status !== 'done' && b.status === 'done') return -1
-        if (a.status === 'done' && b.status === 'done') {
-          // 都是已完成任务，按完成时间排序
-          if (a.completedAt && b.completedAt) {
-            return new Date(b.completedAt) - new Date(a.completedAt)
-          }
-          return new Date(b.updatedAt) - new Date(a.updatedAt)
-        }
-
-        // 正在进行的任务优先级最高（在未完成任务中）
-        if (a.status === 'doing' && b.status !== 'doing') return -1
-        if (a.status !== 'doing' && b.status === 'doing') return 1
-
-        // 按安排开始 / 截止时间排序
-        const timeOrder = compareTasksForDate(a, b)
-        if (timeOrder !== 0) return timeOrder
-
-        // 都没有提醒时间，按创建时间排序（最新的在上方）
-        return new Date(b.createdAt) - new Date(a.createdAt)
-      })
-    } else {
-      // 其他视图的默认排序
-      result = [...result].sort((a, b) => {
-        // 已完成的任务排在最后，并按完成时间排序
-        if (a.status === 'done' && b.status !== 'done') return 1
-        if (a.status !== 'done' && b.status === 'done') return -1
-        if (a.status === 'done' && b.status === 'done') {
-          // 都是已完成任务，按完成时间排序
-          if (a.completedAt && b.completedAt) {
-            return new Date(b.completedAt) - new Date(a.completedAt)
-          }
-          return new Date(b.updatedAt) - new Date(a.updatedAt)
-        }
-
-        // 正在进行的任务优先级最高（在未完成任务中）
-        if (a.status === 'doing' && b.status !== 'doing') return -1
-        if (a.status !== 'doing' && b.status === 'doing') return 1
-
-        // 按安排开始 / 截止时间排序
-        const timeOrder = compareTasksForDate(a, b)
-        if (timeOrder !== 0) return timeOrder
-
-        // 按创建时间排序（最新的在上方）
-        return new Date(b.createdAt) - new Date(a.createdAt)
-      })
-    }
-
-    return result
+    // 排序逻辑与 getSortedTasks 共用比较器
+    return [...result].sort(currentCategory.value === 'completed' ? compareCompletedTasks : compareActiveTasks)
   })
 
   // 计算属性：分类统计
@@ -655,6 +524,17 @@ export const useTaskStore = defineStore('task', () => {
     tasks.value = newTasks
   }
 
+  // 用 IPC 返回的已保存任务打补丁，替代全量重拉
+  const patchTask = (updated) => {
+    if (!updated || !updated.id) return
+    const taskIndex = tasks.value.findIndex(task => task.id === updated.id)
+    if (taskIndex !== -1) {
+      tasks.value.splice(taskIndex, 1, updated)
+    } else {
+      tasks.value.unshift(updated)
+    }
+  }
+
   // 获取所有任务
   const getAllTasks = async () => {
     try {
@@ -709,8 +589,10 @@ export const useTaskStore = defineStore('task', () => {
       console.log('[createTask] taskData 序列化测试:', serializedData)
       
       const result = await window.electronAPI.tasks.create(serializedData)
-      if (result.success) {
-        await getAllTasks() // 重新获取任务列表
+      if (result.success && result.task) {
+        patchTask(result.task)
+      } else if (result.success) {
+        await getAllTasks() // 兜底：接口未返回任务时全量刷新
       }
       return result
     } catch (error) {
@@ -724,8 +606,10 @@ export const useTaskStore = defineStore('task', () => {
     try {
       console.log("updates-----:", updates)
       const result = await window.electronAPI.tasks.update(taskId, updates)
-      if (result.success) {
-        await getAllTasks() // 重新获取任务列表
+      if (result.success && result.task) {
+        patchTask(result.task)
+      } else if (result.success) {
+        await getAllTasks() // 兜底：接口未返回任务时全量刷新
       }
       return result
     } catch (error) {
@@ -740,13 +624,9 @@ export const useTaskStore = defineStore('task', () => {
       console.log('更新任务提醒时间:', taskId, reminderTime)
       const updates = { reminderTime }
       const result = await window.electronAPI.tasks.update(taskId, updates)
-      if (result.success) {
-        // 更新本地任务数据，避免重新获取所有任务
-        const taskIndex = tasks.value.findIndex(task => task.id === taskId)
-        if (taskIndex !== -1) {
-          tasks.value[taskIndex].reminderTime = reminderTime
-          tasks.value[taskIndex].updatedAt = new Date().toISOString()
-        }
+      if (result.success && result.task) {
+        // 用后端归一化后的完整任务打补丁，避免本地只改部分字段造成数据分叉
+        patchTask(result.task)
       }
       return result
     } catch (error) {
@@ -2089,9 +1969,9 @@ export const useTaskStore = defineStore('task', () => {
       const startedData = []
       const completedData = []
       
-      // 填充数据
+      // 填充数据（标签按本地日期生成，与统计端的本地时区分桶对齐）
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0]
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         labels.push(dateStr)
         
         const dayData = dailyData[dateStr] || { created: 0, started: 0, completed: 0 }

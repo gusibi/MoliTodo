@@ -1,4 +1,6 @@
 const TaskStatusLog = require('../entities/task-status-log');
+const { normalizeTaskStatus } = require('./task-status-constants');
+const taskTime = require('./task-time');
 
 /**
  * 任务状态日志服务
@@ -26,22 +28,26 @@ class TaskStatusLogService {
    */
   async logStatusChange(taskId, fromStatus, toStatus, timestamp = null) {
     try {
+      // 归一化历史状态名（'pause' -> 'paused'），写入统一用新词汇表
+      const from = normalizeTaskStatus(fromStatus);
+      const to = normalizeTaskStatus(toStatus);
+
       // 验证状态变化的合法性
-      if (!TaskStatusLog.isValidStatusTransition(fromStatus, toStatus)) {
-        console.warn(`无效的状态转换: ${fromStatus} -> ${toStatus} (任务: ${taskId})`);
+      if (!TaskStatusLog.isValidStatusTransition(from, to)) {
+        console.warn(`无效的状态转换: ${from} -> ${to} (任务: ${taskId})`);
         return null;
       }
 
       // 如果状态没有变化，不记录日志
-      if (fromStatus === toStatus) {
-        console.debug(`状态未变化，跳过日志记录: ${taskId} (${toStatus})`);
+      if (from === to) {
+        console.debug(`状态未变化，跳过日志记录: ${taskId} (${to})`);
         return null;
       }
 
       const taskStatusLog = new TaskStatusLog({
         taskId,
-        fromStatus,
-        toStatus,
+        fromStatus: from,
+        toStatus: to,
         createdAt: timestamp || new Date().toISOString(),
         metadata: {
           transition: `${fromStatus || 'null'}->${toStatus}`,
@@ -73,8 +79,10 @@ class TaskStatusLogService {
     const validLogs = [];
     
     for (const change of statusChanges) {
-      const { taskId, fromStatus, toStatus, timestamp } = change;
-      
+      const { taskId, timestamp } = change;
+      const fromStatus = normalizeTaskStatus(change.fromStatus);
+      const toStatus = normalizeTaskStatus(change.toStatus);
+
       // 验证状态变化的合法性
       if (!TaskStatusLog.isValidStatusTransition(fromStatus, toStatus)) {
         console.warn(`跳过无效的状态转换: ${fromStatus} -> ${toStatus} (任务: ${taskId})`);
@@ -224,17 +232,17 @@ class TaskStatusLogService {
         }
         stats.statusTransitions[transition] += count;
         
-        // 统计特定类型的转换
+        // 统计特定类型的转换（旧数据可能是 'pause'，归一化后比较）
         if (stat.to_status === 'done') {
           stats.completedTasks += count;
           stats.transitionTypes.complete += count;
         } else if (stat.to_status === 'doing' && (!stat.from_status || stat.from_status === 'todo')) {
           stats.startedTasks += count;
           stats.transitionTypes.start += count;
-        } else if (stat.to_status === 'pause') {
+        } else if (normalizeTaskStatus(stat.to_status) === 'paused') {
           stats.pausedTasks += count;
           stats.transitionTypes.pause += count;
-        } else if (stat.to_status === 'doing' && stat.from_status === 'pause') {
+        } else if (stat.to_status === 'doing' && normalizeTaskStatus(stat.from_status) === 'paused') {
           stats.transitionTypes.resume += count;
         } else if (stat.to_status === 'todo' && stat.from_status === 'done') {
           stats.reactivatedTasks += count;
@@ -380,8 +388,8 @@ class TaskStatusLogService {
               }
             });
             logs.push(doingLog);
-          } else if (task.status === 'pause') {
-            // 3. pause状态：生成doing和pause记录
+          } else if (task.status === 'paused') {
+            // 3. paused状态：生成doing和paused记录（历史数据也可能是 'pause'）
             const doingTime = this._ensureISOString(task.startedAt) || this._ensureISOString(task.updatedAt) || new Date().toISOString();
             const doingLog = new TaskStatusLog({
               taskId: task.id,
@@ -396,15 +404,15 @@ class TaskStatusLogService {
               }
             });
             logs.push(doingLog);
-            
+
             const pauseTime = this._ensureISOString(task.updatedAt) || new Date().toISOString();
             const pauseLog = new TaskStatusLog({
               taskId: task.id,
               fromStatus: 'doing',
-              toStatus: 'pause',
+              toStatus: 'paused',
               createdAt: pauseTime,
               metadata: {
-                transition: 'doing->pause',
+                transition: 'doing->paused',
                 timestamp: pauseTime,
                 source: 'initialization_pause',
                 taskUpdatedAt: task.updatedAt
@@ -509,52 +517,39 @@ class TaskStatusLogService {
    */
   async getDailyActivityData(days = 365) {
     try {
-      // 计算开始日期
+      // 计算本地日期范围的起止时刻
       const endDate = new Date();
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - days + 1);
-      
-      // 获取指定时间范围内的所有日志
-      // 注意：created_at 是 TEXT 类型，存储 ISO 字符串格式
-      const sql = `
-        SELECT 
-          DATE(created_at) as date,
-          COUNT(*) as count
-        FROM task_status_logs 
-        WHERE DATE(created_at) >= ? AND DATE(created_at) <= ?
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-      `;
-      
-      const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = endDate.toISOString().split('T')[0];
-      
-      const results = await this.taskStatusLogRepository.db.all(sql, [startDateStr, endDateStr]);
-      // console.log('TaskStatusLogService getDailyActivityData results', results)
-      
-      // 创建完整的日期范围数据
+      startDate.setHours(0, 0, 0, 0);
+
+      // created_at 是 UTC ISO 字符串，DATE(created_at) 会按 UTC 天分桶，
+      // 对 UTC+8 等时区的用户会错一天；改为取原始时间后在 JS 里按本地日期聚合
+      const rows = await this.taskStatusLogRepository.db.all(
+        'SELECT created_at FROM task_status_logs WHERE created_at >= ?',
+        [startDate.toISOString()]
+      );
+
+      const dataMap = {};
+      rows.forEach((row) => {
+        const dateKey = taskTime.localDateKey(row.created_at);
+        if (dateKey) {
+          dataMap[dateKey] = (dataMap[dateKey] || 0) + 1;
+        }
+      });
+
+      // 生成完整的本地日期序列
       const activityData = [];
       const currentDate = new Date(startDate);
-      
-      // 将查询结果转换为日期索引的对象
-      const dataMap = {};
-      results.forEach(row => {
-        dataMap[row.date] = row.count;
-      });
-      
-      // 生成完整的日期序列
       while (currentDate <= endDate) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const count = dataMap[dateStr] || 0;
-        
+        const dateStr = taskTime.localDateKey(currentDate);
         activityData.push({
           date: dateStr,
-          count: count
+          count: dataMap[dateStr] || 0
         });
-        
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      
+
       // console.log('TaskStatusLogService getDailyActivityData result', activityData)
       return activityData;
     } catch (error) {

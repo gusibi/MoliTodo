@@ -18,7 +18,7 @@
             <div class="task-title-input-wrapper">
               <textarea ref="addTaskInput" v-model="newTaskContent" :aria-label="t('today.taskTitleLabel')"
                 :aria-invalid="!!titleError" :aria-describedby="titleError ? 'today-task-title-error' : undefined"
-                :placeholder="props.isEditing ? '编辑任务...' : '添加新任务...'" class="task-title-input" maxlength="1000"
+                :placeholder="props.isEditing ? t('tasks.editor.editPlaceholder') : t('tasks.editor.addPlaceholder')" class="task-title-input" maxlength="1000"
                 :rows="inline ? 1 : 2" :style="inline ? { minHeight: '1.75rem', maxHeight: '15rem' } : undefined" @focus="handleStartAdding"
                 @blur="handleInputBlur" @keydown="handleTitleKeydown"
                 @input="autoResize"></textarea>
@@ -125,7 +125,7 @@
                 <template v-if="props.isEditing">
                   <!-- 当前任务所属列表 -->
                   <div v-if="editingTask && editingTask.listId" class="current-list">
-                    <div class="current-list-label">当前列表</div>
+                    <div class="current-list-label">{{ t('tasks.editor.currentList') }}</div>
                     <Button variant="ghost" class="list-option current-list-option"
                       :class="{ 'active': selectedListId === editingTask.listId }"
                       @click="selectList(getCurrentTaskList())">
@@ -142,7 +142,7 @@
 
                   <!-- 其他可选列表 -->
                   <div v-if="editingTask && editingTask.listId && getOtherLists().length > 0" class="other-lists-label">
-                    移动到其他列表</div>
+                    {{ t('tasks.editor.moveToOtherLists') }}</div>
                   <Button variant="ghost" v-for="list in getOtherLists()" :key="list.id" class="list-option"
                     :class="{ 'active': selectedListId === list.id }" @click="selectList(list)">
                     <div class="list-icon" :style="{ color: list.color }">
@@ -173,7 +173,7 @@
                   <Bell class="h-icon-sm w-icon-sm" aria-hidden="true" />
                 </div>
                 <div class="task-option-content">
-                  <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : '提醒我' }}</div>
+                  <div class="task-option-title">{{ selectedReminder ? getReminderDisplayText() : t('tasks.editor.remindMe') }}</div>
                 </div>
               </Button>
               <Button variant="ghost" v-if="selectedReminder" class="task-option-delete" :aria-label="t('tasks.clearReminder')"
@@ -188,7 +188,7 @@
                 <Button variant="ghost" v-if="selectedReminder || reminderPolicy?.mode === 'disabled'" class="reminder-option"
                   @click="disableReminder">
                   <Ban class="h-icon-sm w-icon-sm reminder-option-icon" aria-hidden="true" />
-                  <span>不提醒</span>
+                  <span>{{ t('tasks.editor.noReminder') }}</span>
                 </Button>
                 <Button variant="ghost" v-for="option in reminderOptions" :key="option.id" class="reminder-option"
                   :class="{ 'reminder-option-active': isReminderOptionActive(option) }"
@@ -256,11 +256,11 @@
                 <!-- 日期型截止与日期+时间截止的切换 -->
                 <Button variant="ghost" v-if="selectedDate && selectedTime && !selectedRecurrence" class="task-option-mini" @click="makeDeadlineDateOnly"
                   :title="t('tasks.clearDeadlineTime')">
-                  仅日期
+                  {{ t('tasks.editor.dateOnly') }}
                 </Button>
                 <Button variant="ghost" v-if="selectedDate && !selectedTime && !selectedRecurrence" class="task-option-mini" @click="openDeadlinePicker(true)"
                   :title="t('tasks.addDeadlineTime')">
-                  加时间
+                  {{ t('tasks.editor.addTime') }}
                 </Button>
                 <Button variant="ghost" v-if="selectedDate" class="task-option-delete" :aria-label="t('tasks.clearDeadline')"
                   @click="clearDateTime">
@@ -394,7 +394,7 @@
         </div>
 
         <div class="task-actions-center">
-          <span v-if="props.isEditing" class="task-created-date">创建于 {{ formatCreatedDate() }}</span>
+          <span v-if="props.isEditing" class="task-created-date">{{ t('tasks.editor.createdAt', { date: formatCreatedDate() }) }}</span>
         </div>
 
         <div class="task-actions-right">
@@ -649,7 +649,6 @@ const { isDark } = useTheme()
 const taskEditContainer = ref(null)
 const addTaskInput = ref(null)
 const noteInput = ref(null)
-const fileInput = ref(null)
 const datePickerBtn = ref(null)
 const datePickerSection = ref(null)
 const listPickerBtn = ref(null)
@@ -1379,7 +1378,7 @@ const toggleStepStatus = async (step) => {
         ...metadata,
         steps: (metadata.steps || []).map((item) => item.id === step.id ? { ...item, status: newStatus } : item)
       }))
-      if (!result || result.success === false) throw new Error(result?.error || '保存失败')
+      if (!result || result.success === false) throw new Error(result?.error || t('tasks.editor.saveFailed'))
       stepError.value = ''
       failedStepRetry.value = null
       if (newStatus === 'done' && editingTask.value?.status === 'todo') {
@@ -1722,7 +1721,7 @@ const handleUpdateTaskList = async (newListId) => {
 // 获取选中的列表名称
 const getSelectedListName = () => {
   const selectedList = availableLists.value.find(list => list.id === selectedListId.value)
-  return selectedList ? selectedList.name : '选择列表'
+  return selectedList ? selectedList.name : t('tasks.editor.selectList')
 }
 
 // 获取当前任务列表
@@ -1743,34 +1742,10 @@ const getOtherLists = () => {
 
 // 获取提醒显示文本
 const getReminderDisplayText = () => {
-  return selectedReminder.value ? selectedReminder.value.label : '提醒我'
+  return selectedReminder.value ? selectedReminder.value.label : t('tasks.editor.remindMe')
 }
 
 
-
-// 获取最小日期
-const getMinDate = () => {
-  const today = new Date()
-  return getLocalDateString(today)
-}
-
-
-
-// 获取 VueDatePicker 的最小时间
-const getMinTimeForDatePicker = () => {
-  const now = new Date()
-  if (dateTimeValue.value) {
-    const selectedDateObj = new Date(dateTimeValue.value)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    selectedDateObj.setHours(0, 0, 0, 0)
-
-    if (selectedDateObj.getTime() === today.getTime()) {
-      return { hours: now.getHours(), minutes: now.getMinutes() }
-    }
-  }
-  return { hours: 0, minutes: 0 }
-}
 
 // 处理日期时间变化：按选择器用途分流（截止 / 绝对提醒）
 const handleDateTimeChange = async (newValue) => {
@@ -1908,7 +1883,7 @@ const reminderOptions = computed(() => {
       options.push({ id: `relative-${minutes}`, kind: 'relative', minutesBefore: minutes, label: t('tasks.reminderBeforeMinutes', { minutes }) })
     }
   }
-  options.push({ id: 'absolute-custom', kind: 'absolute', label: '自定义时间…' })
+  options.push({ id: 'absolute-custom', kind: 'absolute', label: t('tasks.editor.customTime') })
   return options
 })
 
@@ -1998,7 +1973,7 @@ const relativePolicyLabel = (policy) => {
 // 时间提示：无效旧截止 > 服务端警告（计划晚于截止 / 错过的相对提醒）
 const timeHintText = computed(() => {
   if (editingTask.value?.deadlineInvalid) {
-    return '截止数据无效，请重新设置截止时间'
+    return t('tasks.editor.deadlineInvalid')
   }
   return timeWarning.value || ''
 })
@@ -2006,6 +1981,11 @@ const timeHintText = computed(() => {
 const applyTimeWarning = (result) => {
   timeWarning.value = result?.task?.timeWarning || ''
 }
+
+// 本地化的“M月D日”文案（跟随当前语言）
+const formatMonthDay = (dateObj) => (
+  new Intl.DateTimeFormat(localeCode(locale.value), { month: 'long', day: 'numeric' }).format(dateObj)
+)
 
 // 格式化选中的日期
 const formatSelectedDate = (date) => {
@@ -2018,13 +1998,14 @@ const formatSelectedDate = (date) => {
 
   const todayStr = getLocalDateString(today)
   const tomorrowStr = getLocalDateString(tomorrow)
+  const timeText = selectedTime.value || ''
 
   if (date === todayStr) {
-    return `今天 ${selectedTime.value || ''}`
+    return `${t('tasks.today')}${timeText ? ` ${timeText}` : ''}`
   } else if (date === tomorrowStr) {
-    return `明天 ${selectedTime.value || ''}`
+    return `${t('tasks.tomorrow')}${timeText ? ` ${timeText}` : ''}`
   } else {
-    return `${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${selectedTime.value || ''}`
+    return `${formatMonthDay(dateObj)}${timeText ? ` ${timeText}` : ''}`
   }
 }
 
@@ -2037,12 +2018,12 @@ const formatCreatedDate = () => {
     const taskDateStr = getLocalDateString(date)
 
     if (taskDateStr === todayStr) {
-      return '今天'
+      return t('tasks.today')
     } else {
-      return `${date.getMonth() + 1}月${date.getDate()}日`
+      return formatMonthDay(date)
     }
   }
-  return '今天'
+  return t('tasks.today')
 }
 
 // 获取基础日期

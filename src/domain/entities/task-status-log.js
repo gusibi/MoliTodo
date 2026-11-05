@@ -2,6 +2,8 @@
  * 任务状态日志实体类
  * 记录任务状态变化的历史信息
  */
+const { normalizeTaskStatus } = require('../services/task-status-constants');
+
 class TaskStatusLog {
   constructor({
     id = null,
@@ -36,15 +38,17 @@ class TaskStatusLog {
   static isValidStatusTransition(fromStatus, toStatus) {
     const validTransitions = {
       'todo': ['doing', 'done'],
-      'doing': ['todo', 'pause', 'done'],
-      'pause': ['todo', 'doing', 'done'],
+      'doing': ['todo', 'paused', 'done'],
+      'paused': ['todo', 'doing', 'done'],
       'done': ['todo']
     };
-    
+
     // 初始化时允许任何状态（fromStatus 为 null）
     if (!fromStatus) return true;
-    
-    return validTransitions[fromStatus]?.includes(toStatus) || false;
+
+    const from = normalizeTaskStatus(fromStatus);
+    const to = normalizeTaskStatus(toStatus);
+    return validTransitions[from]?.includes(to) || false;
   }
 
   /**
@@ -52,23 +56,25 @@ class TaskStatusLog {
    * @returns {string} 状态变化的中文描述
    */
   getTransitionDescription() {
+    const from = normalizeTaskStatus(this.fromStatus);
+    const to = normalizeTaskStatus(this.toStatus);
     const descriptions = {
       'null->todo': '创建任务',
       'null->doing': '开始执行',
       'null->done': '直接完成',
-      'null->pause': '创建并暂停',
+      'null->paused': '创建并暂停',
       'todo->doing': '开始执行',
       'todo->done': '直接完成',
       'doing->todo': '停止执行',
-      'doing->pause': '暂停执行',
+      'doing->paused': '暂停执行',
       'doing->done': '完成任务',
       'done->todo': '重新激活',
-      'pause->todo': '回到待办',
-      'pause->doing': '恢复执行',
-      'pause->done': '直接完成'
+      'paused->todo': '回到待办',
+      'paused->doing': '恢复执行',
+      'paused->done': '直接完成'
     };
-    
-    const key = `${this.fromStatus || 'null'}->${this.toStatus}`;
+
+    const key = `${from || 'null'}->${to}`;
     return descriptions[key] || '状态变化';
   }
 
@@ -77,18 +83,18 @@ class TaskStatusLog {
    * @returns {string} 变化类型：start, complete, pause, resume, reactivate
    */
   getTransitionType() {
-    const fromStatus = this.fromStatus;
-    const toStatus = this.toStatus;
+    const fromStatus = normalizeTaskStatus(this.fromStatus);
+    const toStatus = normalizeTaskStatus(this.toStatus);
 
     if (!fromStatus && toStatus === 'doing') return 'start';
     if (!fromStatus && toStatus === 'done') return 'complete';
     if (fromStatus === 'todo' && toStatus === 'doing') return 'start';
     if (fromStatus === 'doing' && toStatus === 'done') return 'complete';
-    if (fromStatus === 'doing' && toStatus === 'pause') return 'pause';
-    if (fromStatus === 'pause' && toStatus === 'doing') return 'resume';
+    if (fromStatus === 'doing' && toStatus === 'paused') return 'pause';
+    if (fromStatus === 'paused' && toStatus === 'doing') return 'resume';
     if (fromStatus === 'done' && toStatus === 'todo') return 'reactivate';
-    if ((fromStatus === 'doing' || fromStatus === 'pause') && toStatus === 'todo') return 'stop';
-    
+    if ((fromStatus === 'doing' || fromStatus === 'paused') && toStatus === 'todo') return 'stop';
+
     return 'change';
   }
 
@@ -113,7 +119,7 @@ class TaskStatusLog {
    * @returns {boolean} 是否暂停
    */
   isPause() {
-    return this.toStatus === 'pause';
+    return normalizeTaskStatus(this.toStatus) === 'paused';
   }
 
   /**
@@ -121,7 +127,7 @@ class TaskStatusLog {
    * @returns {boolean} 是否恢复执行
    */
   isResume() {
-    return this.fromStatus === 'pause' && this.toStatus === 'doing';
+    return normalizeTaskStatus(this.fromStatus) === 'paused' && normalizeTaskStatus(this.toStatus) === 'doing';
   }
 
   /**

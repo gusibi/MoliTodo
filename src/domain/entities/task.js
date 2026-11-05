@@ -123,10 +123,10 @@ class Task {
 
   /**
    * 更新任务状态
-   * @param {string} status 新状态 ('todo', 'doing', 'done')
+   * @param {string} status 新状态 ('todo', 'doing', 'paused', 'done')
    */
   updateStatus(status) {
-    const validStatuses = ['todo', 'doing', 'done'];
+    const validStatuses = ['todo', 'doing', 'paused', 'done'];
     if (!validStatuses.includes(status)) {
       throw new Error('无效的任务状态');
     }
@@ -422,24 +422,6 @@ class Task {
    */
   isPausedTask() {
     return this.status === 'paused';
-  }
-
-  /**
-   * 获取任务所属的分类
-   * @returns {string[]} 任务所属的分类数组
-   */
-  getCategories() {
-    const categories = ['all']; // 所有任务都属于'all'分类
-    
-    if (this.isInboxTask()) categories.push('inbox');
-    if (this.isTodayTask()) categories.push('today');
-    if (this.isDoingTask()) categories.push('doing');
-    if (this.isPausedTask()) categories.push('paused');
-    if (this.isPlannedTask()) categories.push('planned');
-    if (this.isUnscheduledTask()) categories.push('unscheduled');
-    if (this.isCompletedTask()) categories.push('completed');
-    
-    return categories;
   }
 
   /**

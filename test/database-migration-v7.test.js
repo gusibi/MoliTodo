@@ -143,7 +143,7 @@ test('fresh database migrates from 0 to v8 with all tool tables', async (t) => {
   });
 
   const version = await repo.db.get('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
-  assert.equal(version.version, 8);
+  assert.equal(version.version, 10);
   await assertToolTablesExist(repo.db);
 
   const focusColumns = await repo.db.all('PRAGMA table_info(focus_sessions)');
@@ -156,7 +156,7 @@ test('fresh database migrates from 0 to v8 with all tool tables', async (t) => {
   assert.ok(!names.includes('growth_score'), 'tasks 不应混入工具域字段');
 });
 
-test('v6 database migrates to v8 without changing tasks schema or data', async (t) => {
+test('v6 database migrates to v9 without changing tasks schema or data', async (t) => {
   const { dir, dbPath } = tempDbPath();
   await createV6Fixture(dbPath);
 
@@ -173,7 +173,7 @@ test('v6 database migrates to v8 without changing tasks schema or data', async (
   });
 
   const version = await repo.db.get('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
-  assert.equal(version.version, 8);
+  assert.equal(version.version, 10);
   await assertToolTablesExist(repo.db);
 
   const columnsAfter = await repo.db.all('PRAGMA table_info(tasks)');

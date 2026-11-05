@@ -1,8 +1,8 @@
 <template>
   <div class="color-theme-switcher">
     <div class="color-theme-switcher-header">
-      <h3 class="color-theme-switcher-title">颜色主题</h3>
-      <p class="color-theme-switcher-description">选择你喜欢的颜色主题</p>
+      <h3 class="color-theme-switcher-title">{{ t('settings.colorThemes.title') }}</h3>
+      <p class="color-theme-switcher-description">{{ t('settings.colorThemes.description') }}</p>
     </div>
     
     <div class="color-theme-switcher-grid">
@@ -23,8 +23,8 @@
         </div>
         
         <div class="color-theme-info">
-          <div class="color-theme-name">{{ theme.name }}</div>
-          <div class="color-theme-desc">{{ theme.description }}</div>
+          <div class="color-theme-name">{{ t(`settings.colorThemes.${theme.id}.name`) }}</div>
+          <div class="color-theme-desc">{{ t(`settings.colorThemes.${theme.id}.description`) }}</div>
         </div>
         
         <div v-if="currentColorTheme === theme.id" class="color-theme-check">
@@ -38,8 +38,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { useTheme } from '@/composables/useTheme'
 
+const { t } = useI18n()
 const { availableColorThemes, currentColorTheme, setColorTheme } = useTheme()
 
 const handleThemeChange = async (themeId) => {

@@ -182,7 +182,7 @@ class SqliteTaskStatusLogRepository {
         from_status,
         to_status,
         COUNT(*) as count,
-        DATE(created_at) as date
+        DATE(created_at, 'localtime') as date
       FROM task_status_logs
     `;
     
@@ -203,7 +203,7 @@ class SqliteTaskStatusLogRepository {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
     
-    sql += ' GROUP BY from_status, to_status, DATE(created_at) ORDER BY created_at DESC';
+    sql += " GROUP BY from_status, to_status, DATE(created_at, 'localtime') ORDER BY created_at DESC";
     
     // console.log("getStatusChangeStatistics sql", sql)
     try {
@@ -223,7 +223,7 @@ class SqliteTaskStatusLogRepository {
   async getCompletionStatistics(startDate = null, endDate = null) {
     let sql = `
       SELECT 
-        DATE(created_at) as date,
+        DATE(created_at, 'localtime') as date,
         COUNT(*) as completed_count
       FROM task_status_logs
       WHERE to_status = 'done'
@@ -241,7 +241,7 @@ class SqliteTaskStatusLogRepository {
       params.push(new Date(endDate).toISOString());
     }
     
-    sql += ' GROUP BY DATE(created_at) ORDER BY date DESC';
+    sql += " GROUP BY DATE(created_at, 'localtime') ORDER BY date DESC";
     
     try {
       return await this.db.all(sql, params);
@@ -301,7 +301,7 @@ class SqliteTaskStatusLogRepository {
           
           if (previous.to_status === 'doing') {
             durations.doing += duration;
-          } else if (previous.to_status === 'pause') {
+          } else if (previous.to_status === 'pause' || previous.to_status === 'paused') {
             durations.pause += duration;
           }
           
@@ -461,13 +461,13 @@ class SqliteTaskStatusLogRepository {
     
     const sql = `
       SELECT 
-        DATE(created_at) as date,
+        DATE(created_at, 'localtime') as date,
         from_status,
         to_status,
         COUNT(*) as count
       FROM task_status_logs
       WHERE created_at >= ?
-      GROUP BY DATE(created_at), from_status, to_status
+      GROUP BY DATE(created_at, 'localtime'), from_status, to_status
       ORDER BY date DESC, count DESC
     `;
     

@@ -94,6 +94,10 @@
       "docsUrl": "Docs URL",
       "openApiUrl": "OpenAPI URL",
       "mcpUrl": "MCP URL (Streamable HTTP)",
+      "token": "Access Token",
+      "tokenDescription": "State-changing API calls require the header: Authorization: Bearer <token>",
+      "copyToken": "Copy",
+      "tokenCopied": "Token copied to clipboard",
       "refreshStatus": "Refresh",
       "invalidPort": "Port must be between 1 and 65535",
       "portSaved": "Port updated",
@@ -135,6 +139,44 @@
     "volume": "Volume",
     "volumeDescription": "Adjust notification sound volume",
     "themeSettings": "Theme Settings",
+    "colorThemes": {
+      "default": {
+        "name": "Default Blue",
+        "description": "The classic blue theme"
+      },
+      "twitter": {
+        "name": "Twitter",
+        "description": "Twitter-style theme"
+      },
+      "vercel": {
+        "name": "Vercel",
+        "description": "Minimal black-and-white Vercel theme"
+      },
+      "morandi": {
+        "name": "Morandi Mist",
+        "description": "Morandi haze-blue theme, soft and elegant"
+      },
+      "mint-green": {
+        "name": "Mint Green",
+        "description": "Fresh mint-green theme, natural and soothing"
+      },
+      "modes": {
+        "system": {
+          "label": "System",
+          "description": "Follow the system theme setting"
+        },
+        "light": {
+          "label": "Light",
+          "description": "Light theme"
+        },
+        "dark": {
+          "label": "Dark",
+          "description": "Dark theme"
+        }
+      },
+      "title": "Color Theme",
+      "description": "Choose your favorite color theme"
+    },
     "themeMode": "Theme Mode",
     "themeModeDescription": "Choose light or dark mode",
     "autoStartFailed": "Failed to set auto start",
@@ -276,6 +318,21 @@
     "medium": "Medium",
     "low": "Low",
     "today": "Today",
+    "editor": {
+      "addPlaceholder": "Add a new task...",
+      "editPlaceholder": "Edit task...",
+      "currentList": "Current list",
+      "remindMe": "Remind me",
+      "noReminder": "No reminder",
+      "selectList": "Select list",
+      "customTime": "Custom time…",
+      "saveFailed": "Save failed",
+      "deadlineInvalid": "Invalid deadline data, please reset the deadline",
+      "createdAt": "Created {date}",
+      "dateOnly": "Date only",
+      "addTime": "Add time",
+      "moveToOtherLists": "Move to other lists"
+    },
     "tomorrow": "Tomorrow",
     "nextWeek": "Next week",
     "quickSchedule": "Quick schedule",
@@ -354,6 +411,30 @@
       "periodMorning": "Morning",
       "periodAfternoon": "Afternoon",
       "periodEvening": "Evening"
+    },
+    "flatList": {
+      "loading": "Loading...",
+      "emptyTitle": "No tasks yet",
+      "emptyIntro": "Start by creating your first task!",
+      "emptyTipInput": "Click the input above to add a task",
+      "emptyTipShortcut": "Use Ctrl + Enter to create a task",
+      "emptyTipDeadline": "Set due dates and reminders",
+      "emptyTipManage": "Start managing your time efficiently",
+      "emptyHint": "💡 Tip: Use {shortcut} to add tasks quickly",
+      "inputPlaceholder": "Add a new task...",
+      "deleteSelected": "Delete selected tasks",
+      "selectedCount": "{count} selected",
+      "unknownList": "Unknown list",
+      "multiSelect": "Multi-select",
+      "selectAll": "Select all",
+      "tooltipMulti": "Click to enter multi-select mode",
+      "tooltipAll": "Click to cancel select-all",
+      "tooltipSelect": "Click to select all, click again to exit multi-select",
+      "splitTitleOn": "Turn off task splitting: AI-generated steps stay in the steps list",
+      "splitTitleOff": "Turn on task splitting: AI breaks the task into multiple tasks",
+      "split": "Split",
+      "reportFailed": "Failed to generate report",
+      "reportUnknownError": "Unknown error while generating report"
     }
   },
   "lists": {
@@ -806,6 +887,18 @@
       "species-5": "Red maple",
       "species-6": "Evergreen"
     },
+    "treeForm": {
+      "base": "Common",
+      "canopy": "Canopy",
+      "legend": "Legend"
+    },
+    "grove": {
+      "title": "Grove trees",
+      "hint": "Merge 3 trees of the same species and form into the next form.",
+      "empty": "No mature trees yet. Plant a seed to get started.",
+      "merge": "Merge into {form}",
+      "formName": "{species} · {form}"
+    },
     "inventory": "Collection",
     "noInventory": "Nothing collected yet",
     "expansion": "Garden expansions",
@@ -824,6 +917,7 @@
     "addFirstItem": "Add your first item",
     "emptyGardenHint": "This garden is still empty. Start with a collectible you like.",
     "placedCount": "{placed}/{capacity} placed",
+    "orchardCount": "Grove · {count} trees",
     "placementFull": "The yard is full. Expand or store an item first.",
     "placementTrayDescription": "Choose a collectible and it will land in its template spot. You can drag it afterwards.",
     "placementTrayHint": "Positions come from the garden template; there is no grid to align.",
@@ -1004,20 +1098,7 @@
       "todayFocusNoteOne": "1 focus round as well",
       "weekCareTotal": "care moments",
       "weekFocusTotal": "focus rounds"
-    },
-    "treeForm": {
-      "base": "Common",
-      "canopy": "Canopy",
-      "legend": "Legend"
-    },
-    "grove": {
-      "title": "Grove trees",
-      "hint": "Merge 3 trees of the same species and form into the next form.",
-      "empty": "No mature trees yet. Plant a seed to get started.",
-      "merge": "Merge into {form}",
-      "formName": "{species} · {form}"
-    },
-    "orchardCount": "Grove · {count} trees"
+    }
   },
   "focusWidget": {
     "brand": "Moli Focus",

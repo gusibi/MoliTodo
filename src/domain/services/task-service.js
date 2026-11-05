@@ -264,6 +264,18 @@ class TaskService {
   }
 
   /**
+   * 在事务中执行多步写入；仓储不支持事务时退化为直接执行。
+   * @param {Function} work 工作函数
+   * @returns {Promise<*>}
+   */
+  _runInTransaction(work) {
+    if (typeof this.taskRepository.withTransaction === 'function') {
+      return this.taskRepository.withTransaction(work);
+    }
+    return work();
+  }
+
+  /**
    * 完成任务
    * @param {string} taskId 任务ID
    * @returns {Promise<Task>}
@@ -281,21 +293,25 @@ class TaskService {
 
     const oldStatus = task.status;
 
-    // 如果是重复任务，创建下一个实例
-    let nextInstanceCreated = false;
-    if (task.isRecurring()) {
-      const nextInstance = await this.createNextRecurringInstance(task);
-      nextInstanceCreated = nextInstance !== null;
+    // 下一期实例 + 清理重复数据 + 完成标记是一个整体：
+    // 中途失败重试会产生重复实例，因此包在同一个事务里。
+    const updatedTask = await this._runInTransaction(async () => {
+      // 如果是重复任务，创建下一个实例
+      let nextInstanceCreated = false;
+      if (task.isRecurring()) {
+        const nextInstance = await this.createNextRecurringInstance(task);
+        nextInstanceCreated = nextInstance !== null;
 
-      // 如果成功创建了新实例，清理当前任务的重复数据
-      if (nextInstanceCreated) {
-        task.clearRecurrence();
+        // 如果成功创建了新实例，清理当前任务的重复数据
+        if (nextInstanceCreated) {
+          task.clearRecurrence();
+        }
       }
-    }
 
-    // 设置完成时间、累计进行中耗时并标记为完成
-    task.completeTask();
-    const updatedTask = await this.taskRepository.save(task);
+      // 设置完成时间、累计进行中耗时并标记为完成
+      task.completeTask();
+      return this.taskRepository.save(task);
+    });
 
     // 记录状态变化日志
     if (this.taskStatusLogService && oldStatus !== updatedTask.status) {
@@ -454,14 +470,15 @@ class TaskService {
     }
 
     // 更新状态
+    let pendingStatusLog = null;
     if (updates.status !== undefined) {
       const oldStatus = task.status;
       task.updateStatus(updates.status);
 
       // 记录状态变化日志
       if (this.taskStatusLogService && oldStatus !== updates.status) {
-        // 延迟记录，等任务保存成功后再记录
-        this._pendingStatusLog = { taskId, oldStatus, newStatus: updates.status };
+        // 延迟记录，等任务保存成功后再记录（局部变量，避免并发互相覆盖）
+        pendingStatusLog = { taskId, oldStatus, newStatus: updates.status };
       }
     }
 
@@ -488,13 +505,12 @@ class TaskService {
     const updatedTask = await this.taskRepository.save(task);
 
     // 处理延迟的状态日志记录
-    if (this._pendingStatusLog) {
+    if (pendingStatusLog) {
       await this.taskStatusLogService.logStatusChange(
-        this._pendingStatusLog.taskId,
-        this._pendingStatusLog.oldStatus,
-        this._pendingStatusLog.newStatus
+        pendingStatusLog.taskId,
+        pendingStatusLog.oldStatus,
+        pendingStatusLog.newStatus
       );
-      this._pendingStatusLog = null;
     }
 
     return updatedTask;
@@ -957,13 +973,22 @@ class TaskService {
     if (!instances.length) return instances;
 
     const RecurringTaskService = require('./recurring-task-service');
-    const overrideKeys = new Set();
-    for (const recurringTask of recurringTasks) {
-      const overrides = await this.taskRepository.findOverrideInstances(recurringTask.id);
-      for (const override of overrides) {
-        const key = RecurringTaskService.instanceKey(recurringTask.id, override.occurrenceDate);
-        if (key) overrideKeys.add(key);
+    // 优先批量查询；仓储不支持批量时退化为逐系列查询
+    let overrideRows = [];
+    if (typeof this.taskRepository.findOverrideInstancesBySeriesIds === 'function') {
+      overrideRows = await this.taskRepository.findOverrideInstancesBySeriesIds(
+        recurringTasks.map((task) => task.id)
+      );
+    } else {
+      for (const recurringTask of recurringTasks) {
+        const overrides = await this.taskRepository.findOverrideInstances(recurringTask.id);
+        overrideRows.push(...overrides);
       }
+    }
+    const overrideKeys = new Set();
+    for (const override of overrideRows) {
+      const key = RecurringTaskService.instanceKey(override.seriesId, override.occurrenceDate);
+      if (key) overrideKeys.add(key);
     }
     if (!overrideKeys.size) return instances;
 
@@ -1052,23 +1077,26 @@ class TaskService {
     const deadlineChanged = 'dueDate' in updates || 'dueTime' in updates;
     if (scheduleChanged || deadlineChanged) {
       const today = taskTime.localDateKey(new Date());
-      const overrides = await this.taskRepository.findOverrideInstances(task.getSeriesId());
-      for (const override of overrides) {
-        if (override.id === task.id || ['done', 'deleted'].includes(override.status) ||
-            taskTime.localDateKey(override.occurrenceDate) < today) continue;
-        const generated = task.createInstance(override.occurrenceDate, override.id);
-        const timeUpdates = {};
-        if (scheduleChanged) {
-          timeUpdates.scheduledStartAt = generated.scheduledStartAt;
-          timeUpdates.scheduledEndAt = generated.scheduledEndAt;
+      // 系列时刻传播是多步写入，包事务避免中途失败留下半更新的系列
+      await this._runInTransaction(async () => {
+        const overrides = await this.taskRepository.findOverrideInstances(task.getSeriesId());
+        for (const override of overrides) {
+          if (override.id === task.id || ['done', 'deleted'].includes(override.status) ||
+              taskTime.localDateKey(override.occurrenceDate) < today) continue;
+          const generated = task.createInstance(override.occurrenceDate, override.id);
+          const timeUpdates = {};
+          if (scheduleChanged) {
+            timeUpdates.scheduledStartAt = generated.scheduledStartAt;
+            timeUpdates.scheduledEndAt = generated.scheduledEndAt;
+          }
+          if (deadlineChanged) {
+            timeUpdates.dueDate = generated.dueDate;
+            timeUpdates.dueTime = generated.dueTime;
+          }
+          const updated = await this.updateTask(override.id, timeUpdates);
+          this._notifySchedule(updated);
         }
-        if (deadlineChanged) {
-          timeUpdates.dueDate = generated.dueDate;
-          timeUpdates.dueTime = generated.dueTime;
-        }
-        const updated = await this.updateTask(override.id, timeUpdates);
-        this._notifySchedule(updated);
-      }
+      });
     }
     return task;
   }
@@ -1202,14 +1230,17 @@ class TaskService {
    * @returns {Promise<Object>}
    */
   async deleteRecurringSeries(seriesId) {
-    // 删除主重复任务（重复任务内部清理用硬删除，避免堆进垃圾桶）
-    await this.taskRepository.delete(seriesId);
+    // 主任务与所有覆盖实例一次性删除，避免中途失败留下孤儿实例
+    await this._runInTransaction(async () => {
+      // 删除主重复任务（重复任务内部清理用硬删除，避免堆进垃圾桶）
+      await this.taskRepository.delete(seriesId);
 
-    // 删除所有相关的覆盖实例
-    const overrideInstances = await this.taskRepository.findOverrideInstances(seriesId);
-    for (const instance of overrideInstances) {
-      await this.taskRepository.delete(instance.id);
-    }
+      // 删除所有相关的覆盖实例
+      const overrideInstances = await this.taskRepository.findOverrideInstances(seriesId);
+      for (const instance of overrideInstances) {
+        await this.taskRepository.delete(instance.id);
+      }
+    });
 
     return { success: true };
   }

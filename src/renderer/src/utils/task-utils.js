@@ -77,20 +77,6 @@ export const calculateTotalDuration = (tasks) => {
 }
 
 /**
- * 按状态统计任务数量
- * @param {Array} tasks - 任务列表
- * @returns {Object} 各状态的任务数量
- */
-export const getTaskStatusCounts = (tasks) => {
-  return {
-    done: tasks.filter(task => task.status === 'done').length,
-    doing: tasks.filter(task => task.status === 'doing').length,
-    paused: tasks.filter(task => task.status === 'paused').length,
-    pending: tasks.filter(task => task.status === 'pending').length
-  }
-}
-
-/**
  * 判断提醒时间是否已过（行上提醒 pill 的逾期红状态）
  * @param {string|Date} reminderTime - 提醒时间
  * @returns {boolean} 是否已过期
@@ -118,56 +104,4 @@ export const formatReminderTime = (reminderTime) => {
   } else {
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
-}
-
-/**
- * 格式化到期日期
- * @param {string|Date} dueDate - 到期日期
- * @returns {string} 格式化后的到期日期字符串
- */
-export const formatDueDate = (dueDate) => {
-  if (!dueDate) return ''
-  
-  const due = new Date(dueDate)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
-  
-  const diffDays = Math.ceil((dueDay - today) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays === 0) {
-    return '今天到期'
-  } else if (diffDays === 1) {
-    return '明天到期'
-  } else if (diffDays === -1) {
-    return '昨天到期'
-  } else if (diffDays < 0) {
-    return `${Math.abs(diffDays)}天前到期`
-  } else {
-    return `${diffDays}天后到期`
-  }
-}
-
-/**
- * 获取到期日期的CSS类名
- * @param {string|Date} dueDate - 到期日期
- * @returns {string} CSS类名
- */
-export const getDueDateCssClass = (dueDate) => {
-  if (!dueDate) return ''
-  
-  const due = new Date(dueDate)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
-  
-  const diffDays = Math.ceil((dueDay - today) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays < 0) {
-    return 'kanban-card-time--overdue'
-  } else if (diffDays <= 1) {
-    return 'kanban-card-time--due-soon'
-  }
-  
-  return 'kanban-card-time'
 }

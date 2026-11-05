@@ -1,7 +1,11 @@
 const http = require('http');
+const crypto = require('crypto');
 const { URL } = require('url');
 const TaskUseCases = require('../application/task-use-cases');
 const MoliTodoMcpServer = require('./mcp-server');
+
+// 请求体大小上限，防止恶意请求撑爆主进程内存
+const MAX_BODY_BYTES = 1024 * 1024;
 
 class LocalApiServer {
   constructor({ taskService, listService, notificationService, windowManager }) {
@@ -26,6 +30,7 @@ class LocalApiServer {
       docsUrl: 'http://127.0.0.1:1234/api/docs',
       openApiUrl: 'http://127.0.0.1:1234/api/openapi.json',
       mcpUrl: 'http://127.0.0.1:1234/mcp',
+      token: null,
       lastError: null
     };
   }
@@ -45,6 +50,7 @@ class LocalApiServer {
     this.state = {
       ...this.state,
       ...apiConfig,
+      token: this.ensureApiToken(),
       running: this.isRunning(),
       lastError: shouldRestart ? null : this.state.lastError
     };
@@ -63,7 +69,13 @@ class LocalApiServer {
   }
 
   normalizeConfig(apiConfig = {}) {
-    const host = apiConfig.host === 'localhost' ? '127.0.0.1' : (apiConfig.host || '127.0.0.1');
+    // host 强制收敛到本机回环地址：监听非回环接口等于把无差别的任务
+    // CRUD 暴露给局域网，不属于受支持的使用方式
+    const host = '127.0.0.1';
+    const requestedHost = apiConfig.host === 'localhost' ? '127.0.0.1' : (apiConfig.host || '127.0.0.1');
+    if (requestedHost !== host) {
+      console.warn(`[LocalApiServer] apiServer.host=${requestedHost} 不受支持，已强制使用 ${host}`);
+    }
     const parsedPort = Number.parseInt(apiConfig.port, 10);
     const port = Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535 ? parsedPort : 1234;
     const enabled = Boolean(apiConfig.enabled);
@@ -78,6 +90,25 @@ class LocalApiServer {
       openApiUrl: `${baseUrl}/api/openapi.json`,
       mcpUrl: `${baseUrl}/mcp`
     };
+  }
+
+  /**
+   * 确保存在 per-install 访问令牌：首次启用时生成并持久化，
+   * 之后所有非公开请求必须携带 Authorization: Bearer <token>。
+   */
+  ensureApiToken() {
+    const store = this.windowManager && this.windowManager.configStore;
+    if (!store) {
+      // 无持久化存储时退化为进程内随机令牌（仅供嵌入场景使用）
+      this._ephemeralToken = this._ephemeralToken || crypto.randomBytes(32).toString('hex');
+      return this._ephemeralToken;
+    }
+    let token = store.get('apiServer.token');
+    if (!token || typeof token !== 'string') {
+      token = crypto.randomBytes(32).toString('hex');
+      store.set('apiServer.token', token);
+    }
+    return token;
   }
 
   getState() {
@@ -105,7 +136,7 @@ class LocalApiServer {
       this.handleRequest(request, response).catch((error) => {
         console.error('[LocalApiServer] 请求处理失败:', error);
         if (!response.headersSent) {
-          this.sendError(response, 500, error.message || 'Internal server error');
+          this.sendError(response, error.statusCode || 500, error.message || 'Internal server error');
         } else if (!response.writableEnded) {
           response.end();
         }
@@ -167,6 +198,16 @@ class LocalApiServer {
       return;
     }
 
+    const url = new URL(request.url, this.state.baseUrl);
+    const { pathname, searchParams } = url;
+
+    // CORS 防不住 no-cors fetch / sendBeacon 等简单请求，
+    // 状态变更类接口必须校验 Bearer token（公开的只有只读信息端点）
+    if (!this.isPublicPath(pathname, request.method) && !this.isAuthorized(request)) {
+      this.sendError(response, 401, '需要有效的 Authorization: Bearer <token>');
+      return;
+    }
+
     this.setCorsHeaders(response);
 
     if (request.method === 'OPTIONS') {
@@ -174,9 +215,6 @@ class LocalApiServer {
       response.end();
       return;
     }
-
-    const url = new URL(request.url, this.state.baseUrl);
-    const { pathname, searchParams } = url;
 
     if (pathname === '/mcp') {
       await this.mcpServer.handleRequest(request, response);
@@ -343,10 +381,35 @@ class LocalApiServer {
     return this.parseRequiredListId(value);
   }
 
+  /**
+   * 无需鉴权的只读信息端点（无副作用，供健康检查与服务发现）
+   */
+  isPublicPath(pathname, method) {
+    return (
+      method === 'GET' &&
+      (pathname === '/' ||
+        pathname === '/api' ||
+        pathname === '/api/health' ||
+        pathname === '/api/docs' ||
+        pathname === '/api/openapi.json')
+    );
+  }
+
+  isAuthorized(request) {
+    const header = request.headers.authorization || '';
+    const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+    return Boolean(match && match[1] && match[1] === this.state.token);
+  }
+
   async readJsonBody(request) {
     const chunks = [];
+    let totalBytes = 0;
 
     for await (const chunk of request) {
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        throw Object.assign(new Error('请求体超过 1MB 上限'), { statusCode: 413 });
+      }
       chunks.push(chunk);
     }
 
@@ -429,15 +492,16 @@ class LocalApiServer {
       openApiUrl: this.state.openApiUrl,
       mcpUrl: this.state.mcpUrl,
       notes: [
-        '默认只监听本机 localhost，可直接给本地 AI、脚本或自动化工具调用。',
+        '默认只监听本机 127.0.0.1，可直接给本地 AI、脚本或自动化工具调用。',
+        '除健康检查和文档端点外，所有请求需携带 Authorization: Bearer <token>，token 在设置页查看。',
         '所有请求和响应都使用 JSON。',
         '建议先调用 /api/health 和 /api/docs 了解服务状态和接口列表。'
       ],
       endpoints: [
-        { method: 'GET', path: '/api/health', description: '检查服务是否在线' },
-        { method: 'GET', path: '/api/docs', description: '读取接口说明和调用示例' },
-        { method: 'GET', path: '/api/openapi.json', description: '读取 OpenAPI 规范' },
-        { method: 'POST', path: '/mcp', description: 'MCP Streamable HTTP 入口' },
+        { method: 'GET', path: '/api/health', description: '检查服务是否在线（无需鉴权）' },
+        { method: 'GET', path: '/api/docs', description: '读取接口说明和调用示例（无需鉴权）' },
+        { method: 'GET', path: '/api/openapi.json', description: '读取 OpenAPI 规范（无需鉴权）' },
+        { method: 'POST', path: '/mcp', description: 'MCP Streamable HTTP 入口（需鉴权）' },
         { method: 'GET', path: '/api/lists', description: '获取所有清单' },
         { method: 'POST', path: '/api/lists', description: '创建清单' },
         { method: 'GET', path: '/api/tasks', description: '查询任务，支持 status、listId、category、query、includeCompleted 参数' },
@@ -450,10 +514,10 @@ class LocalApiServer {
       ],
       examples: {
         health: `curl ${this.state.baseUrl}/api/health`,
-        listTasks: `curl ${this.state.baseUrl}/api/tasks?includeCompleted=true`,
-        createTask: `curl -X POST ${this.state.baseUrl}/api/tasks -H "Content-Type: application/json" -d '{"content":"写接口联调说明","listId":0}'`,
-        updateTask: `curl -X PATCH ${this.state.baseUrl}/api/tasks/TASK_ID -H "Content-Type: application/json" -d '{"content":"新的任务标题"}'`,
-        completeTask: `curl -X POST ${this.state.baseUrl}/api/tasks/TASK_ID/complete`
+        listTasks: `curl -H "Authorization: Bearer <token>" ${this.state.baseUrl}/api/tasks?includeCompleted=true`,
+        createTask: `curl -X POST ${this.state.baseUrl}/api/tasks -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"content":"写接口联调说明","listId":0}'`,
+        updateTask: `curl -X PATCH ${this.state.baseUrl}/api/tasks/TASK_ID -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"content":"新的任务标题"}'`,
+        completeTask: `curl -X POST -H "Authorization: Bearer <token>" ${this.state.baseUrl}/api/tasks/TASK_ID/complete`
       }
     };
   }

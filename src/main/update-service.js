@@ -456,7 +456,12 @@ class UpdateService {
     });
 
     const digest = hash.digest('base64');
-    if (asset.sha512 && digest !== asset.sha512) {
+    // 无校验值时拒绝安装：静默替换应用文件的风险不能只靠 HTTPS 兜底
+    if (!asset.sha512) {
+      await fsp.rm(part, { force: true }).catch(() => {});
+      throw new Error('未能获取更新包的校验值，请到发布页手动下载安装');
+    }
+    if (digest !== asset.sha512) {
       await fsp.rm(part, { force: true }).catch(() => {});
       throw new Error('安装包校验失败，请重试');
     }
@@ -547,7 +552,6 @@ class UpdateService {
       'attach',
       '-nobrowse',
       '-readonly',
-      '-noverify',
       '-mountpoint',
       mountPoint,
       dmgPath

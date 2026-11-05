@@ -98,6 +98,7 @@ class ToolsRuntime {
     const pending = await this.reminderUseCases.resumePending(this.clock.now());
     await this.popupPresenter.present(pending);
     await this.tickFocus();
+    this.syncFocusHeartbeat();
     this.start();
   }
 
@@ -109,13 +110,33 @@ class ToolsRuntime {
       });
     }, this.tickIntervalMs);
     if (this.timer.unref) this.timer.unref();
+  }
 
-    this.focusTimer = setInterval(() => {
-      this.tickFocus().catch((error) => {
-        console.error('专注心跳失败:', error);
-      });
-    }, 2000);
-    if (this.focusTimer.unref) this.focusTimer.unref();
+  /**
+   * 专注心跳只在有进行中的会话（含休息阶段）时运行，
+   * 避免 2 秒一次的 SQLite 写事务在空闲时无谓空转。
+   */
+  _setFocusHeartbeat(active) {
+    if (active && !this.focusTimer) {
+      this.focusTimer = setInterval(() => {
+        this.tickFocus().catch((error) => {
+          console.error('专注心跳失败:', error);
+        });
+      }, 2000);
+      if (this.focusTimer.unref) this.focusTimer.unref();
+    } else if (!active && this.focusTimer) {
+      clearInterval(this.focusTimer);
+      this.focusTimer = null;
+    }
+  }
+
+  async syncFocusHeartbeat() {
+    try {
+      const active = await this.focusRepository.findActiveSession();
+      this._setFocusHeartbeat(Boolean(active && active.status === 'running'));
+    } catch (error) {
+      console.warn('同步专注心跳状态失败:', error.message);
+    }
   }
 
   dispose() {
@@ -171,6 +192,8 @@ class ToolsRuntime {
           await this.autoPlaceNewItem(result.activity?.inventoryItemId);
         }
         this.broadcastToolsUpdated();
+        // 会话结束后停掉心跳；进入休息阶段则保持
+        await this.syncFocusHeartbeat();
       }
       return result;
     } finally {
@@ -204,6 +227,7 @@ class ToolsRuntime {
     const state = await this.focusUseCases.start(input);
     this.focusNotice = null;
     this.broadcastToolsUpdated();
+    this.syncFocusHeartbeat();
     return state;
   }
 
@@ -217,24 +241,28 @@ class ToolsRuntime {
   async pauseFocus(now = this.clock.now()) {
     const state = await this.focusUseCases.pause(now);
     this.broadcastToolsUpdated();
+    this.syncFocusHeartbeat();
     return state;
   }
 
   async resumeFocus(now = this.clock.now()) {
     const state = await this.focusUseCases.resume(now);
     this.broadcastToolsUpdated();
+    this.syncFocusHeartbeat();
     return state;
   }
 
   async cancelFocus(now = this.clock.now()) {
     const state = await this.focusUseCases.cancel(now);
     this.broadcastToolsUpdated();
+    this.syncFocusHeartbeat();
     return state;
   }
 
   async skipFocusBreak(now = this.clock.now()) {
     const state = await this.focusUseCases.skipBreak(now);
     this.broadcastToolsUpdated();
+    this.syncFocusHeartbeat();
     return state;
   }
 
@@ -245,6 +273,7 @@ class ToolsRuntime {
       this.focusPausedForSleep = true;
       this.broadcastToolsUpdated();
     }
+    this.syncFocusHeartbeat();
   }
 
   async handleResume() {
@@ -255,6 +284,7 @@ class ToolsRuntime {
       await this.focusUseCases.resume(this.clock.now());
       this.broadcastToolsUpdated();
     }
+    this.syncFocusHeartbeat();
   }
 
   async listReminderRules() {
@@ -345,6 +375,7 @@ class ToolsRuntime {
     const result = await this.dataPort.importToolsData(snapshot);
     this.focusPausedForSleep = false;
     this.popupPresenter.reset();
+    this.syncFocusHeartbeat();
     this.broadcastToolsUpdated();
     return result;
   }
@@ -353,6 +384,7 @@ class ToolsRuntime {
     await this.dataPort.clearToolsData();
     this.focusPausedForSleep = false;
     this.popupPresenter.reset();
+    this.syncFocusHeartbeat();
     this.broadcastToolsUpdated();
   }
 
@@ -364,6 +396,22 @@ class ToolsRuntime {
 
   async claimBasicSeed() {
     const result = await this.gardenUseCases.claimBasicSeed();
+    this.broadcastToolsUpdated();
+    return result;
+  }
+
+  async mergeTrees({ speciesId, fromTier } = {}) {
+    const result = await this.gardenUseCases.mergeTrees({
+      speciesId,
+      fromTier,
+      now: this.clock.now()
+    });
+    if (result.merged && this.autoPlace) {
+      await this.placementUseCases.autoPlace({
+        now: this.clock.now(),
+        inventoryIds: [result.inventoryItemId]
+      });
+    }
     this.broadcastToolsUpdated();
     return result;
   }

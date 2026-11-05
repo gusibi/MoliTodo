@@ -131,6 +131,7 @@ const formatTransition = (transition) => {
     'todo': '待办',
     'doing': '进行中',
     'pause': '暂停',
+    'paused': '暂停',
     'done': '已完成'
   }
   return `${statusMap[from] || from} → ${statusMap[to] || to}`

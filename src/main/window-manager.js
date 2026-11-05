@@ -2,6 +2,7 @@ const { BrowserWindow, screen, nativeImage, Tray, Menu, app } = require('electro
 const path = require('path');
 const fs = require('fs');
 const Store = require('electron-store');
+const { DEFAULT_CONFIG } = require('./default-config');
 
 // 菜单栏下拉面板：宽度固定，高度由渲染层测量内容后回传，避免底部留白
 const MENUBAR_PANEL_WIDTH = 320;
@@ -37,81 +38,31 @@ class WindowManager {
 
     this.configStore = new Store({
       name: 'config',
-      defaults: {
-        // 首次启动检测
-        isFirstLaunch: true,
-        userGuideCompleted: false,
-        floatingIcon: {
-          x: 100,
-          y: 100,
-          size: 50,
-          opacity: 100,
-          visible: true
-        },
-        focusWidget: {
-          visible: false,
-          x: null,
-          y: null
-        },
-        autoStart: false,
-        showNotifications: true,
-        apiServer: {
-          enabled: false,
-          host: '127.0.0.1',
-          port: 1234
-        },
-        notificationSound: {
-          enabled: true,
-          soundFile: 'ding-126626.mp3',
-          volume: 50
-        },
-        theme: 'system',
-        customReminders: [
-          { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
-          { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
-          { id: 3, label: '2小时后', type: 'relative', value: 2, unit: 'hours' },
-          { id: 4, label: '1天后', type: 'relative', value: 1, unit: 'days' },
-          { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
-          { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
-          { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
-          { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
-        ],
-        ai: {
-          enabled: true,
-          selectedProvider: '',
-          providers: {
-            openai: {
-              apiKey: '',
-              baseURL: 'https://api.openai.com/v1',
-              model: 'gpt-4o'
-            },
-            google: {
-              apiKey: '',
-              model: 'gemini-1.5-pro'
-            },
-            anthropic: {
-              apiKey: '',
-              model: 'claude-3-5-sonnet-20241022'
-            },
-            xai: {
-              apiKey: '',
-              baseURL: 'https://api.x.ai/v1',
-              model: 'grok-beta'
-            }
-          },
-          customProviders: [],
-          features: {
-            taskSuggestions: true,
-            autoCategories: false,
-            smartReminders: false
-          }
-        }
-      }
+      defaults: DEFAULT_CONFIG
     });
 
     // 获取开发服务器端口
     this.devPort = process.env.VITE_DEV_PORT || '5173';
     this.devBaseUrl = `http://localhost:${this.devPort}`;
+  }
+
+  /**
+   * 统一的 BrowserWindow 创建入口：
+   * 拒绝 window.open 弹窗，且只允许导航到本应用页面，
+   * 防止被攻陷的渲染进程导航到远程内容后获得完整 preload 权限。
+   */
+  _createBrowserWindow(options) {
+    const window = new BrowserWindow(options);
+    window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    const allowedPrefix = process.env.NODE_ENV === 'development'
+      ? this.devBaseUrl
+      : 'file://';
+    window.webContents.on('will-navigate', (event, url) => {
+      if (typeof url !== 'string' || !url.startsWith(allowedPrefix)) {
+        event.preventDefault();
+      }
+    });
+    return window;
   }
 
   async initialize() {
@@ -143,7 +94,7 @@ class WindowManager {
     const x = Math.min(Math.max(config.x, 0), width - config.size);
     const y = Math.min(Math.max(config.y, 0), height - config.size);
 
-    this.floatingWindow = new BrowserWindow({
+    this.floatingWindow = this._createBrowserWindow({
       width: config.size,
       height: config.size,
       x: x,
@@ -222,7 +173,7 @@ class WindowManager {
       ? Math.min(Math.max(Number(config.y), workArea.y), workArea.y + workArea.height - FOCUS_WIDGET_HEIGHT)
       : defaultY;
 
-    this.focusWidgetWindow = new BrowserWindow({
+    this.focusWidgetWindow = this._createBrowserWindow({
       width: FOCUS_WIDGET_WIDTH,
       height: FOCUS_WIDGET_HEIGHT,
       x,
@@ -305,7 +256,7 @@ class WindowManager {
 
     const currentIcon = this.getCurrentAppIcon();
 
-    this.taskManagerWindow = new BrowserWindow({
+    this.taskManagerWindow = this._createBrowserWindow({
       width: 1200,
       height: 800,
       minWidth: 1000,
@@ -351,7 +302,7 @@ class WindowManager {
 
     const currentIcon = this.getCurrentAppIcon();
 
-    this.settingsWindow = new BrowserWindow({
+    this.settingsWindow = this._createBrowserWindow({
       width: 900,
       height: 650,
       resizable: false,
@@ -429,7 +380,7 @@ class WindowManager {
 
     const currentIcon = this.getCurrentAppIcon();
 
-    this.taskPanelWindow = new BrowserWindow({
+    this.taskPanelWindow = this._createBrowserWindow({
       width: 320,
       height: maxHeight,
       x: panelX,
@@ -596,7 +547,7 @@ class WindowManager {
       options.visualEffectState = 'active';
     }
 
-    this.menuBarPanelWindow = new BrowserWindow(options);
+    this.menuBarPanelWindow = this._createBrowserWindow(options);
 
     if (process.env.NODE_ENV === 'development') {
       this.menuBarPanelWindow.loadURL(`${this.devBaseUrl}/#/menubar-panel`);
@@ -690,7 +641,7 @@ class WindowManager {
       return;
     }
 
-    this.reminderPopupWindow = new BrowserWindow({
+    this.reminderPopupWindow = this._createBrowserWindow({
       ...bounds,
       frame: false,
       transparent: true,
@@ -979,16 +930,6 @@ class WindowManager {
       }
     }
 
-    // 暂时注释掉图标更新，确保原图标正常显示
-    // if (this.tray) {
-    //   const iconWithBadge = this.createTrayIconWithBadge(todayTaskCount);
-    //   if (iconWithBadge) {
-    //     this.tray.setImage(iconWithBadge);
-    //     console.log('托盘图标已更新，显示数字:', todayTaskCount);
-    //   } else {
-    //     console.log('创建带数字的图标失败，保持原图标');
-    //   }
-    // }
   }
 
   // 辅助函数：判断日期是否为今天
@@ -1008,62 +949,6 @@ class WindowManager {
       console.log('托盘不存在，无法刷新');
     }
   }
-
-  // 创建带有数字角标的托盘图标
-  createTrayIconWithBadge(count = 0) {
-    try {
-      const trayIconPath = this.getTrayIconPath();
-      const fs = require('fs');
-
-      // 先确保原始图标存在并可用
-      if (!fs.existsSync(trayIconPath)) {
-        console.warn('托盘图标文件不存在，路径:', trayIconPath);
-        return null;
-      }
-
-      let baseImage = nativeImage.createFromPath(trayIconPath);
-      if (baseImage.isEmpty()) {
-        console.warn('托盘图标为空');
-        return null;
-      }
-
-      if (process.platform === 'darwin') {
-        baseImage.setTemplateImage(true);
-      }
-
-      // 如果没有任务数量，直接返回原图标
-      if (count <= 0) {
-        console.log('没有任务，返回原始图标');
-        return baseImage;
-      }
-
-      // 尝试使用简单的PNG生成方法
-      try {
-        console.log('尝试创建带数字的图标，任务数:', count);
-
-        // 创建一个简单的16x16像素的图标
-        const displayCount = count > 99 ? '99+' : count.toString();
-
-        // 使用更简单的方法：创建一个基于原图标的副本，然后尝试添加文字
-        // 如果失败，就返回原图标
-        const resizedBase = baseImage.resize({ width: 16, height: 16 });
-
-        // 暂时返回原图标，但在控制台显示我们正在处理数字
-        console.log('返回原始图标，数字:', displayCount);
-        return resizedBase;
-
-      } catch (numberError) {
-        console.log('数字图标创建失败，返回原图标:', numberError.message);
-        return baseImage.resize({ width: 16, height: 16 });
-      }
-
-    } catch (error) {
-      console.error('创建托盘图标失败:', error);
-      return null;
-    }
-  }
-
-
 
   applyFloatingIconConfig() {
     if (!this.floatingWindow || this.floatingWindow.isDestroyed()) {
@@ -1332,7 +1217,7 @@ class WindowManager {
 
     const currentIcon = this.getCurrentAppIcon();
 
-    const floatingTaskWindow = new BrowserWindow({
+    const floatingTaskWindow = this._createBrowserWindow({
       width: 420, // 扩大窗口宽度以适配内容
       height: 80, // 初始高度
       maxHeight: 140, // 最大高度限制

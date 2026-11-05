@@ -78,6 +78,17 @@
           <code class="setting-api-link-value">{{ serverState.mcpUrl }}</code>
         </div>
 
+        <div class="setting-api-link-block">
+          <div class="setting-api-link-label">{{ t('settings.api.token') }}</div>
+          <div class="setting-api-port-group">
+            <code class="setting-api-link-value">{{ serverState.token }}</code>
+            <Button variant="secondary" size="sm" @click="copyToken">
+              {{ t('settings.api.copyToken') }}
+            </Button>
+          </div>
+          <div class="setting-item-description">{{ t('settings.api.tokenDescription') }}</div>
+        </div>
+
         <div v-if="serverState.lastError" class="setting-api-error">
           {{ serverState.lastError }}
         </div>
@@ -122,6 +133,7 @@ const serverState = reactive({
   docsUrl: 'http://127.0.0.1:1234/api/docs',
   openApiUrl: 'http://127.0.0.1:1234/api/openapi.json',
   mcpUrl: 'http://127.0.0.1:1234/mcp',
+  token: null,
   lastError: null
 })
 
@@ -157,6 +169,15 @@ const refreshState = async () => {
   } catch (error) {
     console.error('Failed to refresh local api state:', error)
     serverState.lastError = error.message
+  }
+}
+
+const copyToken = async () => {
+  try {
+    await navigator.clipboard.writeText(serverState.token || '')
+    emit('show-message', t('settings.api.tokenCopied'), 'success')
+  } catch (error) {
+    console.error('Failed to copy token:', error)
   }
 }
 

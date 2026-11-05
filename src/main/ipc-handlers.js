@@ -2,6 +2,7 @@ const { ipcMain, dialog, app, shell } = require('electron');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
+const { DEFAULT_CONFIG } = require('./default-config');
 
 class IpcHandlers {
   constructor({ taskService, listService, notificationService, windowManager, taskStatusLogService, localApiServer, toolsRuntime = null, updateService = null }) {
@@ -847,77 +848,9 @@ class IpcHandlers {
     });
 
     ipcMain.handle('reset-config', () => {
-      // 重置为默认配置
-      const defaultConfig = {
-        background: null,
-        floatingIcon: {
-          x: 100,
-          y: 100,
-          size: 60,
-          opacity: 100,
-          visible: true
-        },
-        focusWidget: {
-          visible: false,
-          x: null,
-          y: null
-        },
-        autoStart: false,
-        showNotifications: true,
-        apiServer: {
-          enabled: false,
-          host: '127.0.0.1',
-          port: 1234
-        },
-        notificationSound: {
-          enabled: true,
-          soundFile: 'ding-126626.mp3',
-          volume: 50
-        },
-        theme: 'system',
-        customReminders: [
-          { id: 1, label: '30分钟后', type: 'relative', value: 30, unit: 'minutes' },
-          { id: 2, label: '1小时后', type: 'relative', value: 1, unit: 'hours' },
-          { id: 3, label: '2小时后', type: 'relative', value: 2, unit: 'hours' },
-          { id: 4, label: '1天后', type: 'relative', value: 1, unit: 'days' },
-          { id: 5, label: '下周', type: 'relative', value: 7, unit: 'days' },
-          { id: 6, label: '今天下午4点', type: 'absolute', time: '16:00', dayOffset: 0 },
-          { id: 7, label: '明天9点', type: 'absolute', time: '09:00', dayOffset: 1 },
-          { id: 8, label: '3天后上午10点', type: 'absolute', time: '10:00', dayOffset: 3 }
-        ],
-        ai: {
-          enabled: true,
-          selectedProvider: '',
-          providers: {
-            openai: {
-              apiKey: '',
-              baseURL: 'https://api.openai.com/v1',
-              model: 'gpt-4o'
-            },
-            google: {
-              apiKey: '',
-              model: 'gemini-1.5-pro'
-            },
-            anthropic: {
-              apiKey: '',
-              model: 'claude-3-5-sonnet-20241022'
-            },
-            xai: {
-              apiKey: '',
-              baseURL: 'https://api.x.ai/v1',
-              model: 'grok-beta'
-            }
-          },
-          customProviders: [],
-          features: {
-            taskSuggestions: true,
-            autoCategories: false,
-            smartReminders: false
-          }
-        }
-      };
-
-      Object.entries(defaultConfig).forEach(([key, value]) => {
+      // 重置为默认配置（共享 DEFAULT_CONFIG；首次启动标记不重置）
+      Object.entries(DEFAULT_CONFIG).forEach(([key, value]) => {
+        if (key === 'isFirstLaunch' || key === 'userGuideCompleted') return;
         this.windowManager.updateConfig(key, value);
       });
 
@@ -1748,10 +1681,22 @@ class IpcHandlers {
       };
     });
 
-    // 在系统默认浏览器中打开链接
+    // 在系统默认浏览器中打开链接（只放行 http/https，防止协议滥用）
     ipcMain.handle('app-open-external', async (event, url) => {
       try {
-        await shell.openExternal(url);
+        if (typeof url !== 'string') {
+          return { success: false, error: 'URL 必须是字符串' };
+        }
+        let parsed;
+        try {
+          parsed = new URL(url);
+        } catch (parseError) {
+          return { success: false, error: '无效的 URL' };
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return { success: false, error: '只允许打开 http/https 链接' };
+        }
+        await shell.openExternal(parsed.href);
         return { success: true };
       } catch (error) {
         console.error('Failed to open external URL:', error);

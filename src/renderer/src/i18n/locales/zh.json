@@ -109,6 +109,10 @@
       "docsUrl": "接口文档地址",
       "openApiUrl": "OpenAPI 地址",
       "mcpUrl": "MCP 地址（Streamable HTTP）",
+      "token": "访问令牌",
+      "tokenDescription": "状态变更类请求需携带请求头：Authorization: Bearer <token>",
+      "copyToken": "复制",
+      "tokenCopied": "令牌已复制到剪贴板",
       "refreshStatus": "刷新状态",
       "invalidPort": "端口号必须在 1 到 65535 之间",
       "portSaved": "端口设置已更新",
@@ -140,6 +144,44 @@
     "volume": "音量",
     "volumeDescription": "调整通知音效音量",
     "themeSettings": "主题设置",
+    "colorThemes": {
+      "default": {
+        "name": "默认蓝色",
+        "description": "经典的蓝色主题"
+      },
+      "twitter": {
+        "name": "Twitter",
+        "description": "Twitter 风格主题"
+      },
+      "vercel": {
+        "name": "Vercel",
+        "description": "Vercel 极简黑白主题"
+      },
+      "morandi": {
+        "name": "Morandi Mist",
+        "description": "莫兰迪雾霾蓝主题，柔和优雅"
+      },
+      "mint-green": {
+        "name": "薄荷绿",
+        "description": "清新薄荷绿主题，自然舒缓"
+      },
+      "modes": {
+        "system": {
+          "label": "跟随系统",
+          "description": "跟随系统主题设置"
+        },
+        "light": {
+          "label": "浅色",
+          "description": "浅色主题"
+        },
+        "dark": {
+          "label": "深色",
+          "description": "深色主题"
+        }
+      },
+      "title": "颜色主题",
+      "description": "选择你喜欢的颜色主题"
+    },
     "themeMode": "主题模式",
     "themeModeDescription": "选择浅色或深色模式",
     "autoStartFailed": "设置自启动失败",
@@ -291,6 +333,21 @@
     "medium": "中",
     "low": "低",
     "today": "今天",
+    "editor": {
+      "addPlaceholder": "添加新任务...",
+      "editPlaceholder": "编辑任务...",
+      "currentList": "当前列表",
+      "remindMe": "提醒我",
+      "noReminder": "不提醒",
+      "selectList": "选择列表",
+      "customTime": "自定义时间…",
+      "saveFailed": "保存失败",
+      "deadlineInvalid": "截止数据无效，请重新设置截止时间",
+      "createdAt": "创建于 {date}",
+      "dateOnly": "仅日期",
+      "addTime": "加时间",
+      "moveToOtherLists": "移动到其他列表"
+    },
     "tomorrow": "明天",
     "nextWeek": "下周",
     "quickSchedule": "快捷改期",
@@ -369,6 +426,30 @@
       "periodMorning": "上午",
       "periodAfternoon": "下午",
       "periodEvening": "晚上"
+    },
+    "flatList": {
+      "loading": "加载中...",
+      "emptyTitle": "暂无任务",
+      "emptyIntro": "开始创建您的第一个任务吧！",
+      "emptyTipInput": "点击上方输入框添加任务",
+      "emptyTipShortcut": "使用 Ctrl + Enter 创建任务",
+      "emptyTipDeadline": "设置截止日期和提醒",
+      "emptyTipManage": "开始高效管理您的时间",
+      "emptyHint": "💡 提示：您可以使用快捷键 {shortcut} 快速添加任务",
+      "inputPlaceholder": "添加新任务...",
+      "deleteSelected": "删除选中任务",
+      "selectedCount": "已选 {count}",
+      "unknownList": "未知清单",
+      "multiSelect": "多选",
+      "selectAll": "全选",
+      "tooltipMulti": "点击进入多选模式",
+      "tooltipAll": "点击取消全选",
+      "tooltipSelect": "点击全选，再点击退出多选",
+      "splitTitleOn": "关闭拆分任务：AI 生成的详细步骤会放在步骤中",
+      "splitTitleOff": "打开拆分任务：AI 会将任务拆分生成多个任务",
+      "split": "拆分",
+      "reportFailed": "生成报告失败",
+      "reportUnknownError": "生成报告时发生未知错误"
     }
   },
   "lists": {
@@ -806,6 +887,18 @@
       "species-5": "红枫树",
       "species-6": "常青树"
     },
+    "treeForm": {
+      "base": "普通",
+      "canopy": "华盖",
+      "legend": "传说"
+    },
+    "grove": {
+      "title": "林间树木",
+      "hint": "3 棵同种同形态的树可以合成下一形态。",
+      "empty": "还没有成熟的树，种下种子开始吧。",
+      "merge": "合成{form}",
+      "formName": "{species} · {form}"
+    },
     "inventory": "收藏",
     "noInventory": "暂无收藏",
     "expansion": "小院扩建",
@@ -824,6 +917,7 @@
     "addFirstItem": "添加第一件物品",
     "emptyGardenHint": "这里还是一块空地，从一件喜欢的收藏开始吧。",
     "placedCount": "已摆放 {placed}/{capacity} 件",
+    "orchardCount": "林间 · {count} 棵",
     "placementFull": "院落已经放满，扩建或收起物品后再添加。",
     "placementTrayDescription": "选择一件收藏，它会自动放到预设位置；之后可以拖动调整。",
     "placementTrayHint": "默认位置来自小院模板，不需要手动对齐格子。",
@@ -1004,20 +1098,7 @@
       "todayFocusNoteOne": "另有 1 轮专注",
       "weekCareTotal": "次照顾",
       "weekFocusTotal": "轮专注"
-    },
-    "treeForm": {
-      "base": "普通",
-      "canopy": "华盖",
-      "legend": "传说"
-    },
-    "grove": {
-      "title": "林间树木",
-      "hint": "3 棵同种同形态的树可以合成下一形态。",
-      "empty": "还没有成熟的树，种下种子开始吧。",
-      "merge": "合成{form}",
-      "formName": "{species} · {form}"
-    },
-    "orchardCount": "林间 · {count} 棵"
+    }
   },
   "focusWidget": {
     "brand": "Moli 专注",

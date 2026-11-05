@@ -6,6 +6,7 @@ const { app } = require('electron');
 const Task = require('../../domain/entities/task');
 const taskTime = require('../../domain/services/task-time');
 const DatabaseMigration = require('./database-migration');
+const { withTransaction } = require('./with-transaction');
 
 /**
  * 基于 SQLite 的任务仓储实现
@@ -60,7 +61,13 @@ class SqliteTaskRepository {
 
       // 然后执行数据库迁移
       const migration = new DatabaseMigration(this.db, this.dbPath);
-      await migration.checkAndMigrate();
+      const migratedDb = await migration.checkAndMigrate();
+
+      // 迁移失败恢复备份时会重开连接，仓储必须采用新句柄，否则后续全部报“数据库已关闭”
+      if (migratedDb && migratedDb !== this.db) {
+        this.db = migratedDb;
+        await this.configureSQLite();
+      }
 
       console.log(`✅ SQLite 数据库初始化成功: ${this.dbPath}`);
     } catch (error) {
@@ -356,6 +363,15 @@ class SqliteTaskRepository {
   }
 
   /**
+   * 在单个事务中执行一组仓储操作（多步写入保证原子性）。
+   * @param {Function} work 工作函数
+   * @returns {Promise<*>} work 的返回值
+   */
+  async withTransaction(work) {
+    return withTransaction(this.db, work);
+  }
+
+  /**
    * 将任务对象转换为数据库行
    */
   taskToRow(task) {
@@ -455,7 +471,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    const rows = await this.db.all('SELECT * FROM tasks WHERE deleted_at IS NULL ORDER BY created_at DESC');
+    const rows = await this.db.all('SELECT * FROM tasks WHERE deleted_at IS NULL AND status != "deleted" ORDER BY created_at DESC');
     return rows.map(row => this.rowToTask(row));
   }
 
@@ -496,7 +512,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND status != "done"';
+    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND status != "done" AND status != "deleted"';
     const params = [];
 
     if (listId !== null) {
@@ -535,8 +551,8 @@ class SqliteTaskRepository {
   }
 
   /**
-   * 保存任务
-   * @param {Task} task 
+   * 保存任务（原子 upsert：存在则更新，不存在则插入）
+   * @param {Task} task
    * @returns {Promise<Task>}
    */
   async save(task) {
@@ -546,85 +562,53 @@ class SqliteTaskRepository {
 
     const row = this.taskToRow(task);
 
-    // 检查任务是否已存在
-    const existing = await this.findById(task.id);
-
-    if (existing) {
-      // 更新现有任务
-      await this.db.run(`
-        UPDATE tasks SET
-          content = ?,
-          status = ?,
-          completed = ?,
-          updated_at = ?,
-          reminder_time = ?,
-          completed_at = ?,
-          started_at = ?,
-          total_duration = ?,
-          list_id = ?,
-          metadata = ?,
-          due_date = ?,
-          due_time = ?,
-          scheduled_start_at = ?,
-          scheduled_end_at = ?,
-          reminder_policy = ?,
-          recurrence = ?,
-          series_id = ?,
-          occurrence_date = ?,
-          deleted_at = ?
-        WHERE id = ?
-      `, [
-        row.content,
-        row.status,
-        row.completed,
-        row.updated_at,
-        row.reminder_time,
-        row.completed_at,
-        row.started_at,
-        row.total_duration,
-        row.list_id,
-        row.metadata,
-        row.due_date,
-        row.due_time,
-        row.scheduled_start_at,
-        row.scheduled_end_at,
-        row.reminder_policy,
-        row.recurrence,
-        row.series_id,
-        row.occurrence_date,
-        row.deleted_at,
-        row.id
-      ]);
-    } else {
-      // 插入新任务
-      await this.db.run(`
-        INSERT INTO tasks (
-          id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, scheduled_start_at, scheduled_end_at, reminder_policy, recurrence, series_id, occurrence_date, deleted_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        row.id,
-        row.content,
-        row.status,
-        row.completed,
-        row.created_at,
-        row.updated_at,
-        row.reminder_time,
-        row.completed_at,
-        row.started_at,
-        row.total_duration,
-        row.list_id,
-        row.metadata,
-        row.due_date,
-        row.due_time,
-        row.scheduled_start_at,
-        row.scheduled_end_at,
-        row.reminder_policy,
-        row.recurrence,
-        row.series_id,
-        row.occurrence_date,
-        row.deleted_at
-      ]);
-    }
+    await this.db.run(`
+      INSERT INTO tasks (
+        id, content, status, completed, created_at, updated_at, reminder_time, completed_at, started_at, total_duration, list_id, metadata, due_date, due_time, scheduled_start_at, scheduled_end_at, reminder_policy, recurrence, series_id, occurrence_date, deleted_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        content = excluded.content,
+        status = excluded.status,
+        completed = excluded.completed,
+        updated_at = excluded.updated_at,
+        reminder_time = excluded.reminder_time,
+        completed_at = excluded.completed_at,
+        started_at = excluded.started_at,
+        total_duration = excluded.total_duration,
+        list_id = excluded.list_id,
+        metadata = excluded.metadata,
+        due_date = excluded.due_date,
+        due_time = excluded.due_time,
+        scheduled_start_at = excluded.scheduled_start_at,
+        scheduled_end_at = excluded.scheduled_end_at,
+        reminder_policy = excluded.reminder_policy,
+        recurrence = excluded.recurrence,
+        series_id = excluded.series_id,
+        occurrence_date = excluded.occurrence_date,
+        deleted_at = excluded.deleted_at
+    `, [
+      row.id,
+      row.content,
+      row.status,
+      row.completed,
+      row.created_at,
+      row.updated_at,
+      row.reminder_time,
+      row.completed_at,
+      row.started_at,
+      row.total_duration,
+      row.list_id,
+      row.metadata,
+      row.due_date,
+      row.due_time,
+      row.scheduled_start_at,
+      row.scheduled_end_at,
+      row.reminder_policy,
+      row.recurrence,
+      row.series_id,
+      row.occurrence_date,
+      row.deleted_at
+    ]);
 
     return task;
   }
@@ -653,7 +637,7 @@ class SqliteTaskRepository {
       throw new Error('数据库未初始化');
     }
 
-    let sql = 'SELECT COUNT(*) as count FROM tasks WHERE deleted_at IS NULL AND status != "done"';
+    let sql = 'SELECT COUNT(*) as count FROM tasks WHERE deleted_at IS NULL AND status != "done" AND status != "deleted"';
     const params = [];
 
     if (listId !== null) {
@@ -688,41 +672,7 @@ class SqliteTaskRepository {
     }
 
     const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
-      [listId]
-    );
-    return rows.map(row => this.rowToTask(row));
-  }
-
-  /**
-   * 获取指定清单的未完成任务
-   * @param {number} listId 清单ID
-   * @returns {Promise<Task[]>}
-   */
-  async findIncompleteByListId(listId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status != "done" ORDER BY created_at DESC',
-      [listId]
-    );
-    return rows.map(row => this.rowToTask(row));
-  }
-
-  /**
-   * 获取指定清单的已完成任务
-   * @param {number} listId 清单ID
-   * @returns {Promise<Task[]>}
-   */
-  async findCompletedByListId(listId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const rows = await this.db.all(
-      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status = "done" ORDER BY updated_at DESC',
+      'SELECT * FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status != "deleted" ORDER BY created_at DESC',
       [listId]
     );
     return rows.map(row => this.rowToTask(row));
@@ -805,97 +755,6 @@ class SqliteTaskRepository {
   }
 
   /**
-   * 将指定清单的所有任务移动到另一个清单
-   * @param {number} fromListId 源清单ID
-   * @param {number} toListId 目标清单ID
-   * @returns {Promise<number>} 移动的任务数量
-   */
-  async moveTasksBetweenLists(fromListId, toListId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const result = await this.db.run(
-      'UPDATE tasks SET list_id = ?, updated_at = ? WHERE list_id = ?',
-      [toListId, new Date().toISOString(), fromListId]
-    );
-    return result.changes;
-  }
-
-  /**
-   * 获取指定清单的任务数量
-   * @param {number} listId 清单ID
-   * @returns {Promise<number>}
-   */
-  async getTaskCountByListId(listId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const result = await this.db.get(
-      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ? AND deleted_at IS NULL',
-      [listId]
-    );
-    return result.count;
-  }
-
-  /**
-   * 获取指定清单的未完成任务数量
-   * @param {number} listId 清单ID
-   * @returns {Promise<number>}
-   */
-  async getIncompleteCountByListId(listId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const result = await this.db.get(
-      'SELECT COUNT(*) as count FROM tasks WHERE list_id = ? AND deleted_at IS NULL AND status != "done"',
-      [listId]
-    );
-    return result.count;
-  }
-
-  /**
-   * 获取所有清单的任务统计
-   * @returns {Promise<Object>} 清单ID到统计信息的映射
-   */
-  async getTaskCountsByListId() {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const rows = await this.db.all(`
-      SELECT 
-        list_id,
-        status,
-        COUNT(*) as count
-      FROM tasks 
-      WHERE deleted_at IS NULL
-      GROUP BY list_id, status
-    `);
-
-    const result = {};
-
-    rows.forEach(row => {
-      if (!result[row.list_id]) {
-        result[row.list_id] = {
-          total: 0,
-          todo: 0,
-          doing: 0,
-          paused: 0,
-          done: 0
-        };
-      }
-
-      result[row.list_id][row.status] = row.count;
-      result[row.list_id].total += row.count;
-    });
-
-    return result;
-  }
-
-  /**
    * 搜索任务（支持清单过滤）
    * @param {string} query 搜索关键词
    * @param {number|null} listId 清单ID，null表示搜索所有清单
@@ -912,65 +771,11 @@ class SqliteTaskRepository {
 
     const searchTerm = `%${query.trim()}%`;
     let sql = `
-      SELECT * FROM tasks 
-      WHERE deleted_at IS NULL AND (content LIKE ? OR metadata LIKE ?)
+      SELECT * FROM tasks
+      WHERE deleted_at IS NULL AND status != "deleted" AND (content LIKE ? OR metadata LIKE ?)
     `;
     const params = [searchTerm, searchTerm];
 
-    if (listId !== null) {
-      sql += ' AND list_id = ?';
-      params.push(listId);
-    }
-
-    sql += ' ORDER BY created_at DESC';
-
-    const rows = await this.db.all(sql, params);
-    return rows.map(row => this.rowToTask(row));
-  }
-
-  /**
-   * 按分类获取任务（支持清单过滤）
-   * @param {string} category 分类名称
-   * @param {number|null} listId 清单ID，null表示所有清单
-   * @returns {Promise<Task[]>}
-   */
-  async findByCategory(category, listId = null) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    let sql = 'SELECT * FROM tasks WHERE deleted_at IS NULL AND ';
-    const params = [];
-
-    // 根据分类构建查询条件
-    switch (category) {
-      case 'inbox':
-        sql += 'status = "todo" AND reminder_time IS NULL';
-        break;
-      case 'today':
-        const today = new Date().toISOString().split('T')[0];
-        sql += `(DATE(reminder_time) = ? AND status != "done") OR status = "doing"`;
-        params.push(today);
-        break;
-      case 'doing':
-        sql += 'status = "doing"';
-        break;
-      case 'paused':
-        sql += 'status = "paused"';
-        break;
-      case 'planned':
-        sql += 'reminder_time IS NOT NULL';
-        break;
-      case 'completed':
-        sql += 'status = "done"';
-        break;
-      case 'all':
-      default:
-        sql += '1=1'; // 所有任务
-        break;
-    }
-
-    // 添加清单过滤
     if (listId !== null) {
       sql += ' AND list_id = ?';
       params.push(listId);
@@ -1018,141 +823,6 @@ class SqliteTaskRepository {
     });
 
     return result;
-  }
-
-  /**
-   * 批量获取多个清单的任务（优化版）
-   * @param {number[]} listIds 清单ID数组
-   * @returns {Promise<Object>} 清单ID到任务数组的映射
-   */
-  async findByMultipleListIds(listIds) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    if (!Array.isArray(listIds) || listIds.length === 0) {
-      return {};
-    }
-
-    const placeholders = listIds.map(() => '?').join(',');
-    const rows = await this.db.all(
-      `SELECT * FROM tasks WHERE list_id IN (${placeholders}) AND deleted_at IS NULL ORDER BY list_id, created_at DESC`,
-      listIds
-    );
-
-    const result = {};
-    listIds.forEach(id => {
-      result[id] = [];
-    });
-
-    rows.forEach(row => {
-      const task = this.rowToTask(row);
-      if (result[task.listId]) {
-        result[task.listId].push(task);
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * 获取任务的时间统计信息（优化版）
-   * @param {number|null} listId 清单ID，null表示所有清单
-   * @returns {Promise<Object>}
-   */
-  async getTimeStatistics(listId = null) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    let sql = `
-      SELECT 
-        COUNT(*) as total_tasks,
-        SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as completed_tasks,
-        SUM(CASE WHEN status = 'doing' THEN 1 ELSE 0 END) as in_progress_tasks,
-        SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused_tasks,
-        SUM(CASE WHEN status = 'done' THEN total_duration ELSE 0 END) as total_work_time,
-        AVG(CASE WHEN status = 'done' AND total_duration > 0 THEN total_duration ELSE NULL END) as avg_task_time
-      FROM tasks
-    `;
-    const params = [];
-
-    if (listId !== null) {
-      sql += ' WHERE list_id = ?';
-      params.push(listId);
-    }
-
-    const result = await this.db.get(sql, params);
-
-    return {
-      totalTasks: result.total_tasks || 0,
-      completedTasks: result.completed_tasks || 0,
-      inProgressTasks: result.in_progress_tasks || 0,
-      pausedTasks: result.paused_tasks || 0,
-      todoTasks: (result.total_tasks || 0) - (result.completed_tasks || 0) - (result.in_progress_tasks || 0) - (result.paused_tasks || 0),
-      totalWorkTime: result.total_work_time || 0,
-      averageTaskTime: Math.round(result.avg_task_time || 0),
-      completionRate: result.total_tasks > 0 ? ((result.completed_tasks || 0) / result.total_tasks) * 100 : 0
-    };
-  }
-
-  /**
-   * 获取今日任务的优化查询
-   * @param {number|null} listId 清单ID，null表示所有清单
-   * @returns {Promise<Task[]>}
-   */
-  async findTodayTasks(listId = null) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    let sql = `
-      SELECT * FROM tasks 
-      WHERE (
-        (DATE(reminder_time) = ? AND status != 'done') 
-        OR status = 'doing'
-      )
-    `;
-    const params = [today];
-
-    if (listId !== null) {
-      sql += ' AND list_id = ?';
-      params.push(listId);
-    }
-
-    sql += ' ORDER BY reminder_time ASC, created_at DESC';
-
-    const rows = await this.db.all(sql, params);
-    return rows.map(row => this.rowToTask(row));
-  }
-
-  /**
-   * 获取逾期任务
-   * @param {number|null} listId 清单ID，null表示所有清单
-   * @returns {Promise<Task[]>}
-   */
-  async findOverdueTasks(listId = null) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    const now = new Date().toISOString();
-    let sql = `
-      SELECT * FROM tasks 
-      WHERE reminder_time < ? AND status != 'done'
-    `;
-    const params = [now];
-
-    if (listId !== null) {
-      sql += ' AND list_id = ?';
-      params.push(listId);
-    }
-
-    sql += ' ORDER BY reminder_time ASC';
-
-    const rows = await this.db.all(sql, params);
-    return rows.map(row => this.rowToTask(row));
   }
 
   /**
@@ -1417,6 +1087,27 @@ class SqliteTaskRepository {
   }
 
   /**
+   * 批量查找多个系列的覆盖实例（避免逐系列 N+1 查询）
+   * @param {string[]} seriesIds 系列任务ID数组
+   * @returns {Promise<Task[]>}
+   */
+  async findOverrideInstancesBySeriesIds(seriesIds) {
+    if (!this.db) {
+      throw new Error('数据库未初始化');
+    }
+    if (!seriesIds || seriesIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = seriesIds.map(() => '?').join(', ');
+    const rows = await this.db.all(
+      `SELECT * FROM tasks WHERE series_id IN (${placeholders}) ORDER BY occurrence_date ASC`,
+      seriesIds
+    );
+    return rows.map(row => this.rowToTask(row));
+  }
+
+  /**
    * 查找特定日期的覆盖实例
    * 兼容历史存储格式（YYYY-MM-DD 与 ISO 时间字符串），按本地发生日期匹配
    * @param {string} seriesId 系列任务ID
@@ -1430,22 +1121,6 @@ class SqliteTaskRepository {
     return instances.find((task) => taskTime.localDateKey(task.occurrenceDate) === targetKey) || null;
   }
 
-  /**
-   * 删除系列任务及其所有覆盖实例
-   * @param {string} seriesId 系列任务ID
-   * @returns {Promise<void>}
-   */
-  async deleteRecurringSeries(seriesId) {
-    if (!this.db) {
-      throw new Error('数据库未初始化');
-    }
-
-    // 删除主任务
-    await this.db.run('DELETE FROM tasks WHERE id = ?', [seriesId]);
-    
-    // 删除所有覆盖实例
-    await this.db.run('DELETE FROM tasks WHERE series_id = ?', [seriesId]);
-  }
 }
 
 module.exports = SqliteTaskRepository;

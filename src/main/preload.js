@@ -271,7 +271,7 @@ const electronAPI = {
       'get-completion-statistics',
       'get-task-efficiency-stats',
       'get-log-statistics',
-      'cleanup-old-logs'
+      'cleanup-old-task-logs'
     ];
 
     if (allowedChannels.includes(channel)) {
