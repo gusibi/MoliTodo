@@ -29,6 +29,7 @@ function rule(overrides = {}) {
     windowStart: '09:00',
     windowEnd: '18:00',
     pauseUntil: null,
+    createdAt: '2026-10-21T00:40:00.000Z',
     ...overrides
   };
 }
@@ -107,13 +108,14 @@ test('slots are filtered by weekday', () => {
   const clock = makeClock();
   const fridayRule = rule({ weekdays: [5] });
 
+  // 锚点日（周三）被 weekday 过滤，周五从窗口起点排槽
   const next = computeNextRunAt(
     fridayRule,
     new Date('2026-10-21T00:40:00.000Z'),
     clock
   );
 
-  assert.equal(next.toISOString(), '2026-10-23T01:40:00.000Z');
+  assert.equal(next.toISOString(), '2026-10-23T01:00:00.000Z');
 });
 
 test('pauseUntil skips every slot at or before the pause end', () => {
@@ -150,15 +152,39 @@ test('anchor after the window still schedules from the window start next day', (
   assert.equal(next.toISOString(), '2026-10-22T01:00:00.000Z');
 });
 
-test('anchor near the window end keeps the anchor time on later days', () => {
+test('anchor near the window end schedules from the window start on later days', () => {
   const clock = makeClock();
   const lateRule = rule({
     anchorMinutes: 17 * 60 + 30,
     intervalMinutes: 45,
     windowStart: '09:00',
-    windowEnd: '18:00'
+    windowEnd: '18:00',
+    createdAt: '2026-10-21T09:30:00.000Z'
   });
 
   const next = computeNextRunAt(lateRule, new Date('2026-10-21T09:30:00.000Z'), clock);
-  assert.equal(next.toISOString(), '2026-10-22T09:30:00.000Z');
+  assert.equal(next.toISOString(), '2026-10-22T01:00:00.000Z');
+});
+
+test('a rule created in the afternoon starts from the window start on the next day', () => {
+  const clock = makeClock();
+  // 本地 14:05 创建，窗口 09:00–18:00，间隔 60 分钟
+  const after = new Date('2026-10-21T06:05:00.000Z');
+  const afternoonRule = rule({
+    anchorMinutes: getAnchorMinutes('created', after, clock),
+    intervalMinutes: 60,
+    createdAt: after.toISOString()
+  });
+
+  // 创建当天按锚点排槽
+  let next = computeNextRunAt(afternoonRule, after, clock);
+  assert.equal(next.toISOString(), '2026-10-21T07:05:00.000Z');
+
+  // 第二天起从窗口起点 09:00 排槽，上午槽位不再缺失
+  const nextMorning = new Date('2026-10-21T16:05:00.000Z');
+  next = computeNextRunAt(afternoonRule, nextMorning, clock);
+  assert.equal(next.toISOString(), '2026-10-22T01:00:00.000Z');
+
+  next = computeNextRunAt(afternoonRule, next, clock);
+  assert.equal(next.toISOString(), '2026-10-22T02:00:00.000Z');
 });

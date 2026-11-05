@@ -83,7 +83,8 @@ class ReminderUseCases {
       weekdays,
       windowStart,
       windowEnd,
-      pauseUntil
+      pauseUntil,
+      createdAt: nowIso
     }, now, this.clock);
 
     return this.reminderRepository.insertRule({
@@ -154,7 +155,8 @@ class ReminderUseCases {
         weekdays,
         windowStart,
         windowEnd,
-        pauseUntil
+        pauseUntil,
+        createdAt: existing.createdAt
       }, now, this.clock);
       nextRunAt = next ? next.toISOString() : null;
     }

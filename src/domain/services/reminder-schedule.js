@@ -87,7 +87,9 @@ function localInstant(localDate, minutesOfDay, clock) {
 
 /**
  * 返回严格晚于 after（且晚于 pauseUntil）的第一个槽位。
- * 每天从 anchorMinutes 重新排槽，窗口按 [start, end) 处理。
+ * 锚点网格只在锚点当天（createdAt 的本地日期）生效；之后的每天
+ * 从窗口起点重新排槽，避免创建/修改发生在下午时上午槽位永远缺失。
+ * 窗口按 [start, end) 处理。
  */
 function computeNextRunAt(rule, after, clock) {
   if (!(after instanceof Date) || Number.isNaN(after.getTime())) {
@@ -119,17 +121,21 @@ function computeNextRunAt(rule, after, clock) {
   const afterMs = Math.max(after.getTime(), pauseUntilMs);
   const firstDate = clock.localDate(new Date(afterMs));
 
+  const createdAtMs = rule.createdAt ? new Date(rule.createdAt).getTime() : NaN;
+  const anchorDate = Number.isNaN(createdAtMs) ? null : clock.localDate(new Date(createdAtMs));
+
   for (let dayOffset = 0; dayOffset < 370; dayOffset += 1) {
     const localDate = addDays(firstDate, dayOffset);
     if (weekdays.length > 0 && !weekdays.includes(weekdayOf(localDate))) {
       continue;
     }
 
-    // 锚点落在窗口结束之后（例如傍晚才创建 09:00–18:00 的规则）时，
-    // 若继续从锚点向后排槽，每天都会排到窗口之外，导致 nextRunAt 永远为空。
-    // 这种情况下把槽位重排到窗口起点；其余情况从锚点本身开始，
-    // 保证跨天后锚点时刻也能再次触发。
-    const slotBase = anchorMinutes < windowEnd ? anchorMinutes : windowStart;
+    // 锚点当天从 anchorMinutes 起排槽（保证创建/修改后一个间隔内就有提醒）；
+    // 锚点晚于窗口结束（例如傍晚才创建 09:00–18:00 的规则）时当天没有锚点槽位。
+    // 其余每天从窗口起点排槽：锚点固定在下午时，上午的槽位不在锚点的等差数列上，
+    // 若继续从锚点向后排槽，上午永远不会触发。
+    const isAnchorDay = anchorDate !== null && anchorDate === localDate;
+    const slotBase = isAnchorDay && anchorMinutes < windowEnd ? anchorMinutes : windowStart;
 
     for (let minute = slotBase; minute < windowEnd; minute += interval) {
       if (minute < windowStart) continue;
