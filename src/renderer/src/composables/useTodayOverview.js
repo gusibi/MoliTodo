@@ -27,7 +27,7 @@ export function useTodayOverview() {
   // ---------- 日期与范围状态 ----------
   const todayKey = ref(dateToKey(new Date()))
   const modelClock = ref(new Date()) // 分组评估时钟，跨午夜时刷新
-  const futureDays = ref(7) // Agenda 初始加载今天起 7 天（含首尾）
+  const futureDays = ref(30) // Agenda 初始加载今天起一个月（含首尾）
   const extraSpans = ref([]) // 导航到初始范围之外的日期时按需加载的区间（过去 / 远期）
   const monthWindow = ref(defaultMonthWindow()) // { startKey, endKey } 月份窗口（含头尾月）
 
@@ -237,7 +237,7 @@ export function useTodayOverview() {
   function resetToToday() {
     todayKey.value = dateToKey(new Date())
     extraSpans.value = []
-    futureDays.value = 7
+    futureDays.value = 30
     monthWindow.value = defaultMonthWindow()
     return ensureRanges()
   }
@@ -248,6 +248,27 @@ export function useTodayOverview() {
     const listId = taskStore.currentListId
     if (listId === null) return taskStore.tasks
     return taskStore.tasks.filter((task) => task.listId === listId)
+  })
+
+  // Agenda 当前展示范围的最后一天
+  const agendaEndKey = computed(() => addDaysToKey(todayKey.value, futureDays.value))
+
+  // Agenda 范围之外是否还有任务：决定「加载更多日期」按钮是否展示。
+  // 基础任务全量在手（含循环系列模板），无需额外查询：
+  // - 普通任务：主日期超出范围即算
+  // - 循环系列：结束日期超出范围或没有结束日期即算（按次数结束的按可能还有算）
+  const hasMoreFutureTasks = computed(() => {
+    const endKey = agendaEndKey.value
+    return baseTasksInScope.value.some((task) => {
+      if (!task || task.status === 'done') return false
+      if (task.recurrence) {
+        const end = task.recurrence.endCondition
+        if (end?.type === 'date' && end.endDate) return end.endDate.slice(0, 10) > endKey
+        return true
+      }
+      const main = getMainDateInfo(task)
+      return Boolean(main && main.date > endKey)
+    })
   })
 
   const world = computed(() => {
@@ -396,6 +417,7 @@ export function useTodayOverview() {
     agendaModel,
     calendarDots,
     todayPendingCount,
+    hasMoreFutureTasks,
 
     // 操作
     loadMoreFuture,

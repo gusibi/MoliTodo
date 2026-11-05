@@ -9,7 +9,8 @@
         :search-query="searchQuery"
         :show-completed="showCompleted"
         :initial-loading="(!initialLoaded && loadingCount > 0) || (taskStore.loading && taskStore.tasks.length === 0)"
-        :loading-more="loadingCount > 0" :has-error="hasLoadError" :expanded-task-key="expandedTaskKey"
+        :loading-more="loadingCount > 0" :has-error="hasLoadError" :has-more-tasks="hasMoreFutureTasks"
+        :expanded-task-key="expandedTaskKey"
         @task-click="handleEditTask" @task-collapse="handleTaskCollapse" @load-more="loadMoreFuture"
         @retry="retryFailed" @active-date-change="handleActiveDateChange"
         @delete-request="requestTaskDelete" />
@@ -102,6 +103,7 @@ const {
   loadingCount,
   initialLoaded,
   hasLoadError,
+  hasMoreFutureTasks,
   loadMoreFuture,
   ensureDateLoaded,
   ensureMonthVisible,

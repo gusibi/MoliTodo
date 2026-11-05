@@ -210,8 +210,8 @@
           </div>
         </section>
 
-        <!-- 加载更多未来日期 -->
-        <div class="agenda-load-more">
+        <!-- 加载更多未来日期（范围内没有更多任务时隐藏） -->
+        <div v-if="hasMoreTasks" class="agenda-load-more">
           <Button variant="outline" size="sm" :loading="loadingMore" @click="handleLoadMore">
             <Plus v-if="!loadingMore" class="h-icon-sm w-icon-sm" aria-hidden="true" />
             <span>{{ $t('today.loadMore') }}</span>
@@ -289,7 +289,9 @@ const props = defineProps({
   showCompleted: { type: Boolean, default: false },
   initialLoading: { type: Boolean, default: false },
   loadingMore: { type: Boolean, default: false },
-  hasError: { type: Boolean, default: false }
+  hasError: { type: Boolean, default: false },
+  // 范围之外是否还有任务：没有时隐藏「加载更多日期」
+  hasMoreTasks: { type: Boolean, default: true }
 })
 
 const emit = defineEmits([
