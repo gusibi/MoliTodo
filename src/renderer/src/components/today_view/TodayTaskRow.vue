@@ -19,7 +19,19 @@
         <!-- 主行：状态圆圈（纯展示）+ 标题/备注摘要 + hover 动作（图标即动作） -->
         <div class="today-task-main">
           <span v-if="!expanded" class="today-task-status">
-            <TaskStatusCircle :status="status" />
+            <!-- 未完成：圆圈可点击（开始/继续/暂停，与右侧 hover 动作同语义）；
+                 已完成：保持纯展示，避免误触复活任务（重做走 hover 动作） -->
+            <button
+              v-if="status !== 'done'"
+              type="button"
+              class="today-task-status-toggle"
+              :aria-label="statusActionLabel"
+              :title="statusActionLabel"
+              @click.stop="handleStatusCircleClick"
+            >
+              <TaskStatusCircle :status="status" />
+            </button>
+            <TaskStatusCircle v-else :status="status" />
           </span>
 
           <div v-if="!expanded" class="today-task-content">
@@ -272,6 +284,18 @@ function handleEditorDelete(task) {
 }
 
 // ---------- 状态动作（图标即动作） ----------
+
+// 状态圆圈点击：todo/暂停 → 开始，进行中 → 暂停（与 hover 动作区同语义）
+const statusActionLabel = computed(() => {
+  if (status.value === 'doing') return $t('tasks.pause')
+  if (status.value === 'paused') return $t('tasks.resume')
+  return $t('tasks.start')
+})
+
+const handleStatusCircleClick = () => {
+  if (status.value === 'doing') handlePause()
+  else handleStart()
+}
 
 const handleStart = async () => {
   try {
