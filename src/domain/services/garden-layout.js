@@ -4,6 +4,7 @@ const { getCatalogItem } = require('./item-catalog');
 const COLUMNS = 4;
 const GARDEN_REGION = 'garden';
 const PET_REGION = 'pet';
+const ORCHARD_REGION = 'orchard';
 
 function getGardenCapacity(level) {
   return (getExpansionLevel(level) || getExpansionLevel(1)).capacity;
@@ -11,6 +12,20 @@ function getGardenCapacity(level) {
 
 function getPetCapacity(level) {
   return level >= 4 ? 3 : 2;
+}
+
+/**
+ * 林间层不设件数上限：树是无限收益流，不与有限收藏竞争容量。
+ * 返回 null 表示无件数限制，仅受地块物理边界与碰撞约束。
+ */
+function getRegionCapacity(level, region) {
+  if (region === PET_REGION) return getPetCapacity(level);
+  if (region === ORCHARD_REGION) return null;
+  return getGardenCapacity(level);
+}
+
+function isTreeKind(kind) {
+  return kind === 'tree' || kind === 'species-tree';
 }
 
 function getItemSize(item) {
@@ -67,8 +82,11 @@ module.exports = {
   COLUMNS,
   GARDEN_REGION,
   PET_REGION,
+  ORCHARD_REGION,
   getGardenCapacity,
   getPetCapacity,
+  getRegionCapacity,
+  isTreeKind,
   getItemSize,
   parseSlotNumber,
   slotIdFor,

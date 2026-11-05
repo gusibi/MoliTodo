@@ -198,6 +198,49 @@ test('pets use independent capacity and are placed at their template spots', asy
   assert.equal((await gardenRepository.listPlacements()).filter((entry) => entry.regionId === 'pet').length, 3);
 });
 
+test('trees go to the orchard region and bypass garden capacity', async (t) => {
+  const { gardenRepository, placementUseCases } = await setup(t);
+  for (let index = 0; index < 4; index += 1) {
+    const itemId = await addItem(gardenRepository, 'furniture-6', 'furniture', `stool-${index}`);
+    await placementUseCases.placeItem({ inventoryId: itemId });
+  }
+  assert.equal((await gardenRepository.listPlacements()).length, 4);
+
+  for (let index = 0; index < 6; index += 1) {
+    const treeId = await addItem(gardenRepository, 'species-1', 'tree', `tree-${index}`);
+    const placement = await placementUseCases.placeItem({ inventoryId: treeId });
+    assert.equal(placement.regionId, 'orchard');
+  }
+
+  const placements = await gardenRepository.listPlacements();
+  assert.equal(placements.filter((entry) => entry.regionId === 'orchard').length, 6);
+  assert.equal(placements.filter((entry) => entry.regionId === 'garden').length, 4);
+});
+
+test('orchard collision stays global with the yard', async (t) => {
+  const { gardenRepository, placementUseCases, itemA } = await setup(t);
+  const treeId = await addItem(gardenRepository, 'species-1', 'tree', 'tree-x');
+
+  await placementUseCases.placeItem({ inventoryId: itemA, position: { x: 0, z: 0 } });
+  await assert.rejects(
+    placementUseCases.placeItem({ inventoryId: treeId, position: { x: 0.2, z: 0 } }),
+    /占用/
+  );
+});
+
+test('autoPlace still places trees when the yard is at capacity', async (t) => {
+  const { gardenRepository, placementUseCases } = await setup(t);
+  for (let index = 0; index < 4; index += 1) {
+    const item = await addItem(gardenRepository, 'furniture-6', 'furniture', `stool-${index}`);
+    await placementUseCases.placeItem({ inventoryId: item });
+  }
+
+  const treeId = await addItem(gardenRepository, 'species-2', 'tree', 'tree-auto');
+  const placed = await placementUseCases.autoPlace({ inventoryIds: [treeId] });
+  assert.equal(placed.length, 1);
+  assert.equal(placed[0].regionId, 'orchard');
+});
+
 test('autoPlace fills the template, prioritizes larger items and keeps pets separate', async (t) => {
   const { gardenRepository, placementUseCases } = await setup(t);
   await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');

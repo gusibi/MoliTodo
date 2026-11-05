@@ -173,6 +173,14 @@ class SqliteGardenRepository {
     return result.lastID;
   }
 
+  async deleteInventoryItem(inventoryId) {
+    const result = await this.db.run(
+      'DELETE FROM inventory_items WHERE id = ?',
+      [inventoryId]
+    );
+    return result.changes > 0;
+  }
+
   async listUnlockedMilestones() {
     const rows = await this.db.all(
       'SELECT definition_id FROM milestone_unlocks ORDER BY id ASC'

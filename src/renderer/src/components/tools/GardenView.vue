@@ -72,7 +72,8 @@
             :level="garden.level"
             :plant="plant"
             :matured-plant="lastMaturedPlant"
-            :placements="scenePlacements"
+            :placements="layoutMode ? scenePlacementsAll : scenePlacements"
+            :grove-count="layoutMode ? 0 : orchardHiddenCount"
             :layout-mode="layoutMode"
             @remove-placement="removePlacement"
             @move-placement="movePlacement"
@@ -80,6 +81,9 @@
 
           <div class="pointer-events-none absolute left-14 top-4 z-30 flex flex-wrap items-center gap-1.5">
             <span class="garden-hud">{{ $t('tools.gardenLevel', { level: garden.level }) }}</span>
+            <span v-if="orchardCount > 0" class="garden-hud">
+              {{ $t('tools.orchardCount', { count: orchardCount }) }}
+            </span>
           </div>
 
           <div class="absolute right-3 top-3 z-30 flex max-w-[88%] flex-wrap items-center justify-end gap-1.5 rounded-xl border border-white/45 bg-background/70 p-1.5 shadow-sm backdrop-blur-md">
@@ -104,7 +108,7 @@
           </div>
 
           <div
-            v-if="scenePlacements.length === 0"
+            v-if="sceneEmpty"
             class="pointer-events-none absolute inset-x-0 bottom-[6.5rem] z-20 flex flex-col items-center gap-2"
           >
             <p class="rounded-full bg-background/75 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">{{ $t('tools.emptyGardenHint') }}</p>
@@ -332,15 +336,49 @@
         <div class="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
           <div class="tool-inset p-4">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-medium text-foreground">{{ $t('tools.species') }}</h3>
-              <span class="tool-tick text-[10px] text-muted-foreground">{{ species.length }}</span>
+              <h3 class="text-xs font-medium text-foreground">{{ $t('tools.grove.title') }}</h3>
+              <span class="tool-tick text-[10px] text-muted-foreground">{{ groveTrees.length }}</span>
             </div>
-            <p v-if="species.length === 0" class="mt-3 text-xs text-muted-foreground">{{ $t('tools.noSpecies') }}</p>
-            <ul v-else class="mt-3 flex flex-wrap gap-1.5">
-              <li v-for="entry in species" :key="entry.speciesId" class="rounded-full border border-border/50 bg-background/60 px-2.5 py-1 text-[11px] text-foreground">
-                {{ speciesName(entry.speciesId) }}
+            <p class="mt-1 text-[10px] text-muted-foreground">{{ $t('tools.grove.hint') }}</p>
+            <p v-if="groveTrees.length === 0" class="mt-3 text-xs text-muted-foreground">{{ $t('tools.grove.empty') }}</p>
+            <ul v-else class="mt-3 flex flex-col gap-2">
+              <li
+                v-for="entry in groveTrees"
+                :key="entry.speciesId"
+                class="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/40 bg-background/45 px-2.5 py-2"
+              >
+                <div class="h-6 w-6 shrink-0">
+                  <ItemArt variant="tree" />
+                </div>
+                <span class="text-[11px] font-medium text-foreground">{{ speciesName(entry.speciesId) }}</span>
+                <span class="text-[10px] text-muted-foreground">
+                  {{ $t('tools.treeForm.base') }}×{{ entry.formCounts.base }}
+                  · {{ $t('tools.treeForm.canopy') }}×{{ entry.formCounts.canopy }}
+                  · {{ $t('tools.treeForm.legend') }}×{{ entry.formCounts.legend }}
+                </span>
+                <span class="ml-auto flex items-center gap-1">
+                  <Button
+                    v-if="entry.formCounts.base >= 3"
+                    size="sm"
+                    variant="outline"
+                    :loading="mergingKey === `${entry.speciesId}:1`"
+                    @click="mergeTreeForms(entry.speciesId, 1)"
+                  >
+                    {{ $t('tools.grove.merge', { form: $t('tools.treeForm.canopy') }) }}
+                  </Button>
+                  <Button
+                    v-if="entry.formCounts.canopy >= 3"
+                    size="sm"
+                    variant="outline"
+                    :loading="mergingKey === `${entry.speciesId}:2`"
+                    @click="mergeTreeForms(entry.speciesId, 2)"
+                  >
+                    {{ $t('tools.grove.merge', { form: $t('tools.treeForm.legend') }) }}
+                  </Button>
+                </span>
               </li>
             </ul>
+            <p v-if="mergeError" class="mt-2 text-xs text-destructive" role="alert">{{ mergeError }}</p>
           </div>
 
           <div class="tool-inset p-4">
@@ -360,15 +398,19 @@
           <div class="tool-inset p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-xs font-medium text-foreground">{{ $t('tools.inventory') }}</h3>
-              <span class="tool-tick text-[10px] text-muted-foreground">{{ inventory.length }}</span>
+              <span class="tool-tick text-[10px] text-muted-foreground">{{ groupedInventory.length }}</span>
             </div>
-            <p v-if="inventory.length === 0" class="mt-3 text-xs text-muted-foreground">{{ $t('tools.noInventory') }}</p>
+            <p v-if="groupedInventory.length === 0" class="mt-3 text-xs text-muted-foreground">{{ $t('tools.noInventory') }}</p>
             <ul v-else class="mt-3 flex flex-wrap gap-1.5">
-              <li v-for="item in inventory" :key="item.id" class="flex items-center gap-1 rounded-full border border-border/50 bg-background/60 px-2 py-0.5 text-[11px] text-foreground">
+              <li
+                v-for="item in groupedInventory"
+                :key="item.catalogId"
+                class="flex items-center gap-1 rounded-full border border-border/50 bg-background/60 px-2 py-0.5 text-[11px] text-foreground"
+              >
                 <div class="h-4 w-4 text-primary">
-                  <ItemArt :variant="collectionByCatalogId[item.catalogId]?.variant || 'box'" />
+                  <ItemArt :variant="item.entry?.variant || 'box'" />
                 </div>
-                {{ itemName(collectionByCatalogId[item.catalogId]) || item.catalogId }}
+                {{ itemName(item.entry) || item.catalogId }}
                 <span class="text-muted-foreground">×{{ item.quantity }}</span>
               </li>
             </ul>
@@ -615,6 +657,8 @@ const placingItemId = ref(null)
 const placementError = ref('')
 const plantingSpecies = ref(null)
 const claimingSeed = ref(false)
+const mergingKey = ref('')
+const mergeError = ref('')
 
 const gardenView = computed(() => toolsStore.gardenView)
 const plant = computed(() => gardenView.value?.plant || null)
@@ -634,10 +678,18 @@ const collectionByCatalogId = computed(() => {
       map[entry.id] = entry
     } else if (entry.category === 'species' && entry.speciesId) {
       map[entry.speciesId] = entry
+    } else if (entry.category === 'tree-form') {
+      map[entry.id] = entry
     }
   }
   return map
 })
+// 林间面板：只显示解锁了物种或已有成树的行。
+const groveTrees = computed(() => (
+  collection.value
+    .filter((entry) => entry.category === 'species' && (entry.unlocked || entry.owned))
+    .map((entry) => ({ ...entry }))
+))
 const badges = computed(() => gardenView.value?.badges || {
   pendingRewards: 0,
   total: 0,
@@ -683,15 +735,34 @@ const collectionOwnedCount = computed(() => (
   collection.value.filter((entry) => entry.owned || entry.unlocked).length
 ))
 const inventory = computed(() => gardenView.value?.inventory || [])
+// 收藏面板按种类聚合显示：同 catalogId 的行合并为一条，数量累加。
+const groupedInventory = computed(() => {
+  const groups = new Map()
+  for (const item of inventory.value) {
+    if (item.quantity <= 0) continue
+    if (!groups.has(item.catalogId)) {
+      groups.set(item.catalogId, {
+        catalogId: item.catalogId,
+        entry: collectionByCatalogId.value[item.catalogId] || null,
+        quantity: 0
+      })
+    }
+    groups.get(item.catalogId).quantity += item.quantity
+  }
+  return [...groups.values()]
+})
 const placements = computed(() => gardenView.value?.placements || [])
 const gardenPlacements = computed(() => placements.value.filter((placement) => placement.regionId === 'garden'))
 const petPlacements = computed(() => placements.value.filter((placement) => placement.regionId === 'pet'))
+const orchardPlacements = computed(() => placements.value.filter((placement) => placement.regionId === 'orchard'))
 const inventoryById = computed(() => {
   const map = {}
   for (const item of inventory.value) map[item.id] = item
   return map
 })
 const layoutMode = ref(false)
+// 林间可见树上限：更老的树压缩成背景树林簇，仅渲染收拢、数据不动。
+const ORCHARD_VISIBLE_TREES = 16
 function itemSize(item) {
   const entry = collectionByCatalogId.value[item.catalogId]
   if (item.kind === 'tree' || entry?.category === 'species') return 1
@@ -699,7 +770,16 @@ function itemSize(item) {
 }
 const gardenPlacedCount = computed(() => gardenPlacements.value.length)
 const petPlacedCount = computed(() => petPlacements.value.length)
-const scenePlacements = computed(() => placements.value.map((placement) => {
+const orchardCount = computed(() => orchardPlacements.value.length)
+const visibleOrchardPlacements = computed(() => (
+  [...orchardPlacements.value]
+    .sort((a, b) => String(b.placedAt || '').localeCompare(String(a.placedAt || '')))
+    .slice(0, ORCHARD_VISIBLE_TREES)
+))
+const orchardHiddenCount = computed(() => (
+  Math.max(0, orchardCount.value - visibleOrchardPlacements.value.length)
+))
+function joinPlacement(placement) {
   const item = inventoryById.value[placement.inventoryId]
   const entry = item ? collectionByCatalogId.value[item.catalogId] : null
   return {
@@ -707,16 +787,29 @@ const scenePlacements = computed(() => placements.value.map((placement) => {
     variant: entry?.variant || 'box',
     size: item ? itemSize(item) : 1,
     label: item ? itemName(entry) : '',
-    isPet: placement.regionId === 'pet'
+    isPet: placement.regionId === 'pet',
+    speciesId: entry?.speciesId || null
   }
-}))
+}
+const scenePlacements = computed(() => (
+  [...gardenPlacements.value, ...petPlacements.value, ...visibleOrchardPlacements.value]
+    .map(joinPlacement)
+))
+const scenePlacementsAll = computed(() => placements.value.map(joinPlacement))
+const sceneEmpty = computed(() => (
+  scenePlacements.value.length === 0 && orchardHiddenCount.value === 0
+))
 const placementOptions = computed(() => {
   const placedIds = new Set(placements.value.map((placement) => placement.inventoryId))
   const gardenFull = gardenPlacedCount.value >= (garden.value.capacity || 0)
   const petFull = petPlacedCount.value >= (garden.value.petCapacity || 0)
   return inventory.value
     .filter((item) => item.quantity > 0 && !placedIds.has(item.id))
-    .filter((item) => (item.kind === 'pet' ? !petFull : !gardenFull))
+    .filter((item) => {
+      // 树入林间层，不占院落容量，始终可摆。
+      if (item.kind === 'tree') return true
+      return item.kind === 'pet' ? !petFull : !gardenFull
+    })
     .map((item) => {
       const entry = collectionByCatalogId.value[item.catalogId]
       return {
@@ -728,8 +821,8 @@ const placementOptions = computed(() => {
     })
 })
 const placementFull = computed(() => (
-  gardenPlacedCount.value >= (garden.value.capacity || 0)
-  && petPlacedCount.value >= (garden.value.petCapacity || 0)
+  inventory.value.some((item) => item.quantity > 0)
+  && placementOptions.value.length === 0
 ))
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []
@@ -917,6 +1010,18 @@ async function claimBasicSeed() {
   }
 }
 
+async function mergeTreeForms(speciesId, fromTier) {
+  mergingKey.value = `${speciesId}:${fromTier}`
+  mergeError.value = ''
+  try {
+    await toolsStore.mergeTrees(speciesId, fromTier)
+  } catch (err) {
+    mergeError.value = err.message
+  } finally {
+    mergingKey.value = ''
+  }
+}
+
 function badgeStatus(badge) {
   if (badge.claimStatus === 'claimed') return t('tools.badges.claimed')
   if (badge.claimStatus === 'pending') return t('tools.badges.pending')
@@ -945,6 +1050,12 @@ function itemName(entry) {
   if (!entry) return ''
   if (entry.category === 'species') {
     return t(`tools.speciesNames.${entry.speciesId}`)
+  }
+  if (entry.category === 'tree-form') {
+    return t('tools.grove.formName', {
+      species: t(`tools.speciesNames.${entry.speciesId}`),
+      form: t(`tools.treeForm.${entry.tierKey}`)
+    })
   }
   return t(`tools.itemNames.${entry.id}`)
 }

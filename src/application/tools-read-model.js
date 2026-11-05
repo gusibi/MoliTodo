@@ -13,7 +13,9 @@ const { DEFAULT_CATALOG, DEFAULT_GROWTH_POLICY } = require('../domain/services/g
 const {
   ITEM_CATALOG,
   SPECIES_IDS,
-  FALLBACK_ITEM
+  FALLBACK_ITEM,
+  TREE_FORM_TIERS,
+  parseTreeFormCatalogId
 } = require('../domain/services/item-catalog');
 
 /**
@@ -259,10 +261,22 @@ class ToolsReadModel {
       quantity: ownedMap.get(item.id) || 0
     }));
 
+    // 形态计数：inventory 里 kind='tree' 的行按物种与形态聚合。
+    const formCountsBySpecies = new Map(
+      SPECIES_IDS.map((speciesId) => [speciesId, { base: 0, canopy: 0, legend: 0 }])
+    );
+    for (const item of inventory) {
+      if (item.kind !== 'tree' || item.quantity <= 0) continue;
+      const form = parseTreeFormCatalogId(item.catalogId);
+      const speciesId = form ? form.speciesId : item.catalogId;
+      const counts = formCountsBySpecies.get(speciesId);
+      if (!counts) continue;
+      counts[form ? form.tierKey : 'base'] += item.quantity;
+    }
+
     const trees = SPECIES_IDS.map((speciesId) => {
-      const matureCount = inventory
-        .filter((item) => item.kind === 'tree' && item.catalogId === speciesId)
-        .reduce((total, item) => total + item.quantity, 0);
+      const formCounts = formCountsBySpecies.get(speciesId);
+      const quantity = formCounts.base + formCounts.canopy + formCounts.legend;
       const unlocked = unlockedSpecies.has(speciesId);
       return {
         id: `species-tree:${speciesId}`,
@@ -271,11 +285,32 @@ class ToolsReadModel {
         size: 1,
         category: 'species',
         speciesId,
-        owned: matureCount > 0,
+        owned: quantity > 0,
         unlocked,
-        quantity: matureCount
+        quantity,
+        formCounts: { ...formCounts }
       };
     });
+
+    const treeForms = TREE_FORM_TIERS
+      .filter((tier) => tier.tier > 1)
+      .flatMap((tier) => SPECIES_IDS.map((speciesId) => {
+        const id = `${speciesId}-${tier.tierKey}`;
+        const quantity = ownedMap.get(id) || 0;
+        return {
+          id,
+          kind: 'tree-form',
+          variant: tier.variant,
+          size: 1,
+          category: 'tree-form',
+          speciesId,
+          tier: tier.tier,
+          tierKey: tier.tierKey,
+          owned: quantity > 0,
+          unlocked: quantity > 0,
+          quantity
+        };
+      }));
 
     const fallback = {
       id: FALLBACK_ITEM.id,
@@ -288,7 +323,7 @@ class ToolsReadModel {
       quantity: ownedMap.get(FALLBACK_ITEM.id) || 0
     };
 
-    return [...items, ...trees, fallback];
+    return [...items, ...trees, ...treeForms, fallback];
   }
 
   buildGrowthRules() {

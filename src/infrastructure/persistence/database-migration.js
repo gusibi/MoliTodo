@@ -11,7 +11,7 @@ class DatabaseMigration {
     this.db = db;
     this.dbPath = dbPath;
     this.currentVersion = 0;
-    this.targetVersion = 8; // 工具域数据表与专注休息阶段
+    this.targetVersion = 9; // 树挪入林间层（不占院落容量）
   }
 
   /**
@@ -136,6 +136,11 @@ class DatabaseMigration {
         version: 8,
         description: '为专注会话添加休息阶段',
         migrate: () => this.migration_008_add_focus_phase()
+      },
+      {
+        version: 9,
+        description: '树挪入林间层（不占院落容量）',
+        migrate: () => this.migration_009_move_trees_to_orchard()
       }
     ];
 
@@ -578,6 +583,34 @@ class DatabaseMigration {
 
     console.log('专注休息阶段迁移完成');
   }
+
+  /**
+   * 迁移 009: 树的摆放从院落区移到林间区（orchard）。
+   * 树不占院落容量，slot_id 保持不变，UNIQUE(region_id, slot_id) 无冲突。
+   */
+  async migration_009_move_trees_to_orchard() {
+    console.log('执行迁移: 树挪入林间层');
+
+    const rows = await this.db.all(
+      `SELECT COUNT(*) AS count FROM garden_placements
+       WHERE region_id = 'garden'
+         AND inventory_id IN (SELECT id FROM inventory_items WHERE kind = 'tree')`
+    );
+    const count = rows && rows[0] ? rows[0].count : 0;
+    if (count === 0) {
+      console.log('院落区没有树的摆放，跳过');
+      return;
+    }
+
+    await this.db.exec(
+      `UPDATE garden_placements
+       SET region_id = 'orchard'
+       WHERE region_id = 'garden'
+         AND inventory_id IN (SELECT id FROM inventory_items WHERE kind = 'tree')`
+    );
+    console.log(`已把 ${count} 个树的摆放移入林间层`);
+  }
+
 
   /**
    * 备份数据库

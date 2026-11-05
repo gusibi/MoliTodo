@@ -294,7 +294,7 @@ test('an empty garden view returns defaults without writing state', async (t) =>
     { streakDays: 10, totalGrowthDays: 15, capacity: 10 }
   );
   assert.equal(view.plantHistory.length, 0);
-  assert.equal(view.collection.length, 24);
+  assert.equal(view.collection.length, 36);
   assert.equal(view.collection.filter((entry) => entry.owned || entry.unlocked).length, 0);
   assert.equal(view.plant, null);
   assert.deepEqual(view.seeds, []);
@@ -353,7 +353,7 @@ test('the garden view reflects initialization, seeds, rewards and placements', a
     'pending'
   );
   assert.equal(before.plantHistory.length, 1);
-  assert.equal(before.collection.length, 24);
+  assert.equal(before.collection.length, 36);
   assert.equal(
     before.collection.filter((entry) => entry.owned || entry.unlocked).length,
     3

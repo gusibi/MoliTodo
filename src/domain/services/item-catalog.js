@@ -44,6 +44,49 @@ const FALLBACK_ITEM = Object.freeze({
 
 const CHOICE_LIMIT = 3;
 
+const TREE_MERGE_CHUNK = 3;
+
+const TREE_FORM_TIERS = Object.freeze([
+  { tier: 1, tierKey: 'base', suffix: '', variant: 'tree' },
+  { tier: 2, tierKey: 'canopy', suffix: '-canopy', variant: 'canopy-tree' },
+  { tier: 3, tierKey: 'legend', suffix: '-legend', variant: 'legend-tree' }
+].map(Object.freeze));
+
+const TREE_FORM_PATTERN = /^species-(\d+)-(canopy|legend)$/;
+
+function parseTreeFormCatalogId(catalogId) {
+  const match = TREE_FORM_PATTERN.exec(String(catalogId || ''));
+  if (!match) return null;
+  const tierKey = match[2];
+  return Object.freeze({
+    speciesId: `species-${match[1]}`,
+    tier: tierKey === 'canopy' ? 2 : 3,
+    tierKey
+  });
+}
+
+function treeFormCatalogId(speciesId, tierKey) {
+  return `${speciesId}-${tierKey}`;
+}
+
+/**
+ * 同种树向上合并：3 棵同形态 → 1 棵下一形态（base → canopy → legend）。
+ * 形态纯外观与图鉴收集，不参与物品自选奖励池，也不动里程碑 gating。
+ */
+function getTreeFormUpgrade(speciesId, fromTier) {
+  const next = TREE_FORM_TIERS.find((entry) => entry.tier === fromTier + 1);
+  if (!next) return null;
+  return Object.freeze({
+    id: treeFormCatalogId(speciesId, next.tierKey),
+    speciesId,
+    tier: next.tier,
+    tierKey: next.tierKey,
+    kind: 'tree',
+    variant: next.variant,
+    size: 1
+  });
+}
+
 function getCatalogItem(itemId) {
   return ITEM_CATALOG.find((item) => item.id === itemId) || null;
 }
@@ -69,6 +112,11 @@ module.exports = {
   INITIAL_ITEM_IDS,
   FALLBACK_ITEM,
   CHOICE_LIMIT,
+  TREE_MERGE_CHUNK,
+  TREE_FORM_TIERS,
+  parseTreeFormCatalogId,
+  treeFormCatalogId,
+  getTreeFormUpgrade,
   getCatalogItem,
   getChoiceCandidates
 };

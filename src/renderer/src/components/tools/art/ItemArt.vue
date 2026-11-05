@@ -189,6 +189,37 @@
       <rect x="22" y="26" width="4" height="4" fill="#f2a03d" />
     </g>
 
+    <g v-else-if="variant === 'canopy-tree'">
+      <rect x="27" y="26" width="10" height="30" fill="#8b5a3c" />
+      <rect x="32" y="26" width="5" height="30" fill="#6d442c" />
+      <use href="#item-leaf-block" transform="translate(4 14)" fill="#4f8f3f" />
+      <use href="#item-leaf-block" transform="translate(44 14)" fill="#5fa84a" />
+      <use href="#item-leaf-block" transform="translate(8 4)" fill="#5fa84a" />
+      <use href="#item-leaf-block" transform="translate(27 -4)" fill="#86ce63" />
+      <use href="#item-leaf-block" transform="translate(40 4)" fill="#4f8f3f" />
+      <use href="#item-leaf-block" transform="translate(18 18)" fill="#86ce63" />
+      <rect x="22" y="24" width="5" height="5" fill="#f2a03d" />
+      <rect x="38" y="20" width="4" height="4" fill="#f2c14e" />
+    </g>
+
+    <g v-else-if="variant === 'legend-tree'">
+      <rect x="26" y="24" width="12" height="32" fill="#8b5a3c" />
+      <rect x="32" y="24" width="6" height="32" fill="#6d442c" />
+      <rect x="20" y="40" width="6" height="10" fill="#6d442c" />
+      <rect x="38" y="42" width="6" height="8" fill="#5b3822" />
+      <use href="#item-leaf-block" transform="translate(0 20)" fill="#4f8f3f" />
+      <use href="#item-leaf-block" transform="translate(48 20)" fill="#5fa84a" />
+      <use href="#item-leaf-block" transform="translate(2 8)" fill="#5fa84a" />
+      <use href="#item-leaf-block" transform="translate(46 6)" fill="#86ce63" />
+      <use href="#item-leaf-block" transform="translate(14 -2)" fill="#86ce63" />
+      <use href="#item-leaf-block" transform="translate(27 -8)" fill="#a4de7c" />
+      <use href="#item-leaf-block" transform="translate(38 -2)" fill="#5fa84a" />
+      <use href="#item-leaf-block" transform="translate(24 12)" fill="#a4de7c" />
+      <rect x="18" y="18" width="5" height="5" fill="#ffe08a" />
+      <rect x="44" y="26" width="4" height="4" fill="#ffe08a" />
+      <rect x="30" y="-2" width="4" height="4" fill="#fff0b0" />
+    </g>
+
     <g v-else-if="variant === 'memorial'">
       <polygon points="12,42 32,34 52,42 32,50" fill="#a5a5a5" />
       <polygon points="12,42 32,50 32,56 12,48" fill="#7f7f7f" />

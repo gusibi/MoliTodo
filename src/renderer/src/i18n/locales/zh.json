@@ -60,7 +60,6 @@
       "choose": "选择图片",
       "replace": "更换图片",
       "uploadPrompt": "用一张喜欢的图片，让工作空间更有自己的感觉。",
-
       "title": "窗口背景",
       "description": "为主窗口和设置页选择背景，明暗蒙层让文字保持清晰。",
       "mountains": "雾山",
@@ -226,13 +225,13 @@
       },
       "templateHelp": "#### 可用占位符：\n\n- `{'{{'}project_name{'}}'}`  - 项目名称\n- `{'{{'}report_period{'}}'}`  - 报告时间周期\n- `{'{{'}report_type{'}}'}`  - 报告类型（日报/周报）\n- `{'{{'}summary{'}}'}`  - AI 生成的工作总结\n- `{'{{'}completed_tasks{'}}'}`  - 已完成任务列表\n- `{'{{'}inprogress_tasks{'}}'}`  - 进行中任务列表（包含子任务进度）\n- `{'{{'}planned_tasks{'}}'}`  - 计划中任务列表\n- `{'{{'}risks_issues{'}}'}`  - 风险和问题列表\n\n#### 模板格式：\n\n支持标准 Markdown 语法  \n占位符会在生成报告时自动替换为实际内容  \n如果某个占位符没有对应内容，会显示\"无\"或\"暂无\"  \n留空使用默认模板"
     },
-     "languageSettings": {
-    "title": "语言设置",
-    "description": "选择应用界面语言",
-    "chinese": "中文",
-    "english": "English",
-    "changeSuccess": "语言切换成功"
-  },
+    "languageSettings": {
+      "title": "语言设置",
+      "description": "选择应用界面语言",
+      "chinese": "中文",
+      "english": "English",
+      "changeSuccess": "语言切换成功"
+    },
     "about": {
       "appInfo": "应用信息",
       "appDescription": "一个现代化的任务管理应用，支持 AI 智能助手、多语言界面和丰富的任务管理功能。",
@@ -276,7 +275,6 @@
       "author": "作者"
     }
   },
- 
   "tasks": {
     "startFailed": "开始任务失败：{error}",
     "title": "任务",
@@ -826,7 +824,7 @@
     "addFirstItem": "添加第一件物品",
     "emptyGardenHint": "这里还是一块空地，从一件喜欢的收藏开始吧。",
     "placedCount": "已摆放 {placed}/{capacity} 件",
-    "placementFull": "小院已经放满，扩建或收起物品后再添加。",
+    "placementFull": "院落已经放满，扩建或收起物品后再添加。",
     "placementTrayDescription": "选择一件收藏，它会自动放到预设位置；之后可以拖动调整。",
     "placementTrayHint": "默认位置来自小院模板，不需要手动对齐格子。",
     "petSlotShort": "宠物",
@@ -1006,7 +1004,20 @@
       "todayFocusNoteOne": "另有 1 轮专注",
       "weekCareTotal": "次照顾",
       "weekFocusTotal": "轮专注"
-    }
+    },
+    "treeForm": {
+      "base": "普通",
+      "canopy": "华盖",
+      "legend": "传说"
+    },
+    "grove": {
+      "title": "林间树木",
+      "hint": "3 棵同种同形态的树可以合成下一形态。",
+      "empty": "还没有成熟的树，种下种子开始吧。",
+      "merge": "合成{form}",
+      "formName": "{species} · {form}"
+    },
+    "orchardCount": "林间 · {count} 棵"
   },
   "focusWidget": {
     "brand": "Moli 专注",

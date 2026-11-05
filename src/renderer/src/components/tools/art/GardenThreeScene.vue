@@ -80,6 +80,7 @@ const props = defineProps({
   plant: { type: Object, default: null },
   maturedPlant: { type: Object, default: null },
   placements: { type: Array, default: () => [] },
+  groveCount: { type: Number, default: 0 },
   layoutMode: { type: Boolean, default: false },
   showPlantLabel: { type: Boolean, default: true }
 })
@@ -111,17 +112,19 @@ let progressRing = null
 let animatedItems = []
 let itemRoots = []
 let dragState = null
+const GROUND_Y = 0.29
+const ISLAND_WIDTH = 9.6
+const ISLAND_DEPTH = 8.6
 const raycaster = new THREE.Raycaster()
 const pointer = new THREE.Vector2()
 const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_Y)
 const ITEM_BOUNDS = 4.5
+// 林间树林簇锚点：岛后左角，呼应 Lv3 back-woodland 主题。
+const GROVE_ANCHOR = { x: -3.9, z: -3.9 }
 let intro = null
 let plantGrow = null
 let reducedMotion = false
 
-const GROUND_Y = 0.29
-const ISLAND_WIDTH = 9.6
-const ISLAND_DEPTH = 8.6
 const PLANT_POSITION = new THREE.Vector3(0, GROUND_Y, -0.9)
 const MATURED_POSITION = new THREE.Vector3(3.9, GROUND_Y, -3.9)
 
@@ -360,6 +363,45 @@ function createTree(scale = 1, x = 0, z = 0) {
   return tree
 }
 
+/** 树冠染上物种主题色；树干保持木色。材质逐网格独立，可原地调整。 */
+function tintTreeCanopy(tree, accent) {
+  const target = new THREE.Color(accent)
+  tree.traverse((child) => {
+    if (!child.isMesh || !child.material || !child.material.color) return
+    if (child.material.color.getHex() === palette.woodDark) return
+    child.material.color.lerp(target, 0.55)
+  })
+}
+
+/** 形态差异：华盖加垂枝层，传说再叠高度与微光。 */
+function makeTreeItemModel(variant, speciesId) {
+  const group = new THREE.Group()
+  if (variant === 'tree') {
+    const tree = createTree(0.68)
+    if (speciesId) tintTreeCanopy(tree, speciesAccent(speciesId))
+    group.add(tree)
+    return group
+  }
+
+  const scale = variant === 'legend-tree' ? 1.05 : 0.88
+  const tree = createTree(scale)
+  addIco(tree, 0.3, palette.leafLight, -0.42, 1.08, 0.18)
+  addIco(tree, 0.28, palette.leafDark, 0.4, 1.02, -0.16)
+  if (variant === 'legend-tree') {
+    addIco(tree, 0.26, palette.leaf, 0.02, 2.3, 0.1)
+    const accent = speciesAccent(speciesId)
+    tree.traverse((child) => {
+      if (!child.isMesh || !child.material || !child.material.color) return
+      if (child.material.color.getHex() === palette.woodDark) return
+      child.material.emissive = new THREE.Color(accent)
+      child.material.emissiveIntensity = 0.22
+    })
+  }
+  tintTreeCanopy(tree, speciesAccent(speciesId))
+  group.add(tree)
+  return group
+}
+
 function buildLevelDetails() {
   if (!scene) return
   if (!levelGroup) {
@@ -390,16 +432,23 @@ function buildLevelDetails() {
   }
 }
 
+// 物种主题色：植物与树形物品共用。
+const SPECIES_ACCENTS = {
+  'species-1': 0xf5a623,
+  'species-2': 0xec4899,
+  'species-3': 0x8b5cf6,
+  'species-4': 0x06b6d4,
+  'species-5': 0xef4444,
+  'species-6': 0x22c55e
+}
+
+function speciesAccent(speciesId) {
+  return SPECIES_ACCENTS[speciesId] || 0xf5a623
+}
+
 function makePlantModel(stage, speciesId, scale = 1) {
   const group = new THREE.Group()
-  const accent = {
-    'species-1': 0xf5a623,
-    'species-2': 0xec4899,
-    'species-3': 0x8b5cf6,
-    'species-4': 0x06b6d4,
-    'species-5': 0xef4444,
-    'species-6': 0x22c55e
-  }[speciesId] || 0xf5a623
+  const accent = speciesAccent(speciesId)
 
   if (stage === 'seed') {
     addSphere(group, 0.18, 0x7a4f2e, 0, 0.15, 0, 7)
@@ -661,7 +710,7 @@ function makePetModel(variant) {
   return group
 }
 
-function makeItemModel(variant) {
+function makeItemModel(variant, speciesId = null) {
   switch (variant) {
     case 'chair': return makeChair()
     case 'table': return makeTable()
@@ -680,6 +729,10 @@ function makeItemModel(variant) {
     case 'bird':
     case 'rabbit':
       return makePetModel(variant)
+    case 'tree':
+    case 'canopy-tree':
+    case 'legend-tree':
+      return makeTreeItemModel(variant, speciesId)
     case 'moon-tree': {
       const tree = createTree(0.75)
       tree.position.set(0, 0, 0)
@@ -694,13 +747,6 @@ function makeItemModel(variant) {
           child.material.emissiveIntensity = 0.25
         }
       })
-      return group
-    }
-    case 'tree': {
-      const tree = createTree(0.68)
-      tree.position.set(0, 0, 0)
-      const group = new THREE.Group()
-      group.add(tree)
       return group
     }
     case 'memorial': {
@@ -719,6 +765,23 @@ function makeItemModel(variant) {
   }
 }
 
+/**
+ * 超出可见上限的老树压缩成背景树林簇（三棵小树），
+ * 数据仍完整保留在摆放里，仅渲染收拢。
+ */
+function makeGroveCluster() {
+  const grove = new THREE.Group()
+  const offsets = [
+    [-0.4, -0.15, 0.5],
+    [0.36, 0.1, 0.42],
+    [0.02, 0.28, 0.55]
+  ]
+  for (const [dx, dz, scale] of offsets) {
+    grove.add(createTree(scale, GROVE_ANCHOR.x + dx, GROVE_ANCHOR.z + dz))
+  }
+  return grove
+}
+
 function syncPlacements() {
   if (!scene || !plotGroup) return
   clearGroup(plotGroup)
@@ -726,7 +789,7 @@ function syncPlacements() {
   itemRoots = []
 
   for (const placement of props.placements) {
-    const model = makeItemModel(placement.variant)
+    const model = makeItemModel(placement.variant, placement.speciesId)
     const x = Number(placement.x) || 0
     const z = Number(placement.z) || 0
     const size = Math.max(1, placement.size || 1)
@@ -742,6 +805,10 @@ function syncPlacements() {
     }
     plotGroup.add(model)
     itemRoots.push(model)
+  }
+
+  if (props.groveCount > 0) {
+    plotGroup.add(makeGroveCluster())
   }
 
   rebuildMarkers()
@@ -1080,6 +1147,7 @@ watch(() => props.level, buildLevelDetails)
 watch(() => props.plant, syncPlant, { deep: true })
 watch(() => props.maturedPlant, syncMaturedPlant, { deep: true })
 watch(() => props.placements, syncPlacements, { deep: true })
+watch(() => props.groveCount, syncPlacements)
 </script>
 
 <style scoped>

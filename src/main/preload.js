@@ -127,6 +127,7 @@ const electronAPI = {
     claimReward: (claimId, selectedItemId) => ipcRenderer.invoke('tools:claim-reward', claimId, selectedItemId),
     plantSeed: (speciesId) => ipcRenderer.invoke('tools:plant-seed', speciesId),
     claimBasicSeed: () => ipcRenderer.invoke('tools:claim-basic-seed'),
+    mergeTrees: (speciesId, fromTier) => ipcRenderer.invoke('tools:merge-trees', speciesId, fromTier),
     getFocusState: () => ipcRenderer.invoke('tools:get-focus-state'),
     startFocus: (input) => ipcRenderer.invoke('tools:start-focus', input),
     pauseFocus: () => ipcRenderer.invoke('tools:pause-focus'),

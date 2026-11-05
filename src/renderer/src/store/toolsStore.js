@@ -13,279 +13,161 @@ export const useToolsStore = defineStore('tools', () => {
   const available = computed(() => Boolean(window.electronAPI?.tools))
   const pendingRewards = computed(() => shellSnapshot.value?.badges?.pendingRewards || 0)
 
-  const loadShellSnapshot = async () => {
-    if (!available.value) return null
+  // 统一封装 tools IPC 调用：可用性守卫 + 错误记录
+  // - fallback：工具不可用或失败时返回的默认值
+  // - rethrow：失败时把错误抛给调用方（默认仅记录到 error）
+  // - withLoading：调用期间置 loading，并预先清空 error
+  // - resetError：调用前清空 error（不翻转 loading）
+  const callTools = async (action, { fallback = null, rethrow = false, withLoading = false, resetError = false } = {}) => {
+    if (!available.value) return fallback
+    if (resetError || withLoading) error.value = ''
+    if (withLoading) loading.value = true
     try {
-      shellSnapshot.value = await window.electronAPI.tools.getShellSnapshot()
-      return shellSnapshot.value
+      return await action()
     } catch (err) {
       error.value = err.message
-      return null
-    }
-  }
-
-  const loadGardenView = async () => {
-    if (!available.value) return null
-    try {
-      gardenView.value = await window.electronAPI.tools.getGardenView()
-      return gardenView.value
-    } catch (err) {
-      error.value = err.message
-      return null
-    }
-  }
-
-  const loadHealthView = async () => {
-    if (!available.value) return null
-    try {
-      healthView.value = await window.electronAPI.tools.getHealthView()
-      return healthView.value
-    } catch (err) {
-      error.value = err.message
-      return null
-    }
-  }
-
-  const loadReminderRules = async () => {
-    if (!available.value) return []
-    try {
-      reminderRules.value = await window.electronAPI.tools.listReminderRules()
-      return reminderRules.value
-    } catch (err) {
-      error.value = err.message
-      return []
-    }
-  }
-
-  const loadFocusState = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.getFocusState()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      return null
-    }
-  }
-
-  const startFocus = async (input) => {
-    if (!available.value) return null
-    loading.value = true
-    error.value = ''
-    try {
-      focusState.value = await window.electronAPI.tools.startFocus(input)
-      await loadShellSnapshot()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
+      if (rethrow) throw err
+      return fallback
     } finally {
-      loading.value = false
+      if (withLoading) loading.value = false
     }
   }
 
-  const pauseFocus = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.pauseFocus()
-      await loadShellSnapshot()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const loadShellSnapshot = () => callTools(async () => {
+    shellSnapshot.value = await window.electronAPI.tools.getShellSnapshot()
+    return shellSnapshot.value
+  })
 
-  const resumeFocus = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.resumeFocus()
-      await loadShellSnapshot()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const loadGardenView = () => callTools(async () => {
+    gardenView.value = await window.electronAPI.tools.getGardenView()
+    return gardenView.value
+  })
 
-  const cancelFocus = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.cancelFocus()
-      await loadShellSnapshot()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const loadHealthView = () => callTools(async () => {
+    healthView.value = await window.electronAPI.tools.getHealthView()
+    return healthView.value
+  })
 
-  const skipFocusBreak = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.skipFocusBreak()
-      await loadShellSnapshot()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const loadReminderRules = () => callTools(async () => {
+    reminderRules.value = await window.electronAPI.tools.listReminderRules()
+    return reminderRules.value
+  }, { fallback: [] })
 
-  const dismissFocusNotice = async () => {
-    if (!available.value) return null
-    try {
-      focusState.value = await window.electronAPI.tools.dismissFocusNotice()
-      return focusState.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const loadFocusState = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.getFocusState()
+    return focusState.value
+  })
 
-  const createReminderRule = async (input) => {
-    if (!available.value) return null
-    loading.value = true
-    error.value = ''
-    try {
-      const rule = await window.electronAPI.tools.createReminderRule(input)
-      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
-      return rule
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
+  const startFocus = (input) => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.startFocus(input)
+    await loadShellSnapshot()
+    return focusState.value
+  }, { rethrow: true, withLoading: true })
 
-  const updateReminderRule = async (ruleId, updates) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const rule = await window.electronAPI.tools.updateReminderRule(ruleId, updates)
-      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
-      return rule
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const pauseFocus = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.pauseFocus()
+    await loadShellSnapshot()
+    return focusState.value
+  }, { rethrow: true })
 
-  const deleteReminderRule = async (ruleId) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const result = await window.electronAPI.tools.deleteReminderRule(ruleId)
-      await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const resumeFocus = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.resumeFocus()
+    await loadShellSnapshot()
+    return focusState.value
+  }, { rethrow: true })
+
+  const cancelFocus = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.cancelFocus()
+    await loadShellSnapshot()
+    return focusState.value
+  }, { rethrow: true })
+
+  const skipFocusBreak = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.skipFocusBreak()
+    await loadShellSnapshot()
+    return focusState.value
+  }, { rethrow: true })
+
+  const dismissFocusNotice = () => callTools(async () => {
+    focusState.value = await window.electronAPI.tools.dismissFocusNotice()
+    return focusState.value
+  }, { rethrow: true })
+
+  const createReminderRule = (input) => callTools(async () => {
+    const rule = await window.electronAPI.tools.createReminderRule(input)
+    await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
+    return rule
+  }, { rethrow: true, withLoading: true })
+
+  const updateReminderRule = (ruleId, updates) => callTools(async () => {
+    const rule = await window.electronAPI.tools.updateReminderRule(ruleId, updates)
+    await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
+    return rule
+  }, { rethrow: true, resetError: true })
+
+  const deleteReminderRule = (ruleId) => callTools(async () => {
+    const result = await window.electronAPI.tools.deleteReminderRule(ruleId)
+    await Promise.all([loadReminderRules(), loadHealthView(), loadShellSnapshot()])
+    return result
+  }, { rethrow: true, resetError: true })
 
   const getClaimOptions = async (claimId) => {
     if (!available.value) return null
     return window.electronAPI.tools.getClaimOptions(claimId)
   }
 
-  const plantSeed = async (speciesId) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const result = await window.electronAPI.tools.plantSeed(speciesId)
-      await loadGardenView()
-      await loadShellSnapshot()
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const plantSeed = (speciesId) => callTools(async () => {
+    const result = await window.electronAPI.tools.plantSeed(speciesId)
+    await loadGardenView()
+    await loadShellSnapshot()
+    return result
+  }, { rethrow: true, resetError: true })
 
-  const claimBasicSeed = async () => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const result = await window.electronAPI.tools.claimBasicSeed()
-      await loadGardenView()
-      await loadShellSnapshot()
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const claimBasicSeed = () => callTools(async () => {
+    const result = await window.electronAPI.tools.claimBasicSeed()
+    await loadGardenView()
+    await loadShellSnapshot()
+    return result
+  }, { rethrow: true, resetError: true })
 
-  const placeItem = async (inventoryId, position = null) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const placement = await window.electronAPI.tools.placeItem(inventoryId, position)
-      await loadGardenView()
-      return placement
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const mergeTrees = (speciesId, fromTier) => callTools(async () => {
+    const result = await window.electronAPI.tools.mergeTrees(speciesId, fromTier)
+    await loadGardenView()
+    await loadShellSnapshot()
+    return result
+  }, { rethrow: true, resetError: true })
 
-  const setAutoPlace = async (enabled) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const result = await window.electronAPI.tools.setAutoPlace(enabled)
-      await loadGardenView()
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const placeItem = (inventoryId, position = null) => callTools(async () => {
+    const placement = await window.electronAPI.tools.placeItem(inventoryId, position)
+    await loadGardenView()
+    return placement
+  }, { rethrow: true, resetError: true })
 
-  const moveItem = async (inventoryId, position) => {
-    if (!available.value) return null
-    try {
-      const placement = await window.electronAPI.tools.moveItem(inventoryId, position)
-      await loadGardenView()
-      await loadShellSnapshot()
-      return placement
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const setAutoPlace = (enabled) => callTools(async () => {
+    const result = await window.electronAPI.tools.setAutoPlace(enabled)
+    await loadGardenView()
+    return result
+  }, { rethrow: true, resetError: true })
 
-  const removePlacement = async (inventoryId) => {
-    if (!available.value) return null
-    error.value = ''
-    try {
-      const placement = await window.electronAPI.tools.removePlacement(inventoryId)
-      await loadGardenView()
-      return placement
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
+  const moveItem = (inventoryId, position) => callTools(async () => {
+    const placement = await window.electronAPI.tools.moveItem(inventoryId, position)
+    await loadGardenView()
+    await loadShellSnapshot()
+    return placement
+  }, { rethrow: true })
 
-  const claimReward = async (claimId, selectedItemId = null) => {
-    if (!available.value) return null
-    loading.value = true
-    error.value = ''
-    try {
-      const result = await window.electronAPI.tools.claimReward(claimId, selectedItemId)
-      await loadGardenView()
-      await loadShellSnapshot()
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
+  const removePlacement = (inventoryId) => callTools(async () => {
+    const placement = await window.electronAPI.tools.removePlacement(inventoryId)
+    await loadGardenView()
+    return placement
+  }, { rethrow: true, resetError: true })
+
+  const claimReward = (claimId, selectedItemId = null) => callTools(async () => {
+    const result = await window.electronAPI.tools.claimReward(claimId, selectedItemId)
+    await loadGardenView()
+    await loadShellSnapshot()
+    return result
+  }, { rethrow: true, withLoading: true })
 
   return {
     shellSnapshot,
@@ -315,6 +197,7 @@ export const useToolsStore = defineStore('tools', () => {
     claimReward,
     plantSeed,
     claimBasicSeed,
+    mergeTrees,
     placeItem,
     moveItem,
     removePlacement,

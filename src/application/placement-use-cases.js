@@ -1,8 +1,9 @@
 const {
   GARDEN_REGION,
   PET_REGION,
-  getGardenCapacity,
-  getPetCapacity,
+  ORCHARD_REGION,
+  getRegionCapacity,
+  isTreeKind,
   getItemSize
 } = require('../domain/services/garden-layout');
 const {
@@ -17,11 +18,8 @@ const {
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
 function regionForItem(item) {
+  if (isTreeKind(item.kind)) return ORCHARD_REGION;
   return item.kind === 'pet' ? PET_REGION : GARDEN_REGION;
-}
-
-function capacityForRegion(level, region) {
-  return region === PET_REGION ? getPetCapacity(level) : getGardenCapacity(level);
 }
 
 function sizeForItem(item) {
@@ -53,7 +51,8 @@ function overlapsOthers(position, size, occupied, excludeInventoryId = null) {
 }
 
 /**
- * 小院自由摆放：容量按件数计算，尺寸用于边界与碰撞。
+ * 小院自由摆放：家具/装饰/宠物容量按件数计算，树入林间层不占容量。
+ * 尺寸用于边界与碰撞；林间与院落同岛渲染，碰撞检查保持全局。
  * slot_id 保存为 @x,z，兼容旧的 slot-N 数据。
  */
 class PlacementUseCases {
@@ -80,10 +79,10 @@ class PlacementUseCases {
       const region = regionForItem(inventory);
       const state = await this.gardenRepository.getState();
       const level = state ? state.level : 1;
-      const capacity = capacityForRegion(level, region);
+      const capacity = getRegionCapacity(level, region);
       const placements = await this.gardenRepository.listPlacements();
       const regionPlacements = placements.filter((placement) => placement.regionId === region);
-      if (regionPlacements.length >= capacity) {
+      if (capacity !== null && regionPlacements.length >= capacity) {
         throw new Error(region === PET_REGION ? '宠物位已经放满' : '小院已经放满');
       }
 
@@ -187,9 +186,10 @@ class PlacementUseCases {
 
     for (const item of candidates) {
       const region = regionForItem(item);
-      const capacity = capacityForRegion(level, region);
+      const capacity = getRegionCapacity(level, region);
       const current = await this.gardenRepository.listPlacements();
-      if (current.filter((placement) => placement.regionId === region).length >= capacity) {
+      if (capacity !== null
+        && current.filter((placement) => placement.regionId === region).length >= capacity) {
         continue;
       }
       try {

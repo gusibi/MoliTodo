@@ -1,4 +1,4 @@
-const { INITIAL_ITEM_IDS, getCatalogItem } = require('../domain/services/item-catalog');
+const { INITIAL_ITEM_IDS, getCatalogItem, TREE_MERGE_CHUNK, getTreeFormUpgrade, treeFormCatalogId } = require('../domain/services/item-catalog');
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
 /**
@@ -155,6 +155,65 @@ class GardenUseCases {
       return {
         state: await this.gardenRepository.getState(),
         seeds: await this.gardenRepository.listSeeds()
+      };
+    });
+  }
+
+  /**
+   * 同种树向上合并形态：3 棵同种同形态的树 → 1 棵下一形态。
+   * 被消耗的树连同摆放一起移除；新树留在库存，由调用方决定是否自动摆放。
+   */
+  async mergeTrees({ speciesId = 'species-1', fromTier = 1, now = this.clock.now() } = {}) {
+    const instant = now instanceof Date ? now : new Date(now);
+    if (Number.isNaN(instant.getTime())) {
+      throw new TypeError('now 不是有效时间');
+    }
+    const nowIso = instant.toISOString();
+
+    const target = getTreeFormUpgrade(speciesId, fromTier);
+    if (!target) {
+      throw new Error('该物种已是最高形态');
+    }
+
+    return withTransaction(this.db, async () => {
+      const inventory = await this.gardenRepository.listInventoryItems();
+      const sourceCatalogIds = fromTier === 1
+        ? [speciesId]
+        : [treeFormCatalogId(speciesId, 'canopy')];
+      const rows = inventory
+        .filter((item) => (
+          item.kind === 'tree'
+          && item.quantity > 0
+          && sourceCatalogIds.includes(item.catalogId)
+        ))
+        .sort((a, b) => a.id - b.id);
+
+      if (rows.length < TREE_MERGE_CHUNK) {
+        throw new Error(`同种树木不足 ${TREE_MERGE_CHUNK} 棵，无法合成`);
+      }
+
+      const consumed = rows.slice(0, TREE_MERGE_CHUNK);
+      for (const row of consumed) {
+        await this.gardenRepository.removePlacement(row.id);
+        await this.gardenRepository.deleteInventoryItem(row.id);
+      }
+
+      const inventoryItemId = await this.gardenRepository.addInventoryItem({
+        catalogId: target.id,
+        kind: 'tree',
+        quantity: 1,
+        originType: 'tree_merge',
+        originId: `${target.id}:${consumed.map((row) => row.id).join('-')}`,
+        acquiredAt: nowIso
+      });
+
+      return {
+        merged: true,
+        speciesId,
+        fromTier,
+        form: { ...target },
+        consumedIds: consumed.map((row) => row.id),
+        inventoryItemId
       };
     });
   }
