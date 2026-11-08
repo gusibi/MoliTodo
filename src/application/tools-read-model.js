@@ -5,6 +5,7 @@ const {
 } = require('../domain/services/expansion-policy');
 const {
   COLUMNS,
+  ORCHARD_CAPACITY,
   getPetCapacity
 } = require('../domain/services/garden-layout');
 const { getFocusSummary } = require('../domain/services/focus-policy');
@@ -201,6 +202,7 @@ class ToolsReadModel {
         capacity: currentExpansion.capacity,
         columns: COLUMNS,
         petCapacity: getPetCapacity(level),
+        orchardCapacity: ORCHARD_CAPACITY,
         autoPlace: Boolean(this.getAutoPlace()),
         currentStreak: gardenState ? gardenState.currentStreak : 0,
         longestStreak: gardenState ? gardenState.longestStreak : 0,

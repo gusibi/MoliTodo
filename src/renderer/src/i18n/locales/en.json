@@ -922,6 +922,7 @@
     "placedCount": "{placed}/{capacity} placed",
     "orchardCount": "Grove · {count} trees",
     "placementFull": "The yard is full. Expand or store an item first.",
+    "placementOrchardFull": "The grove is full ({capacity} trees). Extra trees stay in the background; store one to swap it in.",
     "placementTrayDescription": "Choose a collectible and it will land in its template spot. You can drag it afterwards.",
     "placementTrayHint": "Positions come from the garden template; there is no grid to align.",
     "petSlotShort": "Pet",

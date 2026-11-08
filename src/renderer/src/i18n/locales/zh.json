@@ -922,6 +922,7 @@
     "placedCount": "已摆放 {placed}/{capacity} 件",
     "orchardCount": "林间 · {count} 棵",
     "placementFull": "院落已经放满，扩建或收起物品后再添加。",
+    "placementOrchardFull": "林间已种满 {capacity} 棵，其余的树留在背景树林里；收起一棵后可以换上。",
     "placementTrayDescription": "选择一件收藏，它会自动放到预设位置；之后可以拖动调整。",
     "placementTrayHint": "默认位置来自小院模板，不需要手动对齐格子。",
     "petSlotShort": "宠物",

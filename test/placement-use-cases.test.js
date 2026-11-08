@@ -6,6 +6,15 @@ const path = require('node:path');
 const SqliteTaskRepository = require('../src/infrastructure/persistence/sqlite-task-repository');
 const SqliteGardenRepository = require('../src/infrastructure/persistence/sqlite-garden-repository');
 const PlacementUseCases = require('../src/application/placement-use-cases');
+const { ORCHARD_CAPACITY, getItemSize } = require('../src/domain/services/garden-layout');
+const { ITEM_CATALOG } = require('../src/domain/services/item-catalog');
+const {
+  PLANT_BED,
+  TEMPLATE_POSITIONS,
+  positionForPlacement,
+  positionToken,
+  rectsOverlap
+} = require('../src/domain/services/garden-template');
 
 const originalConsole = {
   log: console.log,
@@ -267,4 +276,186 @@ test('missing inventory is rejected and removing an unplaced item fails', async 
     placementUseCases.removeItem(itemA),
     /没有摆放/
   );
+});
+
+async function addTrees(gardenRepository, count, prefix = 'tree') {
+  const forms = ['', '-canopy', '-legend'];
+  const ids = [];
+  for (let index = 0; index < count; index += 1) {
+    const catalogId = `species-${(index % 6) + 1}${forms[index % 3]}`;
+    ids.push(await addItem(gardenRepository, catalogId, 'tree', `${prefix}-${index}`));
+  }
+  return ids;
+}
+
+test('the orchard is capped so extra trees stay owned and never crowd out the yard', async (t) => {
+  const { gardenRepository, placementUseCases, itemA } = await setup(t);
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY + 24);
+
+  const placed = await placementUseCases.autoPlace({ inventoryIds: treeIds });
+
+  assert.equal(placed.length, ORCHARD_CAPACITY);
+  const owned = await gardenRepository.listInventoryItems();
+  assert.equal(owned.filter((item) => item.kind === 'tree').length, ORCHARD_CAPACITY + 24, '超出的树仍保留所有权');
+
+  const chair = await placementUseCases.placeItem({ inventoryId: itemA });
+  assert.equal(chair.regionId, 'garden');
+});
+
+test('every catalog item still fits once the orchard is full because trees step aside', async (t) => {
+  const { db, gardenRepository, placementUseCases } = await setup(t);
+  await db.run('UPDATE garden_state SET level = 5 WHERE id = 1');
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY);
+  await placementUseCases.autoPlace({ inventoryIds: treeIds });
+
+  const collectibles = ITEM_CATALOG.filter((entry) => entry.id !== 'pet-4');
+  for (const item of collectibles) {
+    const inventoryId = await addItem(gardenRepository, item.id, item.kind, `catalog-${item.id}`);
+    await placementUseCases.placeItem({ inventoryId });
+  }
+
+  const placements = await gardenRepository.listPlacements();
+  assert.equal(placements.filter((entry) => entry.regionId !== 'orchard').length, collectibles.length);
+  const inventory = await gardenRepository.listInventoryItems();
+  assert.equal(inventory.filter((item) => item.kind === 'tree').length, ORCHARD_CAPACITY, '树仍保留所有权');
+});
+
+test('auto placed collectibles keep their template spot and trees there step aside', async (t) => {
+  const { gardenRepository, placementUseCases } = await setup(t);
+  const [nearTree, farTree] = await addTrees(gardenRepository, 2);
+  const template = TEMPLATE_POSITIONS['furniture-2'];
+  await placementUseCases.placeItem({ inventoryId: nearTree, position: template });
+  await placementUseCases.placeItem({ inventoryId: farTree, position: { x: 4, z: -4 } });
+
+  // 指定位置不会挤走树，仍按占用拒绝
+  const lamp = await addItem(gardenRepository, 'furniture-5', 'furniture', 'lamp');
+  await assert.rejects(
+    placementUseCases.placeItem({ inventoryId: lamp, position: template }),
+    /占用/
+  );
+  assert.ok(await gardenRepository.findPlacementByInventoryId(nearTree));
+
+  const table = await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');
+  const placed = await placementUseCases.placeItem({ inventoryId: table });
+
+  assert.equal(placed.x, template.x);
+  assert.equal(placed.z, template.z);
+  const moved = await gardenRepository.findPlacementByInventoryId(nearTree);
+  assert.equal(rectsOverlap(moved, 1, placed, 2), false, '压到的树挪到空位');
+  const untouched = await gardenRepository.findPlacementByInventoryId(farTree);
+  assert.equal(untouched.x, 4, '没压到的树不动');
+  assert.equal(untouched.z, -4);
+});
+
+test('covered trees return to the woods only when the island has no free spot', async (t) => {
+  const { db, gardenRepository, placementUseCases } = await setup(t);
+  await db.run('UPDATE garden_state SET level = 5 WHERE id = 1');
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY);
+  await placementUseCases.autoPlace({ inventoryIds: treeIds });
+  for (let index = 0; index < 31; index += 1) {
+    const stool = await addItem(gardenRepository, 'furniture-6', 'furniture', `stool-${index}`);
+    await placementUseCases.placeItem({ inventoryId: stool });
+  }
+  const orchardBefore = (await gardenRepository.listPlacements())
+    .filter((entry) => entry.regionId === 'orchard').length;
+  const table = await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');
+
+  await placementUseCases.placeItem({ inventoryId: table });
+
+  const placements = await gardenRepository.listPlacements();
+  assert.equal(placements.filter((entry) => entry.regionId === 'garden').length, 32);
+  assert.ok(placements.filter((entry) => entry.regionId === 'orchard').length < orchardBefore);
+  const inventory = await gardenRepository.listInventoryItems();
+  assert.equal(inventory.filter((item) => item.kind === 'tree').length, ORCHARD_CAPACITY, '收起的树仍保留所有权');
+  const byId = new Map(inventory.map((item) => [item.id, item]));
+  for (const [index, a] of placements.entries()) {
+    for (const b of placements.slice(index + 1)) {
+      const overlapped = rectsOverlap(a, getItemSize(byId.get(a.inventoryId)), b, getItemSize(byId.get(b.inventoryId)), 0);
+      assert.equal(overlapped, false, `${a.slotId} 与 ${b.slotId} 重叠`);
+    }
+  }
+});
+
+test('collectibles never push each other off the island', async (t) => {
+  const { gardenRepository, placementUseCases, itemA } = await setup(t);
+  const template = TEMPLATE_POSITIONS['furniture-2'];
+  await placementUseCases.placeItem({ inventoryId: itemA, position: template });
+
+  const table = await addItem(gardenRepository, 'furniture-2', 'furniture', 'table');
+  const placed = await placementUseCases.placeItem({ inventoryId: table });
+
+  assert.notDeepEqual({ x: placed.x, z: placed.z }, template);
+  assert.ok(await gardenRepository.findPlacementByInventoryId(itemA), '已摆放的收藏不会被挤走');
+});
+
+test('placing a tree into a full orchard is rejected until a spot frees up', async (t) => {
+  const { gardenRepository, placementUseCases } = await setup(t);
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY + 1);
+  const [first] = treeIds;
+  const extra = treeIds[treeIds.length - 1];
+  await placementUseCases.autoPlace({ inventoryIds: treeIds.slice(0, ORCHARD_CAPACITY) });
+
+  await assert.rejects(placementUseCases.placeItem({ inventoryId: extra }), /林间已经放满/);
+
+  await placementUseCases.removeItem(first);
+  const placed = await placementUseCases.placeItem({ inventoryId: extra });
+  assert.equal(placed.regionId, 'orchard');
+});
+
+test('existing orchard placements above the cap stay put and only block new trees', async (t) => {
+  const { gardenRepository, placementUseCases, itemA } = await setup(t);
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY + 3);
+  const legacy = treeIds.slice(0, ORCHARD_CAPACITY + 2);
+  for (const [index, inventoryId] of legacy.entries()) {
+    await gardenRepository.addPlacement({
+      inventoryId,
+      regionId: 'orchard',
+      slotId: positionToken(-4 + (index % 6) * 1.25, -4 + Math.floor(index / 6) * 1.25),
+      visible: 1,
+      placedAt: '2026-10-21T01:00:00.000Z'
+    });
+  }
+
+  await assert.rejects(
+    placementUseCases.placeItem({ inventoryId: treeIds[treeIds.length - 1] }),
+    /林间已经放满/
+  );
+  const placedTrees = await placementUseCases.autoPlace({ inventoryIds: [treeIds[treeIds.length - 1]] });
+  assert.equal(placedTrees.length, 0);
+  assert.equal((await gardenRepository.listPlacements()).length, legacy.length, '已有摆放不被改动');
+
+  await placementUseCases.moveItem({ inventoryId: legacy[0], position: { x: 4, z: 4 } });
+  await placementUseCases.placeItem({ inventoryId: itemA });
+});
+
+test('auto placement keeps clear of the plant bed while dragging stays free', async (t) => {
+  const { gardenRepository, placementUseCases, itemA } = await setup(t);
+  const treeIds = await addTrees(gardenRepository, ORCHARD_CAPACITY);
+
+  const placed = await placementUseCases.autoPlace({ inventoryIds: treeIds });
+  for (const placement of placed) {
+    assert.equal(
+      rectsOverlap(positionForPlacement(placement), 1, PLANT_BED, PLANT_BED.size),
+      false,
+      `${placement.slotId} 不应压在苗床上`
+    );
+  }
+
+  await placementUseCases.placeItem({ inventoryId: itemA, position: { x: 4, z: 4 } });
+  const dragged = await placementUseCases.moveItem({
+    inventoryId: itemA,
+    position: { x: PLANT_BED.x, z: PLANT_BED.z }
+  });
+  assert.equal(dragged.z, PLANT_BED.z);
+});
+
+test('template positions never sit on the plant bed', () => {
+  for (const [catalogId, position] of Object.entries(TEMPLATE_POSITIONS)) {
+    const size = ITEM_CATALOG.find((item) => item.id === catalogId)?.size || 1;
+    assert.equal(
+      rectsOverlap(position, size, PLANT_BED, PLANT_BED.size),
+      false,
+      `${catalogId} 的模板位置压在苗床上`
+    );
+  }
 });

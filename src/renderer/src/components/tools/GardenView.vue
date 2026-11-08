@@ -72,8 +72,8 @@
             :level="garden.level"
             :plant="plant"
             :matured-plant="lastMaturedPlant"
-            :placements="layoutMode ? scenePlacementsAll : scenePlacements"
-            :grove-count="layoutMode ? 0 : orchardHiddenCount"
+            :placements="scenePlacements"
+            :grove-count="orchardHiddenCount"
             :layout-mode="layoutMode"
             @remove-placement="removePlacement"
             @move-placement="movePlacement"
@@ -620,6 +620,9 @@
           </Button>
           <p class="text-xs text-muted-foreground">{{ $t('tools.placementTrayHint') }}</p>
         </div>
+        <p v-if="orchardFull && orchardHiddenCount > 0" class="mt-2 text-xs text-muted-foreground">
+          {{ $t('tools.placementOrchardFull', { capacity: garden.orchardCapacity }) }}
+        </p>
         <p v-if="placementError" class="mt-3 text-sm text-destructive" role="alert">{{ placementError }}</p>
       </Dialog>
     </div>
@@ -761,8 +764,6 @@ const inventoryById = computed(() => {
   return map
 })
 const layoutMode = ref(false)
-// 林间可见树上限：更老的树压缩成背景树林簇，仅渲染收拢、数据不动。
-const ORCHARD_VISIBLE_TREES = 16
 function itemSize(item) {
   const entry = collectionByCatalogId.value[item.catalogId]
   if (item.kind === 'tree' || entry?.category === 'species') return 1
@@ -770,15 +771,15 @@ function itemSize(item) {
 }
 const gardenPlacedCount = computed(() => gardenPlacements.value.length)
 const petPlacedCount = computed(() => petPlacements.value.length)
-const orchardCount = computed(() => orchardPlacements.value.length)
-const visibleOrchardPlacements = computed(() => (
-  [...orchardPlacements.value]
-    .sort((a, b) => String(b.placedAt || '').localeCompare(String(a.placedAt || '')))
-    .slice(0, ORCHARD_VISIBLE_TREES)
-))
+const placedInventoryIds = computed(() => new Set(placements.value.map((placement) => placement.inventoryId)))
+const orchardFull = computed(() => orchardPlacements.value.length >= (garden.value.orchardCapacity || 0))
+// 没上岛的树留在收藏里，用背景树林簇表达，不占岛上空间。
 const orchardHiddenCount = computed(() => (
-  Math.max(0, orchardCount.value - visibleOrchardPlacements.value.length)
+  inventory.value.filter((item) => (
+    item.kind === 'tree' && item.quantity > 0 && !placedInventoryIds.value.has(item.id)
+  )).length
 ))
+const orchardCount = computed(() => orchardPlacements.value.length + orchardHiddenCount.value)
 function joinPlacement(placement) {
   const item = inventoryById.value[placement.inventoryId]
   const entry = item ? collectionByCatalogId.value[item.catalogId] : null
@@ -791,23 +792,18 @@ function joinPlacement(placement) {
     speciesId: entry?.speciesId || null
   }
 }
-const scenePlacements = computed(() => (
-  [...gardenPlacements.value, ...petPlacements.value, ...visibleOrchardPlacements.value]
-    .map(joinPlacement)
-))
-const scenePlacementsAll = computed(() => placements.value.map(joinPlacement))
+const scenePlacements = computed(() => placements.value.map(joinPlacement))
 const sceneEmpty = computed(() => (
   scenePlacements.value.length === 0 && orchardHiddenCount.value === 0
 ))
 const placementOptions = computed(() => {
-  const placedIds = new Set(placements.value.map((placement) => placement.inventoryId))
   const gardenFull = gardenPlacedCount.value >= (garden.value.capacity || 0)
   const petFull = petPlacedCount.value >= (garden.value.petCapacity || 0)
   return inventory.value
-    .filter((item) => item.quantity > 0 && !placedIds.has(item.id))
+    .filter((item) => item.quantity > 0 && !placedInventoryIds.value.has(item.id))
     .filter((item) => {
-      // 树入林间层，不占院落容量，始终可摆。
-      if (item.kind === 'tree') return true
+      // 树入林间层，不占院落容量，只受林间上限约束。
+      if (item.kind === 'tree') return !orchardFull.value
       return item.kind === 'pet' ? !petFull : !gardenFull
     })
     .map((item) => {
@@ -820,9 +816,13 @@ const placementOptions = computed(() => {
       }
     })
 })
+// 还有院落收藏没摆、却放不下，才算放满；全部摆好只是没有可摆的物品。
 const placementFull = computed(() => (
-  inventory.value.some((item) => item.quantity > 0)
-  && placementOptions.value.length === 0
+  placementOptions.value.length === 0
+  && inventory.value.some((item) => (
+    item.kind !== 'tree' && item.kind !== 'pet'
+    && item.quantity > 0 && !placedInventoryIds.value.has(item.id)
+  ))
 ))
 const pendingClaims = computed(() => (
   gardenView.value?.rewardClaims?.filter((claim) => !claim.claimedAt) || []

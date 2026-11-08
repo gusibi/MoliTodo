@@ -5,6 +5,7 @@ const COLUMNS = 4;
 const GARDEN_REGION = 'garden';
 const PET_REGION = 'pet';
 const ORCHARD_REGION = 'orchard';
+const ORCHARD_CAPACITY = 16;
 
 function getGardenCapacity(level) {
   return (getExpansionLevel(level) || getExpansionLevel(1)).capacity;
@@ -15,12 +16,13 @@ function getPetCapacity(level) {
 }
 
 /**
- * 林间层不设件数上限：树是无限收益流，不与有限收藏竞争容量。
- * 返回 null 表示无件数限制，仅受地块物理边界与碰撞约束。
+ * 树是无限收益流，不与有限收藏竞争院落容量，所以林间层单独计数。
+ * 但树与院落同岛碰撞，上岛棵数必须有上限，否则会挤占家具的物理空间；
+ * 超出的树留在收藏里，由背景树林簇表达。
  */
 function getRegionCapacity(level, region) {
   if (region === PET_REGION) return getPetCapacity(level);
-  if (region === ORCHARD_REGION) return null;
+  if (region === ORCHARD_REGION) return ORCHARD_CAPACITY;
   return getGardenCapacity(level);
 }
 
@@ -83,6 +85,7 @@ module.exports = {
   GARDEN_REGION,
   PET_REGION,
   ORCHARD_REGION,
+  ORCHARD_CAPACITY,
   getGardenCapacity,
   getPetCapacity,
   getRegionCapacity,

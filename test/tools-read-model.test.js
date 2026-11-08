@@ -258,6 +258,7 @@ test('an empty garden view returns defaults without writing state', async (t) =>
     capacity: 4,
     columns: 4,
     petCapacity: 2,
+    orchardCapacity: 16,
     autoPlace: true,
     currentStreak: 0,
     longestStreak: 0,

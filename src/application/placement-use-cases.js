@@ -17,6 +17,12 @@ const {
 } = require('../domain/services/garden-template');
 const { withTransaction } = require('../infrastructure/persistence/with-transaction');
 
+const REGION_FULL_MESSAGES = Object.freeze({
+  [GARDEN_REGION]: '小院已经放满',
+  [PET_REGION]: '宠物位已经放满',
+  [ORCHARD_REGION]: '林间已经放满'
+});
+
 function regionForItem(item) {
   if (isTreeKind(item.kind)) return ORCHARD_REGION;
   return item.kind === 'pet' ? PET_REGION : GARDEN_REGION;
@@ -51,8 +57,8 @@ function overlapsOthers(position, size, occupied, excludeInventoryId = null) {
 }
 
 /**
- * 小院自由摆放：家具/装饰/宠物容量按件数计算，树入林间层不占容量。
- * 尺寸用于边界与碰撞；林间与院落同岛渲染，碰撞检查保持全局。
+ * 小院自由摆放：家具/装饰、宠物、林间的树各按件数计算容量，互不占用。
+ * 尺寸用于边界与碰撞；三者同岛渲染，碰撞检查保持全局。
  * slot_id 保存为 @x,z，兼容旧的 slot-N 数据。
  */
 class PlacementUseCases {
@@ -82,8 +88,8 @@ class PlacementUseCases {
       const capacity = getRegionCapacity(level, region);
       const placements = await this.gardenRepository.listPlacements();
       const regionPlacements = placements.filter((placement) => placement.regionId === region);
-      if (capacity !== null && regionPlacements.length >= capacity) {
-        throw new Error(region === PET_REGION ? '宠物位已经放满' : '小院已经放满');
+      if (regionPlacements.length >= capacity) {
+        throw new Error(REGION_FULL_MESSAGES[region]);
       }
 
       const existing = await this.gardenRepository.findPlacementByInventoryId(inventoryId);
@@ -98,29 +104,67 @@ class PlacementUseCases {
       if (!nextPosition && slotId) {
         nextPosition = positionForPlacement({ slotId, regionId: region });
       }
+      let blocking = occupied;
       if (!nextPosition) {
+        // 自动落位时收藏无视树：树是无限收益流，不该把有限的收藏挤离模板位置。
+        if (region !== ORCHARD_REGION) {
+          blocking = occupied.filter((entry) => entry.regionId !== ORCHARD_REGION);
+        }
         nextPosition = findFreePosition({
           catalogId: inventory.catalogId,
           size,
-          occupied,
+          occupied: blocking,
           bounds: GARDEN_BOUNDS
         });
       }
       if (!nextPosition) throw new Error('没有足够的空地摆放这件物品');
 
       const clamped = clampToBounds(nextPosition, size, GARDEN_BOUNDS);
-      if (overlapsOthers(clamped, size, occupied)) {
+      if (overlapsOthers(clamped, size, blocking)) {
         throw new Error('这个位置已经被其他物品占用');
       }
+      const coveredTrees = occupied.filter((entry) => (
+        !blocking.includes(entry) && overlapsOthers(clamped, size, [entry])
+      ));
 
-      return this.gardenRepository.addPlacement({
+      const placement = await this.gardenRepository.addPlacement({
         inventoryId,
         regionId: region,
         slotId: positionToken(clamped.x, clamped.z),
         visible: 1,
         placedAt: nowIso
       });
+      await this.moveTreesAside(coveredTrees, [
+        ...occupied.filter((entry) => !coveredTrees.includes(entry)),
+        { ...clamped, size }
+      ], inventoryById);
+      return placement;
     });
+  }
+
+  /**
+   * 被收藏压到的树挪到最近的空位；岛上没有空地才收起，
+   * 回到背景树林，所有权不变。
+   */
+  async moveTreesAside(trees, occupied, inventoryById) {
+    const taken = [...occupied];
+    for (const tree of trees) {
+      const spot = findFreePosition({
+        catalogId: inventoryById.get(tree.inventoryId).catalogId,
+        size: tree.size,
+        occupied: taken,
+        bounds: GARDEN_BOUNDS
+      });
+      if (!spot) {
+        await this.gardenRepository.removePlacement(tree.inventoryId);
+        continue;
+      }
+      await this.gardenRepository.updatePlacementSlot({
+        inventoryId: tree.inventoryId,
+        slotId: positionToken(spot.x, spot.z)
+      });
+      taken.push({ ...spot, size: tree.size });
+    }
   }
 
   async moveItem({ inventoryId, position, now = this.clock.now() } = {}) {
@@ -188,8 +232,7 @@ class PlacementUseCases {
       const region = regionForItem(item);
       const capacity = getRegionCapacity(level, region);
       const current = await this.gardenRepository.listPlacements();
-      if (capacity !== null
-        && current.filter((placement) => placement.regionId === region).length >= capacity) {
+      if (current.filter((placement) => placement.regionId === region).length >= capacity) {
         continue;
       }
       try {

@@ -766,8 +766,8 @@ function makeItemModel(variant, speciesId = null) {
 }
 
 /**
- * 超出可见上限的老树压缩成背景树林簇（三棵小树），
- * 数据仍完整保留在摆放里，仅渲染收拢。
+ * 没上岛的树用背景树林簇（三棵小树）表达：
+ * 它们只留在收藏里，没有摆放记录，也不参与碰撞。
  */
 function makeGroveCluster() {
   const grove = new THREE.Group()

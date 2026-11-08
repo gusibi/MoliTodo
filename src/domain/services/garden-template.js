@@ -37,6 +37,9 @@ const TEMPLATE_POSITIONS = Object.freeze({
   'garden-memorial': { x: -1.2, z: -3.9 }
 });
 
+// 中央苗床（对应场景里的 PLANT_POSITION）：自动摆放避开，手动拖动不限制。
+const PLANT_BED = Object.freeze({ x: 0, z: -0.9, size: 1.84 });
+
 const POSITION_TOKEN = /^@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/;
 
 function parsePositionToken(slotId) {
@@ -133,8 +136,9 @@ function findFreePosition({
   occupied = [],
   bounds = GARDEN_BOUNDS
 } = {}) {
+  const blocked = [...occupied, PLANT_BED];
   const preferred = templatePositionFor(catalogId);
-  if (preferred && isWithinBounds(preferred, size, bounds) && !overlapsAny(preferred, size, occupied)) {
+  if (preferred && isWithinBounds(preferred, size, bounds) && !overlapsAny(preferred, size, blocked)) {
     return { ...preferred };
   }
   const candidates = buildCandidates(bounds);
@@ -146,7 +150,7 @@ function findFreePosition({
       })
     : candidates;
   for (const candidate of sorted) {
-    if (isWithinBounds(candidate, size, bounds) && !overlapsAny(candidate, size, occupied)) {
+    if (isWithinBounds(candidate, size, bounds) && !overlapsAny(candidate, size, blocked)) {
       return candidate;
     }
   }
@@ -155,6 +159,7 @@ function findFreePosition({
 
 module.exports = {
   GARDEN_BOUNDS,
+  PLANT_BED,
   TEMPLATE_POSITIONS,
   parsePositionToken,
   positionToken,
