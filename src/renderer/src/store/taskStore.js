@@ -1885,16 +1885,6 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const cleanupOldLogs = async (daysToKeep = 90) => {
-    try {
-      const result = await window.electronAPI.invoke('cleanup-old-logs', { daysToKeep })
-      return result.success ? result.deletedCount : 0
-    } catch (error) {
-      console.error('清理过期日志失败:', error)
-      throw error
-    }
-  }
-
   // 初始化现有任务日志
   const initializeExistingTaskLogs = async (force = false) => {
     try {
@@ -2151,7 +2141,6 @@ export const useTaskStore = defineStore('task', () => {
     getCompletionStatistics,
     getTaskEfficiencyStats,
     getLogStatistics,
-    cleanupOldLogs,
     initializeExistingTaskLogs,
 
     // AI 相关状态

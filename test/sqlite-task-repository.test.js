@@ -137,3 +137,28 @@ test('SQLite repository normalizes a legacy ISO deadline on read', async (t) => 
   assert.equal(loaded.dueDate, '2026-08-01');
   assert.equal(loaded.dueTime, '23:59');
 });
+
+test('getStats reports the task count, file size and path shown on the data settings page', async (t) => {
+  const dbPath = tempDbPath();
+  const repo = new SqliteTaskRepository(dbPath);
+  await repo.initialize();
+  t.after(async () => {
+    await repo.close();
+    fs.rmSync(path.dirname(dbPath), { recursive: true, force: true });
+  });
+  await repo.save(new Task({
+    id: 'stats-task',
+    content: '统计用任务',
+    status: 'todo',
+    createdAt: new Date(),
+    timeTracking: {},
+    listId: 0,
+    metadata: {}
+  }));
+
+  const stats = await repo.getStats();
+
+  assert.equal(stats.taskCount, 1);
+  assert.ok(stats.fileSize > 0);
+  assert.equal(stats.path, dbPath);
+});

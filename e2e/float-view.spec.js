@@ -483,7 +483,7 @@ test('悬浮面板键盘可选择分类和清单、完成步骤及关闭右键�
 });
 
 
-test('悬浮图标三状态：提醒优先，悬停保留提醒，处理后恢复待办与清空', async ({ app, window }) => {
+test('悬浮图标三状态：提醒优先，悬停片刻清除提醒，处理后恢复待办与清空', async ({ app, window }) => {
   const icon = await findWindow(app, page => {
     const url = page.url();
     return !url.includes('task-manager') && !url.includes('settings') && !url.includes('task-panel') && !url.includes('floating-task');
@@ -520,19 +520,31 @@ test('悬浮图标三状态：提醒优先，悬停保留提醒，处理后恢�
     await moli.taskService.taskRepository.save(task);
     moli.windowManager.floatingWindow.webContents.send('task-reminder', task.toJSON());
   }, id);
-  await expect(button).toHaveAttribute('title', '有待处理提醒');
+  const reminderTitle = '有待处理提醒，悬停片刻可清除';
+  await expect(button).toHaveAttribute('title', reminderTitle);
   await expect(icon.locator('.floating-icon-calendar-count')).toHaveCount(0);
   await expect(icon.locator('.floating-icon-calendar-dot')).toHaveCount(0);
   await icon.screenshot({ path: 'test-results/floating-reminder.png' });
+  // 键盘打开面板不算悬停，提醒保留
   await button.press('Enter');
-  await button.dispatchEvent('mouseenter');
-  await expect(button).toHaveAttribute('title', '有待处理提醒');
   const panel = await findWindow(app, page => page.url().includes('task-panel'));
   await expect(panel.getByText('1 个待处理提醒', { exact: true })).toBeVisible();
+  await expect(button).toHaveAttribute('title', reminderTitle);
   const card = panel.locator('.task-panel-card', { hasText: '悬浮状态测试' });
   await card.getByRole('button', { name: '开始任务', exact: true }).click();
   await expect(button).toHaveAttribute('title', '今天剩余 1 个任务');
   await expect(panel.getByText('1 个待处理提醒', { exact: true })).toHaveCount(0);
+  // 暂停后提醒重新生效；悬停片刻视为已知晓，闹钟和面板计数一起清除，提醒数据不动
+  await card.getByRole('button', { name: '暂停任务', exact: true }).click();
+  await expect(button).toHaveAttribute('title', reminderTitle);
+  await button.dispatchEvent('mouseenter');
+  await expect(button).toHaveAttribute('title', '今天剩余 1 个任务');
+  await expect(panel.getByText('1 个待处理提醒', { exact: true })).toHaveCount(0);
+  const reminderTime = await app.electronApp.evaluate(async ({}, taskId) => {
+    const task = await global.__moliTodoApp.taskService.getTaskById(taskId);
+    return task.reminderTime ? task.reminderTime.toISOString() : null;
+  }, id);
+  expect(reminderTime).not.toBeNull();
   await card.getByRole('button', { name: '完成任务', exact: true }).click();
   await expect(button).toHaveAttribute('title', '今天已清空');
 });

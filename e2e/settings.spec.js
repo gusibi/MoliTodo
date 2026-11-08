@@ -63,6 +63,15 @@ test('清除所有数据：统一确认、取消不重启且焦点返回触发�
   await expect(clearBtn).toBeFocused();
 });
 
+test('数据管理：数据库信息显示真实大小与路径', async ({ app, window }) => {
+  const settings = await openSettings(app, window);
+  await settings.locator('.setting-nav-item', { hasText: '数据管理' }).click();
+
+  const stats = settings.locator('.setting-stats-container', { hasText: '数据库信息' });
+  await expect(stats.locator('.setting-stats-item', { hasText: '数据库路径' })).toContainText(app.userDataDir);
+  await expect(stats.locator('.setting-stats-item', { hasText: '数据库大小' })).not.toContainText('0 Bytes');
+});
+
 test('应用图标：C 系列可选且选择持久化', async ({ app, window }) => {
   const settings = await openSettings(app, window);
 

@@ -1014,15 +1014,13 @@ class SqliteTaskRepository {
 
     const taskCount = await this.db.get('SELECT COUNT(*) as count FROM tasks');
     const listStats = await this.getOptimizedListTaskCounts();
-    const timeStats = await this.getTimeStatistics();
     const dbSize = this.dbPath ? (await fs.stat(this.dbPath)).size : 0;
 
     return {
       path: this.dbPath,
       taskCount: taskCount.count,
       fileSize: dbSize,
-      listStats,
-      timeStats
+      listStats
     };
   }
 
