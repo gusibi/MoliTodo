@@ -45,24 +45,6 @@
   @apply flex-shrink-0 flex h-7 w-7 items-center justify-center;
 }
 
-/* 状态圆圈按钮：与纯展示圆圈视觉一致，仅增加 hover 反馈 */
-.today-task-status-toggle {
-  @apply flex h-7 w-7 items-center justify-center rounded-full bg-transparent;
-  @apply cursor-pointer transition-transform duration-100;
-}
-
-.today-task-status-toggle:hover {
-  @apply scale-110;
-}
-
-.today-task-status-toggle:active {
-  @apply scale-95;
-}
-
-.today-task-status-toggle:focus-visible {
-  @apply outline-none ring-2 ring-primary/50 ring-offset-1 ring-offset-background;
-}
-
 .today-task-content {
   @apply flex-1 min-w-0;
 }

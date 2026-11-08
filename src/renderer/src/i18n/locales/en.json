@@ -513,6 +513,9 @@
   "today": {
     "taskDetails": "Task details",
     "expandTask": "Open task: {title}",
+    "startTask": "Start task: {title}",
+    "pauseTask": "Pause task: {title}",
+    "resumeTask": "Resume task: {title}",
     "taskContextMenuHelp": "Right-click or press Shift+F10 to open the task menu",
     "taskTitleLabel": "Task title",
     "titleRequired": "A task title is required.",

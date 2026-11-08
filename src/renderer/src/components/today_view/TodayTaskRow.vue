@@ -16,21 +16,20 @@
         @dragend="handleDragEnd"
         @contextmenu.capture="rememberContextMenuTarget"
       >
-        <!-- 主行：状态圆圈（纯展示）+ 标题/备注摘要 + hover 动作（图标即动作） -->
+        <!-- 主行：状态圆圈（未完成时可开始/暂停）+ 标题/备注摘要 + hover 动作（图标即动作） -->
         <div class="today-task-main">
           <span v-if="!expanded" class="today-task-status">
             <!-- 未完成：圆圈可点击（开始/继续/暂停，与右侧 hover 动作同语义）；
                  已完成：保持纯展示，避免误触复活任务（重做走 hover 动作） -->
-            <button
+            <IconButton
               v-if="status !== 'done'"
-              type="button"
-              class="today-task-status-toggle"
-              :aria-label="statusActionLabel"
-              :title="statusActionLabel"
+              size="icon-sm"
+              class="rounded-full"
+              :label="statusActionLabel"
               @click.stop="handleStatusCircleClick"
             >
               <TaskStatusCircle :status="status" />
-            </button>
+            </IconButton>
             <TaskStatusCircle v-else :status="status" />
           </span>
 
@@ -146,7 +145,7 @@ import { formatRecurrenceSummary } from '../../utils/recurrence-summary.js'
 
 /**
  * Today 页专用任务行（Things 式就地交互）：
- * - 状态圆圈纯展示；动作全部在 hover 动作区，图标即点击后的动作
+ * - 状态圆圈是开始/暂停的快捷入口（已完成只展示）；其余动作在 hover 动作区，图标即点击后的动作
  * - When chip / 提醒 pill 点击弹气泡就地改期、设提醒（共享悬浮窗组件）
  * - 单击任务正文在原位展开，标题、备注、步骤及全部属性共用一套编辑流程
  * - 元信息摘要和 When / 提醒捷径仍留在浏览态，行上动作不会顺带展开
@@ -286,22 +285,38 @@ function handleEditorDelete(task) {
 // ---------- 状态动作（图标即动作） ----------
 
 // 状态圆圈点击：todo/暂停 → 开始，进行中 → 暂停（与 hover 动作区同语义）
+// 可访问名称带上任务名，和行尾同义按钮区分开，读屏时也知道操作的是哪条任务
 const statusActionLabel = computed(() => {
-  if (status.value === 'doing') return $t('tasks.pause')
-  if (status.value === 'paused') return $t('tasks.resume')
-  return $t('tasks.start')
+  const title = props.task.content
+  if (status.value === 'doing') return $t('today.pauseTask', { title })
+  if (status.value === 'paused') return $t('today.resumeTask', { title })
+  return $t('today.startTask', { title })
 })
 
-const handleStatusCircleClick = () => {
+const handleStatusCircleClick = (event) => {
+  // 双击的第二下不算新动作，否则开始后会立刻暂停（键盘触发时 detail 为 0）
+  if (event.detail > 1) return
   if (status.value === 'doing') handlePause()
   else handleStart()
 }
 
-const handleStart = async () => {
+// 处理中忽略重复触发：状态机不接受重复开始，虚拟实例也不应重复物化
+let statusActionPending = false
+
+const runStatusAction = async (action) => {
+  if (statusActionPending) return
+  statusActionPending = true
   try {
     const target = await materializeVirtualInstance(taskStore, props.task)
-    if (!target) return
-    await taskStore.startTask(target.id)
+    if (target) await action(target.id)
+  } finally {
+    statusActionPending = false
+  }
+}
+
+const handleStart = async () => {
+  try {
+    await runStatusAction(taskStore.startTask)
   } catch (error) {
     console.error('开始任务失败:', error)
   }
@@ -309,9 +324,7 @@ const handleStart = async () => {
 
 const handlePause = async () => {
   try {
-    const target = await materializeVirtualInstance(taskStore, props.task)
-    if (!target) return
-    await taskStore.pauseTask(target.id)
+    await runStatusAction(taskStore.pauseTask)
   } catch (error) {
     console.error('暂停任务失败:', error)
   }

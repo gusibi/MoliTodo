@@ -28,7 +28,7 @@ async function waitForToday(page) {
 // issue #15 后任务行动作集中在 hover 动作区：先 hover 行（focus-within 亦可见），再点击动作按钮
 async function rowAction(row, name) {
   await row.hover();
-  await row.getByRole('button', { name }).click();
+  await row.getByRole('button', { name, exact: true }).click();
 }
 
 test('今天截止但安排在明天：只显示一张卡片，日历点仍在明天且可定位执行分组', async ({ app, window }) => {
@@ -1234,6 +1234,82 @@ test('状态动作：开始、暂停、继续与完成即动作', async ({ app, 
 
   await rowAction(row, '完成任务');
   await expect(window.locator('.today-task-row', { hasText: '状态流转任务' })).toHaveCount(0);
+});
+
+test('状态圆圈：点击开始、暂停、继续且不展开任务，已完成只展示', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '圆圈流转任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '圆圈流转任务' });
+  await row.getByRole('button', { name: '开始任务：圆圈流转任务', exact: true }).click();
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await row.getByRole('button', { name: '暂停任务：圆圈流转任务', exact: true }).click();
+  await expect(row).toHaveAttribute('data-status', 'paused');
+  await row.getByRole('button', { name: '继续任务：圆圈流转任务', exact: true }).click();
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await expect(row.getByRole('button', { name: '展开任务：圆圈流转任务', exact: true })).toHaveAttribute('aria-expanded', 'false');
+
+  await rowAction(row, '完成任务');
+  await window.getByRole('button', { name: '显示已完成任务' }).click();
+  await expect(row).toHaveAttribute('data-status', 'done');
+  await expect(row.getByRole('button', { name: /^(开始|暂停|继续)任务：/ })).toHaveCount(0);
+});
+
+test('状态圆圈：双击只开始一次，不弹错误也不展开', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '圆圈双击任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '圆圈双击任务' });
+  await row.getByRole('button', { name: '开始任务：圆圈双击任务', exact: true }).dblclick();
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  // 第二下如果被当成新动作，错误框或暂停会在 IPC 返回后才出现
+  await window.waitForTimeout(500);
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await expect(window.getByRole('dialog', { name: '错误', exact: true })).toHaveCount(0);
+  await expect(row.getByRole('button', { name: '展开任务：圆圈双击任务', exact: true })).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('状态圆圈：处理中重复点击只提交一次', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '圆圈慢服务任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+  await app.electronApp.evaluate(() => {
+    const service = global.__moliTodoApp.taskService;
+    const startTask = service.startTask.bind(service);
+    global.__e2eStartCalls = 0;
+    service.startTask = async (...args) => {
+      global.__e2eStartCalls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return startTask(...args);
+    };
+  });
+
+  const row = window.locator('.today-task-row', { hasText: '圆圈慢服务任务' });
+  const circle = row.getByRole('button', { name: '开始任务：圆圈慢服务任务', exact: true });
+  await circle.click();
+  await circle.click();
+
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await expect(window.getByRole('dialog', { name: '错误', exact: true })).toHaveCount(0);
+  expect(await app.electronApp.evaluate(() => global.__e2eStartCalls)).toBe(1);
+});
+
+test('状态圆圈：键盘 Enter 与 Space 可操作，焦点留在圆圈上', async ({ app, window }) => {
+  await seedTasks(app.electronApp, [{ content: '圆圈键盘任务', dueDate: localKey(new Date()) }]);
+  await window.reload();
+  await waitForToday(window);
+
+  const row = window.locator('.today-task-row', { hasText: '圆圈键盘任务' });
+  await row.getByRole('button', { name: '开始任务：圆圈键盘任务', exact: true }).focus();
+  await window.keyboard.press('Enter');
+  await expect(row).toHaveAttribute('data-status', 'doing');
+  await expect(row.getByRole('button', { name: '暂停任务：圆圈键盘任务', exact: true })).toBeFocused();
+
+  await window.keyboard.press('Space');
+  await expect(row).toHaveAttribute('data-status', 'paused');
+  await expect(row.getByRole('button', { name: '继续任务：圆圈键盘任务', exact: true })).toBeFocused();
 });
 
 test('逾期任务 When chip 变红且悬浮说明为截止时间', async ({ app, window }) => {

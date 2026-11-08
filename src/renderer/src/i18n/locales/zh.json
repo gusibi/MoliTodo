@@ -528,6 +528,9 @@
   "today": {
     "taskDetails": "任务详情",
     "expandTask": "展开任务：{title}",
+    "startTask": "开始任务：{title}",
+    "pauseTask": "暂停任务：{title}",
+    "resumeTask": "继续任务：{title}",
     "taskContextMenuHelp": "右键点击，或按 Shift+F10 打开任务菜单",
     "taskTitleLabel": "任务标题",
     "titleRequired": "任务标题不能为空",

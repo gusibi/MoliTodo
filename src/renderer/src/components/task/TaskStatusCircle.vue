@@ -13,7 +13,8 @@ import { Pause } from '@lucide/vue'
 
 /**
  * 任务状态圆圈（悬浮窗与 Today 行共用的纯展示组件）。
- * 只表达当前状态，不可点击；动作一律由行上的 hover 动作按钮承担。
+ * 只表达当前状态，本身不响应点击；Today 行把它放进 IconButton 作为开始/暂停入口，
+ * 悬浮窗的动作仍由 hover 动作按钮承担。
  */
 defineProps({
   status: {
